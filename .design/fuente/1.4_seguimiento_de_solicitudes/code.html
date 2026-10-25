@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#f7f9fc;}body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "inverse-on-surface": "#eff1f4", "secondary-container": "#febb2a", "background": "#f7f9fc", "surface-container-low": "#f2f4f7", "surface-variant": "#e0e3e6", "outline": "#72777f", "on-primary-fixed": "#001d35", "tertiary-container": "#005827", "surface-container": "#eceef1", "on-tertiary-fixed": "#00210b", "error": "#ba1a1a", "on-background": "#191c1e", "secondary-fixed-dim": "#febb2a", "primary-fixed-dim": "#a0cafc", "inverse-surface": "#2d3133", "inverse-primary": "#a0cafc", "error-container": "#ffdad6", "on-tertiary-container": "#7cce8c", "primary": "#00375e", "surface-container-lowest": "#ffffff", "on-surface-variant": "#42474f", "on-primary-fixed-variant": "#184974", "on-surface": "#191c1e", "surface-container-highest": "#e0e3e6", "on-tertiary": "#ffffff", "secondary-fixed": "#ffdea8", "outline-variant": "#c2c7d0", "primary-fixed": "#d1e4ff", "tertiary-fixed": "#a1f5b0", "on-tertiary-fixed-variant": "#005224", "on-secondary-container": "#6d4d00", "tertiary-fixed-dim": "#86d996", "on-primary-container": "#95bff1", "surface-container-high": "#e6e8eb", "secondary": "#7c5800", "on-primary": "#ffffff", "surface-tint": "#35618d", "primary-container": "#1f4e79", "surface": "#f7f9fc", "surface-bright": "#f7f9fc", "surface-dim": "#d8dadd", "on-secondary-fixed": "#271900", "tertiary": "#003e1a", "on-secondary": "#ffffff", "on-error": "#ffffff", "on-error-container": "#93000a", "on-secondary-fixed-variant": "#5e4200" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xs": "0.25rem", "margin-desktop": "2rem", "gutter-desktop": "1.5rem", "margin-tablet": "1.5rem", "margin": "1rem", "space-md": "1rem", "gutter": "1rem", "space-sm": "0.5rem", "gutter-tablet": "1.25rem", "space-lg": "1.5rem", "space-xl": "2rem" }, fontFamily: { "body-sm": ["Inter"], "label-sm": ["JetBrains Mono"], "label-lg": ["JetBrains Mono"], "headline-xl-mobile": ["Inter"], "label-md": ["JetBrains Mono"], "body-md": ["Inter"], "headline-lg": ["Inter"], "headline-lg-mobile": ["Inter"], "headline-xl": ["Inter"], "headline-sm": ["Inter"], "headline-md": ["Inter"], "body-lg": ["Inter"] }, fontSize: { "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.25px", "fontWeight": "500" }], "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.5px", "fontWeight": "600" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }], "label-md": ["14px", { "lineHeight": "18px", "letterSpacing": "0.25px", "fontWeight": "600" }], "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }], "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }], "headline-xl": ["40px", { "lineHeight": "48px", "fontWeight": "700" }], "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }], "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }], "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }] } } } };</script><style>body { min-height: max(884px, 100dvh); }</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-20 px-margin flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0"><div class="w-9 h-9 rounded-lg bg-primary-container text-white flex items-center justify-center font-headline-sm font-bold shrink-0 shadow-sm"><span class="material-symbols-outlined text-[20px] text-primary-fixed">restaurant</span></div><div class="flex flex-col min-w-0"><span class="font-headline-sm text-headline-sm text-primary tracking-tight truncate leading-tight">1.4 Seguimiento De Solicitudes</span><div class="flex items-center gap-space-xs mt-0.5"><span class="w-2 h-2 rounded-full bg-secondary-container animate-pulse shrink-0"></span><span class="font-label-sm text-label-sm text-on-surface-variant truncate font-semibold">Mesa 12 · Salón Principal</span></div></div></div><div class="flex items-center gap-space-xs shrink-0"><button class="h-10 px-space-xs flex items-center justify-center rounded-lg bg-surface-container-high text-on-surface font-label-sm text-label-sm min-w-[44px] hover:bg-surface-container-highest transition-colors"><span class="material-symbols-outlined text-[18px] mr-0.5 text-on-surface-variant">translate</span>ES</button><button aria-label="Llamar al mesero" class="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center shrink-0 hover:bg-primary-container transition-colors shadow-sm"><span class="material-symbols-outlined text-[20px]">room_service</span></button></div></div></header><main class="flex flex-col relative w-full px-margin pt-20 pb-28 bg-surface min-h-screen"><div class="flex flex-col w-full gap-space-md">
+<!-- Stepper de Preparación del Pedido -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Comanda #4082</span>
+<span class="font-headline-sm text-headline-sm text-primary">Estado de tu Pedido</span>
+</div>
+<div class="flex items-center gap-space-xs bg-tertiary-container/10 px-space-sm py-1 rounded-full">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="font-label-sm text-label-sm text-tertiary font-semibold">En cocina</span>
+</div>
+</div>
+<!-- Stepper Gráfico Horizontal -->
+<div class="relative flex items-center justify-between pt-space-xs pb-1">
+<!-- Barra base de progreso -->
+<div class="absolute left-6 right-6 top-1/2 -translate-y-1/2 h-1 bg-surface-container rounded-full z-0"></div>
+<div class="absolute left-6 w-[45%] top-1/2 -translate-y-1/2 h-1 bg-secondary-container rounded-full z-0 transition-all duration-500"></div>
+<!-- Paso 1: Recibido (Completado) -->
+<div class="relative z-10 flex flex-col items-center gap-1">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center shadow-xs">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Recibido</span>
+</div>
+<!-- Paso 2: En preparación (Activo / Pulsante) -->
+<div class="relative z-10 flex flex-col items-center gap-1">
+<div class="relative flex items-center justify-center">
+<span class="absolute inline-flex h-10 w-10 rounded-full bg-secondary-container/30 animate-ping"></span>
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[18px]">skillet</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-secondary-container font-semibold">Preparando</span>
+</div>
+<!-- Paso 3: Listo -->
+<div class="relative z-10 flex flex-col items-center gap-1">
+<div class="w-8 h-8 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">dinner_dining</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Listo</span>
+</div>
+<!-- Paso 4: Entregado -->
+<div class="relative z-10 flex flex-col items-center gap-1">
+<div class="w-8 h-8 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Entregado</span>
+</div>
+</div>
+<!-- Estimación de Tiempo -->
+<div class="bg-surface-container-low rounded-lg p-space-sm flex items-center gap-space-sm">
+<div class="w-12 h-12 rounded-lg bg-primary-container text-on-primary flex flex-col items-center justify-center shrink-0">
+<span class="font-label-lg text-label-lg font-bold leading-none text-white">~14</span>
+<span class="font-label-sm text-[10px] uppercase text-primary-fixed leading-none mt-0.5">min</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-sm text-body-sm text-on-surface font-semibold">Tu pedido está en las brasas</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">El equipo de cocina de Andina GastroOS lo prepara a fuego vivo.</span>
+</div>
+</div>
+</section>
+<!-- Platos del Pedido Actual -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-1">
+<h3 class="font-headline-sm text-headline-sm text-primary">Platos en marcha</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">2 ítems</span>
+</div>
+<!-- Plato 1 -->
+<div class="flex items-start gap-space-sm p-space-sm bg-surface-container-low rounded-lg">
+<img class="w-14 h-14 rounded-lg object-cover shrink-0 shadow-xs" data-alt="Traditional Bolivian Pique Macho dish in a deep rustic clay bowl, layered with tender sauteed beef strips, crispy fried potatoes, sliced sausages, hot locoto chili, and boiled egg, natural restaurant warm lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAq_wsIKdS7Lh3TkiYTUVjLdFmaKNKYi1mdlMPBXlyrZI-qSQg68AeUZIw3fQONPwhtEPTO14Q1qaEJf8xMrToKZCG4WPzaoFDFs-JEAVk95qHAFN8s8x2Fo15PCaxhh-I5btzcRnN3hq_g7XFlQqXq3TyewjUbOzo7hW48ZzUqrl-kqe1jnLDJdjrIA3ZnqZ6yho4Mdv-1flOmH5nzwxzyoazdfkfQVJdnXXEeAqQE5pJo7fh-2kw8dg"/>
+<div class="flex flex-col flex-1 min-w-0">
+<div class="flex items-baseline justify-between gap-space-xs">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate">1x Pique Macho Tradicional</span>
+<span class="font-label-md text-label-md text-primary font-bold shrink-0">Bs 65.00</span>
+</div>
+<div class="flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[15px] text-error shrink-0">do_not_disturb_on</span>
+<span class="font-label-sm text-label-sm text-error font-medium">Nota: sin cebolla</span>
+</div>
+</div>
+</div>
+<!-- Plato 2 -->
+<div class="flex items-start gap-space-sm p-space-sm bg-surface-container-low rounded-lg">
+<img class="w-14 h-14 rounded-lg object-cover shrink-0 shadow-xs" data-alt="Authentic Silpancho Cochabambino served flat over rice and fried potatoes, breaded beef cutlet topped with a golden sunny-side-up egg and diced tomato salsa, overhead shot, soft culinary glow." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMngeI6KJB5LB4zRrffRG31W9qMrqKMZodzWnoNoQeHHUcYW5oTrxuYvBz_N4q3wApxITaIVhRA8x5DvKWbXTcuWnFzEsSZzGI2nej5MACdTcCKw3t5ZklBrKR3lP7zO8aZmIr8zrOx6TuObdNXATpRpaBe7GnhhsUW7Z9tS8rX6rXL4OSWHVQjj4xoSccqD2tOgCqgfSsoTyzvPsCenH_XszeaQGwAfubDBeIihJfwDoBI28v-psj0Q"/>
+<div class="flex flex-col flex-1 min-w-0">
+<div class="flex items-baseline justify-between gap-space-xs">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate">1x Silpancho Cochabambino</span>
+<span class="font-label-md text-label-md text-primary font-bold shrink-0">Bs 43.20</span>
+</div>
+<div class="flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[15px] text-tertiary shrink-0">task_alt</span>
+<span class="font-label-sm text-label-sm text-tertiary font-medium">Nota: huevo bien cocido</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Solicitudes de Mesa Activas y Recientes -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between pb-1">
+<h3 class="font-headline-sm text-headline-sm text-primary">Solicitudes a Mesa 12</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">En vivo</span>
+</div>
+<!-- Tarjeta Activa (Cuenta solicitada) -->
+<div class="bg-secondary-fixed/50 p-space-sm rounded-lg flex items-start gap-space-sm shadow-xs animate-pulse">
+<div class="w-10 h-10 rounded-lg bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">notifications_active</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between gap-1">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Cuenta solicitada</span>
+<span class="font-label-sm text-label-sm text-on-secondary-container font-bold bg-secondary-container/40 px-2 py-0.5 rounded-full shrink-0">En camino</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">El mesero Carlos llega en ~1 min con el detalle impreso.</span>
+</div>
+</div>
+<!-- Tarjeta Anterior Completada -->
+<div class="bg-surface-container-low p-space-sm rounded-lg flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-tertiary/10 text-tertiary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface truncate">Cubiertos adicionales entregados</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Atendido hace 6 min por salón</span>
+</div>
+</div>
+</section>
+<!-- Pedir Servicio a la Mesa -->
+<section class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary">¿Necesitas algo más para la mesa?</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Toca una opción rápida y te lo acercamos de inmediato sin esperar.</p>
+</div>
+<!-- Grid de Botones Táctiles de Alta Frecuencia -->
+<div class="grid grid-cols-2 gap-space-sm">
+<button class="h-14 px-space-sm bg-surface-container-low hover:bg-surface-container-high active:scale-95 transition-all rounded-lg flex items-center gap-space-sm text-left" onclick="requestItem('Agua con hielo')">
+<div class="w-9 h-9 rounded-md bg-primary-fixed text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">water_drop</span>
+</div>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface truncate">Agua con hielo</span>
+</button>
+<button class="h-14 px-space-sm bg-surface-container-low hover:bg-surface-container-high active:scale-95 transition-all rounded-lg flex items-center gap-space-sm text-left" onclick="requestItem('Hielo extra')">
+<div class="w-9 h-9 rounded-md bg-primary-fixed text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">ac_unit</span>
+</div>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface truncate">Hielo extra</span>
+</button>
+<button class="h-14 px-space-sm bg-surface-container-low hover:bg-surface-container-high active:scale-95 transition-all rounded-lg flex items-center gap-space-sm text-left" onclick="requestItem('Platos / Cubiertos')">
+<div class="w-9 h-9 rounded-md bg-secondary-fixed text-on-secondary-fixed-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">flatware</span>
+</div>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface truncate">Platos/Cubiertos</span>
+</button>
+<button class="h-14 px-space-sm bg-surface-container-low hover:bg-surface-container-high active:scale-95 transition-all rounded-lg flex items-center gap-space-sm text-left" onclick="requestItem('Servilletas')">
+<div class="w-9 h-9 rounded-md bg-secondary-fixed text-on-secondary-fixed-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">cleaning_services</span>
+</div>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface truncate">Servilletas</span>
+</button>
+<button class="h-14 px-space-sm bg-primary/10 hover:bg-primary/20 active:scale-95 transition-all rounded-lg flex items-center gap-space-sm text-left" onclick="requestItem('Llamar mesero')">
+<div class="w-9 h-9 rounded-md bg-primary text-white flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">person_pin_circle</span>
+</div>
+<span class="font-body-sm text-body-sm font-semibold text-primary truncate">Llamar mesero</span>
+</button>
+<button class="h-14 px-space-sm bg-surface-container-low hover:bg-surface-container-high active:scale-95 transition-all rounded-lg flex items-center gap-space-sm text-left" onclick="openSpecialModal()">
+<div class="w-9 h-9 rounded-md bg-surface-container-highest text-on-surface flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</div>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface truncate">Otra cosa...</span>
+</button>
+</div>
+<!-- Feedback Banner de Solicitud (oculto por defecto) -->
+<div class="hidden bg-tertiary-fixed text-on-tertiary-fixed p-space-sm rounded-lg flex items-center gap-space-sm transition-all duration-300" id="service-feedback">
+<span class="material-symbols-outlined text-[20px] text-tertiary">send_and_archive</span>
+<span class="font-label-sm text-label-sm font-medium" id="service-feedback-text">Solicitud transmitida a sala</span>
+</div>
+</section>
+<!-- Botones de Acción Directa al Pie -->
+<section class="sticky bottom-20 z-20 flex flex-col gap-space-xs pt-1">
+<div class="bg-surface-container-lowest/95 backdrop-blur-md p-space-sm rounded-xl shadow-md flex flex-col gap-space-xs">
+<div class="flex items-center justify-between px-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Subtotal acumulado (2 platos)</span>
+<span class="font-label-lg text-label-lg font-bold text-primary">Bs 108.20</span>
+</div>
+<div class="grid grid-cols-2 gap-space-sm pt-1">
+<button class="h-14 bg-surface-container-high hover:bg-surface-container-highest active:scale-95 text-on-surface rounded-lg font-label-md text-label-md flex items-center justify-center gap-1.5 transition-all">
+<span class="material-symbols-outlined text-[20px]">receipt</span>
+          Ver cuenta
+        </button>
+<button class="h-14 bg-primary text-white hover:bg-primary-container active:scale-95 rounded-lg font-label-md text-label-md flex items-center justify-center gap-1.5 shadow-sm transition-all">
+<span class="material-symbols-outlined text-[20px]">qr_code_2</span>
+          Pagar por QR
+        </button>
+</div>
+</div>
+</section>
+<!-- Modal Rápido: Solicitud Especial -->
+<div class="fixed inset-0 z-50 bg-inverse-surface/60 backdrop-blur-xs flex items-end justify-center p-0 hidden" id="special-request-modal">
+<div class="bg-surface-container-lowest w-full max-w-md rounded-t-2xl p-space-md shadow-xl flex flex-col gap-space-md animate-in slide-in-from-bottom duration-200">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">edit_note</span>
+<span class="font-headline-sm text-headline-sm text-primary">Requerimiento especial</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant rounded-full hover:bg-surface-container" onclick="closeSpecialModal()">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-on-surface-variant" for="custom-request-input">¿Qué necesitas para la Mesa 12?</label>
+<textarea class="w-full bg-surface-container-low rounded-lg p-space-sm font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest" id="custom-request-input" placeholder="Ej: Llajwa bien picante, cambio de vaso, salsa de soya..." rows="3"></textarea>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="h-12 flex-1 rounded-lg bg-surface-container font-label-md text-label-md text-on-surface hover:bg-surface-container-high transition-colors" onclick="closeSpecialModal()">
+          Cancelar
+        </button>
+<button class="h-12 flex-1 rounded-lg bg-primary text-white font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm flex items-center justify-center gap-1" onclick="submitSpecialRequest()">
+<span class="material-symbols-outlined text-[18px]">send</span>
+          Enviar solicitud
+        </button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  function requestItem(itemName) {
+    const banner = document.getElementById('service-feedback');
+    const bannerText = document.getElementById('service-feedback-text');
+    if (!banner || !bannerText) return;
+
+    bannerText.textContent = `Solicitud de "${itemName}" enviada al mesero Carlos.`;
+    banner.classList.remove('hidden');
+
+    setTimeout(() => {
+      banner.classList.add('hidden');
+    }, 4500);
+  }
+
+  function openSpecialModal() {
+    const modal = document.getElementById('special-request-modal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      const input = document.getElementById('custom-request-input');
+      if (input) input.focus();
+    }
+  }
+
+  function closeSpecialModal() {
+    const modal = document.getElementById('special-request-modal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function submitSpecialRequest() {
+    const input = document.getElementById('custom-request-input');
+    const val = input ? input.value.trim() : '';
+    if (val.length > 0) {
+      requestItem(val);
+      if (input) input.value = '';
+    }
+    closeSpecialModal();
+  }
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.06)]" data-active-classes="text-primary font-semibold"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] text-on-surface-variant hover:text-on-surface transition-colors py-1 relative" data-path="1-1-menu-qr-con-fotos-y-precios" href="#"><span class="material-symbols-outlined text-[24px]">restaurant_menu</span><span class="font-label-sm text-label-sm mt-0.5">Menú</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] text-on-surface-variant hover:text-on-surface transition-colors py-1 relative" data-path="1-3-mi-pedido-y-comanda" href="#"><span class="material-symbols-outlined text-[24px]">receipt_long</span><span class="font-label-sm text-label-sm mt-0.5">Pedido</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] text-on-surface-variant hover:text-on-surface transition-colors py-1" data-path="1-4-seguimiento-de-solicitudes" href="#"><span class="material-symbols-outlined text-[24px]">timer</span><span class="font-label-sm text-label-sm mt-0.5">Seguimiento</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] text-on-surface-variant hover:text-on-surface transition-colors py-1" data-path="1-5-pagar-por-qr" href="#"><span class="material-symbols-outlined text-[24px]">qr_code_scanner</span><span class="font-label-sm text-label-sm mt-0.5">Pagar QR</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] text-on-surface-variant hover:text-on-surface transition-colors py-1" data-path="1-6-reserva-web-de-mesa" href="#"><span class="material-symbols-outlined text-[24px]">calendar_month</span><span class="font-label-sm text-label-sm mt-0.5">Reserva</span></a></div></nav></body></html>

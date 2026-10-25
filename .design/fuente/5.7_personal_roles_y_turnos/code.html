@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"primary":"#00375e","background":"#f7f9fc","secondary-fixed-dim":"#febb2a","on-secondary":"#ffffff","primary-fixed-dim":"#a0cafc","surface-container-lowest":"#ffffff","surface-tint":"#35618d","secondary-fixed":"#ffdea8","error":"#ba1a1a","tertiary":"#003e1a","on-secondary-fixed-variant":"#5e4200","outline-variant":"#c2c7d0","surface-container-highest":"#e0e3e6","surface-container":"#eceef1","on-primary":"#ffffff","outline":"#72777f","inverse-surface":"#2d3133","on-primary-fixed-variant":"#184974","on-error-container":"#93000a","tertiary-fixed-dim":"#86d996","on-surface":"#191c1e","on-secondary-fixed":"#271900","tertiary-fixed":"#a1f5b0","on-primary-container":"#95bff1","surface-dim":"#d8dadd","on-background":"#191c1e","surface-bright":"#f7f9fc","on-tertiary-fixed":"#00210b","surface-container-high":"#e6e8eb","on-primary-fixed":"#001d35","primary-container":"#1f4e79","surface-variant":"#e0e3e6","inverse-on-surface":"#eff1f4","surface":"#f7f9fc","surface-container-low":"#f2f4f7","secondary-container":"#febb2a","on-tertiary":"#ffffff","on-surface-variant":"#42474f","inverse-primary":"#a0cafc","on-secondary-container":"#6d4d00","tertiary-container":"#005827","on-tertiary-container":"#7cce8c","primary-fixed":"#d1e4ff","on-error":"#ffffff","on-tertiary-fixed-variant":"#005224","error-container":"#ffdad6","secondary":"#7c5800"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-tablet":"1.5rem","space-lg":"1.5rem","space-sm":"0.5rem","margin-desktop":"2rem","gutter":"1rem","gutter-tablet":"1.25rem","space-xl":"2rem","space-md":"1rem","gutter-desktop":"1.5rem","space-xs":"0.25rem","margin":"1rem"},"fontFamily":{"headline-md":["Inter"],"headline-xl":["Inter"],"label-lg":["JetBrains Mono"],"headline-xl-mobile":["Inter"],"body-md":["Inter"],"body-lg":["Inter"],"headline-lg-mobile":["Inter"],"label-md":["JetBrains Mono"],"headline-lg":["Inter"],"label-sm":["JetBrains Mono"],"body-sm":["Inter"],"headline-sm":["Inter"]},"fontSize":{"headline-md":["24px",{"lineHeight":"32px","fontWeight":"600"}],"headline-xl":["40px",{"lineHeight":"48px","fontWeight":"700"}],"label-lg":["16px",{"lineHeight":"20px","letterSpacing":"0.5px","fontWeight":"600"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","fontWeight":"700"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"body-lg":["18px",{"lineHeight":"26px","fontWeight":"500"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","fontWeight":"700"}],"label-md":["14px",{"lineHeight":"18px","letterSpacing":"0.25px","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"40px","fontWeight":"700"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.25px","fontWeight":"500"}],"body-sm":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["20px",{"lineHeight":"28px","fontWeight":"600"}]}}}}</script></head><body class="bg-background font-body-md text-on-surface min-h-screen"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-md flex items-center gap-space-sm"><div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[22px]">restaurant</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">Andina</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mt-0.5">GastroOS</span></div></div><div class="px-space-md py-space-xs"><div class="p-space-sm rounded-lg bg-surface-container-high/60 flex items-center justify-between"><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">SUCURSAL ACTIVA</span><span class="material-symbols-outlined text-on-surface-variant text-[18px]">store</span></div></div><nav class="flex flex-col px-space-sm mt-space-xs gap-space-xs" data-active-classes="bg-primary-container text-on-primary font-semibold shadow-sm"><div class="px-space-sm pt-space-sm pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Principal</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="panel-del-dueno" href="#"><span class="material-symbols-outlined text-[20px]">analytics</span><span class="font-body-md text-body-md">Panel del Dueño</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="menu-y-fotos" href="#"><span class="material-symbols-outlined text-[20px]">menu_book</span><span class="font-body-md text-body-md">Menú &amp; Fotos</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="recetas-y-costeo" href="#"><span class="material-symbols-outlined text-[20px]">calculate</span><span class="font-body-md text-body-md">Recetas &amp; Costeo</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="inventario-y-almacenes" href="#"><span class="material-symbols-outlined text-[20px]">inventory_2</span><span class="font-body-md text-body-md">Inventario &amp; Almacenes</span></a><div class="px-space-sm pt-space-md pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Operaciones</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="compras-y-proveedores" href="#"><span class="material-symbols-outlined text-[20px]">local_shipping</span><span class="font-body-md text-body-md">Compras &amp; Proveedores</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="mesas-y-salon" href="#"><span class="material-symbols-outlined text-[20px]">qr_code_2</span><span class="font-body-md text-body-md">Mesas &amp; Salón (QR)</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="reservas-y-eventos" href="#"><span class="material-symbols-outlined text-[20px]">event_seat</span><span class="font-body-md text-body-md">Reservas &amp; Eventos</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="personal-y-turnos" href="#"><span class="material-symbols-outlined text-[20px]">badge</span><span class="font-body-md text-body-md">Personal &amp; Turnos</span></a><div class="px-space-sm pt-space-md pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Gestión &amp; Finanzas</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="promociones" href="#"><span class="material-symbols-outlined text-[20px]">sell</span><span class="font-body-md text-body-md">Promociones</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="contabilidad-y-libros" href="#"><span class="material-symbols-outlined text-[20px]">account_balance_wallet</span><span class="font-body-md text-body-md">Contabilidad &amp; Libros</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="estadisticas-y-bi" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Estadísticas &amp; BI</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="configuracion" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-body-md text-body-md">Configuración</span></a></nav></div><div class="p-space-md mt-space-md"><div class="bg-surface-container-high rounded-xl p-space-sm flex items-center gap-space-sm"><div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim ring-4 ring-tertiary-container/30"></div><div class="flex flex-col min-w-0"><span class="font-label-sm text-label-sm font-semibold text-on-surface">KDS &amp; POS Red</span><span class="font-body-sm text-body-sm text-on-surface-variant truncate">12 Nodos Conectados</span></div></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md"><div class="relative flex items-center"><label class="sr-only" for="sucursal-select">Seleccionar Sucursal</label><select class="h-12 pl-space-md pr-10 bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" id="sucursal-select"><option selected="" value="prado">Prado - La Paz</option><option value="san-miguel">San Miguel - La Paz</option><option value="equipetrol">Equipetrol - Santa Cruz</option></select><span class="material-symbols-outlined text-on-surface-variant absolute right-3 pointer-events-none text-[20px]">expand_more</span></div><div class="h-12 px-space-md rounded-lg bg-tertiary-fixed/30 flex items-center gap-space-xs"><span class="w-2.5 h-2.5 rounded-full bg-tertiary-container animate-pulse"></span><span class="font-label-sm text-label-sm text-tertiary font-semibold uppercase tracking-wide">SIAT Online: Sincronizado</span></div></div><div class="flex items-center gap-space-lg"><div class="hidden xl:flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">schedule</span><span>BOST: Lun 14:35:10 (-04:00)</span></div><div class="flex items-center gap-space-md pl-space-md"><div class="flex flex-col text-right hidden sm:flex"><span class="font-body-md text-body-md font-semibold text-on-surface leading-tight">Alejandro Morales</span><span class="font-body-sm text-body-sm text-on-surface-variant leading-tight">Dueño / Gerente General</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative pt-16 w-full min-h-screen bg-background px-space-lg py-space-lg"><div class="flex flex-col w-full gap-space-lg">
+<!-- Header Section with Breadcrumb, Title and Operational Action Bar -->
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm tracking-wider uppercase">
+<span class="hover:text-primary transition-colors cursor-pointer">Operaciones &amp; Equipo</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-bold">Gestión de Colaboradores</span>
+</div>
+<div class="flex items-center gap-space-sm flex-wrap">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Personal, Roles y Control de Turnos</h1>
+<div class="flex items-center gap-space-xs bg-tertiary-fixed/40 px-space-sm py-1 rounded-full shadow-sm">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary-container animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-tertiary font-bold tracking-wide uppercase">Turno Almuerzo Activo</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-4xl">
+        Administración de plantilla, asignación de turnos operativos (almuerzo, intermedio, cena), control de asistencia en tiempo real, matriz de permisos de seguridad por rol y asignación de PINs de autorización.
+      </p>
+</div>
+<!-- Main Toolbar Buttons -->
+<div class="flex items-center gap-space-sm flex-wrap self-start lg:self-center">
+<button class="h-12 px-space-md bg-surface-container-lowest hover:bg-surface-container text-on-surface font-body-md text-body-md rounded-lg shadow-sm flex items-center gap-space-xs transition-colors">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant">calendar_month</span>
+<span>Planilla de Turnos (Semanal)</span>
+</button>
+<button class="h-12 px-space-md bg-surface-container-lowest hover:bg-surface-container text-on-surface font-body-md text-body-md rounded-lg shadow-sm flex items-center gap-space-xs transition-colors">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant">history_toggle_off</span>
+<span>Reporte Asistencia &amp; H. Extra</span>
+</button>
+<button class="h-12 px-space-lg bg-primary-container hover:bg-primary text-on-primary font-body-md text-body-md font-semibold rounded-lg shadow-sm flex items-center gap-space-xs transition-colors">
+<span class="material-symbols-outlined text-[20px]">person_add</span>
+<span>+ Registrar Colaborador</span>
+</button>
+</div>
+</div>
+<!-- KPI Cards Banner (4 Grid Units) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
+<!-- KPI 1: Plantilla Activa -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Plantilla Activa</span>
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[22px]">badge</span>
+</div>
+</div>
+<div class="mt-space-sm">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg text-on-surface font-bold">28</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">Colaboradores</span>
+</div>
+<div class="mt-space-xs flex items-center gap-space-xs font-label-sm text-label-sm text-on-surface-variant">
+<span class="inline-block w-2 h-2 rounded-full bg-primary"></span>
+<span>24 Fijos</span>
+<span class="mx-1">•</span>
+<span class="inline-block w-2 h-2 rounded-full bg-secondary-container"></span>
+<span>4 Refuerzo fin de semana</span>
+</div>
+</div>
+</div>
+<!-- KPI 2: En Turno Ahora -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">En Turno Ahora (Prado)</span>
+<div class="w-10 h-10 rounded-lg bg-tertiary-fixed/30 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[22px]">group</span>
+</div>
+</div>
+<div class="mt-space-sm">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg text-tertiary font-bold">14</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">en servicio activo</span>
+</div>
+<div class="mt-space-xs text-on-surface-variant font-label-sm text-label-sm truncate">
+          4 Cocina · 6 Salón/Bar · 2 Caja · 2 Limp.
+        </div>
+</div>
+</div>
+<!-- KPI 3: Puntualidad Hoy -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Puntualidad Hoy</span>
+<div class="w-10 h-10 rounded-lg bg-secondary-fixed/40 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[22px]">alarm_on</span>
+</div>
+</div>
+<div class="mt-space-sm">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg text-on-surface font-bold">96.4%</span>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">1 retraso</span>
+</div>
+<div class="mt-space-xs flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-secondary">schedule</span>
+<span>1 Tardanza registrada (+12 min en salón)</span>
+</div>
+</div>
+</div>
+<!-- KPI 4: Costo Laboral del Mes -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Costo Laboral del Mes</span>
+<div class="w-10 h-10 rounded-lg bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[22px]">payments</span>
+</div>
+</div>
+<div class="mt-space-sm">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg text-primary font-bold">Bs 42,850</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-semibold">.00</span>
+</div>
+<div class="mt-space-xs font-label-sm text-label-sm text-on-surface-variant truncate">
+          Proy. AFP/Gestora + Beneficios de Ley
+        </div>
+</div>
+</div>
+</div>
+<!-- Main Content 12-Column Grid (8 cols left / 4 cols right) -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+<!-- LEFT COLUMN: Staff List, Filter Tabs, Table & Shift Visualizer (8 cols) -->
+<div class="xl:col-span-8 flex flex-col gap-space-md">
+<!-- Navigation Sub-Tabs & Filtering Controls -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<!-- Tab Navigation -->
+<div class="flex items-center gap-space-xs overflow-x-auto pb-space-xs border-b border-surface-container-high">
+<button class="h-10 px-space-md rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold shadow-sm flex items-center gap-space-xs whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">group</span>
+<span>Lista de Colaboradores (28)</span>
+</button>
+<button class="h-10 px-space-md rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-md text-label-md font-medium transition-colors flex items-center gap-space-xs whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">calendar_view_week</span>
+<span>Cuadrante de Turnos Semanal</span>
+</button>
+<button class="h-10 px-space-md rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-md text-label-md font-medium transition-colors flex items-center gap-space-xs whitespace-nowrap">
+<span class="material-symbols-outlined text-[18px]">security</span>
+<span>Permisos &amp; Roles (5 Roles)</span>
+</button>
+</div>
+<!-- Filter Bar Row -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-space-sm items-center">
+<!-- Search Input -->
+<div class="md:col-span-5 relative">
+<span class="material-symbols-outlined text-on-surface-variant absolute left-3 top-3.5 text-[20px]">search</span>
+<input class="w-full h-12 pl-10 pr-space-md bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" placeholder="Buscar por nombre, CI o cargo..." type="text" value="Roberto Soliz"/>
+</div>
+<!-- Area Dropdown -->
+<div class="md:col-span-4 relative">
+<label class="sr-only" for="area-filter">Filtrar por Área</label>
+<select class="w-full h-12 pl-space-md pr-10 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface appearance-none focus:outline-none focus:ring-2 focus:ring-primary shadow-sm cursor-pointer" id="area-filter">
+<option selected="" value="todas">Todas las Áreas</option>
+<option value="cocina">Cocina y Pastelería</option>
+<option value="salon">Salón y Meseros</option>
+<option value="caja">Caja y Facturación</option>
+<option value="admin">Administración</option>
+</select>
+<span class="material-symbols-outlined text-on-surface-variant absolute right-3 top-3.5 pointer-events-none text-[20px]">expand_more</span>
+</div>
+<!-- Active Shift Switch Toggle -->
+<div class="md:col-span-3 flex items-center justify-end">
+<label class="flex items-center gap-space-xs cursor-pointer select-none bg-surface-container-low px-space-sm py-2 rounded-lg">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-surface-container-highest peer-checked:bg-primary rounded-full relative transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface-container-lowest after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface whitespace-nowrap">Solo en turno</span>
+</label>
+</div>
+</div>
+</div>
+<!-- Staff Roster Table Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-space-sm px-space-md">Colaborador</th>
+<th class="py-space-sm px-space-sm">CI / Identidad</th>
+<th class="py-space-sm px-space-sm">Rol en Sistema</th>
+<th class="py-space-sm px-space-sm">Turno Asignado</th>
+<th class="py-space-sm px-space-sm">Asistencia Hoy</th>
+<th class="py-space-sm px-space-sm">PIN / Acceso</th>
+<th class="py-space-sm px-space-md text-right">Acción</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<!-- Row 1: Roberto Soliz (Active / Selected Row) -->
+<tr class="bg-primary/5 hover:bg-primary/10 transition-colors cursor-pointer">
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-sm shadow-sm">
+                      RS
+                      <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-tertiary-container ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-md font-bold text-primary truncate leading-tight">Roberto Soliz Mendoza</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Cajero Principal</span>
+</div>
+</div>
+</td>
+<td class="py-space-sm px-space-sm font-label-sm text-label-sm text-on-surface">
+                  6849201 LP
+                </td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">point_of_sale</span>
+                    Cajero Principal
+                  </span>
+</td>
+<td class="py-space-sm px-space-sm">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-medium text-on-surface">Mañana</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">09:00 - 17:30</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-fixed/50 text-tertiary font-label-sm text-label-sm font-bold">
+<span class="w-2 h-2 rounded-full bg-tertiary-container animate-ping"></span>
+                    En Servicio (08:52)
+                  </span>
+</td>
+<td class="py-space-sm px-space-sm">
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="font-bold tracking-widest text-on-surface">••••</span>
+<span class="text-tertiary material-symbols-outlined text-[16px]">check_circle</span>
+</div>
+</td>
+<td class="py-space-sm px-space-md text-right">
+<button class="w-9 h-9 rounded-lg bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container transition-colors shadow-sm ml-auto">
+<span class="material-symbols-outlined text-[18px]">manage_accounts</span>
+</button>
+</td>
+</tr>
+<!-- Row 2: Carlos Mamani Quispe -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer">
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-10 h-10 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center font-bold text-sm">
+                      CM
+                      <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-tertiary-container ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate leading-tight">Carlos Mamani Quispe</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Capitán de Salón</span>
+</div>
+</div>
+</td>
+<td class="py-space-sm px-space-sm font-label-sm text-label-sm text-on-surface">
+                  4938210 LP
+                </td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">stars</span>
+                    Capitán Salón
+                  </span>
+</td>
+<td class="py-space-sm px-space-sm">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-medium text-on-surface">Continuo</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">11:00 - 19:30</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-fixed/50 text-tertiary font-label-sm text-label-sm font-bold">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+                    En Servicio (10:48)
+                  </span>
+</td>
+<td class="py-space-sm px-space-sm">
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-secondary font-semibold" title="PIN Maestro con permisos de anulación">
+<span class="material-symbols-outlined text-[16px]">key</span>
+<span>PIN Maestro</span>
+</div>
+</td>
+<td class="py-space-sm px-space-md text-right">
+<button class="w-9 h-9 rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-colors ml-auto">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 3: Chef Marcelo Ríos -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer">
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-10 h-10 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-bold text-sm">
+                      MR
+                      <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-tertiary-container ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate leading-tight">Marcelo Ríos Calvimontes</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Jefe de Cocina (Chef)</span>
+</div>
+</div>
+</td>
+<td class="py-space-sm px-space-sm font-label-sm text-label-sm text-on-surface">
+                  3491029 CB
+                </td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-secondary-container/40 text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">skillet</span>
+                    Jefe de Cocina
+                  </span>
+</td>
+<td class="py-space-sm px-space-sm">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-medium text-on-surface">Apertura/Almuerzo</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">07:30 - 16:00</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-fixed/50 text-tertiary font-label-sm text-label-sm font-bold">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+                    En Servicio (07:45)
+                  </span>
+</td>
+<td class="py-space-sm px-space-sm">
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="font-bold tracking-widest text-on-surface">••••</span>
+<span class="text-tertiary material-symbols-outlined text-[16px]">check_circle</span>
+</div>
+</td>
+<td class="py-space-sm px-space-md text-right">
+<button class="w-9 h-9 rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-colors ml-auto">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 4: Lucía Choque Valle (Tardanza) -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer">
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-10 h-10 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center font-bold text-sm">
+                      LC
+                      <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-secondary-container ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate leading-tight">Lucía Choque Valle</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Mesera de Salón</span>
+</div>
+</div>
+</td>
+<td class="py-space-sm px-space-sm font-label-sm text-label-sm text-on-surface">
+                  7820194 LP
+                </td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">table_bar</span>
+                    Mesero / Salón
+                  </span>
+</td>
+<td class="py-space-sm px-space-sm">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-medium text-on-surface">Almuerzo</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">11:30 - 16:30</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                    Tardanza (+12m)
+                  </span>
+</td>
+<td class="py-space-sm px-space-sm">
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="font-bold tracking-widest text-on-surface">••••</span>
+<span class="text-tertiary material-symbols-outlined text-[16px]">check_circle</span>
+</div>
+</td>
+<td class="py-space-sm px-space-md text-right">
+<button class="w-9 h-9 rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-colors ml-auto">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 5: Fernando Torrez (Próximo) -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer">
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-10 h-10 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center font-bold text-sm">
+                      FT
+                      <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-outline-variant ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate leading-tight">Fernando Torrez</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Runner &amp; Ayudante Salón</span>
+</div>
+</div>
+</td>
+<td class="py-space-sm px-space-sm font-label-sm text-label-sm text-on-surface">
+                  8940211 SC
+                </td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">room_service</span>
+                    Runner Salón
+                  </span>
+</td>
+<td class="py-space-sm px-space-sm">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-medium text-on-surface">Cena</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">18:00 - 23:30</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-medium">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                    Inicia 18:00
+                  </span>
+</td>
+<td class="py-space-sm px-space-sm">
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="font-bold tracking-widest text-on-surface">••••</span>
+<span class="text-tertiary material-symbols-outlined text-[16px]">check_circle</span>
+</div>
+</td>
+<td class="py-space-sm px-space-md text-right">
+<button class="w-9 h-9 rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-colors ml-auto">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 6: Andrea Villarroel (Descanso) -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer">
+<td class="py-space-sm px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-10 h-10 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center font-bold text-sm">
+                      AV
+                      <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-outline-variant ring-2 ring-surface-container-lowest"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate leading-tight">Andrea Villarroel</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Bartender Principal</span>
+</div>
+</div>
+</td>
+<td class="py-space-sm px-space-sm font-label-sm text-label-sm text-on-surface">
+                  5748291 LP
+                </td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">local_bar</span>
+                    Bar &amp; Café
+                  </span>
+</td>
+<td class="py-space-sm px-space-sm">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-medium text-on-surface-variant">Descanso</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Día Compensatorio</span>
+</div>
+</td>
+<td class="py-space-sm px-space-sm">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-medium">
+<span class="material-symbols-outlined text-[14px]">bedtime</span>
+                    Descanso Prog.
+                  </span>
+</td>
+<td class="py-space-sm px-space-sm">
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="font-bold tracking-widest text-on-surface">••••</span>
+<span class="text-tertiary material-symbols-outlined text-[16px]">check_circle</span>
+</div>
+</td>
+<td class="py-space-sm px-space-md text-right">
+<button class="w-9 h-9 rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-colors ml-auto">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination Footer -->
+<div class="p-space-sm bg-surface-container-low flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span>Mostrando 6 de 28 colaboradores (Filtrado: Sucursal Prado)</span>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 rounded flex items-center justify-center hover:bg-surface-container-high disabled:opacity-40" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<span class="px-2 font-bold text-on-surface">1</span>
+<button class="w-8 h-8 rounded flex items-center justify-center hover:bg-surface-container-high">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Cuadrante Visual de Cobertura de Turnos (Timeline 08:00 a 24:00) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">view_timeline</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Densidad de Cobertura por Estación (Hoy)</h2>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-tertiary bg-tertiary-fixed/30 px-2 py-0.5 rounded font-semibold">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+              Pico Almuerzo Cubierto (100%)
+            </span>
+</div>
+</div>
+<!-- Time Grid Bars -->
+<div class="flex flex-col gap-space-sm mt-space-xs">
+<!-- Hour markers -->
+<div class="grid grid-cols-8 text-center font-label-sm text-label-sm text-on-surface-variant pb-1 border-b border-surface-container">
+<span>08:00</span>
+<span>10:00</span>
+<span>12:00</span>
+<span class="text-secondary font-bold">14:00 (PICO)</span>
+<span>16:00</span>
+<span>18:00</span>
+<span>20:00</span>
+<span>22:00+</span>
+</div>
+<!-- Cocina Line -->
+<div class="flex items-center gap-space-sm">
+<span class="w-24 font-body-sm text-body-sm font-semibold text-on-surface">Cocina (6)</span>
+<div class="flex-1 h-7 bg-surface-container-low rounded-lg relative overflow-hidden flex items-center">
+<!-- Shift blocks -->
+<div class="absolute left-[0%] w-[50%] h-full bg-primary/20 rounded-l-lg flex items-center px-2">
+<span class="font-label-sm text-label-sm text-primary font-bold">4 Cocineros (M)</span>
+</div>
+<div class="absolute left-[45%] w-[55%] h-full bg-primary/30 rounded-r-lg flex items-center justify-end px-2">
+<span class="font-label-sm text-label-sm text-primary font-bold">4 Cocineros (Cena)</span>
+</div>
+<!-- Overlap Peak Indicator -->
+<div class="absolute left-[30%] w-[25%] h-full bg-secondary-container/30 border-l border-r border-secondary/40 flex items-center justify-center">
+<span class="font-label-sm text-label-sm text-on-secondary-container font-extrabold uppercase">6 en Línea</span>
+</div>
+</div>
+</div>
+<!-- Salón y Barra Line -->
+<div class="flex items-center gap-space-sm">
+<span class="w-24 font-body-sm text-body-sm font-semibold text-on-surface">Salón &amp; Bar (10)</span>
+<div class="flex-1 h-7 bg-surface-container-low rounded-lg relative overflow-hidden flex items-center">
+<div class="absolute left-[15%] w-[45%] h-full bg-primary/20 rounded flex items-center px-2">
+<span class="font-label-sm text-label-sm text-primary font-bold">6 Meseros / Bar</span>
+</div>
+<div class="absolute left-[55%] w-[45%] h-full bg-primary/30 rounded flex items-center justify-end px-2">
+<span class="font-label-sm text-label-sm text-primary font-bold">5 Meseros / Bar</span>
+</div>
+<div class="absolute left-[30%] w-[25%] h-full bg-secondary-container/30 border-l border-r border-secondary/40 flex items-center justify-center">
+<span class="font-label-sm text-label-sm text-on-secondary-container font-extrabold">Capacidad Máx</span>
+</div>
+</div>
+</div>
+<!-- Caja y Facturación SIAT Line -->
+<div class="flex items-center gap-space-sm">
+<span class="w-24 font-body-sm text-body-sm font-semibold text-on-surface">Caja SIAT (3)</span>
+<div class="flex-1 h-7 bg-surface-container-low rounded-lg relative overflow-hidden flex items-center">
+<div class="absolute left-[6%] w-[45%] h-full bg-tertiary-fixed/60 rounded flex items-center px-2">
+<span class="font-label-sm text-label-sm text-tertiary font-bold">R. Soliz (Mañana)</span>
+</div>
+<div class="absolute left-[50%] w-[50%] h-full bg-tertiary-fixed/80 rounded flex items-center justify-end px-2">
+<span class="font-label-sm text-label-sm text-tertiary font-bold">M. Torrez (Cierre)</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary">info</span>
+            Turnos escalonados calculados para reducir tiempos de espera en picos de salón (12:30 - 14:30).
+          </span>
+<a class="text-primary font-semibold hover:underline flex items-center gap-1 font-label-sm text-label-sm" href="#">
+<span>Exportar Horario PDF</span>
+<span class="material-symbols-outlined text-[16px]">file_download</span>
+</a>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: Inspector / Security Permissions & Biometric Details (4 cols) -->
+<div class="xl:col-span-4 flex flex-col gap-space-md">
+<!-- Profile Card: Roberto Soliz Mendoza -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-md relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-10 -mt-10 pointer-events-none"></div>
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-14 h-14 rounded-xl bg-primary text-on-primary flex items-center justify-center font-bold text-lg shadow-sm">
+              RS
+            </div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface leading-tight">Roberto Soliz M.</h3>
+<span class="material-symbols-outlined text-primary text-[18px]" title="Perfil Verificado">verified</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">CI: 6849201 La Paz · Cajero Titular</span>
+<span class="font-label-sm text-label-sm text-tertiary font-semibold mt-0.5">Contrato Indefinido (Gestora Activa)</span>
+</div>
+</div>
+<button class="p-2 text-on-surface-variant hover:text-on-surface rounded-lg hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<!-- Assigned Branch Badge & Operational Tags -->
+<div class="p-space-sm bg-surface-container-low rounded-lg flex flex-col gap-space-xs">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-on-surface-variant font-medium">Sucursal Primaria:</span>
+<span class="text-on-surface font-bold">Prado Central</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-on-surface-variant font-medium">Apoyo Cruzado:</span>
+<span class="text-secondary font-bold">Habilitado San Miguel</span>
+</div>
+</div>
+<!-- Section: Security & Authorizations PIN -->
+<div class="flex flex-col gap-space-sm pt-space-xs border-t border-surface-container">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider font-bold text-on-surface">PIN y Seguridad Operativa</span>
+<span class="px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm font-semibold">Nivel 3: Caja</span>
+</div>
+<div class="bg-surface-container-low p-space-sm rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">pin</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md tracking-widest text-on-surface font-bold">•••• 8421</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-[12px]">Cambiado hace 14 días</span>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-highest hover:bg-surface-variant text-on-surface font-label-sm text-label-sm font-semibold transition-colors">
+              Regenerar
+            </button>
+</div>
+<button class="h-10 px-space-sm w-full rounded-lg bg-surface-container-high/60 hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center justify-center gap-space-xs transition-colors">
+<span class="material-symbols-outlined text-[18px]">lock_reset</span>
+<span>Historial de Anulaciones autorizadas por su PIN</span>
+</button>
+</div>
+<!-- Section: Specific Permissions Matrix (Toggles) -->
+<div class="flex flex-col gap-space-sm pt-space-xs border-t border-surface-container">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm uppercase tracking-wider font-bold text-on-surface">Matriz de Permisos POS</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">3 / 6 Concedidos</span>
+</div>
+<div class="flex flex-col divide-y divide-surface-container">
+<!-- Perm 1: Apertura y Cierre Z (ON) -->
+<div class="py-2 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Apertura y Cierre de Caja (Arqueo Z)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-[12px]">Habilitado para balance diario</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-8 h-4 bg-surface-container-highest peer-checked:bg-primary rounded-full relative transition-colors after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-surface-container-lowest after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-4"></div>
+</label>
+</div>
+<!-- Perm 2: Emisión SIAT (ON) -->
+<div class="py-2 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Facturación Electrónica SIAT</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-[12px]">Emisión directa con código CUF</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-8 h-4 bg-surface-container-highest peer-checked:bg-primary rounded-full relative transition-colors after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-surface-container-lowest after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-4"></div>
+</label>
+</div>
+<!-- Perm 3: Anulación de platos (OFF) -->
+<div class="py-2 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Anular Comanda sin Supervisor</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-[12px]">Requiere PIN Maestro de Gerencia</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-8 h-4 bg-surface-container-highest peer-checked:bg-primary rounded-full relative transition-colors after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-surface-container-lowest after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-4"></div>
+</label>
+</div>
+<!-- Perm 4: Descuentos > 15% (OFF) -->
+<div class="py-2 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Aplicar Descuentos Mayores al 15%</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-[12px]">Bloqueado para cajeros operativos</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-8 h-4 bg-surface-container-highest peer-checked:bg-primary rounded-full relative transition-colors after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-surface-container-lowest after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-4"></div>
+</label>
+</div>
+<!-- Perm 5: Modificación de costos (OFF) -->
+<div class="py-2 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Modificar Precios o Recetas</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-[12px]">Exclusivo Chef y Gerencia</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-8 h-4 bg-surface-container-highest peer-checked:bg-primary rounded-full relative transition-colors after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-surface-container-lowest after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-4"></div>
+</label>
+</div>
+<!-- Perm 6: Reporte de Ventas (ON - Solo Turno) -->
+<div class="py-2 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Ver Reporte Ventas de su Turno</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-[12px]">Sin acceso a balances globales</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-8 h-4 bg-surface-container-highest peer-checked:bg-primary rounded-full relative transition-colors after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-surface-container-lowest after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:after:translate-x-4"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- Section: Biometric Attendance Record Live -->
+<div class="flex flex-col gap-space-sm pt-space-xs border-t border-surface-container">
+<span class="font-label-sm text-label-sm uppercase tracking-wider font-bold text-on-surface">Reloj Biométrico Hoy</span>
+<div class="p-space-sm bg-surface-container-low rounded-lg flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Dispositivo:</span>
+<span class="font-label-sm text-label-sm text-on-surface font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-tertiary">fingerprint</span>
+                Marcador Facial Prado 01
+              </span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Entrada registrada:</span>
+<span class="font-label-sm text-label-sm text-tertiary font-bold">08:52:14 (Puntual)</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Salida programada:</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">17:30:00</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Tiempo laborado:</span>
+<span class="font-label-sm text-label-sm text-primary font-bold">5h 43min</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-high/40 text-on-surface-variant">
+<div class="flex items-center gap-1 text-[12px] font-body-sm">
+<span class="material-symbols-outlined text-[16px] text-tertiary">chat</span>
+<span>Alerta WhatsApp Ausencia/Retraso:</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary font-bold">Activo</span>
+</div>
+</div>
+<!-- Action Button for Selected User -->
+<div class="pt-space-xs">
+<button class="w-full h-12 bg-primary hover:bg-primary-container text-on-primary font-body-md text-body-md font-semibold rounded-lg shadow-sm transition-colors flex items-center justify-center gap-space-xs">
+<span class="material-symbols-outlined text-[20px]">save</span>
+<span>Guardar Ajustes de Permisos</span>
+</button>
+</div>
+</div>
+<!-- Quick Action / Notification Callout Card -->
+<div class="bg-surface-container-high/60 rounded-xl p-space-md flex flex-col gap-space-sm shadow-sm">
+<div class="flex items-center gap-space-xs text-secondary font-bold font-label-md text-label-md">
+<span class="material-symbols-outlined text-[20px]">notification_important</span>
+<span>Recordatorio de Ley Laboral</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          El personal nocturno que exceda las 22:00 horas computa automáticamente recargo nocturno del 25% al 50% según normativa del Ministerio de Trabajo de Bolivia.
+        </p>
+<div class="flex items-center justify-between pt-1">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Cálculo en Planilla: Automático</span>
+<span class="material-symbols-outlined text-tertiary text-[18px]">verified</span>
+</div>
+</div>
+</div>
+</div>
+</div></main></div></body></html>

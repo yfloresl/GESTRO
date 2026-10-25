@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;background-color:#f7f9fc;}body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "inverse-on-surface": "#eff1f4", "secondary-container": "#febb2a", "background": "#f7f9fc", "surface-container-low": "#f2f4f7", "surface-variant": "#e0e3e6", "outline": "#72777f", "on-primary-fixed": "#001d35", "tertiary-container": "#005827", "surface-container": "#eceef1", "on-tertiary-fixed": "#00210b", "error": "#ba1a1a", "on-background": "#191c1e", "secondary-fixed-dim": "#febb2a", "primary-fixed-dim": "#a0cafc", "inverse-surface": "#2d3133", "inverse-primary": "#a0cafc", "error-container": "#ffdad6", "on-tertiary-container": "#7cce8c", "primary": "#00375e", "surface-container-lowest": "#ffffff", "on-surface-variant": "#42474f", "on-primary-fixed-variant": "#184974", "on-surface": "#191c1e", "surface-container-highest": "#e0e3e6", "on-tertiary": "#ffffff", "secondary-fixed": "#ffdea8", "outline-variant": "#c2c7d0", "primary-fixed": "#d1e4ff", "tertiary-fixed": "#a1f5b0", "on-tertiary-fixed-variant": "#005224", "on-secondary-container": "#6d4d00", "tertiary-fixed-dim": "#86d996", "on-primary-container": "#95bff1", "surface-container-high": "#e6e8eb", "secondary": "#7c5800", "on-primary": "#ffffff", "surface-tint": "#35618d", "primary-container": "#1f4e79", "surface": "#f7f9fc", "surface-bright": "#f7f9fc", "surface-dim": "#d8dadd", "on-secondary-fixed": "#271900", "tertiary": "#003e1a", "on-secondary": "#ffffff", "on-error": "#ffffff", "on-error-container": "#93000a", "on-secondary-fixed-variant": "#5e4200" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "space-xs": "0.25rem", "margin-desktop": "2rem", "gutter-desktop": "1.5rem", "margin-tablet": "1.5rem", "margin": "1rem", "space-md": "1rem", "gutter": "1rem", "space-sm": "0.5rem", "gutter-tablet": "1.25rem", "space-lg": "1.5rem", "space-xl": "2rem" }, fontFamily: { "body-sm": ["Inter"], "label-sm": ["JetBrains Mono"], "label-lg": ["JetBrains Mono"], "headline-xl-mobile": ["Inter"], "label-md": ["JetBrains Mono"], "body-md": ["Inter"], "headline-lg": ["Inter"], "headline-lg-mobile": ["Inter"], "headline-xl": ["Inter"], "headline-sm": ["Inter"], "headline-md": ["Inter"], "body-lg": ["Inter"] }, fontSize: { "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.25px", "fontWeight": "500" }], "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.5px", "fontWeight": "600" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }], "label-md": ["14px", { "lineHeight": "18px", "letterSpacing": "0.25px", "fontWeight": "600" }], "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }], "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }], "headline-xl": ["40px", { "lineHeight": "48px", "fontWeight": "700" }], "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }], "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }], "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }] } } } };</script><style>body { min-height: max(884px, 100dvh); }</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-body-md text-on-surface flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-20 px-margin flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0"><div class="w-9 h-9 rounded-lg bg-primary-container text-white flex items-center justify-center font-headline-sm font-bold shrink-0 shadow-sm"><span class="material-symbols-outlined text-[20px] text-primary-fixed">restaurant</span></div><div class="flex flex-col min-w-0"><span class="font-headline-sm text-headline-sm text-primary tracking-tight truncate leading-tight">1.6 Reserva Web De Mesa</span><div class="flex items-center gap-space-xs mt-0.5"><span class="w-2 h-2 rounded-full bg-secondary-container animate-pulse shrink-0"></span><span class="font-label-sm text-label-sm text-on-surface-variant truncate font-semibold">Mesa 12 · Salón Principal</span></div></div></div><div class="flex items-center gap-space-xs shrink-0"><button class="h-10 px-space-xs flex items-center justify-center rounded-lg bg-surface-container-high text-on-surface font-label-sm text-label-sm min-w-[44px] hover:bg-surface-container-highest transition-colors"><span class="material-symbols-outlined text-[18px] mr-0.5 text-on-surface-variant">translate</span>ES</button><button aria-label="Llamar al mesero" class="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center shrink-0 hover:bg-primary-container transition-colors shadow-sm"><span class="material-symbols-outlined text-[20px]">room_service</span></button></div></div></header><main class="flex flex-col relative w-full px-margin pt-20 pb-28 bg-surface min-h-screen"><div class="flex flex-col w-full pb-8 space-y-6">
+<!-- Header Section -->
+<section class="flex flex-col space-y-1">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary-container" style="font-variation-settings: 'FILL' 1;">stars</span>
+        Experiencia Andina
+      </span>
+<span class="bg-secondary-container/20 text-on-secondary-container px-2.5 py-0.5 rounded-full font-label-sm text-label-sm font-semibold flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-container animate-pulse"></span>
+        En línea
+      </span>
+</div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary tracking-tight font-bold">
+      Reservar una Mesa
+    </h1>
+<div class="flex items-center text-on-surface-variant font-body-sm text-body-sm gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-primary">location_on</span>
+<span>Sucursal Prado · La Paz / Cochabamba</span>
+</div>
+</section>
+<!-- Visual Ambiance Carousel Teaser -->
+<div class="relative w-full h-36 rounded-xl overflow-hidden shadow-sm">
+<div class="w-full h-full bg-cover bg-center" data-alt="Warmly lit rustic-modern Bolivian fine dining restaurant dining room with dark wood tables, Andean weaving textiles, lush hanging plants, warm brass accent lighting, and welcoming atmosphere in La Paz Bolivia" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC4qUSiK4j2Vp3JEiB2vGhBWtUrFnZzX5a_u0xhOQ0AoTo6QDT6E7LX3dhhee3sY4eui3xULCr0IKNr4QzJADZxxjHUQBxIPCdeeu--QWYwViWFLlHpP3VfueimzSWuh6FXtUkBharAww_892e3p67fcGK4y4YgxyUioHqKww35PtVauxRnH-g2Gcx38B-o5rSWHgXZ6nLp9RaLiwDTseZeXIQj3tLCJBfwsK1QB_sBvwd8l3x0r2cHtQ')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/30 to-transparent flex items-end p-space-md">
+<div class="text-white">
+<p class="font-headline-sm text-headline-sm font-semibold">Salón &amp; Terraza Panorámica</p>
+<p class="font-label-sm text-label-sm opacity-90">Mesas preparadas 15 minutos antes de tu llegada</p>
+</div>
+</div>
+</div>
+<!-- Step 1: Cantidad de Personas -->
+<section class="flex flex-col space-y-3">
+<div class="flex justify-between items-baseline">
+<label class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-primary-container text-white flex items-center justify-center font-label-sm text-label-sm">1</span>
+        Número de comensales
+      </label>
+<span class="font-label-sm text-label-sm text-on-surface-variant" id="pax-badge">4 personas</span>
+</div>
+<!-- Circles selector -->
+<div class="grid grid-cols-6 gap-2">
+<button class="pax-btn flex flex-col items-center justify-center h-14 rounded-xl bg-surface-container hover:bg-surface-container-high transition-all font-label-md text-label-md text-on-surface focus:outline-none" onclick="selectPax(this, '1')" type="button">
+<span class="font-bold text-body-lg">1</span>
+</button>
+<button class="pax-btn flex flex-col items-center justify-center h-14 rounded-xl bg-surface-container hover:bg-surface-container-high transition-all font-label-md text-label-md text-on-surface focus:outline-none" onclick="selectPax(this, '2')" type="button">
+<span class="font-bold text-body-lg">2</span>
+</button>
+<button class="pax-btn flex flex-col items-center justify-center h-14 rounded-xl bg-primary text-white shadow-md transition-all font-label-md text-label-md focus:outline-none active-pax" onclick="selectPax(this, '4')" type="button">
+<span class="font-bold text-body-lg">4</span>
+</button>
+<button class="pax-btn flex flex-col items-center justify-center h-14 rounded-xl bg-surface-container hover:bg-surface-container-high transition-all font-label-md text-label-md text-on-surface focus:outline-none" onclick="selectPax(this, '6')" type="button">
+<span class="font-bold text-body-lg">6</span>
+</button>
+<button class="pax-btn flex flex-col items-center justify-center h-14 rounded-xl bg-surface-container hover:bg-surface-container-high transition-all font-label-md text-label-md text-on-surface focus:outline-none" onclick="selectPax(this, '8')" type="button">
+<span class="font-bold text-body-lg">8</span>
+</button>
+<button class="pax-btn flex flex-col items-center justify-center h-14 rounded-xl bg-surface-container hover:bg-surface-container-high transition-all font-label-md text-label-md text-on-surface focus:outline-none px-1" onclick="selectPax(this, '+10')" type="button">
+<span class="font-bold text-label-sm">+10</span>
+</button>
+</div>
+</section>
+<!-- Step 2: Fecha -->
+<section class="flex flex-col space-y-3">
+<div class="flex justify-between items-baseline">
+<label class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-primary-container text-white flex items-center justify-center font-label-sm text-label-sm">2</span>
+        Seleccionar fecha
+      </label>
+<button class="text-primary font-label-sm text-label-sm font-semibold flex items-center gap-0.5" type="button">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+        Ver mes
+      </button>
+</div>
+<!-- Quick Date Chips -->
+<div class="grid grid-cols-4 gap-2">
+<button class="date-chip h-16 rounded-xl flex flex-col items-center justify-center p-2 bg-surface-container text-on-surface hover:bg-surface-container-high transition-all" onclick="selectDate(this, 'Hoy')" type="button">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Hoy</span>
+<span class="font-headline-sm text-headline-sm font-bold">22</span>
+</button>
+<button class="date-chip h-16 rounded-xl flex flex-col items-center justify-center p-2 bg-surface-container text-on-surface hover:bg-surface-container-high transition-all" onclick="selectDate(this, 'Mañana')" type="button">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Mañana</span>
+<span class="font-headline-sm text-headline-sm font-bold">23</span>
+</button>
+<button class="date-chip h-16 rounded-xl flex flex-col items-center justify-center p-2 bg-surface-container text-on-surface hover:bg-surface-container-high transition-all" onclick="selectDate(this, 'Viernes 24')" type="button">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Vie</span>
+<span class="font-headline-sm text-headline-sm font-bold">24</span>
+</button>
+<button class="date-chip h-16 rounded-xl flex flex-col items-center justify-center p-2 bg-primary text-white shadow-md transition-all active-date" onclick="selectDate(this, 'Sábado 25')" type="button">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-primary-fixed">Sáb</span>
+<span class="font-headline-sm text-headline-sm font-bold">25</span>
+</button>
+</div>
+</section>
+<!-- Step 3: Turno y Horario -->
+<section class="flex flex-col space-y-4">
+<div class="flex items-center justify-between">
+<label class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-primary-container text-white flex items-center justify-center font-label-sm text-label-sm">3</span>
+        Turno y Horario
+      </label>
+<span class="font-label-sm text-label-sm text-on-surface-variant" id="time-badge">13:30 hrs</span>
+</div>
+<!-- Almuerzo Section -->
+<div class="bg-surface-container-low rounded-xl p-3 space-y-2.5">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-[18px]">wb_sunny</span>
+<span class="font-headline-sm text-headline-sm font-bold text-[16px]">Almuerzo</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant ml-auto">12:30 a 15:30</span>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<button class="time-btn h-12 px-3 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md flex items-center justify-center shadow-sm hover:bg-surface-container-high transition-all" onclick="selectTime(this, '12:30')" type="button">
+          12:30
+        </button>
+<button class="time-btn h-12 px-3 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md flex flex-col items-center justify-center shadow-sm hover:bg-surface-container-high transition-all relative" onclick="selectTime(this, '13:00')" type="button">
+<span>13:00</span>
+<span class="text-[10px] leading-tight text-error font-medium flex items-center gap-0.5">
+<span class="w-1 h-1 rounded-full bg-error"></span> Pocos cupos
+          </span>
+</button>
+<button class="time-btn h-12 px-3 rounded-lg bg-primary text-white font-label-md text-label-md flex items-center justify-center shadow-md transition-all active-time" onclick="selectTime(this, '13:30')" type="button">
+          13:30
+        </button>
+<button class="time-btn h-12 px-3 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md flex items-center justify-center shadow-sm hover:bg-surface-container-high transition-all" onclick="selectTime(this, '14:00')" type="button">
+          14:00
+        </button>
+</div>
+</div>
+<!-- Cena Section -->
+<div class="bg-surface-container-low rounded-xl p-3 space-y-2.5">
+<div class="flex items-center gap-2 text-primary-container">
+<span class="material-symbols-outlined text-[18px]">bedtime</span>
+<span class="font-headline-sm text-headline-sm font-bold text-[16px]">Cena</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant ml-auto">19:30 a 23:00</span>
+</div>
+<div class="grid grid-cols-4 gap-2">
+<button class="time-btn h-12 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md flex items-center justify-center shadow-sm hover:bg-surface-container-high transition-all" onclick="selectTime(this, '19:30')" type="button">
+          19:30
+        </button>
+<button class="time-btn h-12 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md flex items-center justify-center shadow-sm hover:bg-surface-container-high transition-all" onclick="selectTime(this, '20:00')" type="button">
+          20:00
+        </button>
+<button class="time-btn h-12 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md flex items-center justify-center shadow-sm hover:bg-surface-container-high transition-all" onclick="selectTime(this, '20:30')" type="button">
+          20:30
+        </button>
+<button class="time-btn h-12 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md flex items-center justify-center shadow-sm hover:bg-surface-container-high transition-all" onclick="selectTime(this, '21:00')" type="button">
+          21:00
+        </button>
+</div>
+</div>
+</section>
+<!-- Step 4: Área del Local -->
+<section class="flex flex-col space-y-3">
+<label class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-primary-container text-white flex items-center justify-center font-label-sm text-label-sm">4</span>
+      Ubicación preferida
+    </label>
+<div class="grid grid-cols-3 gap-2">
+<button class="area-btn h-20 p-2 rounded-xl bg-primary text-white flex flex-col items-center justify-center text-center shadow-sm transition-all active-area" onclick="selectArea(this, 'Salón Principal')" type="button">
+<span class="material-symbols-outlined text-[20px] mb-1">dining</span>
+<span class="font-label-sm text-label-sm font-semibold">Salón Principal</span>
+</button>
+<button class="area-btn h-20 p-2 rounded-xl bg-surface-container text-on-surface flex flex-col items-center justify-center text-center hover:bg-surface-container-high transition-all" onclick="selectArea(this, 'Terraza Jardín')" type="button">
+<span class="material-symbols-outlined text-[20px] mb-1 text-tertiary">deck</span>
+<span class="font-label-sm text-label-sm font-semibold">Terraza Jardín</span>
+</button>
+<button class="area-btn h-20 p-2 rounded-xl bg-surface-container text-on-surface flex flex-col items-center justify-center text-center hover:bg-surface-container-high transition-all" onclick="selectArea(this, 'Área Familiar')" type="button">
+<span class="material-symbols-outlined text-[20px] mb-1 text-secondary">family_restroom</span>
+<span class="font-label-sm text-label-sm font-semibold">Área Familiar</span>
+</button>
+</div>
+</section>
+<!-- Step 5: Ocasión Especial -->
+<section class="flex flex-col space-y-3">
+<div class="flex items-center justify-between">
+<label class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-primary-container text-white flex items-center justify-center font-label-sm text-label-sm">5</span>
+        ¿Celebran algo especial?
+      </label>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-normal">Opcional</span>
+</div>
+<div class="flex flex-wrap gap-2">
+<button class="ocasion-chip px-3.5 py-2 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold shadow-sm flex items-center gap-1.5 transition-colors active-ocasion" onclick="toggleOcasion(this)" type="button">
+<span class="material-symbols-outlined text-[16px]">celebration</span>
+        Almuerzo casual
+      </button>
+<button class="ocasion-chip px-3.5 py-2 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm font-semibold flex items-center gap-1.5 hover:bg-surface-container-high transition-colors" onclick="toggleOcasion(this)" type="button">
+<span class="material-symbols-outlined text-[16px] text-secondary">cake</span>
+        Cumpleaños
+      </button>
+<button class="ocasion-chip px-3.5 py-2 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm font-semibold flex items-center gap-1.5 hover:bg-surface-container-high transition-colors" onclick="toggleOcasion(this)" type="button">
+<span class="material-symbols-outlined text-[16px] text-primary">work</span>
+        Reunión de trabajo
+      </button>
+<button class="ocasion-chip px-3.5 py-2 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm font-semibold flex items-center gap-1.5 hover:bg-surface-container-high transition-colors" onclick="toggleOcasion(this)" type="button">
+<span class="material-symbols-outlined text-[16px] text-error">favorite</span>
+        Aniversario
+      </button>
+</div>
+</section>
+<!-- Step 6: Datos del Comensal -->
+<section class="flex flex-col space-y-3">
+<label class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-primary-container text-white flex items-center justify-center font-label-sm text-label-sm">6</span>
+      Tus Datos de Contacto
+    </label>
+<div class="space-y-3 bg-surface-container-lowest p-4 rounded-xl shadow-sm">
+<div class="flex flex-col space-y-1">
+<label class="font-label-sm text-label-sm text-on-surface-variant font-semibold" for="client-name">Nombre Completo *</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[20px]">person</span>
+<input class="w-full h-[52px] pl-10 pr-3 rounded-lg bg-surface-container-low font-body-md text-body-md text-on-surface focus:bg-surface-container-lowest focus:outline-none focus:ring-0" id="client-name" placeholder="Ej. Valeria Quiroga" type="text" value="Valeria Quiroga"/>
+</div>
+</div>
+<div class="flex flex-col space-y-1">
+<label class="font-label-sm text-label-sm text-on-surface-variant font-semibold" for="client-phone">Teléfono / WhatsApp (+591) *</label>
+<div class="relative flex items-center">
+<div class="absolute left-3 flex items-center gap-1 text-on-surface-variant font-label-md text-label-md border-r-0">
+<span class="material-symbols-outlined text-[18px] text-tertiary">chat</span>
+<span>+591</span>
+</div>
+<input class="w-full h-[52px] pl-20 pr-3 rounded-lg bg-surface-container-low font-label-md text-label-md text-on-surface focus:bg-surface-container-lowest focus:outline-none focus:ring-0" id="client-phone" placeholder="77218940" type="tel" value="77942105"/>
+</div>
+</div>
+<div class="flex flex-col space-y-1">
+<label class="font-label-sm text-label-sm text-on-surface-variant font-semibold" for="client-notes">Notas especiales (decoración, trona de bebé...)</label>
+<div class="relative">
+<textarea class="w-full p-3 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface focus:bg-surface-container-lowest focus:outline-none focus:ring-0 resize-none" id="client-notes" placeholder="Ej. Solicitamos 1 silla alta de infante y mesa cercana a ventanal." rows="2">Mesa junto al ventanal. Trona para bebé de 1 año por favor.</textarea>
+</div>
+</div>
+</div>
+</section>
+<!-- Summary Card (Previa confirmación) -->
+<section class="bg-gradient-to-br from-primary to-primary-container text-white p-5 rounded-2xl shadow-md space-y-4 relative overflow-hidden">
+<div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-white/5 pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container text-[22px]">verified</span>
+<span class="font-headline-sm text-headline-sm font-bold tracking-tight">Resumen de Reserva</span>
+</div>
+<span class="px-2.5 py-1 rounded-md bg-white/10 text-primary-fixed font-label-sm text-label-sm tracking-wider uppercase font-semibold backdrop-blur-sm">
+        RES-8492
+      </span>
+</div>
+<!-- Booking details line -->
+<div class="bg-white/10 backdrop-blur-md rounded-xl p-3.5 space-y-2">
+<div class="flex items-center gap-2 text-primary-fixed">
+<span class="material-symbols-outlined text-[20px]">event_available</span>
+<p class="font-headline-sm text-headline-sm text-[16px] text-white font-semibold" id="summary-line">
+          Sábado 25 de Mayo, 13:30 hrs
+        </p>
+</div>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-on-primary-container font-body-sm text-body-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">group</span>
+<span id="summary-pax">4 personas</span>
+</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">storefront</span>
+<span id="summary-area">Salón Principal</span>
+</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">celebration</span>
+<span id="summary-ocasion">Almuerzo casual</span>
+</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-on-primary-container font-label-sm text-label-sm pt-1">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary-container">schedule</span>
+        Tolerancia de espera: 15 min
+      </span>
+<span class="font-medium text-white underline decoration-white/40">Sin costo de anticipo</span>
+</div>
+</section>
+<!-- CTA Action Panel -->
+<div class="flex flex-col space-y-3 pt-2">
+<button class="w-full h-14 bg-primary-container text-white font-headline-sm text-headline-sm text-[17px] font-bold rounded-xl shadow-md hover:bg-primary active:scale-[0.99] transition-all flex items-center justify-center gap-2" onclick="confirmReservation(this)" type="button">
+<span class="material-symbols-outlined text-[22px]">task_alt</span>
+      Confirmar Reserva de Mesa
+    </button>
+<!-- Support and notification notice -->
+<div class="flex items-center justify-center gap-2 text-center text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px] text-tertiary">mark_chat_read</span>
+<span>Te enviaremos la confirmación directa a tu <strong>WhatsApp</strong></span>
+</div>
+</div>
+<!-- Interactive Feedback Overlay Container (Hidden by default) -->
+<div class="hidden fixed inset-0 z-50 bg-inverse-surface/60 backdrop-blur-sm flex items-center justify-center p-4" id="modal-success">
+<div class="bg-surface-container-lowest rounded-2xl p-6 w-full max-w-sm text-center shadow-xl space-y-4">
+<div class="w-16 h-16 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center mx-auto">
+<span class="material-symbols-outlined text-[36px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-tertiary font-bold">¡Reserva Registrada!</span>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-primary font-bold mt-1">RES-8492</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2">
+          Te enviamos los detalles a tu WhatsApp (+591 77942105). El equipo de Andina Prado te estará esperando.
+        </p>
+</div>
+<div class="pt-2">
+<button class="w-full h-12 rounded-xl bg-primary text-white font-label-md text-label-md font-bold shadow-sm" onclick="closeSuccessModal()" type="button">
+          Entendido, volver al Menú
+        </button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  let currentPax = "4 personas";
+  let currentDate = "Sábado 25 de Mayo";
+  let currentTime = "13:30 hrs";
+  let currentArea = "Salón Principal";
+  let currentOcasion = "Almuerzo casual";
+
+  function updateSummary() {
+    document.getElementById('summary-line').textContent = currentDate + ", " + currentTime;
+    document.getElementById('summary-pax').textContent = currentPax;
+    document.getElementById('summary-area').textContent = currentArea;
+    document.getElementById('summary-ocasion').textContent = currentOcasion;
+    document.getElementById('pax-badge').textContent = currentPax;
+    document.getElementById('time-badge').textContent = currentTime;
+  }
+
+  function selectPax(btn, val) {
+    document.querySelectorAll('.pax-btn').forEach(b => {
+      b.className = "pax-btn flex flex-col items-center justify-center h-14 rounded-xl bg-surface-container hover:bg-surface-container-high transition-all font-label-md text-label-md text-on-surface focus:outline-none";
+    });
+    btn.className = "pax-btn flex flex-col items-center justify-center h-14 rounded-xl bg-primary text-white shadow-md transition-all font-label-md text-label-md focus:outline-none";
+    currentPax = (val === '+10') ? "+10 personas (Grupo)" : val + (val === '1' ? ' persona' : ' personas');
+    updateSummary();
+  }
+
+  function selectDate(btn, label) {
+    document.querySelectorAll('.date-chip').forEach(b => {
+      b.className = "date-chip h-16 rounded-xl flex flex-col items-center justify-center p-2 bg-surface-container text-on-surface hover:bg-surface-container-high transition-all";
+      const spanTitle = b.querySelector('span:first-child');
+      if (spanTitle) spanTitle.className = "font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant";
+    });
+    btn.className = "date-chip h-16 rounded-xl flex flex-col items-center justify-center p-2 bg-primary text-white shadow-md transition-all";
+    const spanTitle = btn.querySelector('span:first-child');
+    if (spanTitle) spanTitle.className = "font-label-sm text-label-sm uppercase tracking-wider text-primary-fixed";
+    
+    if (label === 'Hoy') currentDate = 'Hoy 22 de Mayo';
+    else if (label === 'Mañana') currentDate = 'Mañana 23 de Mayo';
+    else if (label === 'Viernes 24') currentDate = 'Viernes 24 de Mayo';
+    else currentDate = 'Sábado 25 de Mayo';
+    
+    updateSummary();
+  }
+
+  function selectTime(btn, time) {
+    document.querySelectorAll('.time-btn').forEach(b => {
+      b.classList.remove('bg-primary', 'text-white', 'shadow-md');
+      b.classList.add('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+    });
+    btn.classList.remove('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm');
+    btn.classList.add('bg-primary', 'text-white', 'shadow-md');
+    currentTime = time + " hrs";
+    updateSummary();
+  }
+
+  function selectArea(btn, area) {
+    document.querySelectorAll('.area-btn').forEach(b => {
+      b.className = "area-btn h-20 p-2 rounded-xl bg-surface-container text-on-surface flex flex-col items-center justify-center text-center hover:bg-surface-container-high transition-all";
+    });
+    btn.className = "area-btn h-20 p-2 rounded-xl bg-primary text-white flex flex-col items-center justify-center text-center shadow-sm transition-all";
+    currentArea = area;
+    updateSummary();
+  }
+
+  function toggleOcasion(btn) {
+    document.querySelectorAll('.ocasion-chip').forEach(b => {
+      b.className = "ocasion-chip px-3.5 py-2 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm font-semibold flex items-center gap-1.5 hover:bg-surface-container-high transition-colors";
+    });
+    btn.className = "ocasion-chip px-3.5 py-2 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold shadow-sm flex items-center gap-1.5 transition-colors";
+    currentOcasion = btn.innerText.trim();
+    updateSummary();
+  }
+
+  function confirmReservation(btn) {
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span> Confirmando reserva...`;
+    btn.disabled = true;
+
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      const modal = document.getElementById('modal-success');
+      if (modal) {
+        modal.classList.remove('hidden');
+      }
+    }, 800);
+  }
+
+  function closeSuccessModal() {
+    const modal = document.getElementById('modal-success');
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+  }
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.06)]" data-active-classes="text-primary font-semibold"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] text-on-surface-variant hover:text-on-surface transition-colors py-1 relative" data-path="1-1-menu-qr-con-fotos-y-precios" href="#"><span class="material-symbols-outlined text-[24px]">restaurant_menu</span><span class="font-label-sm text-label-sm mt-0.5">Menú</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] text-on-surface-variant hover:text-on-surface transition-colors py-1 relative" data-path="1-3-mi-pedido-y-comanda" href="#"><span class="material-symbols-outlined text-[24px]">receipt_long</span><span class="font-label-sm text-label-sm mt-0.5">Pedido</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] text-on-surface-variant hover:text-on-surface transition-colors py-1" data-path="1-4-seguimiento-de-solicitudes" href="#"><span class="material-symbols-outlined text-[24px]">timer</span><span class="font-label-sm text-label-sm mt-0.5">Seguimiento</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] text-on-surface-variant hover:text-on-surface transition-colors py-1" data-path="1-5-pagar-por-qr" href="#"><span class="material-symbols-outlined text-[24px]">qr_code_scanner</span><span class="font-label-sm text-label-sm mt-0.5">Pagar QR</span></a><a class="flex flex-col items-center justify-center min-w-[56px] min-h-[48px] text-on-surface-variant hover:text-on-surface transition-colors py-1" data-path="1-6-reserva-web-de-mesa" href="#"><span class="material-symbols-outlined text-[24px]">calendar_month</span><span class="font-label-sm text-label-sm mt-0.5">Reserva</span></a></div></nav></body></html>

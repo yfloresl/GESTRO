@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"primary":"#00375e","background":"#f7f9fc","secondary-fixed-dim":"#febb2a","on-secondary":"#ffffff","primary-fixed-dim":"#a0cafc","surface-container-lowest":"#ffffff","surface-tint":"#35618d","secondary-fixed":"#ffdea8","error":"#ba1a1a","tertiary":"#003e1a","on-secondary-fixed-variant":"#5e4200","outline-variant":"#c2c7d0","surface-container-highest":"#e0e3e6","surface-container":"#eceef1","on-primary":"#ffffff","outline":"#72777f","inverse-surface":"#2d3133","on-primary-fixed-variant":"#184974","on-error-container":"#93000a","tertiary-fixed-dim":"#86d996","on-surface":"#191c1e","on-secondary-fixed":"#271900","tertiary-fixed":"#a1f5b0","on-primary-container":"#95bff1","surface-dim":"#d8dadd","on-background":"#191c1e","surface-bright":"#f7f9fc","on-tertiary-fixed":"#00210b","surface-container-high":"#e6e8eb","on-primary-fixed":"#001d35","primary-container":"#1f4e79","surface-variant":"#e0e3e6","inverse-on-surface":"#eff1f4","surface":"#f7f9fc","surface-container-low":"#f2f4f7","secondary-container":"#febb2a","on-tertiary":"#ffffff","on-surface-variant":"#42474f","inverse-primary":"#a0cafc","on-secondary-container":"#6d4d00","tertiary-container":"#005827","on-tertiary-container":"#7cce8c","primary-fixed":"#d1e4ff","on-error":"#ffffff","on-tertiary-fixed-variant":"#005224","error-container":"#ffdad6","secondary":"#7c5800"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-tablet":"1.5rem","space-lg":"1.5rem","space-sm":"0.5rem","margin-desktop":"2rem","gutter":"1rem","gutter-tablet":"1.25rem","space-xl":"2rem","space-md":"1rem","gutter-desktop":"1.5rem","space-xs":"0.25rem","margin":"1rem"},"fontFamily":{"headline-md":["Inter"],"headline-xl":["Inter"],"label-lg":["JetBrains Mono"],"headline-xl-mobile":["Inter"],"body-md":["Inter"],"body-lg":["Inter"],"headline-lg-mobile":["Inter"],"label-md":["JetBrains Mono"],"headline-lg":["Inter"],"label-sm":["JetBrains Mono"],"body-sm":["Inter"],"headline-sm":["Inter"]},"fontSize":{"headline-md":["24px",{"lineHeight":"32px","fontWeight":"600"}],"headline-xl":["40px",{"lineHeight":"48px","fontWeight":"700"}],"label-lg":["16px",{"lineHeight":"20px","letterSpacing":"0.5px","fontWeight":"600"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","fontWeight":"700"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"body-lg":["18px",{"lineHeight":"26px","fontWeight":"500"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","fontWeight":"700"}],"label-md":["14px",{"lineHeight":"18px","letterSpacing":"0.25px","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"40px","fontWeight":"700"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.25px","fontWeight":"500"}],"body-sm":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["20px",{"lineHeight":"28px","fontWeight":"600"}]}}}}</script></head><body class="bg-background font-body-md text-on-surface min-h-screen"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-md flex items-center gap-space-sm"><div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[22px]">restaurant</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">Andina</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mt-0.5">GastroOS</span></div></div><div class="px-space-md py-space-xs"><div class="p-space-sm rounded-lg bg-surface-container-high/60 flex items-center justify-between"><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">SUCURSAL ACTIVA</span><span class="material-symbols-outlined text-on-surface-variant text-[18px]">store</span></div></div><nav class="flex flex-col px-space-sm mt-space-xs gap-space-xs" data-active-classes="bg-primary-container text-on-primary font-semibold shadow-sm"><div class="px-space-sm pt-space-sm pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Principal</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="panel-del-dueno" href="#"><span class="material-symbols-outlined text-[20px]">analytics</span><span class="font-body-md text-body-md">Panel del Dueño</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="menu-y-fotos" href="#"><span class="material-symbols-outlined text-[20px]">menu_book</span><span class="font-body-md text-body-md">Menú &amp; Fotos</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="recetas-y-costeo" href="#"><span class="material-symbols-outlined text-[20px]">calculate</span><span class="font-body-md text-body-md">Recetas &amp; Costeo</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="inventario-y-almacenes" href="#"><span class="material-symbols-outlined text-[20px]">inventory_2</span><span class="font-body-md text-body-md">Inventario &amp; Almacenes</span></a><div class="px-space-sm pt-space-md pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Operaciones</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="compras-y-proveedores" href="#"><span class="material-symbols-outlined text-[20px]">local_shipping</span><span class="font-body-md text-body-md">Compras &amp; Proveedores</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="mesas-y-salon" href="#"><span class="material-symbols-outlined text-[20px]">qr_code_2</span><span class="font-body-md text-body-md">Mesas &amp; Salón (QR)</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="reservas-y-eventos" href="#"><span class="material-symbols-outlined text-[20px]">event_seat</span><span class="font-body-md text-body-md">Reservas &amp; Eventos</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="personal-y-turnos" href="#"><span class="material-symbols-outlined text-[20px]">badge</span><span class="font-body-md text-body-md">Personal &amp; Turnos</span></a><div class="px-space-sm pt-space-md pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Gestión &amp; Finanzas</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="promociones" href="#"><span class="material-symbols-outlined text-[20px]">sell</span><span class="font-body-md text-body-md">Promociones</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="contabilidad-y-libros" href="#"><span class="material-symbols-outlined text-[20px]">account_balance_wallet</span><span class="font-body-md text-body-md">Contabilidad &amp; Libros</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="estadisticas-y-bi" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Estadísticas &amp; BI</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="configuracion" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-body-md text-body-md">Configuración</span></a></nav></div><div class="p-space-md mt-space-md"><div class="bg-surface-container-high rounded-xl p-space-sm flex items-center gap-space-sm"><div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim ring-4 ring-tertiary-container/30"></div><div class="flex flex-col min-w-0"><span class="font-label-sm text-label-sm font-semibold text-on-surface">KDS &amp; POS Red</span><span class="font-body-sm text-body-sm text-on-surface-variant truncate">12 Nodos Conectados</span></div></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md"><div class="relative flex items-center"><label class="sr-only" for="sucursal-select">Seleccionar Sucursal</label><select class="h-12 pl-space-md pr-10 bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" id="sucursal-select"><option selected="" value="prado">Prado - La Paz</option><option value="san-miguel">San Miguel - La Paz</option><option value="equipetrol">Equipetrol - Santa Cruz</option></select><span class="material-symbols-outlined text-on-surface-variant absolute right-3 pointer-events-none text-[20px]">expand_more</span></div><div class="h-12 px-space-md rounded-lg bg-tertiary-fixed/30 flex items-center gap-space-xs"><span class="w-2.5 h-2.5 rounded-full bg-tertiary-container animate-pulse"></span><span class="font-label-sm text-label-sm text-tertiary font-semibold uppercase tracking-wide">SIAT Online: Sincronizado</span></div></div><div class="flex items-center gap-space-lg"><div class="hidden xl:flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">schedule</span><span>BOST: Lun 14:35:10 (-04:00)</span></div><div class="flex items-center gap-space-md pl-space-md"><div class="flex flex-col text-right hidden sm:flex"><span class="font-body-md text-body-md font-semibold text-on-surface leading-tight">Alejandro Morales</span><span class="font-body-sm text-body-sm text-on-surface-variant leading-tight">Dueño / Gerente General</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative pt-16 w-full min-h-screen bg-background px-space-lg py-space-lg"><div class="flex flex-col w-full">
+<!-- Cabecera Superior y Migas de Pan -->
+<header class="flex flex-col xl:flex-row xl:items-end justify-between gap-space-md mb-space-md">
+<div class="flex flex-col">
+<nav aria-label="Breadcrumb" class="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm tracking-wider uppercase mb-space-xs">
+<span>Operaciones y Salón</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-bold">Configuración Espacial</span>
+</nav>
+<div class="flex items-center gap-space-sm">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Editor de Salón y Plano de Mesas</h1>
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold uppercase tracking-wider">Modo Arquitecto</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-3xl mt-0.5">
+        Diseño visual del salón, distribución de mesas, capacidad de comensales, áreas de servicio y asignación de códigos QR únicos por mesa.
+      </p>
+</div>
+<!-- Acciones Superiores -->
+<div class="flex flex-wrap items-center gap-space-sm">
+<button class="h-12 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-body-md text-body-md flex items-center gap-space-xs transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[20px] text-primary">visibility</span>
+<span>Vista Previa Mesero</span>
+</button>
+<button class="h-12 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-body-md text-body-md flex items-center gap-space-xs transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant">qr_code_scanner</span>
+<span>Descargar QRs en Lote (PDF)</span>
+</button>
+<button class="h-12 px-space-lg rounded-lg bg-primary-container hover:bg-primary text-on-primary font-body-md text-body-md font-semibold flex items-center gap-space-xs shadow-md transition-all" type="button">
+<span class="material-symbols-outlined text-[20px]">save</span>
+<span>Guardar Distribución</span>
+</button>
+</div>
+</header>
+<!-- Pestañas de Zonas / Ambientes -->
+<div class="flex items-center justify-between overflow-x-auto pb-1 mb-space-sm">
+<div class="flex items-center gap-space-xs bg-surface-container-low p-1.5 rounded-xl">
+<button class="h-10 px-space-md rounded-lg bg-surface-container-lowest text-primary font-body-md text-body-md font-semibold shadow-sm flex items-center gap-space-xs" type="button">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+<span>Salón Principal</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant ml-1 font-normal">(12 mesas · 48 sillas)</span>
+</button>
+<button class="h-10 px-space-md rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container font-body-md text-body-md flex items-center gap-space-xs transition-colors" type="button">
+<span>Terraza Exterior</span>
+<span class="font-label-sm text-label-sm text-outline ml-1 font-normal">(6 mesas · 24 sillas)</span>
+</button>
+<button class="h-10 px-space-md rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container font-body-md text-body-md flex items-center gap-space-xs transition-colors" type="button">
+<span>Mezzanine VIP</span>
+<span class="font-label-sm text-label-sm text-outline ml-1 font-normal">(4 mesas · 16 sillas)</span>
+</button>
+<button class="h-10 px-space-md rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container font-body-md text-body-md flex items-center gap-space-xs transition-colors" type="button">
+<span>Barra &amp; Mostrador</span>
+<span class="font-label-sm text-label-sm text-outline ml-1 font-normal">(8 banquetas)</span>
+</button>
+</div>
+<button class="h-10 px-space-md rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-label-md text-label-md flex items-center gap-space-xs font-semibold ml-space-md transition-colors whitespace-nowrap" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Nueva Zona</span>
+</button>
+</div>
+<!-- Barra de Herramientas de Edición (Toolbar Superior del Canvas) -->
+<div class="bg-surface-container-lowest rounded-t-xl p-space-sm shadow-sm flex flex-wrap items-center justify-between gap-space-sm">
+<!-- Grupo: Agregar elementos rápidos -->
+<div class="flex items-center gap-space-xs overflow-x-auto">
+<span class="font-label-sm text-label-sm uppercase text-outline font-bold tracking-wider px-2 hidden sm:inline">Añadir</span>
+<button class="h-9 px-space-sm rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold flex items-center gap-1.5 transition-colors" type="button">
+<span class="w-3.5 h-3.5 rounded-full bg-primary-fixed-dim"></span>
+<span>+ Redonda (2-4p)</span>
+</button>
+<button class="h-9 px-space-sm rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold flex items-center gap-1.5 transition-colors" type="button">
+<span class="w-3.5 h-3.5 rounded bg-primary-fixed-dim"></span>
+<span>+ Cuadrada (2p)</span>
+</button>
+<button class="h-9 px-space-sm rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold flex items-center gap-1.5 transition-colors" type="button">
+<span class="w-5 h-3 rounded bg-primary-fixed-dim"></span>
+<span>+ Rectangular (4-8p)</span>
+</button>
+<div class="relative group">
+<button class="h-9 px-space-sm rounded-lg bg-secondary-fixed/50 hover:bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-semibold flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">domain</span>
+<span>+ Elemento Fijo</span>
+<span class="material-symbols-outlined text-[14px]">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Grupo: Modos y Transformación -->
+<div class="flex items-center gap-space-sm">
+<!-- Selector de Cursor -->
+<div class="flex items-center bg-surface-container-low p-1 rounded-lg">
+<button class="w-8 h-8 rounded bg-surface-container-lowest text-primary flex items-center justify-center shadow-xs" title="Seleccionar" type="button">
+<span class="material-symbols-outlined text-[18px]">near_me</span>
+</button>
+<button class="w-8 h-8 rounded text-on-surface-variant hover:text-on-surface flex items-center justify-center" title="Panorámica (Mano)" type="button">
+<span class="material-symbols-outlined text-[18px]">pan_tool</span>
+</button>
+</div>
+<!-- Snap to Grid Switch -->
+<div class="flex items-center gap-space-xs px-space-sm py-1 rounded-lg bg-surface-container-low text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-tertiary-container">grid_4x4</span>
+<span class="font-label-sm text-label-sm font-semibold">Snap 0.5m</span>
+<div class="w-8 h-4 rounded-full bg-tertiary-container relative cursor-pointer ml-1">
+<div class="w-3.5 h-3.5 rounded-full bg-surface-container-lowest absolute right-0.5 top-0.25 shadow"></div>
+</div>
+</div>
+<!-- Zoom & Historial -->
+<div class="flex items-center bg-surface-container-low p-1 rounded-lg gap-0.5">
+<button class="w-7 h-7 rounded text-on-surface-variant hover:text-on-surface flex items-center justify-center" title="Reducir Zoom" type="button">
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</button>
+<span class="font-label-sm text-label-sm px-1.5 font-bold text-on-surface">100%</span>
+<button class="w-7 h-7 rounded text-on-surface-variant hover:text-on-surface flex items-center justify-center" title="Aumentar Zoom" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+<div class="flex items-center gap-0.5">
+<button class="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant flex items-center justify-center" title="Deshacer" type="button">
+<span class="material-symbols-outlined text-[18px]">undo</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container text-outline flex items-center justify-center cursor-not-allowed" title="Rehacer" type="button">
+<span class="material-symbols-outlined text-[18px]">redo</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Contenedor Principal: Canvas + Inspector de Mesa Lateral -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-0 bg-surface-container-lowest rounded-b-xl shadow-md overflow-hidden">
+<!-- Lienzo Visual / Canvas Arquitectónico (Col 8) -->
+<div class="xl:col-span-8 p-space-md bg-surface-container-lowest relative overflow-hidden flex flex-col justify-between min-h-[660px]">
+<!-- Fondo Retícula Milimétrica Simulación SVG de Precisión -->
+<div class="absolute inset-0 pointer-events-none opacity-40">
+<svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<pattern height="20" id="smallGrid" patternunits="userSpaceOnUse" width="20">
+<path d="M 20 0 L 0 0 0 20" fill="none" stroke="#c2c7d0" stroke-width="0.5"></path>
+</pattern>
+<pattern height="100" id="grid" patternunits="userSpaceOnUse" width="100">
+<rect fill="url(#smallGrid)" height="100" width="100"></rect>
+<path d="M 100 0 L 0 0 0 100" fill="none" opacity="0.3" stroke="#72777f" stroke-width="0.75"></path>
+</pattern>
+</defs>
+<rect fill="url(#grid)" height="100%" width="100%"></rect>
+</svg>
+</div>
+<!-- Leyenda y Cotas de Sala flotantes -->
+<div class="relative z-10 flex items-center justify-between pointer-events-none">
+<div class="flex items-center gap-space-xs bg-surface-container-low/90 backdrop-blur px-3 py-1.5 rounded-lg shadow-xs">
+<span class="font-label-sm text-label-sm font-bold text-primary tracking-wide">PLANO ARQUITECTÓNICO: SALÓN EL PRADO</span>
+<span class="text-outline">·</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">14.0m × 9.5m (133 m²)</span>
+</div>
+<div class="flex items-center gap-space-sm bg-surface-container-low/90 backdrop-blur px-3 py-1.5 rounded-lg shadow-xs">
+<span class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="w-2.5 h-2.5 rounded bg-primary-fixed"></span> Libre
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="w-2.5 h-2.5 rounded bg-tertiary-fixed-dim"></span> Ocupada
+          </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="w-2.5 h-2.5 rounded bg-secondary-fixed"></span> Reservada
+          </span>
+</div>
+</div>
+<!-- Área Interactiva de Mesas y Elementos Estructurales -->
+<div class="relative w-full h-[580px] my-auto">
+<!-- ELEMENTO FIJO 1: Entrada Principal / Puerta El Prado -->
+<div class="absolute left-4 top-2 bg-surface-container-highest px-3 py-1.5 rounded-lg shadow-xs flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary">sensor_door</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-bold text-on-surface">ACCESO PRINCIPAL</span>
+<span class="font-label-sm text-[10px] text-on-surface-variant">Av. 16 de Julio (El Prado)</span>
+</div>
+<!-- Flecha de Flujo -->
+<span class="material-symbols-outlined text-[16px] text-tertiary">south</span>
+</div>
+<!-- ELEMENTO FIJO 2: Pase de Cocina KDS & Runners -->
+<div class="absolute right-4 top-2 bg-primary-container text-on-primary px-4 py-2 rounded-xl shadow-md flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-tertiary-fixed animate-ping"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-bold tracking-wider">PASE KDS / DESPACHO</span>
+<span class="font-label-sm text-[10px] text-on-primary-container">4 Pantallas KDS Activas</span>
+</div>
+<span class="material-symbols-outlined text-[20px] text-tertiary-fixed">countertops</span>
+</div>
+<!-- ELEMENTO FIJO 3: Terminal POS Salón 01 & Estación de Mozos -->
+<div class="absolute right-4 top-36 bg-surface-container-high px-3 py-2 rounded-xl shadow-xs flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary">point_of_sale</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-bold text-on-surface">POS SALÓN 01</span>
+<span class="font-label-sm text-[10px] text-tertiary font-semibold">● 100% Online</span>
+</div>
+</div>
+<!-- ELEMENTO FIJO 4: Servicios Higiénicos / Baños -->
+<div class="absolute right-4 bottom-4 bg-surface-container px-3 py-2 rounded-lg shadow-xs flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-outline">wc</span>
+<span class="font-label-sm text-label-sm font-medium text-on-surface">Baños Salón</span>
+</div>
+<!-- ELEMENTO FIJO 5: Barra Central de Coctelería con 6 Taburetes -->
+<div class="absolute left-6 bottom-4 bg-surface-container-high rounded-xl p-3 shadow-sm flex flex-col gap-2 w-72">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary">local_bar</span>
+<span class="font-label-sm text-label-sm font-bold text-on-surface">Barra de Coctelería</span>
+</div>
+<span class="font-label-sm text-[10px] text-outline font-semibold">6 Taburetes</span>
+</div>
+<!-- Banco de Taburetes B1 a B6 -->
+<div class="grid grid-cols-6 gap-1.5 pt-1">
+<div class="h-7 rounded bg-secondary-fixed/60 flex items-center justify-center font-label-sm text-[10px] font-bold text-on-secondary-fixed">B1</div>
+<div class="h-7 rounded bg-secondary-fixed/60 flex items-center justify-center font-label-sm text-[10px] font-bold text-on-secondary-fixed">B2</div>
+<div class="h-7 rounded bg-secondary-fixed/60 flex items-center justify-center font-label-sm text-[10px] font-bold text-on-secondary-fixed">B3</div>
+<div class="h-7 rounded bg-secondary-fixed/60 flex items-center justify-center font-label-sm text-[10px] font-bold text-on-secondary-fixed">B4</div>
+<div class="h-7 rounded bg-secondary-fixed/60 flex items-center justify-center font-label-sm text-[10px] font-bold text-on-secondary-fixed">B5</div>
+<div class="h-7 rounded bg-secondary-fixed/60 flex items-center justify-center font-label-sm text-[10px] font-bold text-on-secondary-fixed">B6</div>
+</div>
+</div>
+<!-- COTA DE DISTANCIA VIRTUAL: Pasillo Central -->
+<div class="absolute left-1/2 top-48 -translate-x-1/2 flex items-center gap-1 text-outline font-label-sm text-[11px] select-none pointer-events-none">
+<div class="w-12 h-px bg-outline-variant"></div>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-high/80 text-on-surface-variant font-mono">Pasillo 1.80m</span>
+<div class="w-12 h-px bg-outline-variant"></div>
+</div>
+<!-- MESAS DISTRIBUIDAS -->
+<!-- Mesa M1 (Cuadrada, 2p, Libre) -->
+<div class="absolute left-10 top-20 w-20 h-20 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col items-center justify-center cursor-pointer hover:shadow-md transition-shadow">
+<div class="flex items-center gap-1">
+<span class="font-label-md text-label-md font-bold text-primary">M1</span>
+<span class="material-symbols-outlined text-[13px] text-on-surface-variant">qr_code</span>
+</div>
+<span class="font-label-sm text-[11px] text-on-surface-variant font-mono">2 pax</span>
+<!-- Sillas gráficas -->
+<div class="absolute -top-1.5 w-6 h-1 rounded-full bg-outline-variant"></div>
+<div class="absolute -bottom-1.5 w-6 h-1 rounded-full bg-outline-variant"></div>
+</div>
+<!-- Mesa M2 (Cuadrada, 2p, Libre) -->
+<div class="absolute left-36 top-20 w-20 h-20 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col items-center justify-center cursor-pointer hover:shadow-md transition-shadow">
+<div class="flex items-center gap-1">
+<span class="font-label-md text-label-md font-bold text-primary">M2</span>
+<span class="material-symbols-outlined text-[13px] text-on-surface-variant">qr_code</span>
+</div>
+<span class="font-label-sm text-[11px] text-on-surface-variant font-mono">2 pax</span>
+<div class="absolute -top-1.5 w-6 h-1 rounded-full bg-outline-variant"></div>
+<div class="absolute -bottom-1.5 w-6 h-1 rounded-full bg-outline-variant"></div>
+</div>
+<!-- Mesa M3 (Rectangular, 4p, Ocupada) -->
+<div class="absolute left-64 top-16 w-36 h-24 rounded-xl bg-tertiary-fixed/30 shadow-sm flex flex-col items-center justify-center cursor-pointer hover:shadow-md transition-shadow">
+<div class="flex items-center gap-1.5">
+<span class="font-label-md text-label-md font-bold text-tertiary">M3</span>
+<span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span>
+<span class="material-symbols-outlined text-[14px] text-tertiary">qr_code</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary font-mono font-medium">4 pax · Ocupada</span>
+<!-- Sillas -->
+<div class="absolute -top-1.5 left-4 w-6 h-1 rounded-full bg-tertiary-container/60"></div>
+<div class="absolute -top-1.5 right-4 w-6 h-1 rounded-full bg-tertiary-container/60"></div>
+<div class="absolute -bottom-1.5 left-4 w-6 h-1 rounded-full bg-tertiary-container/60"></div>
+<div class="absolute -bottom-1.5 right-4 w-6 h-1 rounded-full bg-tertiary-container/60"></div>
+</div>
+<!-- Mesa M4 (Rectangular, 4p, Libre) -->
+<div class="absolute left-10 top-52 w-36 h-24 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col items-center justify-center cursor-pointer hover:shadow-md transition-shadow">
+<div class="flex items-center gap-1.5">
+<span class="font-label-md text-label-md font-bold text-primary">M4</span>
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">qr_code</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">4 pax</span>
+<div class="absolute -top-1.5 left-4 w-6 h-1 rounded-full bg-outline-variant"></div>
+<div class="absolute -top-1.5 right-4 w-6 h-1 rounded-full bg-outline-variant"></div>
+<div class="absolute -bottom-1.5 left-4 w-6 h-1 rounded-full bg-outline-variant"></div>
+<div class="absolute -bottom-1.5 right-4 w-6 h-1 rounded-full bg-outline-variant"></div>
+</div>
+<!-- MESA M5: SELECCIONADA CON MARCO DE EDICIÓN / HANDLES DE REDIMENSIÓN (PROTAGONISTA) -->
+<div class="absolute left-64 top-52 w-48 h-28 rounded-xl bg-primary text-on-primary shadow-xl flex flex-col items-center justify-center cursor-move z-20 group">
+<!-- Handles de Transformación y Vértices -->
+<div class="absolute -top-1.5 -left-1.5 w-3 h-3 bg-secondary-fixed-dim rounded-full shadow"></div>
+<div class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-secondary-fixed-dim rounded-full shadow"></div>
+<div class="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-secondary-fixed-dim rounded-full shadow"></div>
+<div class="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-secondary-fixed-dim rounded-full shadow"></div>
+<!-- Rotador Superior -->
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-secondary-fixed-dim flex items-center justify-center cursor-grab shadow">
+<span class="material-symbols-outlined text-[10px] text-on-secondary-fixed font-bold">sync</span>
+</div>
+<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-px h-2 bg-secondary-fixed-dim"></div>
+<!-- Contenido Mesa 5 -->
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-primary font-bold">Mesa 5</span>
+<span class="px-1.5 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-sm text-[10px] font-bold uppercase">Activa</span>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="font-label-md text-label-md text-primary-fixed font-mono">6 pax · 1.60 × 0.90m</span>
+<span class="material-symbols-outlined text-[16px] text-secondary-fixed-dim">qr_code_2</span>
+</div>
+<!-- Sillas Gráficas Alrededor de Mesa 5 -->
+<div class="absolute -top-2 left-5 w-8 h-1.5 rounded-full bg-secondary-fixed shadow-xs"></div>
+<div class="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1.5 rounded-full bg-secondary-fixed shadow-xs"></div>
+<div class="absolute -top-2 right-5 w-8 h-1.5 rounded-full bg-secondary-fixed shadow-xs"></div>
+<div class="absolute -bottom-2 left-5 w-8 h-1.5 rounded-full bg-secondary-fixed shadow-xs"></div>
+<div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 h-1.5 rounded-full bg-secondary-fixed shadow-xs"></div>
+<div class="absolute -bottom-2 right-5 w-8 h-1.5 rounded-full bg-secondary-fixed shadow-xs"></div>
+</div>
+<!-- Mesa M6 (Redonda, 4p, Libre) -->
+<div class="absolute right-36 top-64 w-24 h-24 rounded-full bg-surface-container-lowest shadow-sm flex flex-col items-center justify-center cursor-pointer hover:shadow-md transition-shadow">
+<div class="flex items-center gap-1">
+<span class="font-label-md text-label-md font-bold text-primary">M6</span>
+<span class="material-symbols-outlined text-[13px] text-on-surface-variant">qr_code</span>
+</div>
+<span class="font-label-sm text-[11px] text-on-surface-variant font-mono">4 pax</span>
+<!-- Sillas radiales -->
+<div class="absolute -top-1.5 w-6 h-1 rounded-full bg-outline-variant"></div>
+<div class="absolute -bottom-1.5 w-6 h-1 rounded-full bg-outline-variant"></div>
+<div class="absolute -left-1.5 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-outline-variant"></div>
+<div class="absolute -right-1.5 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-outline-variant"></div>
+</div>
+<!-- Mesas Adicionales M7, M8, M9, M10 para Salón Armónico -->
+<!-- M7 (Cuadrada, 2p) -->
+<div class="absolute left-80 bottom-12 w-20 h-20 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col items-center justify-center cursor-pointer hover:shadow-md transition-shadow">
+<span class="font-label-md text-label-md font-bold text-primary">M7</span>
+<span class="font-label-sm text-[11px] text-on-surface-variant font-mono">2 pax</span>
+<div class="absolute -top-1.5 w-6 h-1 rounded-full bg-outline-variant"></div>
+<div class="absolute -bottom-1.5 w-6 h-1 rounded-full bg-outline-variant"></div>
+</div>
+<!-- M8 (Rectangular, 4p) -->
+<div class="absolute left-[430px] bottom-10 w-36 h-22 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col items-center justify-center cursor-pointer hover:shadow-md transition-shadow">
+<div class="flex items-center gap-1">
+<span class="font-label-md text-label-md font-bold text-primary">M8</span>
+<span class="material-symbols-outlined text-[13px] text-on-surface-variant">qr_code</span>
+</div>
+<span class="font-label-sm text-[11px] text-on-surface-variant font-mono">4 pax</span>
+<div class="absolute -top-1.5 left-4 w-6 h-1 rounded-full bg-outline-variant"></div>
+<div class="absolute -top-1.5 right-4 w-6 h-1 rounded-full bg-outline-variant"></div>
+<div class="absolute -bottom-1.5 left-4 w-6 h-1 rounded-full bg-outline-variant"></div>
+<div class="absolute -bottom-1.5 right-4 w-6 h-1 rounded-full bg-outline-variant"></div>
+</div>
+<!-- M9 & M10 (Perímetro Derecho) -->
+<div class="absolute right-10 top-60 w-20 h-20 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col items-center justify-center cursor-pointer hover:shadow-md transition-shadow">
+<span class="font-label-md text-label-md font-bold text-primary">M9</span>
+<span class="font-label-sm text-[11px] text-on-surface-variant font-mono">2 pax</span>
+<div class="absolute -top-1.5 w-6 h-1 rounded-full bg-outline-variant"></div>
+<div class="absolute -bottom-1.5 w-6 h-1 rounded-full bg-outline-variant"></div>
+</div>
+<div class="absolute right-10 bottom-24 w-20 h-20 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col items-center justify-center cursor-pointer hover:shadow-md transition-shadow">
+<span class="font-label-md text-label-md font-bold text-primary">M10</span>
+<span class="font-label-sm text-[11px] text-on-surface-variant font-mono">2 pax</span>
+<div class="absolute -top-1.5 w-6 h-1 rounded-full bg-outline-variant"></div>
+<div class="absolute -bottom-1.5 w-6 h-1 rounded-full bg-outline-variant"></div>
+</div>
+</div>
+<!-- Barra de Estado Inferior del Canvas -->
+<div class="relative z-10 flex flex-wrap items-center justify-between gap-space-sm pt-space-xs text-on-surface-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-space-md">
+<span class="flex items-center gap-1 text-tertiary font-medium">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+            Guardado automático hace 2 min
+          </span>
+<span class="text-outline">·</span>
+<span>Escala: <strong class="text-on-surface">1:50</strong></span>
+<span class="text-outline">·</span>
+<span>Mesas activas: <strong class="text-on-surface">12 unidades</strong></span>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+            0 Colisiones detectadas
+          </span>
+</div>
+</div>
+</div>
+<!-- Panel Lateral Derecho: Inspector de Propiedades (Mesa 5 Seleccionada) (Col 4) -->
+<aside class="xl:col-span-4 bg-surface-container-low p-space-md flex flex-col justify-between overflow-y-auto">
+<div class="flex flex-col gap-space-md">
+<!-- Encabezado del Inspector -->
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-lg bg-primary-container text-on-primary flex items-center justify-center shadow-xs">
+<span class="material-symbols-outlined text-[18px]">table_restaurant</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface leading-tight">Configuración · Mesa 5</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Elemento activo en edición</span>
+</div>
+</div>
+<!-- Acciones de elemento -->
+<div class="flex items-center gap-1">
+<button class="w-9 h-9 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center transition-colors" title="Duplicar Mesa" type="button">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+<button class="w-9 h-9 rounded-lg bg-error-container hover:bg-error text-on-error-container hover:text-on-error flex items-center justify-center transition-colors" title="Eliminar Mesa" type="button">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Campos de Configuración -->
+<div class="space-y-space-sm">
+<!-- Identificador y Zona -->
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm font-semibold text-on-surface" for="mesa-id">Identificador</label>
+<input class="h-11 px-3 rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary shadow-xs" id="mesa-id" type="text" value="Mesa 5"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm font-semibold text-on-surface" for="mesa-zona">Zona</label>
+<select class="h-11 px-3 rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary shadow-xs" id="mesa-zona">
+<option selected="">Salón Principal</option>
+<option>Terraza Exterior</option>
+<option>Mezzanine VIP</option>
+</select>
+</div>
+</div>
+<!-- Capacidad de Comensales -->
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm font-semibold text-on-surface">Capacidad de Comensales</label>
+<div class="h-12 px-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between shadow-xs">
+<button class="w-9 h-9 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center font-bold" type="button">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-primary font-bold">6</span>
+<span class="font-body-md text-body-md text-on-surface-variant">personas</span>
+</div>
+<button class="w-9 h-9 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center font-bold" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+<!-- Geometría / Forma de Mesa -->
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm font-semibold text-on-surface">Forma de Mesa</label>
+<div class="grid grid-cols-3 gap-space-xs">
+<button class="h-10 rounded-lg bg-surface-container-lowest hover:bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-semibold flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="w-3.5 h-3.5 rounded-sm bg-outline"></span>
+<span>Cuadrada</span>
+</button>
+<button class="h-10 rounded-lg bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold flex items-center justify-center gap-1.5 shadow-sm" type="button">
+<span class="w-4 h-2.5 rounded-xs bg-secondary-fixed"></span>
+<span>Rectangular</span>
+</button>
+<button class="h-10 rounded-lg bg-surface-container-lowest hover:bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-semibold flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="w-3.5 h-3.5 rounded-full bg-outline"></span>
+<span>Redonda</span>
+</button>
+</div>
+</div>
+<!-- Dimensiones y Rotación -->
+<div class="grid grid-cols-3 gap-space-xs">
+<div class="flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-outline">Ancho</span>
+<div class="h-10 px-2.5 rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface font-mono font-label-md text-label-md shadow-xs">
+<span>1.60</span>
+<span class="text-outline text-xs">m</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-outline">Largo</span>
+<div class="h-10 px-2.5 rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface font-mono font-label-md text-label-md shadow-xs">
+<span>0.90</span>
+<span class="text-outline text-xs">m</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-outline">Giro</span>
+<div class="h-10 px-2.5 rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface font-mono font-label-md text-label-md shadow-xs">
+<span>0</span>
+<span class="text-outline text-xs">°</span>
+</div>
+</div>
+</div>
+<!-- Mozo Responsable -->
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm font-semibold text-on-surface" for="mozo-asignado">Asignación de Mozo por Defecto</label>
+<div class="relative flex items-center">
+<select class="w-full h-11 pl-3 pr-10 rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary shadow-xs appearance-none" id="mozo-asignado">
+<option selected="">Carlos Mamani (Capitán Prado)</option>
+<option>Ana Quispe (Moza Turno Tarde)</option>
+<option>Javier Torrez (Mozo Turno Noche)</option>
+<option>Sin asignar</option>
+</select>
+<span class="material-symbols-outlined text-outline absolute right-3 pointer-events-none text-[20px]">expand_more</span>
+</div>
+</div>
+<!-- Switch Habilitada -->
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between shadow-xs">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Reservas web y Pedidos QR</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Visible para clientes digitales</span>
+</div>
+<div class="w-10 h-5 rounded-full bg-primary-container relative cursor-pointer">
+<div class="w-4 h-4 rounded-full bg-on-primary absolute right-0.5 top-0.5 shadow"></div>
+</div>
+</div>
+<!-- Módulo Código QR de Mesa -->
+<div class="p-space-sm rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]">qr_code_2</span>
+<span class="font-label-sm text-label-sm font-bold uppercase tracking-wider text-primary">Código QR Activo</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary font-bold flex items-center gap-0.5">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+                Vigente
+              </span>
+</div>
+<div class="flex items-center gap-space-sm">
+<!-- Miniatura SVG QR Preciso con Brand Andina -->
+<div class="w-20 h-20 bg-surface-container-high rounded-lg p-1.5 flex items-center justify-center shrink-0 shadow-inner">
+<svg class="w-full h-full text-primary" fill="currentColor" viewbox="0 0 100 100">
+<!-- Posicionadores Esquinas -->
+<rect fill="none" height="26" rx="2" stroke="currentColor" stroke-width="6" width="26" x="5" y="5"></rect>
+<rect fill="currentColor" height="10" rx="1" width="10" x="13" y="13"></rect>
+<rect fill="none" height="26" rx="2" stroke="currentColor" stroke-width="6" width="26" x="69" y="5"></rect>
+<rect fill="currentColor" height="10" rx="1" width="10" x="77" y="13"></rect>
+<rect fill="none" height="26" rx="2" stroke="currentColor" stroke-width="6" width="26" x="5" y="69"></rect>
+<rect fill="currentColor" height="10" rx="1" width="10" x="13" y="77"></rect>
+<!-- Patrón de Datos QR -->
+<rect height="6" width="6" x="40" y="8"></rect>
+<rect height="6" width="6" x="52" y="8"></rect>
+<rect height="6" width="6" x="46" y="20"></rect>
+<rect height="6" width="6" x="8" y="44"></rect>
+<rect height="6" width="6" x="20" y="44"></rect>
+<rect fill="#00375e" height="20" rx="3" width="20" x="40" y="40"></rect>
+<!-- Logo Core Andina -->
+<circle cx="50" cy="50" fill="#febb2a" r="5"></circle>
+<rect height="6" width="6" x="68" y="44"></rect>
+<rect height="6" width="6" x="80" y="44"></rect>
+<rect height="6" width="6" x="44" y="68"></rect>
+<rect height="6" width="6" x="56" y="68"></rect>
+<rect height="6" width="6" x="68" y="68"></rect>
+<rect height="6" width="6" x="80" y="80"></rect>
+</svg>
+</div>
+<!-- Enlace y Botones QR -->
+<div class="flex flex-col min-w-0 justify-between flex-1">
+<span class="font-label-sm text-[11px] text-outline font-semibold uppercase">Enlace Único de Mesa</span>
+<span class="font-label-md text-label-md text-primary font-mono truncate font-semibold">andina.bo/m/prado/m5</span>
+<div class="flex items-center gap-1.5 mt-2">
+<button class="h-8 px-2.5 rounded bg-primary-container text-on-primary font-label-sm text-label-sm font-semibold flex items-center gap-1 hover:bg-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">print</span>
+<span>Sticker</span>
+</button>
+<button class="h-8 px-2 rounded bg-surface-container text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">refresh</span>
+<span>Regenerar</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Métricas Rápidas de la Zona Activa -->
+<div class="p-space-sm rounded-xl bg-surface-container-high/60 flex flex-col gap-space-xs mt- space-xs">
+<span class="font-label-sm text-label-sm font-bold uppercase text-on-surface-variant tracking-wider">Métricas de Confort y Capacidad</span>
+<div class="grid grid-cols-2 gap-space-xs text-on-surface">
+<div class="flex flex-col p-2 bg-surface-container-lowest rounded-lg shadow-2xs">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Aforo Salón</span>
+<span class="font-label-md text-label-md font-bold text-primary">48 comensales</span>
+</div>
+<div class="flex flex-col p-2 bg-surface-container-lowest rounded-lg shadow-2xs">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Densidad Normativa</span>
+<span class="font-label-md text-label-md font-bold text-tertiary">1.4 m² / pax <span class="text-[10px] font-normal text-on-surface-variant">(Óptimo)</span></span>
+</div>
+<div class="flex flex-col p-2 bg-surface-container-lowest rounded-lg shadow-2xs">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Cobertura Wi-Fi</span>
+<span class="font-label-md text-label-md font-bold text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-tertiary text-[14px]">wifi</span>
+                98% Excelente
+              </span>
+</div>
+<div class="flex flex-col p-2 bg-surface-container-lowest rounded-lg shadow-2xs">
+<span class="font-label-sm text-[11px] text-on-surface-variant">Línea de Visión Mozo</span>
+<span class="font-label-md text-label-md font-bold text-primary">100% Despejada</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</div></main></div></body></html>

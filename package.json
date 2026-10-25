@@ -1,0 +1,19 @@
+{
+  "name": "gestro",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": { "node": ">=22.0.0" },
+  "packageManager": "pnpm@11.11.0",
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "dev:api": "pnpm --filter @gestro/api dev",
+    "dev:web": "pnpm --filter @gestro/web dev",
+    "db:arriba": "node scripts/bd-local.mjs arriba",
+    "db:abajo": "node scripts/bd-local.mjs abajo",
+    "db:migrar": "pnpm --filter @gestro/api db:migrate"
+  },
+  "devDependencies": { "turbo": "^2.3.0", "typescript": "^5.6.0" }
+}

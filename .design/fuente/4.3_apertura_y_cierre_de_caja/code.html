@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-container-low": "#f2f4f7", "on-primary-container": "#95bff1", "on-tertiary-fixed-variant": "#005224", "on-primary": "#ffffff", "tertiary": "#003e1a", "surface-tint": "#35618d", "surface-container": "#eceef1", "on-secondary-fixed-variant": "#5e4200", "on-tertiary": "#ffffff", "inverse-on-surface": "#eff1f4", "outline": "#72777f", "surface-dim": "#d8dadd", "surface": "#f7f9fc", "on-background": "#191c1e", "error-container": "#ffdad6", "on-secondary-fixed": "#271900", "inverse-surface": "#2d3133", "on-error": "#ffffff", "primary-fixed-dim": "#a0cafc", "on-surface": "#191c1e", "tertiary-container": "#005827", "tertiary-fixed": "#a1f5b0", "on-primary-fixed": "#001d35", "on-error-container": "#93000a", "background": "#f7f9fc", "secondary-fixed-dim": "#febb2a", "on-primary-fixed-variant": "#184974", "on-secondary": "#ffffff", "surface-container-high": "#e6e8eb", "on-secondary-container": "#6d4d00", "primary-container": "#1f4e79", "inverse-primary": "#a0cafc", "surface-container-lowest": "#ffffff", "error": "#ba1a1a", "on-tertiary-fixed": "#00210b", "secondary-fixed": "#ffdea8", "secondary-container": "#febb2a", "primary": "#00375e", "on-tertiary-container": "#7cce8c", "outline-variant": "#c2c7d0", "primary-fixed": "#d1e4ff", "tertiary-fixed-dim": "#86d996", "on-surface-variant": "#42474f", "surface-variant": "#e0e3e6", "secondary": "#7c5800", "surface-container-highest": "#e0e3e6", "surface-bright": "#f7f9fc" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-sm": "0.5rem", "margin": "1rem", "space-xl": "2rem", "space-xs": "0.25rem", "margin-tablet": "1.5rem", "gutter-desktop": "1.5rem", "gutter": "1rem", "space-lg": "1.5rem", "gutter-tablet": "1.25rem", "space-md": "1rem", "margin-desktop": "2rem" }, "fontFamily": { "headline-md": ["Inter"], "headline-lg": ["Inter"], "label-sm": ["JetBrains Mono"], "headline-lg-mobile": ["Inter"], "headline-sm": ["Inter"], "body-md": ["Inter"], "headline-xl-mobile": ["Inter"], "label-md": ["JetBrains Mono"], "body-lg": ["Inter"], "label-lg": ["JetBrains Mono"], "body-sm": ["Inter"], "headline-xl": ["Inter"] }, "fontSize": { "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }], "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }], "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.25px", "fontWeight": "500" }], "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }], "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }], "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }], "label-md": ["14px", { "lineHeight": "18px", "letterSpacing": "0.25px", "fontWeight": "600" }], "body-lg": ["18px", { "lineHeight": "26px", "fontWeight": "500" }], "label-lg": ["16px", { "lineHeight": "20px", "letterSpacing": "0.5px", "fontWeight": "600" }], "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "headline-xl": ["40px", { "lineHeight": "48px", "fontWeight": "700" }] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 h-16 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex items-center justify-between px-space-md lg:px-space-lg"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-sm"><div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary font-headline-sm text-headline-sm">A</div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm font-bold text-primary tracking-tight leading-none">Andina GastroOS</span><span class="font-label-sm text-label-sm text-on-surface-variant leading-none mt-1">v3.4 SIAT Conectado</span></div></div><div class="hidden md:flex items-center gap-space-xs px-space-sm py-1 rounded-lg bg-surface-container-low"><span class="material-symbols-outlined text-[18px] text-primary">storefront</span><span class="font-label-md text-label-md text-on-surface">Prado - La Paz</span><span class="material-symbols-outlined text-[16px] text-on-surface-variant">expand_more</span></div></div><div class="flex items-center gap-space-md"><div class="hidden xl:flex items-center gap-space-md"><div class="flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container-lowest shadow-[0_1px_4px_rgba(0,0,0,0.03)]"><span class="w-2.5 h-2.5 rounded-full bg-tertiary-container animate-pulse"></span><span class="font-label-sm text-label-sm text-on-surface">SIAT Online: Sincronizado</span></div><div class="flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container-low"><span class="material-symbols-outlined text-[16px] text-primary">point_of_sale</span><span class="font-label-sm text-label-sm text-on-surface-variant">Terminal CAJA-01</span></div><div class="flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container-low"><span class="material-symbols-outlined text-[16px] text-secondary">schedule</span><span class="font-label-md text-label-md text-on-surface">13:42:08</span></div></div><div class="flex items-center gap-space-sm pl-space-md"><div class="text-right hidden sm:block"><div class="font-label-md text-label-md text-on-surface leading-tight">Roberto Soliz</div><div class="font-label-sm text-label-sm text-on-surface-variant leading-tight">Cajero Principal</div></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><aside class="fixed left-0 top-16 bottom-0 w-64 bg-surface-container-low z-40 flex flex-col p-space-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant px-space-sm mb-space-sm">Operaciones</div><nav class="flex flex-col gap-space-xs flex-1" data-active-classes="bg-primary-container text-on-primary-container font-headline-sm rounded-lg"><a class="flex items-center gap-space-sm px-space-sm py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors min-h-[48px]" data-path="cobro-en-caja" href="#"><span class="material-symbols-outlined text-[22px]">payments</span><span class="font-label-lg text-label-lg">Cobro en Caja</span></a><a class="flex items-center gap-space-sm px-space-sm py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors min-h-[48px]" data-path="factura-electronica-siat" href="#"><span class="material-symbols-outlined text-[22px]">receipt_long</span><span class="font-label-lg text-label-lg">Facturación SIAT</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-3 transition-colors min-h-[48px] bg-primary-container text-on-primary-container font-headline-sm rounded-lg" data-path="apertura-y-cierre-de-caja" href="#"><span class="material-symbols-outlined text-[22px]">lock_clock</span><span class="font-label-lg text-label-lg">Apertura y Cierre</span></a><a class="flex items-center gap-space-sm px-space-sm py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors min-h-[48px]" data-path="validacion-pagos-qr-simple" href="#"><span class="material-symbols-outlined text-[22px]">qr_code_scanner</span><span class="font-label-lg text-label-lg">QR Simple</span></a><div class="h-px bg-surface-container my-space-xs"></div><div class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant px-space-sm my-space-xs">Área Producción</div><a class="flex items-center gap-space-sm px-space-sm py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors min-h-[48px]" data-path="plan-del-dia-e-insumos-faltantes" href="#"><span class="material-symbols-outlined text-[22px]">soup_kitchen</span><span class="font-label-lg text-label-lg">Plan del Día Cocina</span></a><a class="flex items-center gap-space-sm px-space-sm py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors min-h-[48px]" data-path="pedidos-y-comandas" href="#"><span class="material-symbols-outlined text-[22px]">table_restaurant</span><span class="font-label-lg text-label-lg">Pedidos de Salón</span></a><a class="flex items-center gap-space-sm px-space-sm py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors min-h-[48px]" data-path="insumos-y-stock-critico" href="#"><span class="material-symbols-outlined text-[22px]">inventory_2</span><span class="font-label-lg text-label-lg">Insumos y Stock</span></a></nav><div class="pt-space-sm border-t border-surface-container flex flex-col gap-space-xs"><div class="flex items-center justify-between px-space-sm py-1"><span class="font-label-sm text-label-sm text-on-surface-variant">Turno Mañana:</span><span class="font-label-sm text-label-sm text-on-surface font-semibold">Activo</span></div><button class="flex items-center justify-center gap-space-xs w-full h-12 rounded-lg bg-surface-container-high text-on-surface hover:bg-error-container hover:text-on-error-container transition-colors font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">logout</span><span>Cerrar Sesión</span></button></div></aside><div class="pl-64"><main class="w-full pt-16 bg-surface px-space-md lg:px-space-lg min-h-screen"><div class="flex flex-col w-full pb-space-xl">
+<!-- Operational Meta Ribbon -->
+<div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md py-space-sm mb-space-md">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<span class="inline-block w-2 h-2 rounded-full bg-tertiary-container"></span>
+<span>Arqueo Diario de Ventas & Conciliación Tributaria</span>
+<span class="text-outline">/</span>
+<span class="text-primary font-bold">Corte Z-449</span>
+</div>
+<div class="flex flex-wrap items-center gap-x-space-md gap-y-1 mt-1 font-body-sm text-body-sm text-on-surface">
+<div class="flex items-center gap-1 font-body-lg text-body-lg text-primary font-bold">
+<span class="material-symbols-outlined text-[20px] text-primary">wb_sunny</span>
+<span>Turno Almuerzo</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-normal">11:00 - 16:00</span>
+</div>
+<span class="text-outline-variant hidden sm:inline">•</span>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">store</span>
+<span class="font-semibold text-on-surface">Caja 01 Prado</span>
+</div>
+<span class="text-outline-variant hidden sm:inline">•</span>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">badge</span>
+<span>Cajero: <strong class="text-on-surface">Roberto Soliz</strong></span>
+</div>
+<span class="text-outline-variant hidden sm:inline">•</span>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+<span>Supervisor: <strong class="text-on-surface">Carlos Mamani</strong></span>
+</div>
+</div>
+</div>
+<!-- Mode Selector Tabs -->
+<div class="flex items-center p-1 bg-surface-container rounded-xl shadow-sm self-stretch lg:self-auto">
+<button class="flex items-center gap-space-xs px-space-md py-2 rounded-lg bg-surface-container-lowest text-primary font-label-md text-label-md shadow-sm transition-all">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span>Cierre y Arqueo</span>
+</button>
+<button class="flex items-center gap-space-xs px-space-md py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors">
+<span class="w-2 h-2 rounded-full bg-outline-variant"></span>
+<span>Historial de Cierres</span>
+</button>
+<button class="flex items-center gap-space-xs px-space-md py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors">
+<span class="w-2 h-2 rounded-full bg-outline-variant"></span>
+<span>Fondo Inicial (Bs 300)</span>
+</button>
+</div>
+</div>
+<!-- Operational Alert Banner: Real-time SIAT & Terminal Status -->
+<div class="flex items-center justify-between gap-space-md p-space-md rounded-xl bg-surface-container-low shadow-sm mb-space-lg">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-10 h-10 rounded-lg bg-tertiary/10 text-tertiary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">task_alt</span>
+</div>
+<div class="min-w-0">
+<p class="font-body-md text-body-md font-semibold text-on-surface truncate">Sincronización Fiscal SIAT & Red Enlace Completadas</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant truncate">Todos los comprobantes y lotes electrónicos coinciden con el servidor central SIN Bolivia.</p>
+</div>
+</div>
+<div class="hidden sm:flex items-center gap-space-xs shrink-0 font-label-sm text-label-sm bg-surface-container-lowest px-space-sm py-1.5 rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-tertiary-container">cloud_done</span>
+<span class="text-on-surface">Lote POS Enlace #42 Sincronizado</span>
+</div>
+</div>
+<!-- Main 3-Block Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg">
+<!-- BLOQUE 1: Resumen de Ventas por Método de Pago (Sistema) -->
+<section class="xl:col-span-4 flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-7 h-7 rounded-lg bg-primary-container text-on-primary flex items-center justify-center font-label-sm text-label-sm font-bold">1</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Ventas por Sistema</h2>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Libro de Caja POS</span>
+</div>
+<!-- Métodos de pago Desglosados -->
+<div class="flex flex-col gap-space-sm">
+<!-- Efectivo Registrado -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[26px]">payments</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Efectivo Sistema</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">34 transacciones en mesa</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Bs</span>
+<span class="font-label-lg text-label-lg text-primary font-bold ml-1">1,840.00</span>
+</div>
+</div>
+<!-- QR Simple Bolivia -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-12 h-12 rounded-lg bg-secondary-container/20 text-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[26px]">qr_code_2</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">QR Simple Bolivia</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Banco Central / ASOBAN (18 tx)</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Bs</span>
+<span class="font-label-lg text-label-lg text-on-surface font-bold ml-1">1,420.50</span>
+</div>
+</div>
+<!-- Tarjetas Red Enlace -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[26px]">credit_card</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Tarjetas Débito / Crédito</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Red Enlace POS (22 tx)</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Bs</span>
+<span class="font-label-lg text-label-lg text-on-surface font-bold ml-1">2,150.00</span>
+</div>
+</div>
+<!-- Delivery Apps -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[26px]">two_wheeler</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Delivery Apps</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Cobro Externo / App (6 pedidos)</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Bs</span>
+<span class="font-label-lg text-label-lg text-on-surface font-bold ml-1">430.00</span>
+</div>
+</div>
+<!-- Fondo Fijo Inicial -->
+<div class="p-space-md rounded-xl bg-surface-container-low shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-12 h-12 rounded-lg bg-surface-container text-outline flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[26px]">savings</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Fondo Fijo Apertura</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Entregado 10:50 AM (Billetaje base)</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Bs</span>
+<span class="font-label-lg text-label-lg text-on-surface font-bold ml-1">300.00</span>
+</div>
+</div>
+</div>
+<!-- TOTAL ESPERADO EN CAJA FÍSICA -->
+<div class="p-space-md rounded-xl bg-primary text-on-primary shadow-md relative overflow-hidden">
+<div class="flex items-center justify-between relative z-10">
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-primary-container">Efectivo a Entregar</span>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-primary leading-tight mt-0.5">Total Esperado Físico</h3>
+<p class="font-body-sm text-body-sm text-on-primary-container mt-1">Fondo Apertura (300) + Efectivo (1,840)</p>
+</div>
+<div class="text-right">
+<div class="font-label-sm text-label-sm text-on-primary-container">BOB</div>
+<div class="font-headline-lg text-headline-lg font-bold tracking-tight text-on-primary">Bs 2,140.00</div>
+</div>
+</div>
+</div>
+<!-- Métricas complementarias de sesión -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[20px] text-tertiary-container">shopping_bag</span>
+<span>Ventas Totales del Turno:</span>
+</div>
+<div class="font-label-md text-label-md font-bold text-on-surface">Bs 5,840.50</div>
+</div>
+</section>
+<!-- BLOQUE 2: Arqueo Físico de Efectivo por Denominación Oficial de Moneda Boliviana -->
+<section class="xl:col-span-5 flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-7 h-7 rounded-lg bg-primary-container text-on-primary flex items-center justify-center font-label-sm text-label-sm font-bold">2</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Arqueo Físico de Moneda</h2>
+</div>
+<button class="font-label-sm text-label-sm text-primary hover:underline flex items-center gap-1" id="btn-reset-conteo">
+<span class="material-symbols-outlined text-[16px]">restart_alt</span>
+<span>Reiniciar Conteo</span>
+</button>
+</div>
+<!-- Denominaciones Oficiales Banco Central de Bolivia -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden p-space-sm sm:p-space-md flex flex-col gap-2">
+<div class="hidden sm:grid grid-cols-12 gap-2 pb-2 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider px-2">
+<div class="col-span-4">Corte Oficial</div>
+<div class="col-span-5 text-center">Cantidad Táctil</div>
+<div class="col-span-3 text-right">Subtotal</div>
+</div>
+<!-- Billetes Bs 200 -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors" data-denomination="200">
+<div class="sm:col-span-4 flex items-center gap-2">
+<span class="w-8 h-8 rounded-lg bg-primary/10 text-primary font-label-md text-label-md font-bold flex items-center justify-center shrink-0">200</span>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface leading-tight">Billete Bs 200</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Tiahuanaco / Café</p>
+</div>
+</div>
+<div class="sm:col-span-5 flex items-center justify-center gap-2">
+<button aria-label="Restar" class="qty-btn-minus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">-</button>
+<input class="denom-qty w-16 h-12 text-center rounded-lg bg-surface-container-lowest font-label-lg text-label-lg text-on-surface font-bold shadow-inner focus:outline-none focus:bg-surface-container-lowest" min="0" type="number" value="6"/>
+<button aria-label="Sumar" class="qty-btn-plus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">+</button>
+</div>
+<div class="sm:col-span-3 flex sm:flex-col justify-between sm:justify-center items-end">
+<span class="sm:hidden font-body-sm text-body-sm text-on-surface-variant">Subtotal:</span>
+<span class="subtotal-val font-label-md text-label-md font-bold text-primary">Bs 1,200.00</span>
+</div>
+</div>
+<!-- Billetes Bs 100 -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors" data-denomination="100">
+<div class="sm:col-span-4 flex items-center gap-2">
+<span class="w-8 h-8 rounded-lg bg-error/10 text-error font-label-md text-label-md font-bold flex items-center justify-center shrink-0">100</span>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface leading-tight">Billete Bs 100</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Juana Azurduy / Rojo</p>
+</div>
+</div>
+<div class="sm:col-span-5 flex items-center justify-center gap-2">
+<button aria-label="Restar" class="qty-btn-minus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">-</button>
+<input class="denom-qty w-16 h-12 text-center rounded-lg bg-surface-container-lowest font-label-lg text-label-lg text-on-surface font-bold shadow-inner focus:outline-none" min="0" type="number" value="5"/>
+<button aria-label="Sumar" class="qty-btn-plus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">+</button>
+</div>
+<div class="sm:col-span-3 flex sm:flex-col justify-between sm:justify-center items-end">
+<span class="sm:hidden font-body-sm text-body-sm text-on-surface-variant">Subtotal:</span>
+<span class="subtotal-val font-label-md text-label-md font-bold text-primary">Bs 500.00</span>
+</div>
+</div>
+<!-- Billetes Bs 50 -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors" data-denomination="50">
+<div class="sm:col-span-4 flex items-center gap-2">
+<span class="w-8 h-8 rounded-lg bg-secondary-container/30 text-on-secondary-container font-label-md text-label-md font-bold flex items-center justify-center shrink-0">50</span>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface leading-tight">Billete Bs 50</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">José Manuel B. / Morado</p>
+</div>
+</div>
+<div class="sm:col-span-5 flex items-center justify-center gap-2">
+<button aria-label="Restar" class="qty-btn-minus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">-</button>
+<input class="denom-qty w-16 h-12 text-center rounded-lg bg-surface-container-lowest font-label-lg text-label-lg text-on-surface font-bold shadow-inner focus:outline-none" min="0" type="number" value="6"/>
+<button aria-label="Sumar" class="qty-btn-plus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">+</button>
+</div>
+<div class="sm:col-span-3 flex sm:flex-col justify-between sm:justify-center items-end">
+<span class="sm:hidden font-body-sm text-body-sm text-on-surface-variant">Subtotal:</span>
+<span class="subtotal-val font-label-md text-label-md font-bold text-primary">Bs 300.00</span>
+</div>
+</div>
+<!-- Billetes Bs 20 -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors" data-denomination="20">
+<div class="sm:col-span-4 flex items-center gap-2">
+<span class="w-8 h-8 rounded-lg bg-secondary-container/30 text-secondary font-label-md text-label-md font-bold flex items-center justify-center shrink-0">20</span>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface leading-tight">Billete Bs 20</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Genoveva Ríos / Naranja</p>
+</div>
+</div>
+<div class="sm:col-span-5 flex items-center justify-center gap-2">
+<button aria-label="Restar" class="qty-btn-minus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">-</button>
+<input class="denom-qty w-16 h-12 text-center rounded-lg bg-surface-container-lowest font-label-lg text-label-lg text-on-surface font-bold shadow-inner focus:outline-none" min="0" type="number" value="4"/>
+<button aria-label="Sumar" class="qty-btn-plus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">+</button>
+</div>
+<div class="sm:col-span-3 flex sm:flex-col justify-between sm:justify-center items-end">
+<span class="sm:hidden font-body-sm text-body-sm text-on-surface-variant">Subtotal:</span>
+<span class="subtotal-val font-label-md text-label-md font-bold text-primary">Bs 80.00</span>
+</div>
+</div>
+<!-- Billetes Bs 10 -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors" data-denomination="10">
+<div class="sm:col-span-4 flex items-center gap-2">
+<span class="w-8 h-8 rounded-lg bg-primary-fixed text-primary font-label-md text-label-md font-bold flex items-center justify-center shrink-0">10</span>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface leading-tight">Billete Bs 10</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Apiaguaiki / Azul</p>
+</div>
+</div>
+<div class="sm:col-span-5 flex items-center justify-center gap-2">
+<button aria-label="Restar" class="qty-btn-minus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">-</button>
+<input class="denom-qty w-16 h-12 text-center rounded-lg bg-surface-container-lowest font-label-lg text-label-lg text-on-surface font-bold shadow-inner focus:outline-none" min="0" type="number" value="3"/>
+<button aria-label="Sumar" class="qty-btn-plus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">+</button>
+</div>
+<div class="sm:col-span-3 flex sm:flex-col justify-between sm:justify-center items-end">
+<span class="sm:hidden font-body-sm text-body-sm text-on-surface-variant">Subtotal:</span>
+<span class="subtotal-val font-label-md text-label-md font-bold text-primary">Bs 30.00</span>
+</div>
+</div>
+<!-- Monedas Bolivianas -->
+<div class="py-1 px-2 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-bold">Monedas Metálicas</div>
+<!-- Monedas Bs 5 -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors" data-denomination="5">
+<div class="sm:col-span-4 flex items-center gap-2">
+<span class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface font-label-md text-label-md font-bold flex items-center justify-center shrink-0">5</span>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface leading-tight">Moneda Bs 5</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Bimetálica plateada/dorada</p>
+</div>
+</div>
+<div class="sm:col-span-5 flex items-center justify-center gap-2">
+<button aria-label="Restar" class="qty-btn-minus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">-</button>
+<input class="denom-qty w-16 h-12 text-center rounded-lg bg-surface-container-lowest font-label-lg text-label-lg text-on-surface font-bold shadow-inner focus:outline-none" min="0" type="number" value="4"/>
+<button aria-label="Sumar" class="qty-btn-plus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">+</button>
+</div>
+<div class="sm:col-span-3 flex sm:flex-col justify-between sm:justify-center items-end">
+<span class="sm:hidden font-body-sm text-body-sm text-on-surface-variant">Subtotal:</span>
+<span class="subtotal-val font-label-md text-label-md font-bold text-primary">Bs 20.00</span>
+</div>
+</div>
+<!-- Monedas Bs 2 -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors" data-denomination="2">
+<div class="sm:col-span-4 flex items-center gap-2">
+<span class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface font-label-md text-label-md font-bold flex items-center justify-center shrink-0">2</span>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface leading-tight">Moneda Bs 2</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Borde ondulado</p>
+</div>
+</div>
+<div class="sm:col-span-5 flex items-center justify-center gap-2">
+<button aria-label="Restar" class="qty-btn-minus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">-</button>
+<input class="denom-qty w-16 h-12 text-center rounded-lg bg-surface-container-lowest font-label-lg text-label-lg text-on-surface font-bold shadow-inner focus:outline-none" min="0" type="number" value="4"/>
+<button aria-label="Sumar" class="qty-btn-plus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">+</button>
+</div>
+<div class="sm:col-span-3 flex sm:flex-col justify-between sm:justify-center items-end">
+<span class="sm:hidden font-body-sm text-body-sm text-on-surface-variant">Subtotal:</span>
+<span class="subtotal-val font-label-md text-label-md font-bold text-primary">Bs 8.00</span>
+</div>
+</div>
+<!-- Monedas Bs 1 -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors" data-denomination="1">
+<div class="sm:col-span-4 flex items-center gap-2">
+<span class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface font-label-md text-label-md font-bold flex items-center justify-center shrink-0">1</span>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface leading-tight">Moneda Bs 1</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Acero inoxidable</p>
+</div>
+</div>
+<div class="sm:col-span-5 flex items-center justify-center gap-2">
+<button aria-label="Restar" class="qty-btn-minus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">-</button>
+<input class="denom-qty w-16 h-12 text-center rounded-lg bg-surface-container-lowest font-label-lg text-label-lg text-on-surface font-bold shadow-inner focus:outline-none" min="0" type="number" value="2"/>
+<button aria-label="Sumar" class="qty-btn-plus w-12 h-12 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-bold text-headline-sm flex items-center justify-center active:scale-95 transition-all shadow-sm">+</button>
+</div>
+<div class="sm:col-span-3 flex sm:flex-col justify-between sm:justify-center items-end">
+<span class="sm:hidden font-body-sm text-body-sm text-on-surface-variant">Subtotal:</span>
+<span class="subtotal-val font-label-md text-label-md font-bold text-primary">Bs 2.00</span>
+</div>
+</div>
+</div>
+<!-- Resumen Físico y Badge de Cuadratura -->
+<div class="flex flex-col gap-space-sm p-space-md rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex items-center justify-between pb-space-sm">
+<span class="font-body-md text-body-md font-bold text-on-surface">Total Efectivo Contado Físicamente:</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary" id="total-contado">Bs 2,140.00</span>
+</div>
+<!-- INDICADOR DE DIFERENCIA (Sobrante / Faltante / Exacto) -->
+<div class="p-space-md rounded-xl bg-tertiary text-on-tertiary flex items-center justify-between shadow-md" id="diff-badge">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">verified</span>
+</div>
+<div>
+<p class="font-label-sm text-label-sm uppercase tracking-wider text-on-tertiary-container font-semibold">Estado de Arqueo</p>
+<p class="font-headline-sm text-headline-sm font-bold" id="diff-text">Diferencia: Bs 0.00 (Cuadratura Exacta ✓)</p>
+</div>
+</div>
+<div class="hidden sm:block text-right">
+<span class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-white/20 font-bold uppercase tracking-wider">Sin Descuadre</span>
+</div>
+</div>
+</div>
+</section>
+<!-- BLOQUE 3: Resumen Tributario, Observaciones y Validación -->
+<section class="xl:col-span-3 flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="w-7 h-7 rounded-lg bg-primary-container text-on-primary flex items-center justify-center font-label-sm text-label-sm font-bold">3</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Cierre & Firmas</h2>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Control SIN</span>
+</div>
+<!-- Métricas Tributarias y Operativas -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-space-sm">
+<!-- Facturas Electrónicas SIAT -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-primary text-[20px]">receipt_long</span>
+<div class="truncate">
+<p class="font-label-md text-label-md font-bold text-on-surface truncate">Facturación SIAT</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">42 facturas con CUF</p>
+</div>
+</div>
+<div class="text-right shrink-0">
+<span class="font-label-md text-label-md font-bold text-primary">Bs 5,840.50</span>
+</div>
+</div>
+<!-- Recibos Internos -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-secondary text-[20px]">sticky_note_2</span>
+<div class="truncate">
+<p class="font-label-md text-label-md font-bold text-on-surface truncate">Recibos Internos</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">3 comprobantes salón</p>
+</div>
+</div>
+<div class="text-right shrink-0">
+<span class="font-label-md text-label-md font-bold text-on-surface">Bs 110.00</span>
+</div>
+</div>
+<!-- Propinas Recaudadas -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-tertiary-container text-[20px]">volunteer_activism</span>
+<div class="truncate">
+<p class="font-label-md text-label-md font-bold text-on-surface truncate">Propinas Salón/Cocina</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">A repartir por capitán</p>
+</div>
+</div>
+<div class="text-right shrink-0">
+<span class="font-label-md text-label-md font-bold text-tertiary-container">Bs 245.00</span>
+</div>
+</div>
+</div>
+<!-- Observaciones del Cajero -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-2">
+<label class="font-label-md text-label-md font-bold text-on-surface flex items-center justify-between" for="caja-obs">
+<span>Observaciones de Turno</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-normal">Bitácora</span>
+</label>
+<textarea class="w-full p-2.5 rounded-lg bg-surface-container-low font-body-sm text-body-sm text-on-surface focus:outline-none focus:bg-surface-container-lowest transition-colors resize-none" id="caja-obs" rows="3">Turno almuerzo sin novedades, corte de red enlace sincronizado lote #42</textarea>
+</div>
+<!-- Firmas Digitales / Aprobaciones -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-space-sm">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-bold">Validación Responsable</span>
+<!-- Firma Cajero -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-2">
+<span class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold font-label-sm text-label-sm">RS</span>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface leading-tight">Roberto Soliz</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Cajero Titular</p>
+</div>
+</div>
+<div class="flex items-center gap-1 text-tertiary font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[18px]">done_all</span>
+<span>Firmado</span>
+</div>
+</div>
+<!-- Firma Supervisor -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-2">
+<span class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-bold font-label-sm text-label-sm">CM</span>
+<div>
+<p class="font-label-md text-label-md font-bold text-on-surface leading-tight">Carlos Mamani</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Supervisor en Turno</p>
+</div>
+</div>
+<div class="flex items-center gap-1 text-tertiary font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span>Aprobado</span>
+</div>
+</div>
+</div>
+<!-- Vista rápida de estado de red -->
+<div class="p-space-sm rounded-lg bg-surface-container-low flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-tertiary-container animate-ping"></span>
+<span>Red ASOBAN QR Online</span>
+</span>
+<span class="font-bold text-on-surface">Latencia: 38ms</span>
+</div>
+</section>
+</div>
+<!-- Barra Fija / Inferior de Acciones de Cierre -->
+<div class="mt-space-lg p-space-md rounded-2xl bg-surface-container-lowest shadow-md flex flex-col md:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-sm w-full md:w-auto">
+<div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[28px]">lock_clock</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-bold text-on-surface">Arqueo Completo · Cuadre Verificado</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">La caja quedará bloqueada para nuevas comandas en este turno.</p>
+</div>
+</div>
+<!-- Botones de Acción -->
+<div class="flex flex-wrap items-center justify-end gap-space-sm w-full md:w-auto">
+<!-- Guardar Arqueo Preliminar -->
+<button class="flex-1 sm:flex-none min-h-[48px] px-space-md py-3 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md font-semibold transition-colors flex items-center justify-center gap-2 active:scale-98" id="btn-preliminar">
+<span class="material-symbols-outlined text-[20px]">save</span>
+<span>Guardar Preliminar</span>
+</button>
+<!-- Imprimir Ticket Cierre X / Z -->
+<button class="flex-1 sm:flex-none min-h-[48px] px-space-md py-3 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-md text-label-md font-bold transition-colors flex items-center justify-center gap-2 active:scale-98" id="btn-print-cierre">
+<span class="material-symbols-outlined text-[20px]">print</span>
+<span>IMPRIMIR TICKET CIERRE X / Z</span>
+</button>
+<!-- CERRAR TURNO Y BLOQUEAR CAJA (Principal #1F4E79) -->
+<button class="w-full sm:w-auto min-h-[56px] px-space-lg py-3.5 rounded-lg bg-primary-container hover:bg-primary text-on-primary font-headline-sm text-headline-sm font-bold shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-space-xs active:scale-98" id="btn-cerrar-turno">
+<span class="material-symbols-outlined text-[24px]">lock</span>
+<span>CERRAR TURNO Y BLOQUEAR CAJA</span>
+</button>
+</div>
+</div>
+<!-- Modal de Confirmación por PIN para Cierre Definitivo -->
+<div class="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-space-md" id="pin-modal">
+<div class="w-full max-w-md rounded-2xl bg-surface-container-lowest p-space-lg shadow-xl flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]">pin</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Validar PIN de Supervisor</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Cierre definitivo Turno Almuerzo</p>
+</div>
+</div>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface hover:bg-surface-container-high" id="btn-close-modal">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        Ingrese el código PIN de 4 dígitos de <strong>Carlos Mamani (Supervisor)</strong> para confirmar el bloqueo de caja y emisión de reporte fiscal SIN Z-449.
+      </p>
+<!-- Pantalla de PIN -->
+<div class="flex justify-center items-center gap-3 py-2">
+<span class="pin-dot w-4 h-4 rounded-full bg-surface-container-highest"></span>
+<span class="pin-dot w-4 h-4 rounded-full bg-surface-container-highest"></span>
+<span class="pin-dot w-4 h-4 rounded-full bg-surface-container-highest"></span>
+<span class="pin-dot w-4 h-4 rounded-full bg-surface-container-highest"></span>
+</div>
+<!-- Teclado NumPad Táctil Industrial -->
+<div class="grid grid-cols-3 gap-2">
+<button class="numpad-key h-14 rounded-xl bg-surface-container-low hover:bg-surface-container-high text-headline-sm font-bold text-on-surface flex items-center justify-center active:scale-95 transition-all">1</button>
+<button class="numpad-key h-14 rounded-xl bg-surface-container-low hover:bg-surface-container-high text-headline-sm font-bold text-on-surface flex items-center justify-center active:scale-95 transition-all">2</button>
+<button class="numpad-key h-14 rounded-xl bg-surface-container-low hover:bg-surface-container-high text-headline-sm font-bold text-on-surface flex items-center justify-center active:scale-95 transition-all">3</button>
+<button class="numpad-key h-14 rounded-xl bg-surface-container-low hover:bg-surface-container-high text-headline-sm font-bold text-on-surface flex items-center justify-center active:scale-95 transition-all">4</button>
+<button class="numpad-key h-14 rounded-xl bg-surface-container-low hover:bg-surface-container-high text-headline-sm font-bold text-on-surface flex items-center justify-center active:scale-95 transition-all">5</button>
+<button class="numpad-key h-14 rounded-xl bg-surface-container-low hover:bg-surface-container-high text-headline-sm font-bold text-on-surface flex items-center justify-center active:scale-95 transition-all">6</button>
+<button class="numpad-key h-14 rounded-xl bg-surface-container-low hover:bg-surface-container-high text-headline-sm font-bold text-on-surface flex items-center justify-center active:scale-95 transition-all">7</button>
+<button class="numpad-key h-14 rounded-xl bg-surface-container-low hover:bg-surface-container-high text-headline-sm font-bold text-on-surface flex items-center justify-center active:scale-95 transition-all">8</button>
+<button class="numpad-key h-14 rounded-xl bg-surface-container-low hover:bg-surface-container-high text-headline-sm font-bold text-on-surface flex items-center justify-center active:scale-95 transition-all">9</button>
+<button class="h-14 rounded-xl bg-surface-container text-label-md font-bold text-on-surface flex items-center justify-center active:scale-95 transition-all" id="numpad-clear">C</button>
+<button class="numpad-key h-14 rounded-xl bg-surface-container-low hover:bg-surface-container-high text-headline-sm font-bold text-on-surface flex items-center justify-center active:scale-95 transition-all">0</button>
+<button class="h-14 rounded-xl bg-surface-container text-on-surface flex items-center justify-center active:scale-95 transition-all" id="numpad-back">
+<span class="material-symbols-outlined text-[22px]">backspace</span>
+</button>
+</div>
+<div class="flex items-center justify-between gap-space-sm mt-2">
+<button class="flex-1 py-3 rounded-lg bg-surface-container hover:bg-surface-container-high font-label-md text-label-md text-on-surface font-semibold" id="btn-cancel-pin">Cancelar</button>
+<button class="flex-1 py-3 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md font-bold shadow-md hover:bg-primary transition-all" id="btn-submit-pin">Confirmar Cierre</button>
+</div>
+</div>
+</div>
+<!-- Toast de Notificación -->
+<div class="fixed bottom-6 right-6 z-50 hidden bg-inverse-surface text-inverse-on-surface px-space-md py-3 rounded-xl shadow-xl flex items-center gap-space-sm font-body-sm text-body-sm transition-all" id="toast-msg">
+<span class="material-symbols-outlined text-[20px] text-tertiary-fixed">check_circle</span>
+<span id="toast-text">Ticket de Cierre Z emitido exitosamente.</span>
+</div>
+</div>
+<script>
+  (function() {
+    const TOTAL_ESPERADO = 2140.00;
+    let enteredPin = "";
+
+    function formatBs(val) {
+      return "Bs " + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function calculateTotal() {
+      let total = 0;
+      const rows = document.querySelectorAll('[data-denomination]');
+      rows.forEach(row => {
+        const denom = parseFloat(row.getAttribute('data-denomination'));
+        const input = row.querySelector('.denom-qty');
+        const qty = parseInt(input.value, 10) || 0;
+        const subtotal = denom * qty;
+        total += subtotal;
+        const subtotalEl = row.querySelector('.subtotal-val');
+        if (subtotalEl) {
+          subtotalEl.textContent = formatBs(subtotal);
+        }
+      });
+
+      const totalContadoEl = document.getElementById('total-contado');
+      if (totalContadoEl) {
+        totalContadoEl.textContent = formatBs(total);
+      }
+
+      updateDifferenceBadge(total);
+    }
+
+    function updateDifferenceBadge(contado) {
+      const diff = contado - TOTAL_ESPERADO;
+      const badge = document.getElementById('diff-badge');
+      const textEl = document.getElementById('diff-text');
+      if (!badge || !textEl) return;
+
+      if (Math.abs(diff) < 0.01) {
+        badge.className = "p-space-md rounded-xl bg-tertiary text-on-tertiary flex items-center justify-between shadow-md";
+        textEl.textContent = "Diferencia: Bs 0.00 (Cuadratura Exacta ✓)";
+      } else if (diff > 0) {
+        badge.className = "p-space-md rounded-xl bg-secondary text-on-secondary flex items-center justify-between shadow-md";
+        textEl.textContent = `Diferencia: +${formatBs(diff)} (Sobrante en Caja)`;
+      } else {
+        badge.className = "p-space-md rounded-xl bg-error text-on-error flex items-center justify-between shadow-md";
+        textEl.textContent = `Diferencia: -${formatBs(Math.abs(diff))} (Faltante en Caja)`;
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast-msg');
+      const text = document.getElementById('toast-text');
+      if (!toast || !text) return;
+      text.textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3500);
+    }
+
+    // Attach step listeners
+    document.querySelectorAll('[data-denomination]').forEach(row => {
+      const input = row.querySelector('.denom-qty');
+      const btnMinus = row.querySelector('.qty-btn-minus');
+      const btnPlus = row.querySelector('.qty-btn-plus');
+
+      if (btnMinus && input) {
+        btnMinus.addEventListener('click', () => {
+          let val = parseInt(input.value, 10) || 0;
+          if (val > 0) {
+            input.value = val - 1;
+            calculateTotal();
+          }
+        });
+      }
+
+      if (btnPlus && input) {
+        btnPlus.addEventListener('click', () => {
+          let val = parseInt(input.value, 10) || 0;
+          input.value = val + 1;
+          calculateTotal();
+        });
+      }
+
+      if (input) {
+        input.addEventListener('input', calculateTotal);
+      }
+    });
+
+    const btnReset = document.getElementById('btn-reset-conteo');
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        document.querySelectorAll('.denom-qty').forEach(inp => inp.value = 0);
+        calculateTotal();
+        showToast("Conteo de efectivo reiniciado a cero.");
+      });
+    }
+
+    // Preliminar and print
+    const btnPreliminar = document.getElementById('btn-preliminar');
+    if (btnPreliminar) {
+      btnPreliminar.addEventListener('click', () => {
+        showToast("Borrador de arqueo preliminar guardado en servidor.");
+      });
+    }
+
+    const btnPrint = document.getElementById('btn-print-cierre');
+    if (btnPrint) {
+      btnPrint.addEventListener('click', () => {
+        showToast("Enviando Ticket de Cierre X / Z a impresora térmica Prado.");
+      });
+    }
+
+    // PIN Modal Logic
+    const pinModal = document.getElementById('pin-modal');
+    const btnCerrarTurno = document.getElementById('btn-cerrar-turno');
+    const btnCloseModal = document.getElementById('btn-close-modal');
+    const btnCancelPin = document.getElementById('btn-cancel-pin');
+    const btnSubmitPin = document.getElementById('btn-submit-pin');
+    const pinDots = document.querySelectorAll('.pin-dot');
+
+    function updatePinDots() {
+      pinDots.forEach((dot, index) => {
+        if (index < enteredPin.length) {
+          dot.classList.remove('bg-surface-container-highest');
+          dot.classList.add('bg-primary-container');
+        } else {
+          dot.classList.remove('bg-primary-container');
+          dot.classList.add('bg-surface-container-highest');
+        }
+      });
+    }
+
+    if (btnCerrarTurno && pinModal) {
+      btnCerrarTurno.addEventListener('click', () => {
+        enteredPin = "";
+        updatePinDots();
+        pinModal.classList.remove('hidden');
+      });
+    }
+
+    function closeModal() {
+      if (pinModal) pinModal.classList.add('hidden');
+      enteredPin = "";
+      updatePinDots();
+    }
+
+    if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);
+    if (btnCancelPin) btnCancelPin.addEventListener('click', closeModal);
+
+    document.querySelectorAll('.numpad-key').forEach(key => {
+      key.addEventListener('click', () => {
+        if (enteredPin.length < 4) {
+          enteredPin += key.textContent.trim();
+          updatePinDots();
+        }
+      });
+    });
+
+    const btnClear = document.getElementById('numpad-clear');
+    if (btnClear) {
+      btnClear.addEventListener('click', () => {
+        enteredPin = "";
+        updatePinDots();
+      });
+    }
+
+    const btnBack = document.getElementById('numpad-back');
+    if (btnBack) {
+      btnBack.addEventListener('click', () => {
+        if (enteredPin.length > 0) {
+          enteredPin = enteredPin.slice(0, -1);
+          updatePinDots();
+        }
+      });
+    }
+
+    if (btnSubmitPin) {
+      btnSubmitPin.addEventListener('click', () => {
+        if (enteredPin.length === 4) {
+          closeModal();
+          showToast("¡Turno Cerrado! Caja 01 Prado Bloqueada. Reporte Z transmitido al SIAT.");
+        } else {
+          showToast("Ingrese el PIN de 4 dígitos del supervisor.");
+        }
+      });
+    }
+
+    // Initial check
+    calculateTotal();
+  })();
+</script></main></div></body></html>

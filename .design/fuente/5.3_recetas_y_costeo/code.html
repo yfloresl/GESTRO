@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"primary":"#00375e","background":"#f7f9fc","secondary-fixed-dim":"#febb2a","on-secondary":"#ffffff","primary-fixed-dim":"#a0cafc","surface-container-lowest":"#ffffff","surface-tint":"#35618d","secondary-fixed":"#ffdea8","error":"#ba1a1a","tertiary":"#003e1a","on-secondary-fixed-variant":"#5e4200","outline-variant":"#c2c7d0","surface-container-highest":"#e0e3e6","surface-container":"#eceef1","on-primary":"#ffffff","outline":"#72777f","inverse-surface":"#2d3133","on-primary-fixed-variant":"#184974","on-error-container":"#93000a","tertiary-fixed-dim":"#86d996","on-surface":"#191c1e","on-secondary-fixed":"#271900","tertiary-fixed":"#a1f5b0","on-primary-container":"#95bff1","surface-dim":"#d8dadd","on-background":"#191c1e","surface-bright":"#f7f9fc","on-tertiary-fixed":"#00210b","surface-container-high":"#e6e8eb","on-primary-fixed":"#001d35","primary-container":"#1f4e79","surface-variant":"#e0e3e6","inverse-on-surface":"#eff1f4","surface":"#f7f9fc","surface-container-low":"#f2f4f7","secondary-container":"#febb2a","on-tertiary":"#ffffff","on-surface-variant":"#42474f","inverse-primary":"#a0cafc","on-secondary-container":"#6d4d00","tertiary-container":"#005827","on-tertiary-container":"#7cce8c","primary-fixed":"#d1e4ff","on-error":"#ffffff","on-tertiary-fixed-variant":"#005224","error-container":"#ffdad6","secondary":"#7c5800"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-tablet":"1.5rem","space-lg":"1.5rem","space-sm":"0.5rem","margin-desktop":"2rem","gutter":"1rem","gutter-tablet":"1.25rem","space-xl":"2rem","space-md":"1rem","gutter-desktop":"1.5rem","space-xs":"0.25rem","margin":"1rem"},"fontFamily":{"headline-md":["Inter"],"headline-xl":["Inter"],"label-lg":["JetBrains Mono"],"headline-xl-mobile":["Inter"],"body-md":["Inter"],"body-lg":["Inter"],"headline-lg-mobile":["Inter"],"label-md":["JetBrains Mono"],"headline-lg":["Inter"],"label-sm":["JetBrains Mono"],"body-sm":["Inter"],"headline-sm":["Inter"]},"fontSize":{"headline-md":["24px",{"lineHeight":"32px","fontWeight":"600"}],"headline-xl":["40px",{"lineHeight":"48px","fontWeight":"700"}],"label-lg":["16px",{"lineHeight":"20px","letterSpacing":"0.5px","fontWeight":"600"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","fontWeight":"700"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"body-lg":["18px",{"lineHeight":"26px","fontWeight":"500"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","fontWeight":"700"}],"label-md":["14px",{"lineHeight":"18px","letterSpacing":"0.25px","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"40px","fontWeight":"700"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.25px","fontWeight":"500"}],"body-sm":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["20px",{"lineHeight":"28px","fontWeight":"600"}]}}}}</script></head><body class="bg-background font-body-md text-on-surface min-h-screen"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-md flex items-center gap-space-sm"><div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[22px]">restaurant</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">Andina</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mt-0.5">GastroOS</span></div></div><div class="px-space-md py-space-xs"><div class="p-space-sm rounded-lg bg-surface-container-high/60 flex items-center justify-between"><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">SUCURSAL ACTIVA</span><span class="material-symbols-outlined text-on-surface-variant text-[18px]">store</span></div></div><nav class="flex flex-col px-space-sm mt-space-xs gap-space-xs" data-active-classes="bg-primary-container text-on-primary font-semibold shadow-sm"><div class="px-space-sm pt-space-sm pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Principal</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="panel-del-dueno" href="#"><span class="material-symbols-outlined text-[20px]">analytics</span><span class="font-body-md text-body-md">Panel del Dueño</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="menu-y-fotos" href="#"><span class="material-symbols-outlined text-[20px]">menu_book</span><span class="font-body-md text-body-md">Menú &amp; Fotos</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="recetas-y-costeo" href="#"><span class="material-symbols-outlined text-[20px]">calculate</span><span class="font-body-md text-body-md">Recetas &amp; Costeo</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="inventario-y-almacenes" href="#"><span class="material-symbols-outlined text-[20px]">inventory_2</span><span class="font-body-md text-body-md">Inventario &amp; Almacenes</span></a><div class="px-space-sm pt-space-md pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Operaciones</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="compras-y-proveedores" href="#"><span class="material-symbols-outlined text-[20px]">local_shipping</span><span class="font-body-md text-body-md">Compras &amp; Proveedores</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="mesas-y-salon" href="#"><span class="material-symbols-outlined text-[20px]">qr_code_2</span><span class="font-body-md text-body-md">Mesas &amp; Salón (QR)</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="reservas-y-eventos" href="#"><span class="material-symbols-outlined text-[20px]">event_seat</span><span class="font-body-md text-body-md">Reservas &amp; Eventos</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="personal-y-turnos" href="#"><span class="material-symbols-outlined text-[20px]">badge</span><span class="font-body-md text-body-md">Personal &amp; Turnos</span></a><div class="px-space-sm pt-space-md pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Gestión &amp; Finanzas</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="promociones" href="#"><span class="material-symbols-outlined text-[20px]">sell</span><span class="font-body-md text-body-md">Promociones</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="contabilidad-y-libros" href="#"><span class="material-symbols-outlined text-[20px]">account_balance_wallet</span><span class="font-body-md text-body-md">Contabilidad &amp; Libros</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="estadisticas-y-bi" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Estadísticas &amp; BI</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="configuracion" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-body-md text-body-md">Configuración</span></a></nav></div><div class="p-space-md mt-space-md"><div class="bg-surface-container-high rounded-xl p-space-sm flex items-center gap-space-sm"><div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim ring-4 ring-tertiary-container/30"></div><div class="flex flex-col min-w-0"><span class="font-label-sm text-label-sm font-semibold text-on-surface">KDS &amp; POS Red</span><span class="font-body-sm text-body-sm text-on-surface-variant truncate">12 Nodos Conectados</span></div></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md"><div class="relative flex items-center"><label class="sr-only" for="sucursal-select">Seleccionar Sucursal</label><select class="h-12 pl-space-md pr-10 bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" id="sucursal-select"><option selected="" value="prado">Prado - La Paz</option><option value="san-miguel">San Miguel - La Paz</option><option value="equipetrol">Equipetrol - Santa Cruz</option></select><span class="material-symbols-outlined text-on-surface-variant absolute right-3 pointer-events-none text-[20px]">expand_more</span></div><div class="h-12 px-space-md rounded-lg bg-tertiary-fixed/30 flex items-center gap-space-xs"><span class="w-2.5 h-2.5 rounded-full bg-tertiary-container animate-pulse"></span><span class="font-label-sm text-label-sm text-tertiary font-semibold uppercase tracking-wide">SIAT Online: Sincronizado</span></div></div><div class="flex items-center gap-space-lg"><div class="hidden xl:flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">schedule</span><span>BOST: Lun 14:35:10 (-04:00)</span></div><div class="flex items-center gap-space-md pl-space-md"><div class="flex flex-col text-right hidden sm:flex"><span class="font-body-md text-body-md font-semibold text-on-surface leading-tight">Alejandro Morales</span><span class="font-body-sm text-body-sm text-on-surface-variant leading-tight">Dueño / Gerente General</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative pt-16 w-full min-h-screen bg-background px-space-lg py-space-lg"><div class="flex flex-col w-full gap-space-lg">
+<!-- SECTION HEADER & GLOBAL KPI BADGES -->
+<div class="flex flex-col gap-space-md">
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-space-md">
+<div>
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider mb-1">
+<span>Operaciones de Cocina</span>
+<span>/</span>
+<span class="text-primary font-semibold">Costeo Técnico</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Recetas y Fichas Técnicas de Costeo</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Estandarización de producción, cálculo de merma y análisis de margen de rentabilidad por plato.</p>
+</div>
+<!-- Action buttons -->
+<div class="flex items-center gap-space-sm flex-wrap">
+<button class="h-12 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-body-md text-body-md font-semibold transition-all flex items-center gap-space-xs shadow-sm active:scale-95">
+<span class="material-symbols-outlined text-[20px]">content_copy</span>
+<span>Duplicar Ficha</span>
+</button>
+<button class="h-12 px-space-lg rounded-lg bg-primary hover:bg-primary-container text-on-primary font-body-md text-body-md font-semibold transition-all flex items-center gap-space-xs shadow-md active:scale-95">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span>Nueva Receta Maestra</span>
+</button>
+</div>
+</div>
+<!-- Quick stats strip -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-space-sm">
+<div class="bg-surface-container-low rounded-xl p-space-md shadow-sm flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">menu_book</span>
+</div>
+<div class="min-w-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider block">Catálogo Activo</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">42 Recetas</span>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-space-md shadow-sm flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-primary-container/20 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">percent</span>
+</div>
+<div class="min-w-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider block">Food Cost Teórico</span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold font-label-lg">29.4%</span>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-space-md shadow-sm flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">trending_up</span>
+</div>
+<div class="min-w-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider block">Margen Saludable</span>
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-sm text-headline-sm text-tertiary font-bold">35 Platos</span>
+<span class="font-label-sm text-label-sm text-tertiary">(&gt;60%)</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-space-md shadow-sm flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-error-container text-on-error-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">notification_important</span>
+</div>
+<div class="min-w-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider block">Revisión de Costo</span>
+<span class="font-headline-sm text-headline-sm text-error font-bold">3 Recetas</span>
+</div>
+</div>
+</div>
+</div>
+<!-- MAIN 2-COLUMN TECHNICAL WORKSPACE -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+<!-- LEFT COLUMN: RECIPE SELECTOR (35% on Desktop ~ 4-5 cols) -->
+<div class="xl:col-span-4 flex flex-col gap-space-md bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">Fichas Técnicas</span>
+<span class="font-label-sm text-label-sm bg-surface-container-high px-space-xs py-0.5 rounded-full text-on-surface-variant font-medium">Sucursal Prado</span>
+</div>
+<!-- Search & Filter Controls -->
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-3 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full h-11 pl-10 pr-space-md bg-surface-container-low text-on-surface placeholder:text-on-surface-variant font-body-sm text-body-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Buscar por plato, ingrediente o código..." type="text" value="Silpancho"/>
+</div>
+<div class="flex items-center gap-space-xs">
+<select class="h-9 px-space-sm bg-surface-container-low text-on-surface-variant font-body-sm text-body-sm rounded-lg appearance-none cursor-pointer flex-1 focus:outline-none">
+<option>Todas las Categorías</option>
+<option selected="">Platos Fuertes</option>
+<option>Sopas y Caldos</option>
+<option>Horneados &amp; Masas</option>
+<option>Pescados de Altura</option>
+</select>
+<select class="h-9 px-space-sm bg-surface-container-low text-on-surface-variant font-body-sm text-body-sm rounded-lg appearance-none cursor-pointer focus:outline-none">
+<option>Mayor Margen</option>
+<option>Mayor Costo</option>
+<option>Alfabético</option>
+</select>
+</div>
+</div>
+<!-- Recipe List Catalog -->
+<div class="flex flex-col gap-space-xs overflow-y-auto max-h-[780px] pr-1">
+<!-- ACTIVE ITEM: REC-012 Silpancho Cochabambino -->
+<div class="p-space-md rounded-xl bg-primary-container text-on-primary shadow-md relative cursor-pointer transition-all">
+<div class="flex items-start justify-between gap-space-xs mb-1">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm bg-on-primary/20 px-2 py-0.5 rounded font-mono font-semibold">REC-012</span>
+<span class="font-label-sm text-label-sm text-on-primary-container uppercase">Platos Fuertes</span>
+</div>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed px-2 py-0.5 rounded-full font-semibold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> 65.7% Saludable
+            </span>
+</div>
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-primary leading-tight mt-1">Silpancho Cochabambino Clásico</h3>
+<p class="font-body-sm text-body-sm text-on-primary-container mt-0.5">Rendimiento: 1 porción · Estación Caliente</p>
+<div class="mt-space-md pt-space-xs grid grid-cols-2 gap-space-sm bg-on-primary/10 rounded-lg p-space-sm">
+<div>
+<span class="font-label-sm text-label-sm text-on-primary-container block">Costo Producción</span>
+<span class="font-label-md text-label-md font-bold text-on-primary">Bs 14.80</span>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-primary-container block">PVP Carta (c/IVA)</span>
+<span class="font-label-md text-label-md font-bold text-secondary-fixed">Bs 43.20</span>
+</div>
+</div>
+</div>
+<!-- ITEM 2: REC-008 Pique Macho -->
+<div class="p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface transition-all cursor-pointer">
+<div class="flex items-start justify-between gap-space-xs mb-1">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm bg-surface-container-high px-2 py-0.5 rounded font-mono text-on-surface-variant font-medium">REC-008</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Platos Fuertes</span>
+</div>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm bg-tertiary-fixed/60 text-tertiary px-2 py-0.5 rounded-full font-medium">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> 70.0%
+            </span>
+</div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface leading-snug">Pique Macho Tradicional (2 personas)</h3>
+<div class="flex items-center justify-between mt-space-sm font-label-sm text-label-sm">
+<span class="text-on-surface-variant">Costo: <strong class="text-on-surface font-label-md">Bs 19.50</strong></span>
+<span class="text-on-surface-variant">PVP: <strong class="text-primary font-label-md">Bs 65.00</strong></span>
+</div>
+</div>
+<!-- ITEM 3: REC-015 Sopa de Maní -->
+<div class="p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface transition-all cursor-pointer">
+<div class="flex items-start justify-between gap-space-xs mb-1">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm bg-surface-container-high px-2 py-0.5 rounded font-mono text-on-surface-variant font-medium">REC-015</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Sopas y Caldos</span>
+</div>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm bg-tertiary-fixed/60 text-tertiary px-2 py-0.5 rounded-full font-medium">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> 72.2%
+            </span>
+</div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface leading-snug">Sopa de Maní Criolla</h3>
+<div class="flex items-center justify-between mt-space-sm font-label-sm text-label-sm">
+<span class="text-on-surface-variant">Costo: <strong class="text-on-surface font-label-md">Bs 8.90</strong></span>
+<span class="text-on-surface-variant">PVP: <strong class="text-primary font-label-md">Bs 32.00</strong></span>
+</div>
+</div>
+<!-- ITEM 4: REC-004 Salteñas de Carne -->
+<div class="p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface transition-all cursor-pointer">
+<div class="flex items-start justify-between gap-space-xs mb-1">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm bg-surface-container-high px-2 py-0.5 rounded font-mono text-on-surface-variant font-medium">REC-004</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Horneados</span>
+</div>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm bg-tertiary-fixed/60 text-tertiary px-2 py-0.5 rounded-full font-medium">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> 71.6%
+            </span>
+</div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface leading-snug">Salteñas de Carne (Tanda 30u)</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Tanda: Bs 102.00 · Costo unitario: Bs 3.40</p>
+<div class="flex items-center justify-between mt-space-xs font-label-sm text-label-sm">
+<span class="text-on-surface-variant">Unidad: <strong class="text-on-surface font-label-md">Bs 3.40</strong></span>
+<span class="text-on-surface-variant">PVP u: <strong class="text-primary font-label-md">Bs 12.00</strong></span>
+</div>
+</div>
+<!-- ITEM 5: REC-022 Trucha del Titicaca (Warning Alert) -->
+<div class="p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface transition-all cursor-pointer">
+<div class="flex items-start justify-between gap-space-xs mb-1">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm bg-surface-container-high px-2 py-0.5 rounded font-mono text-on-surface-variant font-medium">REC-022</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Pescados</span>
+</div>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm bg-error-container text-on-error-container px-2 py-0.5 rounded-full font-semibold">
+<span class="material-symbols-outlined text-[14px]">warning</span> Costo +12%
+            </span>
+</div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface leading-snug">Trucha del Titicaca a la Plancha</h3>
+<p class="font-body-sm text-body-sm text-error mt-0.5 font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">trending_up</span> Alerta: Escasez proveedor Desaguadero
+          </p>
+<div class="flex items-center justify-between mt-space-sm font-label-sm text-label-sm">
+<span class="text-on-surface-variant">Costo: <strong class="text-error font-label-md">Bs 24.10</strong></span>
+<span class="text-on-surface-variant">PVP: <strong class="text-primary font-label-md">Bs 52.00</strong></span>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: DETAILED RECIPE COSTING CARD (65% on Desktop ~ 7-8 cols) -->
+<div class="xl:col-span-8 flex flex-col gap-space-md">
+<!-- BANNER HEADER OF ACTIVE SHEET -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-start justify-between gap-space-md">
+<div class="flex items-start gap-space-md">
+<div class="w-20 h-20 rounded-xl overflow-hidden shadow-sm shrink-0">
+<img class="w-full h-full object-cover" data-alt="Traditional Bolivian Silpancho plate served on rustic ceramic, featuring a large flattened breaded beef steak resting over rice and roasted potatoes, crowned with two soft sunny-side-up fried eggs and vibrant locoto llajwa salsa on the side in La Paz restaurant ambiance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyVqvCT5SLeuehav3WSg5aKwBAkfEhSMjkzr_zJmlKqmyBgj1oF2yuTQD4u6AxWdU24sWg1ltM-JTtQZYLaVPYo1veatXrIiS_1eIJOvnkcTGzQeASDJ051MG9hGx2vJWuvOfpLA1WXjsSOP62SMwViQDz5CJ_wXD60aSk9WlHhZlE213BpdlVg7WlE-R-RnUeawzbNRtBR0_haoPXzJ8LOL2dG8vcK6cJuDWwNwMq"/>
+</div>
+<div>
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="font-label-md text-label-md bg-primary text-on-primary px-2.5 py-0.5 rounded font-mono font-bold">REC-012</span>
+<span class="font-label-sm text-label-sm bg-surface-container-high text-on-surface-variant px-2 py-0.5 rounded font-medium">Versión v2.4</span>
+<span class="font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed px-2 py-0.5 rounded font-semibold">Estandarizada SIAT</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold mt-1">Silpancho Cochabambino Clásico</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">person</span>
+<span>Última calibración de costo por Chef Marcelo Ríos (hace 3 días)</span>
+</p>
+</div>
+</div>
+<!-- Quick Parameters Badge Strip -->
+<div class="flex sm:flex-col items-end gap-space-xs shrink-0 font-label-sm text-label-sm">
+<div class="bg-surface-container-low px-space-sm py-1 rounded-lg flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[18px]">group</span>
+<span>Lote: <strong>1 porción</strong></span>
+</div>
+<div class="bg-surface-container-low px-space-sm py-1 rounded-lg flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[18px]">timer</span>
+<span>Tiempo: <strong>18 min</strong></span>
+</div>
+<div class="bg-surface-container-low px-space-sm py-1 rounded-lg flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[18px]">skillet</span>
+<span>Línea: <strong>Plancha / Caliente</strong></span>
+</div>
+</div>
+</div>
+<!-- FINANCIAL & PROFITABILITY KPI CARDS -->
+<div class="grid grid-cols-2 lg:grid-cols-5 gap-space-sm pt-space-xs">
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Costo Insumos Directos</span>
+<span class="font-headline-sm text-headline-sm font-label-md font-bold text-on-surface mt-1">Bs 14.80</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">9 ingredientes</span>
+</div>
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Empaque / Desechables</span>
+<span class="font-headline-sm text-headline-sm font-label-md font-bold text-on-surface mt-1">Bs 0.80</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">Delivery &amp; Takeout</span>
+</div>
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Costo Total Producción</span>
+<span class="font-headline-sm text-headline-sm font-label-md font-bold text-primary mt-1">Bs 15.60</span>
+<span class="font-label-sm text-label-sm text-tertiary font-semibold mt-0.5">Food Cost: 36.1%</span>
+</div>
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">PVP Carta (c/ IVA 13%)</span>
+<span class="font-headline-sm text-headline-sm font-label-md font-bold text-on-surface mt-1">Bs 43.20</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">Neto Facturado: Bs 37.58</span>
+</div>
+<div class="col-span-2 lg:col-span-1 bg-tertiary-fixed/30 rounded-lg p-space-sm flex flex-col justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-tertiary font-bold uppercase tracking-wider">Margen Contribución</span>
+<span class="font-headline-sm text-headline-sm font-label-md font-bold text-tertiary block mt-0.5">Bs 27.60</span>
+</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-tertiary font-semibold mt-1">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+<span>63.9% Óptimo</span>
+</div>
+</div>
+</div>
+<!-- PROFITABILITY PROGRESS BAR -->
+<div class="flex flex-col gap-1.5 pt-space-xs">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-on-surface-variant flex items-center gap-1">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary"></span>
+<span>Desglose Financiero por Unidad</span>
+</span>
+<span class="text-tertiary font-bold">Semáforo de Rentabilidad: Verde Excelente</span>
+</div>
+<div class="w-full h-3 bg-surface-container-highest rounded-full overflow-hidden flex">
+<div class="h-full bg-primary" style="width: 34.2%;" title="Materia Prima: 34.2%"></div>
+<div class="h-full bg-primary-fixed-dim" style="width: 1.9%;" title="Empaque: 1.9%"></div>
+<div class="h-full bg-secondary-fixed-dim" style="width: 13.0%;" title="Impuesto IVA SIAT: 13.0%"></div>
+<div class="h-full bg-tertiary-container" style="width: 50.9%;" title="Margen Bruto Neto: 50.9%"></div>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant pt-0.5 flex-wrap">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-primary"></span> MP Directa (Bs 14.80)</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-primary-fixed-dim"></span> Empaque (Bs 0.80)</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-secondary-fixed-dim"></span> IVA 13% (Bs 5.62)</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-tertiary-container"></span> Margen Neto (Bs 21.98)</span>
+</div>
+</div>
+</div>
+<!-- INGREDIENTS BREAKDOWN TABLE WITH SHRINKAGE (MERMA) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">Composición de Ingredientes &amp; Rendimiento</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Costeo dinámico vinculado a compras y almacén central Prado.</p>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="h-10 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-body-sm text-body-sm font-semibold transition-all flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">sync</span>
+<span>Actualizar Precios Almacén</span>
+</button>
+<button class="h-10 px-space-md rounded-lg bg-primary hover:bg-primary-container text-on-primary font-body-sm text-body-sm font-semibold transition-all flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Agregar Insumo</span>
+</button>
+</div>
+</div>
+<!-- Table Container -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-space-sm px-space-sm rounded-l-lg">Insumo / Ingrediente</th>
+<th class="py-space-sm px-space-sm">Almacén</th>
+<th class="py-space-sm px-space-sm text-right">Cant. Bruta</th>
+<th class="py-space-sm px-space-sm text-center">Unidad</th>
+<th class="py-space-sm px-space-sm text-right">% Merma</th>
+<th class="py-space-sm px-space-sm text-right">Cant. Neta</th>
+<th class="py-space-sm px-space-sm text-right">Costo Unit. (Bs)</th>
+<th class="py-space-sm px-space-sm text-right">Subtotal (Bs)</th>
+<th class="py-space-sm px-space-sm text-center rounded-r-lg">Acción</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm divide-y divide-surface-container">
+<!-- ROW 1 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py- space-sm py-2.5 px-space-sm">
+<div class="font-semibold text-on-surface">Lomo Picado de Res (Corte Silpancho)</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">INS-CRN-044</span>
+</td>
+<td class="py-2.5 px-space-sm">
+<span class="font-label-sm text-label-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">Carnes Frías</span>
+</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">180</td>
+<td class="py-2.5 px-space-sm text-center font-label-sm text-on-surface-variant">g</td>
+<td class="py-2.5 px-space-sm text-right font-label-sm text-on-surface-variant">5%</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">171.0 g</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface-variant">42.00 / kg</td>
+<td class="py-2.5 px-space-sm text-right font-label-md font-bold text-primary">7.56</td>
+<td class="py-2.5 px-space-sm text-center">
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-highest text-on-surface-variant inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- ROW 2 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-2.5 px-space-sm">
+<div class="font-semibold text-on-surface">Arroz Grano de Oro (Cocido)</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">INS-SEC-012</span>
+</td>
+<td class="py-2.5 px-space-sm">
+<span class="font-label-sm text-label-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">Secos</span>
+</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">120</td>
+<td class="py-2.5 px-space-sm text-center font-label-sm text-on-surface-variant">g</td>
+<td class="py-2.5 px-space-sm text-right font-label-sm text-tertiary font-semibold">0%</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">120.0 g</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface-variant">8.50 / kg</td>
+<td class="py-2.5 px-space-sm text-right font-label-md font-bold text-primary">1.02</td>
+<td class="py-2.5 px-space-sm text-center">
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-highest text-on-surface-variant inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- ROW 3 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-2.5 px-space-sm">
+<div class="font-semibold text-on-surface">Papa Holandesa para Fritura</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">INS-VRD-005</span>
+</td>
+<td class="py-2.5 px-space-sm">
+<span class="font-label-sm text-label-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">Verduras</span>
+</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">150</td>
+<td class="py-2.5 px-space-sm text-center font-label-sm text-on-surface-variant">g</td>
+<td class="py-2.5 px-space-sm text-right font-label-sm text-secondary font-semibold">15% (pelado)</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">127.5 g</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface-variant">6.00 / kg</td>
+<td class="py-2.5 px-space-sm text-right font-label-md font-bold text-primary">0.90</td>
+<td class="py-2.5 px-space-sm text-center">
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-highest text-on-surface-variant inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- ROW 4 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-2.5 px-space-sm">
+<div class="font-semibold text-on-surface">Huevo de Granja Fresco</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">INS-LAC-019</span>
+</td>
+<td class="py-2.5 px-space-sm">
+<span class="font-label-sm text-label-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">Lácteos/Huevos</span>
+</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">1</td>
+<td class="py-2.5 px-space-sm text-center font-label-sm text-on-surface-variant">unidad</td>
+<td class="py-2.5 px-space-sm text-right font-label-sm text-tertiary font-semibold">0%</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">1.0 u</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface-variant">1.10 / u</td>
+<td class="py-2.5 px-space-sm text-right font-label-md font-bold text-primary">1.10</td>
+<td class="py-2.5 px-space-sm text-center">
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-highest text-on-surface-variant inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- ROW 5 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-2.5 px-space-sm">
+<div class="font-semibold text-on-surface">Pan Molido Especial Apanado</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">INS-SEC-031</span>
+</td>
+<td class="py-2.5 px-space-sm">
+<span class="font-label-sm text-label-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">Secos</span>
+</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">40</td>
+<td class="py-2.5 px-space-sm text-center font-label-sm text-on-surface-variant">g</td>
+<td class="py-2.5 px-space-sm text-right font-label-sm text-on-surface-variant">2%</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">39.2 g</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface-variant">12.00 / kg</td>
+<td class="py-2.5 px-space-sm text-right font-label-md font-bold text-primary">0.48</td>
+<td class="py-2.5 px-space-sm text-center">
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-highest text-on-surface-variant inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- ROW 6 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-2.5 px-space-sm">
+<div class="font-semibold text-on-surface">Locoto Fresco Seleccionado (Llajwa)</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">INS-VRD-018</span>
+</td>
+<td class="py-2.5 px-space-sm">
+<span class="font-label-sm text-label-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">Verduras</span>
+</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">30</td>
+<td class="py-2.5 px-space-sm text-center font-label-sm text-on-surface-variant">g</td>
+<td class="py-2.5 px-space-sm text-right font-label-sm text-on-surface-variant">8%</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">27.6 g</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface-variant">18.00 / kg</td>
+<td class="py-2.5 px-space-sm text-right font-label-md font-bold text-primary">0.54</td>
+<td class="py-2.5 px-space-sm text-center">
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-highest text-on-surface-variant inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- ROW 7 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-2.5 px-space-sm">
+<div class="font-semibold text-on-surface">Tomate Perita y Quirquiña</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">INS-VRD-022</span>
+</td>
+<td class="py-2.5 px-space-sm">
+<span class="font-label-sm text-label-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">Verduras</span>
+</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">40</td>
+<td class="py-2.5 px-space-sm text-center font-label-sm text-on-surface-variant">g</td>
+<td class="py-2.5 px-space-sm text-right font-label-sm text-on-surface-variant">10%</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">36.0 g</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface-variant">10.00 / kg</td>
+<td class="py-2.5 px-space-sm text-right font-label-md font-bold text-primary">0.40</td>
+<td class="py-2.5 px-space-sm text-center">
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-highest text-on-surface-variant inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- ROW 8 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-2.5 px-space-sm">
+<div class="font-semibold text-on-surface">Aceite Vegetal Fritura Profunda</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">INS-LIQ-009</span>
+</td>
+<td class="py-2.5 px-space-sm">
+<span class="font-label-sm text-label-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">Líquidos</span>
+</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">50</td>
+<td class="py-2.5 px-space-sm text-center font-label-sm text-on-surface-variant">ml</td>
+<td class="py-2.5 px-space-sm text-right font-label-sm text-secondary font-semibold">20% (absorb.)</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface">40.0 ml</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface-variant">14.00 / L</td>
+<td class="py-2.5 px-space-sm text-right font-label-md font-bold text-primary">0.70</td>
+<td class="py-2.5 px-space-sm text-center">
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-highest text-on-surface-variant inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- ROW 9 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-2.5 px-space-sm">
+<div class="font-semibold text-on-surface">Condimentos (Sal, pimienta, comino, ajo)</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">INS-ESP-002</span>
+</td>
+<td class="py-2.5 px-space-sm">
+<span class="font-label-sm text-label-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">Especias</span>
+</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface-variant">Pizca</td>
+<td class="py-2.5 px-space-sm text-center font-label-sm text-on-surface-variant">est.</td>
+<td class="py-2.5 px-space-sm text-right font-label-sm text-on-surface-variant">-</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface-variant">-</td>
+<td class="py-2.5 px-space-sm text-right font-label-md text-on-surface-variant">Fijo x plato</td>
+<td class="py-2.5 px-space-sm text-right font-label-md font-bold text-primary">0.30</td>
+<td class="py-2.5 px-space-sm text-center">
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container-highest text-on-surface-variant inline-flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+<!-- TOTALS FOOTER -->
+<tfoot>
+<tr class="bg-surface-container text-on-surface font-label-md">
+<td class="py-space-sm px-space-sm font-bold text-right rounded-l-lg" colspan="6">
+                  Subtotal Materia Prima Directa (1 porción):
+                </td>
+<td class="py-space-sm px-space-sm text-right font-headline-sm text-headline-sm font-bold text-primary" colspan="2">
+                  Bs 14.80
+                </td>
+<td class="py-space-sm px-space-sm rounded-r-lg"></td>
+</tr>
+</tfoot>
+</table>
+</div>
+</div>
+<!-- OPERATIONAL & HACCP NOTES SECTION -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">health_and_safety</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">Pasos de Elaboración Estándar &amp; Puntos Críticos (HACCP)</h3>
+</div>
+<span class="font-label-sm text-label-sm bg-tertiary-fixed/60 text-tertiary px-space-sm py-0.5 rounded-full font-semibold">Auditoría Bromatológica OK</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-primary font-bold">01 · Aplanado &amp; Empanado</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Carne aplanada al momento sobre piedra con pan molido hasta alcanzar <strong class="text-on-surface">3mm de grosor uniforme</strong>. Evitar roturas periféricas.
+            </p>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-secondary font-bold">02 · Punto Crítico Cocción (PCC-1)</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Fritura profunda de papa a <strong class="text-on-surface">175°C por 4 min</strong>. Carne a plancha fuerte 90 seg por lado. Huevo montado con yema tierna inviolable.
+            </p>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-tertiary font-bold">03 · Emplatado &amp; Llajwa Fresca</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Montaje inmediato sobre base de arroz y papa frita caliente. Servir con <strong class="text-on-surface">llajwa molida en batán</strong> (vida útil máx 4 horas en frío).
+            </p>
+</div>
+</div>
+<!-- ACTION FOOTER BAR -->
+<div class="flex flex-col sm:flex-row items-center justify-between gap-space-md pt-space-md mt-space-xs">
+<div class="flex items-center gap-space-xs w-full sm:w-auto">
+<button class="h-12 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-body-md text-body-md font-semibold transition-all flex items-center justify-center gap-space-xs flex-1 sm:flex-initial">
+<span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+<span>Exportar PDF Cocina</span>
+</button>
+<button class="h-12 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-body-md text-body-md font-semibold transition-all flex items-center justify-center gap-space-xs flex-1 sm:flex-initial">
+<span class="material-symbols-outlined text-[20px]">history</span>
+<span>Historial de Precios</span>
+</button>
+</div>
+<div class="flex items-center gap-space-xs w-full sm:w-auto">
+<button class="h-12 px-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-body-md text-body-md font-semibold transition-all flex items-center justify-center">
+<span>Descartar</span>
+</button>
+<button class="h-12 px-space-xl rounded-lg bg-primary hover:bg-primary-container text-on-primary font-body-md text-body-md font-semibold transition-all flex items-center justify-center gap-space-xs shadow-md active:scale-95 flex-1 sm:flex-initial">
+<span class="material-symbols-outlined text-[20px]">save</span>
+<span>Guardar Ficha Técnica</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></main></div></body></html>

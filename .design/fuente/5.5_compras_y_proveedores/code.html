@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"primary":"#00375e","background":"#f7f9fc","secondary-fixed-dim":"#febb2a","on-secondary":"#ffffff","primary-fixed-dim":"#a0cafc","surface-container-lowest":"#ffffff","surface-tint":"#35618d","secondary-fixed":"#ffdea8","error":"#ba1a1a","tertiary":"#003e1a","on-secondary-fixed-variant":"#5e4200","outline-variant":"#c2c7d0","surface-container-highest":"#e0e3e6","surface-container":"#eceef1","on-primary":"#ffffff","outline":"#72777f","inverse-surface":"#2d3133","on-primary-fixed-variant":"#184974","on-error-container":"#93000a","tertiary-fixed-dim":"#86d996","on-surface":"#191c1e","on-secondary-fixed":"#271900","tertiary-fixed":"#a1f5b0","on-primary-container":"#95bff1","surface-dim":"#d8dadd","on-background":"#191c1e","surface-bright":"#f7f9fc","on-tertiary-fixed":"#00210b","surface-container-high":"#e6e8eb","on-primary-fixed":"#001d35","primary-container":"#1f4e79","surface-variant":"#e0e3e6","inverse-on-surface":"#eff1f4","surface":"#f7f9fc","surface-container-low":"#f2f4f7","secondary-container":"#febb2a","on-tertiary":"#ffffff","on-surface-variant":"#42474f","inverse-primary":"#a0cafc","on-secondary-container":"#6d4d00","tertiary-container":"#005827","on-tertiary-container":"#7cce8c","primary-fixed":"#d1e4ff","on-error":"#ffffff","on-tertiary-fixed-variant":"#005224","error-container":"#ffdad6","secondary":"#7c5800"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-tablet":"1.5rem","space-lg":"1.5rem","space-sm":"0.5rem","margin-desktop":"2rem","gutter":"1rem","gutter-tablet":"1.25rem","space-xl":"2rem","space-md":"1rem","gutter-desktop":"1.5rem","space-xs":"0.25rem","margin":"1rem"},"fontFamily":{"headline-md":["Inter"],"headline-xl":["Inter"],"label-lg":["JetBrains Mono"],"headline-xl-mobile":["Inter"],"body-md":["Inter"],"body-lg":["Inter"],"headline-lg-mobile":["Inter"],"label-md":["JetBrains Mono"],"headline-lg":["Inter"],"label-sm":["JetBrains Mono"],"body-sm":["Inter"],"headline-sm":["Inter"]},"fontSize":{"headline-md":["24px",{"lineHeight":"32px","fontWeight":"600"}],"headline-xl":["40px",{"lineHeight":"48px","fontWeight":"700"}],"label-lg":["16px",{"lineHeight":"20px","letterSpacing":"0.5px","fontWeight":"600"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","fontWeight":"700"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"body-lg":["18px",{"lineHeight":"26px","fontWeight":"500"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","fontWeight":"700"}],"label-md":["14px",{"lineHeight":"18px","letterSpacing":"0.25px","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"40px","fontWeight":"700"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.25px","fontWeight":"500"}],"body-sm":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["20px",{"lineHeight":"28px","fontWeight":"600"}]}}}}</script></head><body class="bg-background font-body-md text-on-surface min-h-screen"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-md flex items-center gap-space-sm"><div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[22px]">restaurant</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">Andina</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mt-0.5">GastroOS</span></div></div><div class="px-space-md py-space-xs"><div class="p-space-sm rounded-lg bg-surface-container-high/60 flex items-center justify-between"><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">SUCURSAL ACTIVA</span><span class="material-symbols-outlined text-on-surface-variant text-[18px]">store</span></div></div><nav class="flex flex-col px-space-sm mt-space-xs gap-space-xs" data-active-classes="bg-primary-container text-on-primary font-semibold shadow-sm"><div class="px-space-sm pt-space-sm pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Principal</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="panel-del-dueno" href="#"><span class="material-symbols-outlined text-[20px]">analytics</span><span class="font-body-md text-body-md">Panel del Dueño</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="menu-y-fotos" href="#"><span class="material-symbols-outlined text-[20px]">menu_book</span><span class="font-body-md text-body-md">Menú &amp; Fotos</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="recetas-y-costeo" href="#"><span class="material-symbols-outlined text-[20px]">calculate</span><span class="font-body-md text-body-md">Recetas &amp; Costeo</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="inventario-y-almacenes" href="#"><span class="material-symbols-outlined text-[20px]">inventory_2</span><span class="font-body-md text-body-md">Inventario &amp; Almacenes</span></a><div class="px-space-sm pt-space-md pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Operaciones</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="compras-y-proveedores" href="#"><span class="material-symbols-outlined text-[20px]">local_shipping</span><span class="font-body-md text-body-md">Compras &amp; Proveedores</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="mesas-y-salon" href="#"><span class="material-symbols-outlined text-[20px]">qr_code_2</span><span class="font-body-md text-body-md">Mesas &amp; Salón (QR)</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="reservas-y-eventos" href="#"><span class="material-symbols-outlined text-[20px]">event_seat</span><span class="font-body-md text-body-md">Reservas &amp; Eventos</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="personal-y-turnos" href="#"><span class="material-symbols-outlined text-[20px]">badge</span><span class="font-body-md text-body-md">Personal &amp; Turnos</span></a><div class="px-space-sm pt-space-md pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Gestión &amp; Finanzas</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="promociones" href="#"><span class="material-symbols-outlined text-[20px]">sell</span><span class="font-body-md text-body-md">Promociones</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="contabilidad-y-libros" href="#"><span class="material-symbols-outlined text-[20px]">account_balance_wallet</span><span class="font-body-md text-body-md">Contabilidad &amp; Libros</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="estadisticas-y-bi" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Estadísticas &amp; BI</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="configuracion" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-body-md text-body-md">Configuración</span></a></nav></div><div class="p-space-md mt-space-md"><div class="bg-surface-container-high rounded-xl p-space-sm flex items-center gap-space-sm"><div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim ring-4 ring-tertiary-container/30"></div><div class="flex flex-col min-w-0"><span class="font-label-sm text-label-sm font-semibold text-on-surface">KDS &amp; POS Red</span><span class="font-body-sm text-body-sm text-on-surface-variant truncate">12 Nodos Conectados</span></div></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md"><div class="relative flex items-center"><label class="sr-only" for="sucursal-select">Seleccionar Sucursal</label><select class="h-12 pl-space-md pr-10 bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" id="sucursal-select"><option selected="" value="prado">Prado - La Paz</option><option value="san-miguel">San Miguel - La Paz</option><option value="equipetrol">Equipetrol - Santa Cruz</option></select><span class="material-symbols-outlined text-on-surface-variant absolute right-3 pointer-events-none text-[20px]">expand_more</span></div><div class="h-12 px-space-md rounded-lg bg-tertiary-fixed/30 flex items-center gap-space-xs"><span class="w-2.5 h-2.5 rounded-full bg-tertiary-container animate-pulse"></span><span class="font-label-sm text-label-sm text-tertiary font-semibold uppercase tracking-wide">SIAT Online: Sincronizado</span></div></div><div class="flex items-center gap-space-lg"><div class="hidden xl:flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">schedule</span><span>BOST: Lun 14:35:10 (-04:00)</span></div><div class="flex items-center gap-space-md pl-space-md"><div class="flex flex-col text-right hidden sm:flex"><span class="font-body-md text-body-md font-semibold text-on-surface leading-tight">Alejandro Morales</span><span class="font-body-sm text-body-sm text-on-surface-variant leading-tight">Dueño / Gerente General</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative pt-16 w-full min-h-screen bg-background px-space-lg py-space-lg"><div class="flex flex-col w-full gap-space-lg">
+<!-- Header Section with Breadcrumbs & Action Toolbar -->
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<span>OPERACIONES Y FINANZAS</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-semibold">ABASTECIMIENTO &amp; COMPRAS</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Gestión de Compras y Proveedores</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+        Control de órdenes de compra, catálogo de proveedores bolivianos con NIT verificado, recepción de facturas comerciales e ingreso automático al Kardex de almacén.
+      </p>
+</div>
+<!-- Quick Action Controls -->
+<div class="flex flex-wrap items-center gap-space-sm pt-space-xs xl:pt-0">
+<button class="h-12 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-body-md text-body-md font-semibold flex items-center gap-space-xs transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-primary text-[20px]">verified_user</span>
+<span>Verificar NIT en SIN</span>
+</button>
+<button class="h-12 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-body-md text-body-md font-semibold flex items-center gap-space-xs transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-primary text-[20px]">receipt_long</span>
+<span>Registrar Factura (+ Stock)</span>
+</button>
+<button class="h-12 px-space-lg rounded-lg bg-primary hover:bg-primary-container text-on-primary font-body-md text-body-md font-semibold flex items-center gap-space-xs transition-all shadow-md active:scale-95" type="button">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span>+ Nueva Orden de Compra (OC)</span>
+</button>
+</div>
+</div>
+<!-- Operational KPIs Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- KPI 1 -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-start justify-between">
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Compras del Mes (Mayo)</span>
+<span class="font-label-lg text-headline-md text-primary font-bold">Bs 34,890.00</span>
+</div>
+<div class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[26px]">account_balance_wallet</span>
+</div>
+</div>
+<div class="mt-space-md flex items-center gap-space-xs text-tertiary font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span>+8.4% vs mes anterior</span>
+<span class="text-on-surface-variant font-normal">| 18 OCs ejecutadas</span>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-start justify-between">
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Pendientes de Recepción</span>
+<div class="flex items-baseline gap-space-xs">
+<span class="font-label-lg text-headline-md text-on-surface font-bold">4 Órdenes</span>
+</div>
+</div>
+<div class="w-12 h-12 rounded-lg bg-secondary-container/40 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[26px]">local_shipping</span>
+</div>
+</div>
+<div class="mt-space-md flex items-center gap-space-xs">
+<span class="px-space-xs py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-bold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]">warning</span> 2 Urgentes
+        </span>
+<span class="font-body-sm text-body-sm text-on-surface-variant truncate">Lomo de Res y Locoto</span>
+</div>
+</div>
+<!-- KPI 3 -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-start justify-between">
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Cuentas por Pagar (Proveedores)</span>
+<span class="font-label-lg text-headline-md text-secondary font-bold">Bs 11,450.00</span>
+</div>
+<div class="w-12 h-12 rounded-lg bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
+<span class="material-symbols-outlined text-[26px]">pending_actions</span>
+</div>
+</div>
+<div class="mt-space-md flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-secondary text-[16px]">schedule</span>
+<span class="font-semibold text-secondary">Vencimiento próximo: 3 días</span>
+<span>(Frigorífico San Lorenzo)</span>
+</div>
+</div>
+<!-- KPI 4 -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden">
+<div class="flex items-start justify-between">
+<div class="flex flex-col gap-space-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Ahorro Negociación / Volumen</span>
+<span class="font-label-lg text-headline-md text-tertiary font-bold">Bs 2,180.00</span>
+</div>
+<div class="w-12 h-12 rounded-lg bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[26px]">price_check</span>
+</div>
+</div>
+<div class="mt-space-md flex items-center gap-space-xs text-tertiary font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[16px]">insights</span>
+<span>6.2% de descuento medio obtenido</span>
+</div>
+</div>
+</div>
+<!-- Main Asymmetric Workspace Layout -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+<!-- Left 70% Panel: Orders & Suppliers Master List -->
+<div class="xl:col-span-8 flex flex-col gap-space-md">
+<!-- Tabs & Search Controls Header -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-space-md">
+<!-- Navigation Tabs -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs bg-surface-container-low p-1 rounded-lg">
+<button class="h-10 px-space-md rounded-lg bg-primary-container text-on-primary font-body-sm text-body-sm font-semibold flex items-center gap-space-xs shadow-sm">
+<span class="material-symbols-outlined text-[18px]">receipt</span>
+<span>Órdenes de Compra (OC)</span>
+<span class="ml-1 px-1.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold">18</span>
+</button>
+<button class="h-10 px-space-md rounded-lg hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm font-semibold flex items-center gap-space-xs transition-colors">
+<span class="material-symbols-outlined text-[18px]">contacts</span>
+<span>Catálogo de Proveedores</span>
+<span class="ml-1 px-1.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">24</span>
+</button>
+<button class="h-10 px-space-md rounded-lg hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm font-semibold flex items-center gap-space-xs transition-colors">
+<span class="material-symbols-outlined text-[18px]">fact_check</span>
+<span>Facturas y Notas de Entrega</span>
+<span class="ml-1 px-1.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">42</span>
+</button>
+</div>
+<!-- Quick Actions Export/Refresh -->
+<div class="flex items-center gap-space-xs">
+<button class="w-10 h-10 rounded-lg bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-center text-on-surface-variant" title="Descargar reporte mensual">
+<span class="material-symbols-outlined text-[20px]">file_download</span>
+</button>
+<button class="w-10 h-10 rounded-lg bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-center text-on-surface-variant" title="Refrescar sincronización">
+<span class="material-symbols-outlined text-[20px]">sync</span>
+</button>
+</div>
+</div>
+<!-- Filter Sub-bar & Search -->
+<div class="flex flex-col md:flex-row items-center gap-space-sm pt-space-xs">
+<!-- Search Input -->
+<div class="relative flex-1 w-full">
+<span class="material-symbols-outlined text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2 text-[20px]">search</span>
+<input class="w-full h-11 pl-10 pr-space-md bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" placeholder="Buscar por N° OC, proveedor, insumo o NIT..." type="text"/>
+</div>
+<!-- State Filter Buttons -->
+<div class="flex items-center gap-space-xs overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
+<button class="h-11 px-space-sm rounded-lg bg-primary/10 text-primary font-label-sm text-label-sm font-bold whitespace-nowrap">Todos</button>
+<button class="h-11 px-space-sm rounded-lg hover:bg-surface-container text-on-surface-variant font-label-sm text-label-sm whitespace-nowrap">Borrador</button>
+<button class="h-11 px-space-sm rounded-lg hover:bg-surface-container text-on-surface-variant font-label-sm text-label-sm whitespace-nowrap">Enviada</button>
+<button class="h-11 px-space-sm rounded-lg hover:bg-surface-container text-on-surface-variant font-label-sm text-label-sm whitespace-nowrap">Parcial</button>
+<button class="h-11 px-space-sm rounded-lg hover:bg-surface-container text-on-surface-variant font-label-sm text-label-sm whitespace-nowrap">Kardex OK</button>
+<button class="h-11 px-space-sm rounded-lg bg-surface-container text-on-surface-variant font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">tune</span> Filtros
+            </button>
+</div>
+</div>
+</div>
+<!-- Orders Interactive Table -->
+<div class="rounded-xl bg-surface-container-lowest shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-space-md px-space-md font-semibold">N° OC &amp; Emisión</th>
+<th class="py-space-md px-space-md font-semibold">Proveedor / Razón Social</th>
+<th class="py-space-md px-space-md font-semibold">Insumos Solicitados</th>
+<th class="py-space-md px-space-md font-semibold">Monto Fiscal (Bs)</th>
+<th class="py-space-md px-space-md font-semibold">Estado Recepción</th>
+<th class="py-space-md px-space-md text-right font-semibold">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container text-on-surface font-body-sm text-body-sm">
+<!-- Row 1: High Priority Urgent (Stock Replenish from 5.4) -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-primary">OC-2025-089</span>
+<span class="text-on-surface-variant font-label-sm text-label-sm">Hoy, 10:15 (Hace 2h)</span>
+<span class="inline-flex items-center gap-1 text-[11px] font-label-sm text-secondary mt-0.5">
+<span class="material-symbols-outlined text-[12px]">auto_mode</span> Auto-stock 5.4
+                    </span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Frigorífico San Lorenzo S.R.L.</span>
+<div class="flex items-center gap-space-xs mt-0.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant">NIT: 1024859023</span>
+<span class="px-1.5 py-0.2 rounded bg-tertiary-fixed text-tertiary font-label-sm text-[11px] font-bold">SIN ACTIVO</span>
+</div>
+<span class="text-on-surface-variant text-[12px]">La Paz - Planta Senkata</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-wrap gap-1 max-w-xs">
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm">Lomo Res 25 kg</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm">Pechuga Pollo 30 kg</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm">Chorizo Parrillero 15 kg</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-primary">Bs 3,850.00</span>
+<span class="text-tertiary font-label-sm text-label-sm flex items-center gap-0.5 font-medium">
+<span class="material-symbols-outlined text-[14px]">receipt</span> Factura Válida (CF)
+                    </span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col gap-1 items-start">
+<span class="px-2.5 py-1 rounded-full bg-secondary-container/60 text-on-secondary-container font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] animate-spin">autorenew</span> En Tránsito
+                    </span>
+<span class="text-[12px] text-error font-medium">Llegada est: 15:30 (Urgente)</span>
+</div>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="h-9 px-space-sm rounded-lg bg-primary text-on-primary hover:bg-primary-container font-body-sm text-body-sm font-semibold flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">inventory</span> Recepcionar
+                    </button>
+<button class="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-center text-tertiary" title="Contactar por WhatsApp">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2: Produce & Local Veggies -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-primary">OC-2025-088</span>
+<span class="text-on-surface-variant font-label-sm text-label-sm">Ayer, 18:40</span>
+<span class="inline-flex items-center gap-1 text-[11px] font-label-sm text-on-surface-variant mt-0.5">
+<span class="material-symbols-outlined text-[12px]">person</span> Por Chef Ejecutivo
+                    </span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Mercado Rodríguez - Doña Maritza</span>
+<div class="flex items-center gap-space-xs mt-0.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Régimen Simplificado</span>
+<span class="px-1.5 py-0.2 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-[11px] font-bold">RECIBO / RET</span>
+</div>
+<span class="text-on-surface-variant text-[12px]">Puesto 114 - Sector Verduras</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-wrap gap-1 max-w-xs">
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm">Locoto Rojo 10 kg</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm">Cebolla Morada 45 kg</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm">Quirquiña 5 amarros</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-primary">Bs 840.00</span>
+<span class="text-on-surface-variant font-label-sm text-label-sm flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]">request_quote</span> Retención IUE/IT
+                    </span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col gap-1 items-start">
+<span class="px-2.5 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">hourglass_top</span> Esperando Entrega
+                    </span>
+<span class="text-[12px] text-on-surface-variant">Entrega directa en cocina</span>
+</div>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="h-9 px-space-sm rounded-lg bg-primary text-on-primary hover:bg-primary-container font-body-sm text-body-sm font-semibold flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">inventory</span> Recepcionar
+                    </button>
+<button class="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-center text-tertiary" title="Contactar por WhatsApp">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3: Wholesaler Completed / Entered into Kardex -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-primary">OC-2025-086</span>
+<span class="text-on-surface-variant font-label-sm text-label-sm">24 Mayo, 08:30</span>
+<span class="inline-flex items-center gap-1 text-[11px] font-label-sm text-tertiary mt-0.5">
+<span class="material-symbols-outlined text-[12px]">check_circle</span> Factura SIN #99214
+                    </span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Distribuidora Altiplano Mayorista</span>
+<div class="flex items-center gap-space-xs mt-0.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant">NIT: 2948102019</span>
+<span class="px-1.5 py-0.2 rounded bg-tertiary-fixed text-tertiary font-label-sm text-[11px] font-bold">SIN ACTIVO</span>
+</div>
+<span class="text-on-surface-variant text-[12px]">El Alto - Zona Franca</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-wrap gap-1 max-w-xs">
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm">Papa Holandesa 120 kg</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm">Aceite Fino 60 L</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm">Arroz Grano de Oro 50 kg</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-primary">Bs 6,420.00</span>
+<span class="text-tertiary font-label-sm text-label-sm flex items-center gap-0.5 font-medium">
+<span class="material-symbols-outlined text-[14px]">receipt</span> Factura Válida (CF)
+                    </span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col gap-1 items-start">
+<span class="px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">warehouse</span> Ingresado a Kardex
+                    </span>
+<span class="text-[12px] text-tertiary font-medium">Almacén Central OK</span>
+</div>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="h-9 px-space-sm rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-body-sm text-body-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">visibility</span> Detalle
+                    </button>
+<button class="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-center text-on-surface-variant" title="Descargar comprobante PDF">
+<span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4: Avícola Sofía (Partially Received) -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-primary">OC-2025-085</span>
+<span class="text-on-surface-variant font-label-sm text-label-sm">23 Mayo, 15:10</span>
+<span class="inline-flex items-center gap-1 text-[11px] font-label-sm text-secondary mt-0.5">
+<span class="material-symbols-outlined text-[12px]">schedule</span> Pago crédito 15d
+                    </span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Avícola Sofía S.A.</span>
+<div class="flex items-center gap-space-xs mt-0.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant">NIT: 1019384021</span>
+<span class="px-1.5 py-0.2 rounded bg-tertiary-fixed text-tertiary font-label-sm text-[11px] font-bold">SIN ACTIVO</span>
+</div>
+<span class="text-on-surface-variant text-[12px]">Sucursal Calacoto / La Paz</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-wrap gap-1 max-w-xs">
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm">Huevos de Granja 15 maples</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm">Pollo Faenado 50 kg</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-bold text-primary">Bs 1,940.00</span>
+<span class="text-tertiary font-label-sm text-label-sm flex items-center gap-0.5 font-medium">
+<span class="material-symbols-outlined text-[14px]">receipt</span> Factura Válida (CF)
+                    </span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col gap-1 items-start">
+<span class="px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check</span> Recepción OK - Pendiente Pago
+                    </span>
+<span class="text-[12px] text-on-surface-variant">Vence: 07 Junio</span>
+</div>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="h-9 px-space-sm rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-body-sm text-body-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">visibility</span> Detalle
+                    </button>
+<button class="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest flex items-center justify-center text-on-surface-variant" title="Descargar comprobante">
+<span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination & Counter -->
+<div class="p-space-md bg-surface-container-low flex flex-col sm:flex-row items-center justify-between gap-space-sm text-on-surface-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-space-xs">
+<span>Mostrando 4 de 18 órdenes registradas en Mayo 2025</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-on-surface-variant cursor-not-allowed">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded bg-primary text-on-primary font-bold flex items-center justify-center">1</button>
+<button class="w-8 h-8 rounded bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center">2</button>
+<button class="w-8 h-8 rounded bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Quick Supply Chain Visual Metric / Summary Card -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col md:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[32px]">fact_check</span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Validación Automática de Facturas con SIAT</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Cada factura ingresada se cruza con el Padrón Nacional Biométrico Digital de Impuestos Nacionales de Bolivia para asegurar Crédito Fiscal legítimo.</p>
+</div>
+</div>
+<div class="flex items-center gap-space-sm w-full md:w-auto">
+<div class="px-space-md py-2 rounded-lg bg-tertiary-fixed text-tertiary font-label-md text-label-md font-bold whitespace-nowrap flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">done_all</span> 100% Sin Observaciones
+          </div>
+</div>
+</div>
+</div>
+<!-- Right 30% Panel: Fast Goods Inward & Key Supplier Directory -->
+<div class="xl:col-span-4 flex flex-col gap-space-md">
+<!-- Widget 1: Fast Receipt / Reception Engine (Active Inward) -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-space-md relative overflow-hidden">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="w-3 h-3 rounded-full bg-secondary"></span>
+<h2 class="font-headline-sm text-headline-sm text-primary">Recepción Rápida de Mercadería</h2>
+</div>
+<span class="px-2 py-0.5 rounded bg-primary-fixed text-primary font-label-sm text-label-sm font-bold uppercase tracking-wider">Kardex Live</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Pase de mercadería en puerta. Valida peso y temperatura antes de autorizar el ingreso físico a cocina.
+        </p>
+<!-- Reception Form -->
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<!-- Select Active OC -->
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm font-semibold text-on-surface">Orden de Compra por Recepcionar:</label>
+<div class="relative">
+<select class="w-full h-11 pl-space-md pr-10 bg-surface-container-low text-on-surface font-body-sm text-body-sm rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary shadow-sm font-medium">
+<option selected="" value="OC-089">OC-2025-089 - Frigorífico San Lorenzo (Bs 3,850)</option>
+<option value="OC-088">OC-2025-088 - Mercado Rodríguez (Bs 840)</option>
+<option value="OC-087">OC-2025-087 - Cervecería Boliviana Nacional</option>
+</select>
+<span class="material-symbols-outlined text-on-surface-variant absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[20px]">expand_more</span>
+</div>
+</div>
+<!-- Factura / CUF Input -->
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm font-semibold text-on-surface">N° Factura del Proveedor o CUF:</label>
+<div class="relative">
+<span class="material-symbols-outlined text-on-surface-variant absolute left-3 top-1/2 -translate-y-1/2 text-[18px]">pin</span>
+<input class="w-full h-11 pl-10 pr-space-md bg-surface-container-low text-on-surface font-label-md text-label-md rounded-lg focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" placeholder="Ej: FAC-849201 o CUF..." type="text" value="FAC-SAN-48201"/>
+</div>
+</div>
+<!-- Verification Checklist (Industrial Restaurant Operations) -->
+<div class="flex flex-col gap-space-xs pt-space-xs bg-surface-container-low p-space-sm rounded-lg">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-bold">Control de Calidad &amp; SENASAG:</span>
+<label class="flex items-center gap-space-sm p-1 rounded hover:bg-surface-container cursor-pointer transition-colors">
+<input checked="" class="w-4 h-4 rounded text-primary focus:ring-primary accent-primary" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-medium text-on-surface">Pesaje Balanza IoT Verificado</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Lomo: 25.12 kg (Tolerancia: ±0.5%)</span>
+</div>
+</label>
+<label class="flex items-center gap-space-sm p-1 rounded hover:bg-surface-container cursor-pointer transition-colors">
+<input checked="" class="w-4 h-4 rounded text-primary focus:ring-primary accent-primary" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-medium text-on-surface">Cadena de Frío Controlada</span>
+<span class="font-label-sm text-label-sm text-tertiary font-semibold">Sensor Sonda: 2.8°C (Aprobado &lt; 4°C)</span>
+</div>
+</label>
+<label class="flex items-center gap-space-sm p-1 rounded hover:bg-surface-container cursor-pointer transition-colors">
+<input checked="" class="w-4 h-4 rounded text-primary focus:ring-primary accent-primary" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-medium text-on-surface">Fecha de Vencimiento de Lote</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Lote 2505-C / Exp: 12-Jun-2025</span>
+</div>
+</label>
+</div>
+<!-- Direct Warehouse Assignment Switch -->
+<div class="flex items-center justify-between p-space-xs">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Destino Directo</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Cámara de Frío Principal</span>
+</div>
+<div class="w-11 h-6 bg-primary rounded-full relative p-0.5 cursor-pointer flex items-center">
+<div class="w-5 h-5 rounded-full bg-on-primary ml-auto shadow-sm"></div>
+</div>
+</div>
+<!-- Submit Button -->
+<button class="mt-space-xs h-12 w-full rounded-lg bg-tertiary hover:bg-tertiary-container text-on-tertiary font-body-md text-body-md font-bold flex items-center justify-center gap-space-xs transition-all shadow-md active:scale-98" type="button">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+<span>Aprobar Ingreso y Actualizar Kardex (+Stock)</span>
+</button>
+</div>
+</div>
+<!-- Widget 2: Frequent Suppliers Quick Directory -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[22px]">mobile_share</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Proveedores Frecuentes</h2>
+</div>
+<a class="font-label-sm text-label-sm font-bold text-primary hover:underline" href="#">Ver los 24</a>
+</div>
+<div class="flex flex-col gap-space-sm divide-y divide-surface-container">
+<!-- Supplier 1 -->
+<div class="pt-space-sm first:pt-0 flex flex-col gap-space-xs">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-bold text-on-surface">Frigorífico San Lorenzo</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Carnes rojas y cortes parrilla</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-tertiary-fixed text-tertiary font-label-sm text-label-sm font-bold">98% Cumplimiento</span>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">call</span> +591 720-44911
+              </span>
+<a class="h-8 px-space-sm rounded-lg bg-surface-container hover:bg-surface-container-high text-tertiary font-label-sm text-label-sm font-bold flex items-center gap-1 transition-colors" href="https://wa.me/59172044911" target="_blank">
+<span class="material-symbols-outlined text-[16px]">chat</span> WhatsApp
+              </a>
+</div>
+</div>
+<!-- Supplier 2 -->
+<div class="pt-space-sm flex flex-col gap-space-xs">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-bold text-on-surface">Mercado Rodríguez (Doña Maritza)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Verduras frescas, locoto y hierbas</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold">Diario 06:00 AM</span>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">call</span> +591 715-99230
+              </span>
+<a class="h-8 px-space-sm rounded-lg bg-surface-container hover:bg-surface-container-high text-tertiary font-label-sm text-label-sm font-bold flex items-center gap-1 transition-colors" href="https://wa.me/59171599230" target="_blank">
+<span class="material-symbols-outlined text-[16px]">chat</span> WhatsApp
+              </a>
+</div>
+</div>
+<!-- Supplier 3 -->
+<div class="pt-space-sm flex flex-col gap-space-xs">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-bold text-on-surface">Cervecería Taquiña / CBN</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Cervezas, maltas y gaseosas</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-bold">Ruta Martes</span>
+</div>
+<div class="flex items-center justify-between mt-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">local_shipping</span> Camión Repartidor Zona Sur
+              </span>
+<button class="h-8 px-space-sm rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm font-bold flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[16px]">calendar_month</span> Pedido Auto
+              </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Delivery Route Map Reference Card -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex items-center gap-space-md overflow-hidden">
+<div class="w-12 h-12 rounded-lg bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed flex-shrink-0">
+<span class="material-symbols-outlined text-[24px]">pin_drop</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-bold uppercase tracking-wider text-secondary">Logística en Prado La Paz</span>
+<span class="font-body-sm text-body-sm text-on-surface font-semibold truncate">Ingreso proveedores por Calle México</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Horario recepción descarga: 07:00 a 11:30</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Persistent Bottom Status & SIAT Inward Sync Bar -->
+<div class="mt-space-sm p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col sm:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-3 h-3 rounded-full bg-tertiary animate-pulse"></div>
+<div class="flex items-center gap-space-xs font-label-sm text-label-sm">
+<span class="font-bold text-on-surface">Conexión SIAT Compras:</span>
+<span class="text-tertiary font-semibold">Sincronización de Facturas Electrónicas de Proveedores OK</span>
+<span class="text-on-surface-variant hidden md:inline">| Última conciliación con SIN: Hoy 14:15:02</span>
+</div>
+</div>
+<div class="flex items-center gap-space-md text-on-surface-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary">lock</span>
+<span>Certificado Digital RCF Válido</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span>Próxima OC Programada: 18:00</span>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Ensure the persistent navigation shell marks 'Compras & Proveedores' as active
+  document.addEventListener('DOMContentLoaded', () => {
+    const navLinks = document.querySelectorAll('aside nav a');
+    navLinks.forEach(link => {
+      const path = link.getAttribute('data-path');
+      if (path === 'compras-y-proveedores') {
+        link.className = 'h-12 flex items-center gap-space-sm px-space-sm rounded-lg bg-primary-container text-on-primary font-semibold shadow-sm transition-colors';
+        const icon = link.querySelector('.material-symbols-outlined');
+        if (icon) icon.className = 'material-symbols-outlined text-[20px] text-on-primary';
+      } else {
+        link.className = 'h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors';
+      }
+    });
+  });
+</script></main></div></body></html>

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"tertiary":"#003e1a","surface-container-highest":"#e0e3e6","surface":"#f7f9fc","secondary-container":"#febb2a","inverse-surface":"#2d3133","on-surface":"#191c1e","on-tertiary":"#ffffff","secondary-fixed-dim":"#febb2a","on-tertiary-fixed":"#00210b","inverse-on-surface":"#eff1f4","error":"#ba1a1a","on-error":"#ffffff","surface-tint":"#35618d","surface-variant":"#e0e3e6","on-secondary-container":"#6d4d00","tertiary-container":"#005827","on-secondary-fixed":"#271900","on-secondary":"#ffffff","on-background":"#191c1e","tertiary-fixed":"#a1f5b0","surface-dim":"#d8dadd","outline-variant":"#c2c7d0","primary-container":"#1f4e79","on-secondary-fixed-variant":"#5e4200","outline":"#72777f","on-primary-fixed":"#001d35","tertiary-fixed-dim":"#86d996","surface-container-lowest":"#ffffff","surface-container-low":"#f2f4f7","on-primary-fixed-variant":"#184974","on-surface-variant":"#42474f","background":"#f7f9fc","secondary":"#7c5800","surface-container-high":"#e6e8eb","error-container":"#ffdad6","surface-container":"#eceef1","on-tertiary-fixed-variant":"#005224","inverse-primary":"#a0cafc","primary-fixed":"#d1e4ff","secondary-fixed":"#ffdea8","primary":"#00375e","on-tertiary-container":"#7cce8c","on-primary":"#ffffff","surface-bright":"#f7f9fc","primary-fixed-dim":"#a0cafc","on-error-container":"#93000a","on-primary-container":"#95bff1"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin":"1rem","gutter-desktop":"1.5rem","space-lg":"1.5rem","space-xl":"2rem","gutter":"1rem","space-sm":"0.5rem","space-md":"1rem","gutter-tablet":"1.25rem","space-xs":"0.25rem","margin-tablet":"1.5rem","margin-desktop":"2rem"},"fontFamily":{"headline-md":["Inter"],"label-md":["JetBrains Mono"],"body-sm":["Inter"],"headline-lg":["Inter"],"headline-xl":["Inter"],"body-md":["Inter"],"body-lg":["Inter"],"headline-sm":["Inter"],"label-sm":["JetBrains Mono"],"label-lg":["JetBrains Mono"],"headline-xl-mobile":["Inter"],"headline-lg-mobile":["Inter"]},"fontSize":{"headline-md":["24px",{"lineHeight":"32px","fontWeight":"600"}],"label-md":["14px",{"lineHeight":"18px","letterSpacing":"0.25px","fontWeight":"600"}],"body-sm":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-lg":["32px",{"lineHeight":"40px","fontWeight":"700"}],"headline-xl":["40px",{"lineHeight":"48px","fontWeight":"700"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"body-lg":["18px",{"lineHeight":"26px","fontWeight":"500"}],"headline-sm":["20px",{"lineHeight":"28px","fontWeight":"600"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.25px","fontWeight":"500"}],"label-lg":["16px",{"lineHeight":"20px","letterSpacing":"0.5px","fontWeight":"600"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","fontWeight":"700"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","fontWeight":"700"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-low z-50 flex flex-col pt-6 pb-6 shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="px-6 mb-8 flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary font-headline-sm font-bold">A</div><div><span class="font-headline-sm text-headline-sm text-primary block leading-none tracking-tight">Andina</span><span class="font-label-sm text-label-sm text-secondary tracking-widest uppercase">GastroOS</span></div></div><nav class="flex-1 px-3 space-y-1" data-active-classes="bg-primary-container text-on-primary font-bold rounded-lg"><a class="flex items-center px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-3" data-path="salon-pos" href="#"><span class="material-symbols-outlined text-[22px]">point_of_sale</span><span class="font-body-md text-body-md font-medium">Salón &amp; Mesas</span></a><a class="flex items-center px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-3" data-path="kitchen-display-system" href="#"><span class="material-symbols-outlined text-[22px]">skillet</span><span class="font-body-md text-body-md font-medium">Monitor Cocina</span></a><a aria-current="page" class="flex items-center px-4 py-3 transition-all gap-3 bg-primary-container text-on-primary font-bold rounded-lg" data-path="orders-dispatch" href="#"><span class="material-symbols-outlined text-[22px]">takeout_dining</span><span class="font-body-md text-body-md font-medium">Despacho &amp; Barra</span></a><a class="flex items-center px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-3" data-path="menu-catalog" href="#"><span class="material-symbols-outlined text-[22px]">restaurant_menu</span><span class="font-body-md text-body-md font-medium">Menú &amp; Precios</span></a><a class="flex items-center px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-3" data-path="cash-shift" href="#"><span class="material-symbols-outlined text-[22px]">payments</span><span class="font-body-md text-body-md font-medium">Caja &amp; Turnos</span></a><a class="flex items-center px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all gap-3" data-path="settings" href="#"><span class="material-symbols-outlined text-[22px]">settings</span><span class="font-body-md text-body-md font-medium">Configuración</span></a></nav><div class="px-4 pt-4 mt-auto border-t border-outline-variant/30 flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-2.5 h-2.5 rounded-full bg-tertiary-container animate-pulse"></div><span class="font-label-sm text-label-sm text-on-surface-variant">Servidor Local OK</span></div><span class="font-label-sm text-label-sm text-outline">v2.4.0</span></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-6"><div class="flex items-center gap-4"><div class="flex items-center bg-surface-container px-3 py-1.5 rounded-lg gap-2"><span class="material-symbols-outlined text-primary text-[20px]">storefront</span><span class="font-body-sm text-body-sm font-semibold text-on-surface">Sucursal Central - La Paz</span></div><div class="flex items-center bg-tertiary/10 text-tertiary px-3 py-1.5 rounded-lg gap-1.5"><span class="material-symbols-outlined text-[18px]">wifi</span><span class="font-label-sm text-label-sm font-medium">En Línea</span></div></div><div class="flex items-center gap-4"><div class="flex items-center bg-surface-container-high px-3 py-1.5 rounded-lg gap-2 text-on-surface"><span class="material-symbols-outlined text-[18px] text-outline">schedule</span><span class="font-label-md text-label-md tracking-wider font-semibold">13:42:05</span></div><button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span></button><div class="flex items-center gap-3 pl-2 border-l border-outline-variant/30"><div class="text-right hidden sm:block"><span class="font-body-sm text-body-sm font-semibold text-on-surface block leading-tight">Carlos Mamani</span><span class="font-label-sm text-label-sm text-on-surface-variant block">Capitán de Salón</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative pt-16 w-full px-8 bg-surface"><div class="flex flex-col w-full pb-8">
+<!-- Sub-Header contextual: Modo de Servicio & Sucursal activa -->
+<div class="flex flex-wrap items-center justify-between gap-4 py-4 mb-4">
+<div class="flex items-center gap-3">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Modo de Operación:</span>
+<div class="inline-flex p-1 bg-surface-container rounded-xl shadow-inner">
+<button class="px-4 py-2 rounded-lg font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">table_restaurant</span>
+          Salón
+        </button>
+<button class="px-4 py-2 rounded-lg font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">storefront</span>
+          Mostrador Rápido
+        </button>
+<button class="px-4 py-2 rounded-lg font-body-sm text-body-sm font-semibold bg-primary-container text-on-primary shadow-sm flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">takeout_dining</span>
+          Para Llevar
+        </button>
+<button class="px-4 py-2 rounded-lg font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">moped</span>
+          Delivery
+        </button>
+</div>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-low px-4 py-2 rounded-xl">
+<span class="material-symbols-outlined text-secondary text-[20px]">pin_drop</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-outline leading-tight">Terminal Activa</span>
+<span class="font-body-sm text-body-sm font-bold text-on-surface">Caja Mostrador 02 · Sucursal El Prado, La Paz</span>
+</div>
+</div>
+</div>
+<!-- Contenedor Maestro: Vista Dividida 5:7 Tablet / POS Industrial -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<!-- LADO IZQUIERDO: Despacho, Ficha de Cliente y Recojo (5 columnas) -->
+<section class="lg:col-span-5 flex flex-col gap-4">
+<!-- Banner Identificador de Ticket Gigante -->
+<div class="relative overflow-hidden bg-primary-container text-on-primary rounded-xl p-6 shadow-md">
+<div class="absolute -right-6 -bottom-8 opacity-10 pointer-events-none select-none">
+<span class="material-symbols-outlined text-[160px]">receipt_long</span>
+</div>
+<div class="relative z-10 flex items-start justify-between">
+<div>
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-surface-container-lowest/15 rounded text-on-primary font-label-sm text-label-sm uppercase tracking-widest mb-1.5">
+<span class="material-symbols-outlined text-[14px]">local_activity</span>
+              Orden del Día #142
+            </div>
+<div class="flex items-baseline gap-2">
+<span class="font-label-lg text-label-lg font-bold opacity-80">TICKET</span>
+<span class="font-headline-xl text-[64px] leading-none font-bold tracking-tight">#39</span>
+</div>
+</div>
+<div class="text-right">
+<span class="inline-flex items-center gap-1 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm font-bold shadow-sm">
+<span class="material-symbols-outlined text-[16px]">shopping_bag</span>
+              Para Llevar (Pick-up)
+            </span>
+<span class="block font-label-sm text-label-sm text-primary-fixed mt-2">Creado: 13:41 · En espera</span>
+</div>
+</div>
+</div>
+<!-- Formulario Táctil de Despacho & Datos de Contacto -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col gap-5">
+<!-- Nombre del Cliente -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant font-semibold flex items-center justify-between">
+<span>Nombre del Cliente</span>
+<span class="text-primary font-normal text-[11px]">Requerido p/ llamado</span>
+</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-outline text-[22px]">person</span>
+<input class="w-full h-14 pl-12 pr-4 bg-surface-container-low text-on-surface rounded-lg font-body-lg text-body-lg font-medium focus:bg-surface-container-lowest focus:outline-none transition-all placeholder:text-outline" placeholder="Ej. Paola Mendoza" type="text" value="Marcelo Claure / Paola Mendoza"/>
+</div>
+</div>
+<!-- Teléfono y Notificación Directa WhatsApp -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant font-semibold flex items-center justify-between">
+<span>Teléfono Móvil / WhatsApp Bolivia</span>
+<span class="text-tertiary font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">verified</span> Verificado
+            </span>
+</label>
+<div class="flex flex-col sm:flex-row items-stretch gap-2">
+<div class="relative flex-1 flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-outline text-[22px]">phone_iphone</span>
+<input class="w-full h-14 pl-12 pr-4 bg-surface-container-low text-on-surface rounded-lg font-label-lg text-label-lg font-semibold tracking-wide focus:bg-surface-container-lowest focus:outline-none transition-all" placeholder="+591 70000000" type="text" value="+591 76543210"/>
+</div>
+<button class="h-14 px-4 bg-tertiary-container hover:bg-tertiary text-on-tertiary rounded-lg font-body-sm text-body-sm font-semibold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.98]" id="notify-btn" onclick="triggerNotificationToast()" type="button">
+<span class="material-symbols-outlined text-[20px]">send</span>
+<span class="whitespace-nowrap">Avisar Pedido Listo</span>
+</button>
+</div>
+<span class="hidden text-tertiary font-label-sm text-label-sm font-semibold items-center gap-1 mt-1 transition-all" id="toast-notify">
+<span class="material-symbols-outlined text-[16px]">check_circle</span> Mensaje preparado para despacho vía gateway WhatsApp.
+          </span>
+</div>
+<!-- Hora Estimada de Retiro (Chips Táctiles) -->
+<div class="flex flex-col gap-2">
+<label class="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant font-semibold flex items-center justify-between">
+<span>Hora Estimada de Recojo</span>
+<span class="material-symbols-outlined text-outline text-[18px]">schedule</span>
+</label>
+<div class="grid grid-cols-2 gap-2">
+<button class="pickup-chip h-12 px-3 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm font-medium hover:bg-surface-container flex items-center justify-center gap-1.5 transition-all text-center" type="button">
+<span class="material-symbols-outlined text-[16px]">bolt</span>
+<span>Inmediato ~15 min</span>
+</button>
+<button class="pickup-chip active h-12 px-3 rounded-lg bg-primary-container text-on-primary font-body-sm text-body-sm font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all text-center" type="button">
+<span class="material-symbols-outlined text-[16px]">alarm</span>
+<span>En 30 min (14:15)</span>
+</button>
+<button class="pickup-chip h-12 px-3 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm font-medium hover:bg-surface-container flex items-center justify-center gap-1.5 transition-all text-center" type="button">
+<span>En 45 min (14:30)</span>
+</button>
+<button class="pickup-chip h-12 px-3 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm font-medium hover:bg-surface-container flex items-center justify-center gap-1.5 transition-all text-center" type="button">
+<span class="material-symbols-outlined text-[16px]">edit_calendar</span>
+<span>Hora: 14:30</span>
+</button>
+</div>
+</div>
+<!-- Modalidades de Empaque & Opciones Eco -->
+<div class="flex flex-col gap-2.5 pt-2">
+<label class="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant font-semibold">
+            Modalidad de Empaque &amp; Vajilla
+          </label>
+<div class="flex flex-col gap-2">
+<!-- Opción: Empaque térmico biodegradable -->
+<label class="flex items-center justify-between p-3.5 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-pointer transition-colors">
+<div class="flex items-center gap-3">
+<input checked="" class="w-5 h-5 rounded accent-primary text-on-primary cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Empaque térmico biodegradable</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Cajas de bagazo de caña térmica (retiene calor +40 min)</span>
+</div>
+</div>
+<span class="font-label-md text-label-md font-bold text-primary">+ Bs 3.00</span>
+</label>
+<!-- Opción: Sin cubiertos plásticos -->
+<label class="flex items-center justify-between p-3.5 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-pointer transition-colors">
+<div class="flex items-center gap-3">
+<input checked="" class="w-5 h-5 rounded accent-primary text-on-primary cursor-pointer" type="checkbox"/>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Sin cubiertos plásticos</span>
+<span class="px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold uppercase">Eco</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Cliente cuenta con cubertería propia</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary font-bold">Sin costo</span>
+</label>
+</div>
+</div>
+<!-- Instrucciones y Notas de Entrega -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant font-semibold flex items-center justify-between">
+<span>Notas de Entrega / Despacho</span>
+<span class="material-symbols-outlined text-outline text-[18px]">directions_car</span>
+</label>
+<div class="relative">
+<textarea class="w-full p-3.5 bg-surface-container-low text-on-surface rounded-lg font-body-sm text-body-sm font-medium focus:bg-surface-container-lowest focus:outline-none transition-all placeholder:text-outline resize-none" rows="2">Cliente esperará en el auto afuera / avisar por WhatsApp al aproximarse a puerta Prado.</textarea>
+</div>
+</div>
+</div>
+</section>
+<!-- LADO DERECHO: Detalle de Platos, Cobranza, Medios de Pago y Acciones Rápidas (7 columnas) -->
+<section class="lg:col-span-7 flex flex-col gap-4">
+<!-- Contenedor Resumen de Platos Añadidos -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm flex flex-col">
+<div class="flex items-center justify-between pb-3 mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[24px]">restaurant_menu</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Detalle de la Orden</h2>
+</div>
+<span class="px-3 py-1 bg-surface-container rounded-full font-label-md text-label-md font-bold text-on-surface-variant">
+            4 Ítems Registrados
+          </span>
+</div>
+<!-- Lista de Productos en la Comanda -->
+<div class="flex flex-col divide-y divide-transparent gap-2">
+<!-- Ítem 1: Silpancho Cochabambino -->
+<div class="flex items-center justify-between p-3.5 bg-surface-container-low rounded-xl hover:bg-surface-container transition-all">
+<div class="flex items-center gap-3.5">
+<div class="w-16 h-16 rounded-lg overflow-hidden bg-surface-container flex-shrink-0 shadow-inner">
+<img class="w-full h-full object-cover" data-alt="Traditional Bolivian Silpancho Cochabambino with thin breaded tenderloin steak over steamed rice, topped with two sunny-side fried eggs, crispy sliced potatoes, and fresh tomato onion locoto llajwa salsa, restaurant food photography, warm ambient lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsmQa7LqOTzLwEqNKSmi55Wbk4bTmeIVatR_7udtcwEKUyQMBg4G3i72Ai3ahtRXMn8aID-7cYbSxSwPESt2AQBmnZEkqxtVN_ikO18k4JnUIBrvSan6cd214c_Ue5wMrmU6xG_4R2qOP1Uq-Y6H6lrxdy0tG9dhSq7vYYzg26LzwUTT2dWTv1Y8_hDP7y8gNO34gsnxBSMh5spPiAG685w_8DRGb6YipYrcZLcnliQFNdug-Ov2hyJA"/>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded bg-primary-container text-on-primary font-label-md text-label-md font-bold flex items-center justify-center">2×</span>
+<span class="font-body-lg text-body-lg font-bold text-on-surface">Silpancho Cochabambino</span>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[14px]">local_offer</span>
+                    Promo Almuerzo Aplicada (-10%)
+                  </span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Arroz doble y huevo término medio</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-lg text-label-lg font-bold text-primary block">Bs 86.40</span>
+<span class="font-label-sm text-label-sm line-through text-outline">Bs 96.00</span>
+</div>
+</div>
+<!-- Ítem 2: Pique Macho Tradicional -->
+<div class="flex items-center justify-between p-3.5 bg-surface-container-low rounded-xl hover:bg-surface-container transition-all">
+<div class="flex items-center gap-3.5">
+<div class="w-16 h-16 rounded-lg overflow-hidden bg-surface-container flex-shrink-0 shadow-inner">
+<img class="w-full h-full object-cover" data-alt="Rich Bolivian Pique Macho dish featuring bite-sized tender beef tenderloin, frankfurter sausages, french fried potatoes, boiled egg wedges, fresh locoto chili, and sliced tomatoes, authentic gastronomy presentation, dramatic warm lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoJ291FILH5qdnHqq-1c61EjDqpaun4CnqTNftf5Dt71AqrgPf0XNR8dhibb7zHFMrMn_Fy2bbc2IIJktTH9yuGofChONP_11EgEBo38xxG3HO-cJ9euP103iPfs6qN2MRnlhdEDg-JDdaZjxfOl3nYcoEu4Cv8B-tQkdoK5TIyBeKKbdfx5p44CEWIoNfydSyLvkHJWowm0kZ0UZx0unUTswlYcQxyVQTfCSMyv6w8QmoQvYa3f4aVw"/>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded bg-primary-container text-on-primary font-label-md text-label-md font-bold flex items-center justify-center">1×</span>
+<span class="font-body-lg text-body-lg font-bold text-on-surface">Pique Macho Tradicional</span>
+</div>
+<div class="flex items-center gap-1.5 mt-1">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[14px]">soup_kitchen</span>
+                    Nota Cocina: Salsa picante por separado
+                  </span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-lg text-label-lg font-bold text-primary block">Bs 65.00</span>
+</div>
+</div>
+<!-- Ítem 3: Jarra Mocochinchi Artesanal -->
+<div class="flex items-center justify-between p-3.5 bg-surface-container-low rounded-xl hover:bg-surface-container transition-all">
+<div class="flex items-center gap-3.5">
+<div class="w-16 h-16 rounded-lg overflow-hidden bg-surface-container flex-shrink-0 shadow-inner">
+<img class="w-full h-full object-cover" data-alt="Artisanal chilled Bolivian mocochinchi beverage in a traditional glass pitcher garnished with whole dehydrated peach and cinnamon sticks, refreshing droplets of condensation on glass, rustic timber restaurant background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMiZuO5uf9Q42MfZGSLPCqFlJjyhhVCZZ7qlg0tBCcFRSeB94C2kxBUOTtbgHAThE5b3-szdhFvIRQvYzmxiDb836I2rVIehMPmBYsCv37RdFwo_nD1SjYut8Y-zf--rMt1Mp3uN99lridKq_wsAbE0Kxmj2qgwm34RcsXgiJO3BZ-ERgWsuGVYoKSGpFdWzaVfe2L03sgpq5ocXdEJe9z0_KN83L-u6DLTtJqGYiOtgARyo_F2Fia4A"/>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded bg-primary-container text-on-primary font-label-md text-label-md font-bold flex items-center justify-center">2×</span>
+<span class="font-body-lg text-body-lg font-bold text-on-surface">Jarra Mocochinchi Artesanal (1L)</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-1">Infusión con canela y clavo, frío con hielo</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-lg text-label-lg font-bold text-primary block">Bs 44.00</span>
+</div>
+</div>
+<!-- Ítem 4: Recargo de Empaque Especial -->
+<div class="flex items-center justify-between p-3.5 bg-surface-container-low rounded-xl hover:bg-surface-container transition-all">
+<div class="flex items-center gap-3.5">
+<div class="w-16 h-16 rounded-lg bg-surface-container flex items-center justify-center text-primary-container flex-shrink-0">
+<span class="material-symbols-outlined text-[32px]">inventory_2</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded bg-surface-container-high text-on-surface font-label-md text-label-md font-bold flex items-center justify-center">1×</span>
+<span class="font-body-lg text-body-lg font-semibold text-on-surface">Recargo Empaque Térmico Especial</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Envase ecológico anti-derrames</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-lg text-label-lg font-bold text-primary block">Bs 3.00</span>
+</div>
+</div>
+</div>
+<!-- Resumen Financiero Consolidado -->
+<div class="mt-4 pt-4 bg-surface-container-low rounded-xl p-5 flex flex-col gap-2">
+<div class="flex justify-between items-center font-body-sm text-body-sm text-on-surface-variant">
+<span>Subtotal de Productos</span>
+<span class="font-label-md text-label-md font-medium text-on-surface">Bs 198.40</span>
+</div>
+<div class="flex justify-between items-center font-body-sm text-body-sm text-tertiary font-semibold">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">percent</span>
+              Descuento Promoción Almuerzo
+            </span>
+<span class="font-label-md text-label-md">- Bs 9.60</span>
+</div>
+<div class="flex justify-between items-center font-body-sm text-body-sm text-on-surface-variant">
+<span>Impuestos de Ley (IVA 13% Incluido)</span>
+<span class="font-label-md text-label-md text-outline">Bs 24.54</span>
+</div>
+<div class="h-px bg-outline-variant/40 my-1"></div>
+<div class="flex justify-between items-end">
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-outline font-bold block">Total a Cobrar</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Factura con NIT/CI disponible</span>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-primary font-bold">BOB</span>
+<span class="font-headline-lg text-[36px] font-bold text-primary leading-none ml-1">Bs 188.80</span>
+</div>
+</div>
+</div>
+<!-- Módulo de Selección de Pago Rápido -->
+<div class="mt-4 flex flex-col gap-2">
+<span class="font-label-sm text-label-sm uppercase tracking-wide text-on-surface-variant font-semibold">
+            Método de Pago Rápido
+          </span>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+<!-- Opción Efectivo con Cálculo Inmediato de Cambio -->
+<button class="payment-method-btn active p-3 bg-primary-container text-on-primary rounded-xl flex flex-col items-start gap-1 text-left shadow-sm transition-all" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="material-symbols-outlined text-[22px]">payments</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 rounded bg-surface-container-lowest/20">Seleccionado</span>
+</div>
+<span class="font-body-sm text-body-sm font-bold">Efectivo Bs 200</span>
+<span class="font-label-sm text-label-sm text-tertiary-fixed font-semibold">Cambio: Bs 11.20</span>
+</button>
+<!-- Opción QR Simple Bolivia -->
+<button class="payment-method-btn p-3 bg-surface-container-low hover:bg-surface-container text-on-surface rounded-xl flex flex-col items-start gap-1 text-left transition-all" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="material-symbols-outlined text-[22px] text-primary">qr_code_2</span>
+<span class="font-label-sm text-label-sm text-tertiary font-bold">Sin cambio</span>
+</div>
+<span class="font-body-sm text-body-sm font-bold">QR Simple Bolivia</span>
+<span class="font-label-sm text-label-sm text-outline">Generar QR Interbancario</span>
+</button>
+<!-- Opción Tarjeta Débito / Crédito -->
+<button class="payment-method-btn p-3 bg-surface-container-low hover:bg-surface-container text-on-surface rounded-xl flex flex-col items-start gap-1 text-left transition-all" type="button">
+<div class="flex items-center justify-between w-full">
+<span class="material-symbols-outlined text-[22px] text-primary">credit_card</span>
+<span class="font-label-sm text-label-sm text-outline">POS Red Enlace</span>
+</div>
+<span class="font-body-sm text-body-sm font-bold">Tarjeta Débito/Crédito</span>
+<span class="font-label-sm text-label-sm text-outline">Contactless / Chip</span>
+</button>
+</div>
+</div>
+</div>
+<!-- BOTONES DE ACCIÓN TÁCTIL PRINCIPALES (Hitbox ≥ 56px para ergonomía rápida) -->
+<div class="flex flex-col sm:flex-row items-stretch gap-3 mt-1">
+<!-- Botón Verde: Enviar a Cocina (KDS) & Generar Ticket -->
+<button class="flex-1 h-16 px-6 bg-tertiary-container hover:bg-tertiary text-on-tertiary rounded-xl font-body-lg text-body-lg font-bold flex items-center justify-center gap-3 shadow-md transition-all active:scale-[0.98]" id="btn-kds" onclick="handleDispatchToKitchen()" type="button">
+<span class="material-symbols-outlined text-[26px]">skillet</span>
+<span class="tracking-wide">ENVIAR A COCINA (KDS)</span>
+</button>
+<!-- Botón Ámbar: Cobrar Directo en Caja -->
+<button class="h-16 px-6 bg-secondary-container hover:bg-secondary-fixed-dim text-on-secondary-container rounded-xl font-body-lg text-body-lg font-bold flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98]" onclick="handleDirectCheckout()" type="button">
+<span class="material-symbols-outlined text-[24px]">point_of_sale</span>
+<span>COBRAR DIRECTO (Bs 188.80)</span>
+</button>
+<!-- Botón Secundario: Imprimir Ticket de Cliente / Comanda -->
+<button class="h-16 w-16 bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded-xl flex items-center justify-center shadow-sm transition-all active:scale-[0.95] flex-shrink-0" onclick="handlePrintTicket()" title="Imprimir copia comanda para cliente" type="button">
+<span class="material-symbols-outlined text-[26px]">print</span>
+</button>
+</div>
+<!-- Status Bar Operativo de Conectividad con Impresora Térmica -->
+<div class="flex items-center justify-between px-3 py-2 bg-surface-container-low rounded-lg text-outline font-label-sm text-label-sm">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary-container"></span>
+<span>Impresora Epson TM-T20III (Mostrador 02): En línea y lista</span>
+</div>
+<div class="flex items-center gap-3">
+<span>KDS Línea Caliente: 3 pedidos en espera</span>
+<span class="font-mono">IP: 192.168.1.108</span>
+</div>
+</div>
+</section>
+</div>
+</div>
+<script>
+  function triggerNotificationToast() {
+    const toast = document.getElementById('toast-notify');
+    if (toast) {
+      toast.classList.remove('hidden');
+      toast.classList.add('inline-flex');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+        toast.classList.remove('inline-flex');
+      }, 4000);
+    }
+  }
+
+  function handleDispatchToKitchen() {
+    const btn = document.getElementById('btn-kds');
+    if (!btn) return;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<span class="material-symbols-outlined text-[26px] animate-spin">sync</span><span>ENVIANDO A KDS...</span>`;
+    btn.classList.add('opacity-90');
+    setTimeout(() => {
+      btn.innerHTML = `<span class="material-symbols-outlined text-[26px]">check_circle</span><span>¡ORDEN ENVIADA A COCINA!</span>`;
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.classList.remove('opacity-90');
+      }, 2500);
+    }, 700);
+  }
+
+  function handleDirectCheckout() {
+    alert("Iniciando cobro de Bs 188.80 (Ticket #39). Aperturando gaveta de dinero...");
+  }
+
+  function handlePrintTicket() {
+    alert("Enviando comanda térmica #39 a Epson TM-T20III...");
+  }
+</script></main></div></body></html>

@@ -1,0 +1,18 @@
+{
+  "name": "@gestro/api", "version": "0.1.0", "private": true,
+  "scripts": {
+    "build": "nest build", "dev": "nest start --watch", "start": "node dist/src/main.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json", "test": "vitest run", "db:migrate": "tsx src/database/migrar.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.4.6", "@nestjs/core": "^10.4.6", "@nestjs/jwt": "^10.2.0", "@nestjs/platform-express": "^10.4.6",
+    "@nestjs/swagger": "^8.0.7", "@nestjs/throttler": "^6.2.1",
+    "cookie-parser": "^1.4.7", "drizzle-orm": "^0.36.1", "pg": "^8.13.1", "reflect-metadata": "^0.2.2", "rxjs": "^7.8.1", "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@gestro/contracts": "workspace:*",
+    "@nestjs/cli": "^10.4.7", "@nestjs/testing": "^10.4.6", "@types/cookie-parser": "^1.4.8", "@types/express": "^5.0.0",
+    "@types/node": "^22.9.0", "@types/pg": "^8.11.10", "@types/supertest": "^6.0.2", "supertest": "^7.0.0",
+    "tsx": "^4.19.2", "typescript": "^5.6.0", "vitest": "^2.1.4"
+  }
+}

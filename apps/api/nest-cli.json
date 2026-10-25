@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "entryFile": "src/main",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "tsConfigPath": "tsconfig.build.json",
+    "assets": [{ "include": "database/migraciones/*.sql", "outDir": "dist/src" }, { "include": "database/reversas/*.sql", "outDir": "dist/src" }]
+  }
+}

@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "tertiary-fixed": "#a1f5b0",
+          "outline-variant": "#c2c7d0",
+          "surface-container-highest": "#e0e3e6",
+          "secondary-container": "#febb2a",
+          "on-primary": "#ffffff",
+          "surface-container-low": "#f2f4f7",
+          "on-secondary-container": "#6d4d00",
+          "secondary-fixed-dim": "#febb2a",
+          "inverse-primary": "#a0cafc",
+          "primary-fixed-dim": "#a0cafc",
+          "on-secondary-fixed": "#271900",
+          "tertiary": "#003e1a",
+          "outline": "#72777f",
+          "secondary-fixed": "#ffdea8",
+          "surface-dim": "#d8dadd",
+          "on-surface": "#191c1e",
+          "on-tertiary-fixed-variant": "#005224",
+          "primary": "#00375e",
+          "on-primary-container": "#95bff1",
+          "on-background": "#191c1e",
+          "tertiary-fixed-dim": "#86d996",
+          "on-error-container": "#93000a",
+          "surface-tint": "#35618d",
+          "error-container": "#ffdad6",
+          "on-secondary-fixed-variant": "#5e4200",
+          "inverse-on-surface": "#eff1f4",
+          "on-tertiary-fixed": "#00210b",
+          "primary-fixed": "#d1e4ff",
+          "surface-variant": "#e0e3e6",
+          "on-primary-fixed": "#001d35",
+          "secondary": "#7c5800",
+          "on-primary-fixed-variant": "#184974",
+          "surface": "#f7f9fc",
+          "on-surface-variant": "#42474f",
+          "surface-container": "#eceef1",
+          "background": "#f7f9fc",
+          "surface-bright": "#f7f9fc",
+          "surface-container-lowest": "#ffffff",
+          "on-tertiary": "#ffffff",
+          "on-secondary": "#ffffff",
+          "primary-container": "#1f4e79",
+          "error": "#ba1a1a",
+          "inverse-surface": "#2d3133",
+          "on-error": "#ffffff",
+          "surface-container-high": "#e6e8eb",
+          "tertiary-container": "#005827",
+          "on-tertiary-container": "#7cce8c"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "gutter-tablet": "1.25rem",
+          "space-sm": "0.5rem",
+          "space-lg": "1.5rem",
+          "margin-tablet": "1.5rem",
+          "margin-desktop": "2rem",
+          "margin": "1rem",
+          "space-xl": "2rem",
+          "space-xs": "0.25rem",
+          "space-md": "1rem",
+          "gutter": "1rem",
+          "gutter-desktop": "1.5rem"
+        },
+        "fontFamily": {
+          "headline-xl": [
+            "Inter"
+          ],
+          "headline-xl-mobile": [
+            "Inter"
+          ],
+          "label-lg": [
+            "JetBrains Mono"
+          ],
+          "body-lg": [
+            "Inter"
+          ],
+          "body-sm": [
+            "Inter"
+          ],
+          "body-md": [
+            "Inter"
+          ],
+          "headline-lg-mobile": [
+            "Inter"
+          ],
+          "headline-lg": [
+            "Inter"
+          ],
+          "headline-md": [
+            "Inter"
+          ],
+          "headline-sm": [
+            "Inter"
+          ],
+          "label-sm": [
+            "JetBrains Mono"
+          ],
+          "label-md": [
+            "JetBrains Mono"
+          ]
+        },
+        "fontSize": {
+          "headline-xl": [
+            "40px",
+            {
+              "lineHeight": "48px",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-xl-mobile": [
+            "28px",
+            {
+              "lineHeight": "36px",
+              "fontWeight": "700"
+            }
+          ],
+          "label-lg": [
+            "16px",
+            {
+              "lineHeight": "20px",
+              "letterSpacing": "0.5px",
+              "fontWeight": "600"
+            }
+          ],
+          "body-lg": [
+            "18px",
+            {
+              "lineHeight": "26px",
+              "fontWeight": "500"
+            }
+          ],
+          "body-sm": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "400"
+            }
+          ],
+          "body-md": [
+            "16px",
+            {
+              "lineHeight": "24px",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-lg-mobile": [
+            "24px",
+            {
+              "lineHeight": "32px",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-lg": [
+            "32px",
+            {
+              "lineHeight": "40px",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-md": [
+            "24px",
+            {
+              "lineHeight": "32px",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-sm": [
+            "20px",
+            {
+              "lineHeight": "28px",
+              "fontWeight": "600"
+            }
+          ],
+          "label-sm": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0.25px",
+              "fontWeight": "500"
+            }
+          ],
+          "label-md": [
+            "14px",
+            {
+              "lineHeight": "18px",
+              "letterSpacing": "0.25px",
+              "fontWeight": "600"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-md flex items-center gap-space-sm bg-surface-container"><div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[24px]">dns</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-tight">KYROS-TECH</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Andina Cloud Platform</span></div></div><div class="px-space-md pt-space-lg pb-space-xs"><span class="font-label-sm text-label-sm uppercase text-outline tracking-wider font-semibold">Sección SuperAdmin SaaS</span></div><nav class="flex flex-col gap-1 px-space-sm" data-active-classes="bg-primary-container text-on-primary font-semibold shadow-sm"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="suscripciones-y-pagos" href="#"><span class="material-symbols-outlined text-[20px]">credit_card</span><span class="font-body-md text-body-md">Suscripciones y Pagos</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="consola-de-plataforma" href="#"><span class="material-symbols-outlined text-[20px]">storefront</span><span class="font-body-md text-body-md">Consola de Plataforma</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg transition-all bg-primary-container text-on-primary font-semibold shadow-sm" data-path="servicio-fiscal-sin" href="#"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-body-md text-body-md">Servicio Fiscal SIN</span></a></nav><div class="px-space-md pt-space-lg pb-space-xs"><span class="font-label-sm text-label-sm uppercase text-outline tracking-wider font-semibold">Infraestructura &amp; Servicios</span></div><nav class="flex flex-col gap-1 px-space-sm" data-active-classes="bg-primary-container text-on-primary font-semibold shadow-sm"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="base-de-datos-y-multi-tenancy" href="#"><span class="material-symbols-outlined text-[20px]">hub</span><span class="font-body-md text-body-md">Base de Datos &amp; Tenancy</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="webhooks-y-api-gateway" href="#"><span class="material-symbols-outlined text-[20px]">api</span><span class="font-body-md text-body-md">Webhooks &amp; Gateway</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="auditoria-de-seguridad-y-logs" href="#"><span class="material-symbols-outlined text-[20px]">security</span><span class="font-body-md text-body-md">Auditoría &amp; Logs</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="configuracion-global" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-body-md text-body-md">Configuración Global</span></a></nav></div><div class="p-space-md m-space-sm rounded-xl bg-surface-container flex flex-col gap-space-xs"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-outline uppercase">Nivel de Acceso</span><span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-bold uppercase">Root</span></div><div class="font-body-sm text-body-sm text-on-surface-variant leading-snug">SuperAdmin Kyros Bolivia Multi-Tenant</div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs px-3 py-1.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant"><span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span><span class="font-label-sm text-label-sm font-bold">Cloud Multi-Tenant Bolivia: 99.98% Uptime</span></div><div class="hidden xl:flex items-center gap-space-xs px-3 py-1.5 rounded-lg bg-surface-container text-on-surface"><span class="material-symbols-outlined text-primary text-[18px]">cloud_done</span><span class="font-body-sm text-body-sm font-medium">Producción (La Paz DC-01)</span></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs px-3 py-1 rounded-lg bg-surface-container-low"><span class="material-symbols-outlined text-outline text-[18px]">schedule</span><div class="flex flex-col text-right"><span class="font-label-sm text-label-sm font-semibold text-on-surface">BOST UTC-4</span><span class="font-label-sm text-label-sm text-outline">SIN SYNC</span></div></div><div class="relative flex items-center justify-center p-2 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer"><span class="material-symbols-outlined text-on-surface-variant text-[22px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-error ring-2 ring-surface"></span></div><div class="flex items-center gap-space-sm pl-space-sm"><div class="flex flex-col text-right hidden sm:flex"><span class="font-body-sm text-body-sm font-bold text-on-surface">Ing. Rodrigo Salinas</span><span class="font-label-sm text-label-sm text-on-surface-variant">Tech Lead &amp; SuperAdmin Kyros-Tech</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 pb-12 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<div class="p-space-lg flex flex-col gap-space-lg">
+<!-- Top Action Breadcrumbs & Global Bar -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs font-label-sm text-label-sm text-outline tracking-wider">
+<span class="hover:text-primary transition-colors cursor-pointer">PLATAFORMA SAAS</span>
+<span>/</span>
+<span class="text-primary font-semibold">TELEMETRÍA FISCAL SIN &amp; FACTURACIÓN SIAT MULTI-TENANT</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Consola de Facturación SIAT en Línea</h1>
+<span class="px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm font-bold flex items-center gap-1.5 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-ping"></span>
+            SIAT V4 SYNC ACTIVO
+          </span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm self-start md:self-auto">
+<button class="h-12 px-space-md bg-surface-container-highest hover:bg-surface-dim text-on-surface rounded-lg font-label-md text-label-md transition-all flex items-center gap-space-xs active:scale-95 shadow-sm" id="btn-sync-all">
+<span class="material-symbols-outlined text-[20px] text-primary">sync</span>
+<span>Sincronizar Catálogos SIN</span>
+</button>
+<button class="h-12 px-space-md bg-primary hover:bg-primary-container text-on-primary rounded-lg font-label-md text-label-md transition-all flex items-center gap-space-xs active:scale-95 shadow-md">
+<span class="material-symbols-outlined text-[20px]">verified_user</span>
+<span>Validación Masiva CUFD</span>
+</button>
+</div>
+</div>
+<!-- 1. Tablero de Estado de Servicios Tributarios Nacionales (Telemetry Bento) -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-md">
+<!-- Card 1: SIN Central Webservice -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Servicio Web SIN Central</span>
+<span class="font-body-md text-body-md font-bold text-on-surface mt-0.5">La Paz DC - Gateway 01</span>
+</div>
+<div class="w-9 h-9 rounded-lg bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed-variant">
+<span class="material-symbols-outlined text-[22px]">cloud_sync</span>
+</div>
+</div>
+<div class="mt-space-md flex flex-col gap-1">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">240<span class="font-label-md text-label-md font-normal text-outline">ms</span></span>
+<span class="font-label-sm text-label-sm font-semibold text-tertiary ml-auto flex items-center">
+<span class="material-symbols-outlined text-[16px]">arrow_downward</span> -12ms
+            </span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm pt-2">
+<span class="text-on-surface-variant">Tasa de éxito SOAP/REST:</span>
+<span class="font-bold text-on-surface">99.85%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden mt-1">
+<div class="bg-tertiary h-1.5 rounded-full" style="width: 99.85%;"></div>
+</div>
+</div>
+</div>
+<!-- Card 2: CUIS Vigentes -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">CUIS Sincronizados</span>
+<span class="font-body-md text-body-md font-bold text-on-surface mt-0.5">Códigos de Inicio Sistema</span>
+</div>
+<div class="w-9 h-9 rounded-lg bg-primary-fixed flex items-center justify-center text-on-primary-fixed">
+<span class="material-symbols-outlined text-[22px]">token</span>
+</div>
+</div>
+<div class="mt-space-md flex flex-col gap-1">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">386</span>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface-variant">/ 386 Activos</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm pt-2">
+<span class="text-on-surface-variant">Vigencia Anual:</span>
+<span class="font-bold text-tertiary">100% Cobertura</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden mt-1">
+<div class="bg-primary h-1.5 rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+</div>
+<!-- Card 3: CUFD por Renovar Hoy -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">CUFD por Renovar Hoy</span>
+<span class="font-body-md text-body-md font-bold text-on-surface mt-0.5">Códigos Diarios (24 Horas)</span>
+</div>
+<div class="w-9 h-9 rounded-lg bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
+<span class="material-symbols-outlined text-[22px]">update</span>
+</div>
+</div>
+<div class="mt-space-md flex flex-col gap-1">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg font-bold text-secondary">14</span>
+<span class="font-label-sm text-label-sm text-outline">pendientes para 23:59</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm pt-2">
+<span class="text-on-surface-variant">Cronjob Automático:</span>
+<span class="font-bold text-on-surface">Programado (UTC-4)</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden mt-1">
+<div class="bg-secondary h-1.5 rounded-full" style="width: 68%;"></div>
+</div>
+</div>
+</div>
+<!-- Card 4: Facturas Rechazadas -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Rechazos Fiscales (24h)</span>
+<span class="font-body-md text-body-md font-bold text-on-surface mt-0.5">Control de Anomalías</span>
+</div>
+<div class="w-9 h-9 rounded-lg bg-error-container flex items-center justify-center text-on-error-container">
+<span class="material-symbols-outlined text-[22px]">error_outline</span>
+</div>
+</div>
+<div class="mt-space-md flex flex-col gap-1">
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg font-bold text-error">3</span>
+<span class="font-label-sm text-label-sm font-semibold text-outline">de 24,890 ops</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm pt-2">
+<span class="text-on-surface-variant">Tasa de Error:</span>
+<span class="font-bold text-outline">0.012% (NIT No Empadronado)</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden mt-1">
+<div class="bg-error h-1.5 rounded-full" style="width: 3%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- 2. Monitor de Contingencias Fiscales Abiertas (Alerta Crítica SIN) -->
+<div class="rounded-xl bg-surface-container-lowest shadow-md overflow-hidden flex flex-col">
+<div class="p-space-md bg-error-container/40 flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-error flex items-center justify-center text-on-error shadow-sm flex-shrink-0 animate-pulse">
+<span class="material-symbols-outlined text-[22px]">warning</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">2 Sucursales operando en Contingencia Tributaria</span>
+<span class="px-2 py-0.5 rounded-full bg-error text-on-error font-label-sm text-label-sm font-bold uppercase tracking-wider">Crítico SIN</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Corte local de internet o falla de enlace con servidores centrales del SIN. Límite reglamentario de regularización: 48 horas.</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs self-end sm:self-auto font-label-sm text-label-sm text-outline font-semibold">
+<span class="material-symbols-outlined text-[18px]">timer</span>
+<span>NORMATIVA RND 102100000011</span>
+</div>
+</div>
+<!-- Contingency Detail Cards -->
+<div class="p-space-md grid grid-cols-1 lg:grid-cols-2 gap-space-md">
+<!-- Sucursal Calacoto Card -->
+<div class="p-space-md rounded-xl bg-surface-container-low shadow-sm flex flex-col justify-between gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-error animate-ping"></span>
+<span class="font-body-lg text-body-lg font-bold text-on-surface">Pique &amp; Sabor - Sucursal Calacoto</span>
+</div>
+<span class="px-2.5 py-1 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-bold">
+                Evento N° 2
+              </span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">NIT: <strong class="text-on-surface font-label-sm text-label-sm">4920193018</strong> | Punto de Venta: POS 01 Terraza &amp; POS 02 Barra</span>
+</div>
+<div class="grid grid-cols-2 gap-space-sm p-space-sm rounded-lg bg-surface-container-lowest shadow-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Facturas Offline Emitidas:</span>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-headline-md text-headline-md font-bold text-primary">18</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">comprobantes</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Tiempo Límite Restante:</span>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-headline-md text-headline-md font-bold text-error">42h 18m</span>
+<span class="font-label-sm text-label-sm text-outline">/ 48h</span>
+</div>
+</div>
+</div>
+<!-- Progress Bar of Time -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between font-label-sm text-label-sm">
+<span class="text-on-surface-variant">Ventana reglamentaria transcurrida (12.3%)</span>
+<span class="font-semibold text-secondary">5h 42m transcurridos</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2 overflow-hidden">
+<div class="bg-secondary rounded-full h-2 transition-all" style="width: 12.3%;"></div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="font-label-sm text-label-sm text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">wifi_off</span>
+              Último ping fallido: hace 4 min
+            </span>
+<button class="h-12 px-space-md bg-primary hover:bg-primary-container text-on-primary rounded-lg font-label-md text-label-md transition-all flex items-center gap-space-xs active:scale-95 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">send_and_archive</span>
+<span>Forzar Reintento de Envío de Paquete</span>
+</button>
+</div>
+</div>
+<!-- Sucursal Sopocachi Card -->
+<div class="p-space-md rounded-xl bg-surface-container-low shadow-sm flex flex-col justify-between gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary-container"></span>
+<span class="font-body-lg text-body-lg font-bold text-on-surface">Burger Grill Cochabamba - Av. América</span>
+</div>
+<span class="px-2.5 py-1 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-bold">
+                Evento N° 1
+              </span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">NIT: <strong class="text-on-surface font-label-sm text-label-sm">8172948011</strong> | Punto de Venta: KDS Cocina &amp; Mostrador Principal</span>
+</div>
+<div class="grid grid-cols-2 gap-space-sm p-space-sm rounded-lg bg-surface-container-lowest shadow-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Facturas Offline Emitidas:</span>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-headline-md text-headline-md font-bold text-primary">6</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">comprobantes</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Tiempo Límite Restante:</span>
+<div class="flex items-baseline gap-1 mt-0.5">
+<span class="font-headline-md text-headline-md font-bold text-tertiary">46h 50m</span>
+<span class="font-label-sm text-label-sm text-outline">/ 48h</span>
+</div>
+</div>
+</div>
+<!-- Progress Bar of Time -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between font-label-sm text-label-sm">
+<span class="text-on-surface-variant">Ventana reglamentaria transcurrida (2.4%)</span>
+<span class="font-semibold text-tertiary">1h 10m transcurridos</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2 overflow-hidden">
+<div class="bg-tertiary rounded-full h-2 transition-all" style="width: 2.4%;"></div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="font-label-sm text-label-sm text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">wifi</span>
+              Enlace restablecido: Listo para cierre
+            </span>
+<button class="h-12 px-space-md bg-tertiary hover:bg-tertiary-container text-on-tertiary rounded-lg font-label-md text-label-md transition-all flex items-center gap-space-xs active:scale-95 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">upload_file</span>
+<span>Empaquetar &amp; Enviar Lote</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. Telemetry Visualizer: Throughput & API Gateway Activity -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-space-md">
+<!-- Chart Column (2 cols) -->
+<div class="xl:col-span-2 p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Métricas de Tráfico SIN Gateway</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Llamadas por Hora al SIAT Central (Hoy)</h2>
+</div>
+<div class="flex items-center gap-space-xs bg-surface-container-low p-1 rounded-lg">
+<button class="px-3 py-1 rounded bg-surface-container-lowest font-label-sm text-label-sm font-bold text-primary shadow-sm">Últimas 24h</button>
+<button class="px-3 py-1 rounded hover:bg-surface-container font-label-sm text-label-sm text-on-surface-variant transition-colors">7 Días</button>
+<button class="px-3 py-1 rounded hover:bg-surface-container font-label-sm text-label-sm text-on-surface-variant transition-colors">30 Días</button>
+</div>
+</div>
+<!-- Inline SVG Area/Bar Telemetry Chart -->
+<div class="w-full h-52 flex flex-col justify-end relative pt-4">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 720 160">
+<defs>
+<lineargradient id="siatTrafficGrad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#00375e" stop-opacity="0.32"></stop>
+<stop offset="100%" stop-color="#00375e" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<!-- Grid lines -->
+<line stroke="#e0e3e6" stroke-dasharray="4 4" stroke-width="1" x1="0" x2="720" y1="20" y2="20"></line>
+<line stroke="#e0e3e6" stroke-dasharray="4 4" stroke-width="1" x1="0" x2="720" y1="65" y2="65"></line>
+<line stroke="#e0e3e6" stroke-dasharray="4 4" stroke-width="1" x1="0" x2="720" y1="110" y2="110"></line>
+<line stroke="#c2c7d0" stroke-width="1" x1="0" x2="720" y1="155" y2="155"></line>
+<!-- Area Fill -->
+<path d="M 0 155 L 0 135 Q 60 130 120 125 T 240 90 T 360 40 T 480 30 T 600 70 T 720 45 L 720 155 Z" fill="url(#siatTrafficGrad)"></path>
+<!-- Line Stroke -->
+<path d="M 0 135 Q 60 130 120 125 T 240 90 T 360 40 T 480 30 T 600 70 T 720 45" fill="none" stroke="#00375e" stroke-linecap="round" stroke-width="3"></path>
+<!-- Peak markers -->
+<circle cx="360" cy="40" fill="#febb2a" r="5" stroke="#00375e" stroke-width="2"></circle>
+<circle cx="480" cy="30" fill="#00375e" r="5" stroke="#ffffff" stroke-width="2"></circle>
+</svg>
+<div class="flex justify-between font-label-sm text-label-sm text-outline mt-2 pt-1">
+<span>00:00</span>
+<span>04:00</span>
+<span>08:00</span>
+<span class="text-secondary font-bold">12:30 (Peak Rush Almuerzo: 4.8k req/m)</span>
+<span>16:00</span>
+<span class="text-primary font-bold">20:30 (Cena)</span>
+<span>23:59</span>
+</div>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs border-t-0">
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-sm bg-primary"></span>
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Emisión Facturas Compra-Venta</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-sm bg-secondary-fixed-dim"></span>
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Anulaciones / Notas de Crédito</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Kyros REST Gateway v3.11-BO</span>
+</div>
+</div>
+<!-- Right Visual Feature: Node Topology / SIAT Datacenter Status -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Topología de Nodos Fiscales</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold mt-0.5">Clúster Andina de Firma</h2>
+</div>
+<div class="flex flex-col gap-space-sm my-space-sm">
+<div class="p-space-sm rounded-lg bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-tertiary text-[20px]">verified</span>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-bold text-on-surface">HSM Clúster La Paz (ADSIB)</span>
+<span class="font-label-sm text-label-sm text-outline">Firma XML XAdES-BES</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm font-bold">9ms</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-tertiary text-[20px]">verified</span>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-bold text-on-surface">Queue Broker RabbitMQ SIN</span>
+<span class="font-label-sm text-label-sm text-outline">Buffering de Contingencias</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm font-bold">0 en cola</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[20px]">sync</span>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-bold text-on-surface">Servidor Sincronización CUFD</span>
+<span class="font-label-sm text-label-sm text-outline">Rotación criptográfica diaria</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-bold">Auto</span>
+</div>
+</div>
+<div class="p-space-sm rounded-lg bg-primary-container text-on-primary flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-primary-container uppercase font-bold">Certificado Kyros Delegado</span>
+<span class="font-body-sm text-body-sm font-semibold">Autorización SIN #901283</span>
+</div>
+<span class="material-symbols-outlined text-on-primary text-[24px]">key</span>
+</div>
+</div>
+</div>
+<!-- 4. Certificados Digitales y Firmas Electrónicas por Vencer (PKCS#12) -->
+<div class="rounded-xl bg-surface-container-lowest shadow-sm flex flex-col overflow-hidden">
+<div class="p-space-md flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm bg-surface-container-low">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">badge</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Certificados Digitales &amp; Firmas Electrónicas (PKCS#12)</h2>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Monitoreo proactivo de vencimientos para evitar paralización en la emisión tributaria de contribuyentes.</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-sm text-label-sm text-outline">Filtrar por:</span>
+<select class="h-10 px-3 rounded-lg bg-surface-container font-label-sm text-label-sm text-on-surface focus:outline-none">
+<option>Todos los estados</option>
+<option>Por vencer (&lt; 30 días)</option>
+<option>Urgente (&lt; 15 días)</option>
+<option>Vigentes (&gt; 60 días)</option>
+</select>
+</div>
+</div>
+<!-- Table of PKCS#12 tokens -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container font-label-sm text-label-sm text-outline uppercase tracking-wider">
+<th class="py-space-sm px-space-md">Razón Social / Contribuyente</th>
+<th class="py-space-sm px-space-md">NIT SIN</th>
+<th class="py-space-sm px-space-md">Entidad Emisora</th>
+<th class="py-space-sm px-space-md">Fecha de Expiración</th>
+<th class="py-space-sm px-space-md">Días Restantes</th>
+<th class="py-space-sm px-space-md">Estado del Token</th>
+<th class="py-space-sm px-space-md text-right">Acción</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-transparent font-body-sm text-body-sm text-on-surface">
+<!-- Row 1: Urgent Crimson (< 15 days) -->
+<tr class="hover:bg-surface-container-low transition-colors bg-error-container/20">
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Gustu Bolivia Alta Cocina S.R.L.</span>
+<span class="font-label-sm text-label-sm text-outline">Sucursal Calacoto Clúster 1</span>
+</div>
+</td>
+<td class="py-space-md px-space-md font-label-md text-label-md font-semibold text-primary">
+                1029384019
+              </td>
+<td class="py-space-md px-space-md">
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm font-bold text-on-surface">ADSIB Bolivia</span>
+</td>
+<td class="py-space-md px-space-md font-label-sm text-label-sm">
+                24 Mar 2025
+              </td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-error animate-ping"></span>
+<span class="font-label-md text-label-md font-bold text-error">9 días restantes</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="px-2.5 py-1 rounded-full bg-error text-on-error font-label-sm text-label-sm font-bold uppercase tracking-wider flex items-center gap-1 w-fit">
+<span class="material-symbols-outlined text-[14px]">crisis_alert</span>
+                  Crítico
+                </span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<button class="h-10 px-3 bg-error hover:bg-error/90 text-on-error rounded-lg font-label-sm text-label-sm font-semibold transition-all shadow-sm active:scale-95 inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">upload</span>
+<span>Cargar Nuevo P12</span>
+</button>
+</td>
+</tr>
+<!-- Row 2: Warning Amber (< 30 days) -->
+<tr class="hover:bg-surface-container-low transition-colors bg-secondary-fixed/20">
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Chifa Palacio Dragón S.A.</span>
+<span class="font-label-sm text-label-sm text-outline">Cochabamba - El Prado</span>
+</div>
+</td>
+<td class="py-space-md px-space-md font-label-md text-label-md font-semibold text-primary">
+                3019283024
+              </td>
+<td class="py-space-md px-space-md">
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm font-bold text-on-surface">DIGICERT LATAM</span>
+</td>
+<td class="py-space-md px-space-md font-label-sm text-label-sm">
+                08 Abr 2025
+              </td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+<span class="font-label-md text-label-md font-bold text-secondary">24 días restantes</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-bold uppercase tracking-wider flex items-center gap-1 w-fit">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                  Atención
+                </span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<button class="h-10 px-3 bg-surface-container-highest hover:bg-surface-dim text-on-surface rounded-lg font-label-sm text-label-sm font-semibold transition-all shadow-sm active:scale-95 inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">notification_important</span>
+<span>Notificar Tenant</span>
+</button>
+</td>
+</tr>
+<!-- Row 3: Optimal Green (> 60 days) -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Pollos Copacabana Corporación</span>
+<span class="font-label-sm text-label-sm text-outline">32 Sucursales Red Nacional</span>
+</div>
+</td>
+<td class="py-space-md px-space-md font-label-md text-label-md font-semibold text-primary">
+                1002349012
+              </td>
+<td class="py-space-md px-space-md">
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm font-bold text-on-surface">ADSIB Bolivia</span>
+</td>
+<td class="py-space-md px-space-md font-label-sm text-label-sm">
+                15 Nov 2025
+              </td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary"></span>
+<span class="font-label-md text-label-md font-bold text-tertiary">245 días</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm font-bold uppercase tracking-wider flex items-center gap-1 w-fit">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                  Operativo
+                </span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<button class="h-10 px-3 bg-surface-container-low hover:bg-surface-container text-on-surface-variant rounded-lg font-label-sm text-label-sm font-semibold transition-all inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Detalles</span>
+</button>
+</td>
+</tr>
+<!-- Row 4: Optimal Green -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Alexander Coffee Roasters</span>
+<span class="font-label-sm text-label-sm text-outline">La Paz &amp; Santa Cruz</span>
+</div>
+</td>
+<td class="py-space-md px-space-md font-label-md text-label-md font-semibold text-primary">
+                1982736021
+              </td>
+<td class="py-space-md px-space-md">
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm font-bold text-on-surface">DIGICERT LATAM</span>
+</td>
+<td class="py-space-md px-space-md font-label-sm text-label-sm">
+                02 Feb 2026
+              </td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary"></span>
+<span class="font-label-md text-label-md font-bold text-tertiary">324 días</span>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm font-bold uppercase tracking-wider flex items-center gap-1 w-fit">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                  Operativo
+                </span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<button class="h-10 px-3 bg-surface-container-low hover:bg-surface-container text-on-surface-variant rounded-lg font-label-sm text-label-sm font-semibold transition-all inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Detalles</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- 5. Consumo de API Gateway Fiscal por Aplicación Cliente (Multi-Tenancy API Metrics) -->
+<div class="rounded-xl bg-surface-container-lowest shadow-sm flex flex-col overflow-hidden">
+<div class="p-space-md flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm bg-surface-container-low">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">api</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Consumo de API Gateway Fiscal por Tenant</h2>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Control de cuotas mensuales de facturación, tokens activos y rate limiting de microservicios SIAT.</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="h-10 px-space-md bg-primary hover:bg-primary-container text-on-primary rounded-lg font-label-sm text-label-sm font-semibold transition-all flex items-center gap-space-xs active:scale-95 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">add_moderator</span>
+<span>Nueva Aplicación Cliente</span>
+</button>
+</div>
+</div>
+<!-- Tenants API Usage Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container font-label-sm text-label-sm text-outline uppercase tracking-wider">
+<th class="py-space-sm px-space-md">Aplicación / Tenant</th>
+<th class="py-space-sm px-space-md">API Key Fiscal</th>
+<th class="py-space-sm px-space-md">Plan Fiscal</th>
+<th class="py-space-sm px-space-md">Consumo del Mes</th>
+<th class="py-space-sm px-space-md">SLA &amp; Latencia</th>
+<th class="py-space-sm px-space-md text-right">Gestión de Acceso</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-transparent font-body-sm text-body-sm text-on-surface">
+<!-- Tenant 1 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-primary-container text-on-primary flex items-center justify-center font-bold font-label-sm text-label-sm">
+                    AG
+                  </div>
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Andina GastroOS Client App v4.2</span>
+<span class="font-label-sm text-label-sm text-outline">Tenant ID: ten_bol_091823</span>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-xs bg-surface-container-high px-2 py-1 rounded-md w-fit">
+<span class="font-label-sm text-label-sm text-on-surface font-mono">kyros_live_...98x2</span>
+<button class="hover:text-primary transition-colors cursor-pointer text-outline" onclick="copyToClipboard('kyros_live_sin_sec_99182746192898x2')" title="Copiar API Key">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">
+                  Tier 2 (20k facturas)
+                </span>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col gap-1 w-44">
+<div class="flex justify-between font-label-sm text-label-sm">
+<span class="font-bold text-on-surface">14,280 / 20k</span>
+<span class="text-primary font-semibold">71.4%</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary rounded-full h-1.5" style="width: 71.4%;"></div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-bold text-tertiary">99.98% éxito</span>
+<span class="font-label-sm text-label-sm text-outline">avg: 218ms</span>
+</div>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="h-9 px-2.5 bg-surface-container hover:bg-surface-container-highest text-on-surface rounded-lg font-label-sm text-label-sm font-semibold transition-all flex items-center gap-1 active:scale-95" title="Regenerar Secreto">
+<span class="material-symbols-outlined text-[16px]">restart_alt</span>
+<span>Secret</span>
+</button>
+<button class="h-9 px-2.5 bg-error-container hover:bg-error text-on-error-container hover:text-on-error rounded-lg font-label-sm text-label-sm font-semibold transition-all flex items-center gap-1 active:scale-95" title="Suspender Servicio">
+<span class="material-symbols-outlined text-[16px]">block</span>
+<span>Suspender</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Tenant 2 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-secondary text-on-secondary flex items-center justify-center font-bold font-label-sm text-label-sm">
+                    CP
+                  </div>
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Copacabana POS Engine Enterprise</span>
+<span class="font-label-sm text-label-sm text-outline">Tenant ID: ten_bol_enterprise_01</span>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-xs bg-surface-container-high px-2 py-1 rounded-md w-fit">
+<span class="font-label-sm text-label-sm text-on-surface font-mono">kyros_live_...41a7</span>
+<button class="hover:text-primary transition-colors cursor-pointer text-outline" onclick="copyToClipboard('kyros_live_sin_sec_77218391048241a7')" title="Copiar API Key">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-bold uppercase tracking-wide">
+                  Tier Enterprise (Ilimitado)
+                </span>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col gap-1 w-44">
+<div class="flex justify-between font-label-sm text-label-sm">
+<span class="font-bold text-on-surface">184,920 req</span>
+<span class="text-tertiary font-semibold">Ilimitado</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 overflow-hidden">
+<div class="bg-tertiary rounded-full h-1.5" style="width: 100%;"></div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-bold text-tertiary">99.99% éxito</span>
+<span class="font-label-sm text-label-sm text-outline">avg: 184ms</span>
+</div>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="h-9 px-2.5 bg-surface-container hover:bg-surface-container-highest text-on-surface rounded-lg font-label-sm text-label-sm font-semibold transition-all flex items-center gap-1 active:scale-95" title="Regenerar Secreto">
+<span class="material-symbols-outlined text-[16px]">restart_alt</span>
+<span>Secret</span>
+</button>
+<button class="h-9 px-2.5 bg-surface-container hover:bg-surface-dim text-on-surface rounded-lg font-label-sm text-label-sm font-semibold transition-all flex items-center gap-1 active:scale-95" title="Ajustes Enterprise">
+<span class="material-symbols-outlined text-[16px]">settings</span>
+<span>Ajustes</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Tenant 3 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-tertiary text-on-tertiary flex items-center justify-center font-bold font-label-sm text-label-sm">
+                    KC
+                  </div>
+<div class="flex flex-col">
+<span class="font-bold text-on-surface">Kiosk Coffee &amp; Barista Stand v1.0</span>
+<span class="font-label-sm text-label-sm text-outline">Tenant ID: ten_bol_049281</span>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex items-center gap-space-xs bg-surface-container-high px-2 py-1 rounded-md w-fit">
+<span class="font-label-sm text-label-sm text-on-surface font-mono">kyros_live_...12b9</span>
+<button class="hover:text-primary transition-colors cursor-pointer text-outline" onclick="copyToClipboard('kyros_live_sin_sec_10293847291012b9')" title="Copiar API Key">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold">
+                  Tier 1 (5k facturas)
+                </span>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col gap-1 w-44">
+<div class="flex justify-between font-label-sm text-label-sm">
+<span class="font-bold text-error">4,910 / 5k</span>
+<span class="text-error font-bold">98.2%</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 overflow-hidden">
+<div class="bg-error rounded-full h-1.5" style="width: 98.2%;"></div>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-bold text-tertiary">99.80% éxito</span>
+<span class="font-label-sm text-label-sm text-outline">avg: 290ms</span>
+</div>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="flex items-center justify-end gap-space-xs">
+<button class="h-9 px-2.5 bg-secondary-container hover:bg-secondary text-on-secondary-container hover:text-on-secondary rounded-lg font-label-sm text-label-sm font-semibold transition-all flex items-center gap-1 active:scale-95" title="Ampliar Cuota">
+<span class="material-symbols-outlined text-[16px]">upgrade</span>
+<span>Ampliar Cuota</span>
+</button>
+<button class="h-9 px-2.5 bg-surface-container hover:bg-surface-container-highest text-on-surface rounded-lg font-label-sm text-label-sm font-semibold transition-all flex items-center gap-1 active:scale-95" title="Regenerar Secreto">
+<span class="material-symbols-outlined text-[16px]">restart_alt</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Quick Toast Container -->
+<div class="fixed bottom-14 right-8 bg-inverse-surface text-inverse-on-surface px-space-md py-space-sm rounded-lg shadow-xl font-body-sm text-body-sm flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none z-50" id="toast-notification">
+<span class="material-symbols-outlined text-[20px] text-tertiary-fixed">check_circle</span>
+<span id="toast-text">Copiado al portapapeles</span>
+</div>
+</div>
+</div>
+</div>
+<script>
+  function copyToClipboard(text) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Clave secreta copiada al portapapeles con éxito.");
+      });
+    } else {
+      showToast("Texto copiado al portapapeles.");
+    }
+  }
+
+  function showToast(message) {
+    const toast = document.getElementById('toast-notification');
+    const toastText = document.getElementById('toast-text');
+    if (!toast || !toastText) return;
+    toastText.textContent = message;
+    toast.classList.remove('translate-y-20', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+    setTimeout(() => {
+      toast.classList.add('translate-y-20', 'opacity-0');
+      toast.classList.remove('translate-y-0', 'opacity-100');
+    }, 3000);
+  }
+
+  document.getElementById('btn-sync-all')?.addEventListener('click', function() {
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin text-primary">autorenew</span><span>Sincronizando con SIN Central...</span>';
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      showToast("Catálogos tributarios sincronizados con el SIAT Nacional (2,410 ítems actualizados).");
+    }, 1800);
+  });
+</script></main><footer class="fixed bottom-0 left-72 right-0 h-10 bg-surface-container-low shadow-[0_-1px_6px_rgba(0,0,0,0.03)] z-30 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-xs font-label-sm text-label-sm text-on-surface-variant"><span class="w-2 h-2 rounded-full bg-tertiary-container"></span><span>Nodos Activos: <strong class="text-on-surface">14/14 (LPZ/CBB/SCZ)</strong></span></div><div class="hidden md:flex items-center gap-space-xs font-label-sm text-label-sm text-on-surface-variant"><span class="material-symbols-outlined text-[16px] text-outline">database</span><span>Latencia DB: <strong class="text-on-surface">8.4ms</strong></span></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs font-label-sm text-label-sm"><span class="material-symbols-outlined text-secondary text-[16px]">sync_saved_locally</span><span class="text-on-surface-variant">Conexión SIAT/SIN Nacional:</span><span class="text-tertiary font-bold uppercase">Operacional En Línea</span></div></div></footer></div></body></html>

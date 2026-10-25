@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "background": "#f7f9fc",
+          "secondary": "#7c5800",
+          "inverse-surface": "#2d3133",
+          "outline": "#72777f",
+          "on-background": "#191c1e",
+          "on-primary-fixed-variant": "#184974",
+          "inverse-on-surface": "#eff1f4",
+          "tertiary-fixed": "#a1f5b0",
+          "secondary-fixed-dim": "#febb2a",
+          "secondary-fixed": "#ffdea8",
+          "on-error-container": "#93000a",
+          "on-surface-variant": "#42474f",
+          "tertiary": "#003e1a",
+          "surface-container-lowest": "#ffffff",
+          "on-tertiary-fixed": "#00210b",
+          "on-primary": "#ffffff",
+          "on-surface": "#191c1e",
+          "primary-fixed-dim": "#a0cafc",
+          "surface-variant": "#e0e3e6",
+          "error-container": "#ffdad6",
+          "surface-container": "#eceef1",
+          "inverse-primary": "#a0cafc",
+          "secondary-container": "#febb2a",
+          "on-primary-fixed": "#001d35",
+          "surface-tint": "#35618d",
+          "on-tertiary": "#ffffff",
+          "on-tertiary-fixed-variant": "#005224",
+          "surface-container-highest": "#e0e3e6",
+          "on-secondary": "#ffffff",
+          "error": "#ba1a1a",
+          "on-tertiary-container": "#7cce8c",
+          "on-error": "#ffffff",
+          "on-secondary-container": "#6d4d00",
+          "surface-container-low": "#f2f4f7",
+          "tertiary-fixed-dim": "#86d996",
+          "surface-dim": "#d8dadd",
+          "primary": "#00375e",
+          "primary-container": "#1f4e79",
+          "surface-container-high": "#e6e8eb",
+          "on-secondary-fixed": "#271900",
+          "surface-bright": "#f7f9fc",
+          "tertiary-container": "#005827",
+          "primary-fixed": "#d1e4ff",
+          "on-secondary-fixed-variant": "#5e4200",
+          "surface": "#f7f9fc",
+          "outline-variant": "#c2c7d0",
+          "on-primary-container": "#95bff1"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "margin-tablet": "1.5rem",
+          "space-md": "1rem",
+          "margin": "1rem",
+          "gutter": "1rem",
+          "space-lg": "1.5rem",
+          "gutter-desktop": "1.5rem",
+          "gutter-tablet": "1.25rem",
+          "space-xl": "2rem",
+          "space-xs": "0.25rem",
+          "space-sm": "0.5rem",
+          "margin-desktop": "2rem"
+        },
+        "fontFamily": {
+          "body-sm": ["Inter"],
+          "label-lg": ["JetBrains Mono"],
+          "label-sm": ["JetBrains Mono"],
+          "headline-lg-mobile": ["Inter"],
+          "headline-xl": ["Inter"],
+          "body-lg": ["Inter"],
+          "headline-lg": ["Inter"],
+          "headline-md": ["Inter"],
+          "headline-sm": ["Inter"],
+          "label-md": ["JetBrains Mono"],
+          "headline-xl-mobile": ["Inter"],
+          "body-md": ["Inter"]
+        },
+        "fontSize": {
+          "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+          "label-lg": ["16px", {"lineHeight": "20px", "letterSpacing": "0.5px", "fontWeight": "600"}],
+          "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.25px", "fontWeight": "500"}],
+          "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+          "headline-xl": ["40px", {"lineHeight": "48px", "fontWeight": "700"}],
+          "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "500"}],
+          "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+          "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+          "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+          "label-md": ["14px", {"lineHeight": "18px", "letterSpacing": "0.25px", "fontWeight": "600"}],
+          "headline-xl-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+          "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+        }
+      }
+    }
+  }</script></head><body class="bg-surface font-body-md text-body-md text-on-surface min-h-screen selection:bg-secondary-fixed selection:text-on-secondary-fixed"><header class="fixed top-0 left-0 right-0 w-full z-50 bg-surface/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] select-none"><div class="h-20 w-full px-margin-desktop flex items-center justify-between gap-gutter"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[24px]">restaurant_menu</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm font-bold tracking-tight text-primary leading-none">Andina GastroOS</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mt-1">Plataforma Gastronómica Bolivia</span></div></div><div class="hidden xl:flex items-center gap-space-xs px-space-md py-space-xs rounded-lg bg-surface-container-low"><span class="material-symbols-outlined text-primary text-[18px]">storefront</span><span class="font-body-sm text-body-sm font-medium text-on-surface">Sucursal Prado · La Paz</span></div><div class="hidden lg:flex items-center px-space-md py-space-xs rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-semibold"><span class="w-2 h-2 rounded-full bg-secondary mr-2 animate-pulse"></span>POS Cajero / Mesero</div></div><nav class="flex items-center gap-space-xs bg-surface-container-low p-space-xs rounded-xl" data-active-classes="bg-primary-container text-on-primary font-bold shadow-sm"><a aria-current="page" class="h-12 px-space-lg flex items-center justify-center rounded-lg transition-all bg-primary-container text-on-primary font-bold shadow-sm" data-path="tomar-pedido-pos" href="#">Tomar Pedido POS</a><a class="h-12 px-space-lg flex items-center justify-center rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="pedidos-del-dia" href="#">Pedidos del Día</a><a class="h-12 px-space-lg flex items-center justify-center rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="mesas-y-salon" href="#">Mesas y Salón</a><a class="h-12 px-space-lg flex items-center justify-center rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="caja-y-cobros" href="#">Caja y Cobros</a></nav><div class="flex items-center gap-space-md"><div class="hidden md:flex flex-col items-end"><span class="font-label-md text-label-md text-primary font-bold tracking-widest tabular-nums">13:42:08</span><span class="font-label-sm text-label-sm text-on-surface-variant">BOT (GMT-4)</span></div><div class="flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[16px] text-tertiary-container">cloud_done</span><span>EN LÍNEA</span></div><div class="flex items-center gap-space-sm pl-space-sm"><div class="hidden sm:flex flex-col items-end text-right"><span class="font-body-sm text-body-sm font-semibold text-on-surface leading-tight">Carlos Mamani</span><span class="font-label-sm text-label-sm text-secondary font-medium">Turno Almuerzo #A-04</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-20 bg-surface min-h-[calc(100vh-5rem)]"><div class="flex flex-col w-full">
+<!-- Layout Maestro Split: 65% Catálogo Táctil / 35% Comanda Activa -->
+<div class="w-full grid grid-cols-1 xl:grid-cols-12 min-h-[calc(100vh-5rem)] bg-surface text-on-surface select-none">
+<!-- PANEL IZQUIERDO: Catálogo Táctil (Col 7 / 65% aprox en xl) -->
+<div class="xl:col-span-8 flex flex-col p-space-md lg:p-space-lg gap-space-md overflow-y-auto">
+<!-- Fila 1: Pestañas de Destino de Comanda & Selector de Comensales -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm bg-surface-container-low p-space-xs rounded-xl shadow-sm">
+<div class="flex items-center gap-space-xs overflow-x-auto">
+<!-- Mesa 5 (Activa) -->
+<button class="h-14 px-space-lg rounded-lg bg-primary text-on-primary font-headline-sm text-headline-sm flex items-center gap-space-xs shadow-md transition-transform active:scale-95" type="button">
+<span class="material-symbols-outlined text-[24px]">table_restaurant</span>
+<span>Mesa 5</span>
+<span class="ml-space-xs px-2 py-0.5 rounded-full bg-secondary text-on-secondary font-label-sm text-label-sm font-bold tracking-wider">SALÓN</span>
+</button>
+<button class="h-14 px-space-md rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-body-lg text-body-lg flex items-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-primary text-[22px]">storefront</span>
+<span>Mostrador</span>
+</button>
+<button class="h-14 px-space-md rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-body-lg text-body-lg flex items-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-primary text-[22px]">takeout_dining</span>
+<span>Para Llevar</span>
+</button>
+<button class="h-14 px-space-md rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-body-lg text-body-lg flex items-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-primary text-[22px]">two_wheeler</span>
+<span>Delivery</span>
+</button>
+</div>
+<!-- Selector Táctil Rápido de Pax (Personas) -->
+<div class="flex items-center gap-space-xs bg-surface-container-high px-space-md py-space-xs rounded-lg">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">group</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">Pax:</span>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 rounded bg-surface text-on-surface font-label-sm text-label-sm flex items-center justify-center font-bold hover:bg-surface-container-highest" type="button">2</button>
+<button class="w-8 h-8 rounded bg-surface text-on-surface font-label-sm text-label-sm flex items-center justify-center font-bold hover:bg-surface-container-highest" type="button">3</button>
+<button class="w-9 h-9 rounded bg-primary-container text-on-primary font-label-md text-label-md flex items-center justify-center font-bold shadow-sm ring-2 ring-primary" type="button">4</button>
+<button class="w-8 h-8 rounded bg-surface text-on-surface font-label-sm text-label-sm flex items-center justify-center font-bold hover:bg-surface-container-highest" type="button">6+</button>
+</div>
+</div>
+</div>
+<!-- Fila 2: Barra de Búsqueda Rápida + Código de Barras / PLU -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-space-sm items-center">
+<div class="sm:col-span-9 relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-on-surface-variant text-[24px]">search</span>
+<input class="w-full h-14 pl-12 pr-12 bg-surface-container-lowest rounded-xl font-body-lg text-body-lg text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" placeholder="Buscar plato, guarnición o código PLU (ej. Silpancho, Maní, #102)..." type="text"/>
+<button class="absolute right-3 w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-on-surface" type="button">
+<span class="material-symbols-outlined text-[20px]">barcode_scanner</span>
+</button>
+</div>
+<!-- Botón Rápido de Teclado Numérico Directo -->
+<button class="sm:col-span-3 h-14 bg-surface-container-low hover:bg-surface-container-high rounded-xl font-label-md text-label-md text-primary font-bold flex items-center justify-center gap-space-xs shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[22px]">dialpad</span>
+<span>CÓDIGO PLU</span>
+</button>
+</div>
+<!-- Fila 3: Banner Promocional Ámbar Activo -->
+<div class="w-full bg-secondary-fixed text-on-secondary-fixed p-space-md rounded-xl flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">bolt</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm font-bold uppercase tracking-wider text-secondary">Promoción Activa Mediodía</span>
+<span class="px-2 py-0.2 bg-secondary text-on-secondary rounded text-[11px] font-bold">12:00 - 15:00</span>
+</div>
+<span class="font-body-md text-body-md font-semibold text-on-secondary-fixed mt-0.5">
+              -10% de descuento en Silpancho Cochabambino y Platos Fuertes seleccionados
+            </span>
+</div>
+</div>
+<div class="hidden md:flex items-center gap-space-xs font-label-sm text-label-sm text-secondary font-bold">
+<span class="material-symbols-outlined text-[18px]">timer</span>
+<span>1h 18m restantes</span>
+</div>
+</div>
+<!-- Fila 4: Chips de Categorías Horizontales con Botones Grandes -->
+<div class="flex items-center gap-space-sm overflow-x-auto pb-space-xs scrollbar-none">
+<button class="h-12 px-space-lg rounded-xl bg-primary text-on-primary font-label-md text-label-md font-bold whitespace-nowrap flex items-center gap-space-xs shadow-sm" type="button">
+<span>Todos</span>
+<span class="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed text-xs font-bold">28</span>
+</button>
+<button class="h-12 px-space-lg rounded-xl bg-surface-container-low hover:bg-surface-container-high text-on-surface font-label-md text-label-md whitespace-nowrap flex items-center gap-space-xs transition-colors" type="button">
+<span>Platos Fuertes</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant text-xs font-bold">10</span>
+</button>
+<button class="h-12 px-space-lg rounded-xl bg-surface-container-low hover:bg-surface-container-high text-on-surface font-label-md text-label-md whitespace-nowrap flex items-center gap-space-xs transition-colors" type="button">
+<span>Sopas y Caldos</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant text-xs font-bold">6</span>
+</button>
+<button class="h-12 px-space-lg rounded-xl bg-surface-container-low hover:bg-surface-container-high text-on-surface font-label-md text-label-md whitespace-nowrap flex items-center gap-space-xs transition-colors" type="button">
+<span>Piques y Entradas</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant text-xs font-bold">5</span>
+</button>
+<button class="h-12 px-space-lg rounded-xl bg-surface-container-low hover:bg-surface-container-high text-on-surface font-label-md text-label-md whitespace-nowrap flex items-center gap-space-xs transition-colors" type="button">
+<span>Bebidas y Jugos</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant text-xs font-bold">8</span>
+</button>
+<button class="h-12 px-space-lg rounded-xl bg-surface-container-low hover:bg-surface-container-high text-on-surface font-label-md text-label-md whitespace-nowrap flex items-center gap-space-xs transition-colors" type="button">
+<span>Postres</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant text-xs font-bold">4</span>
+</button>
+</div>
+<!-- Fila 5: Cuadrícula Táctil de Platos (Grid de alto rendimiento) -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-space-md">
+<!-- Plato 1: Pique Macho Tradicional -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative">
+<div class="relative h-32 w-full overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="A delicious Bolivian Pique Macho dish served in an artisanal clay bowl, featuring tender chopped tenderloin beef, crispy fried potatoes, fried sausage links, sliced red onions, tomatoes, and locoto chili peppers garnished with fresh hard boiled eggs in natural restaurant lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2_BKXAHQJ69UFj3EPBoHyh-EeUNnjXMJMkBNi_na6SKfn-RC4RKy9b6blahLarihpQiy49wpSCljW51Cxt0XH6tqgVjO63Wnbq7uhb0-sQ-BBTH_63dKBDDGKCwiSCYfaw3B_gpDFRipzH0TKdbqveBG7qp95AfaTfH_CWTCsGWcQgmP3u2PDhOUDf0KyBfSJiAxVhTaMllwPRbBbFU8ckMWATF-vkElGMza-BL3YcizdZMkfJTJkjw"/>
+<div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-bold shadow-sm">
+<span class="material-symbols-outlined text-[14px]">local_fire_department</span>
+<span>POPULAR</span>
+</div>
+<div class="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-surface/90 backdrop-blur font-label-sm text-label-sm font-bold text-primary">
+              T2: Platos
+            </div>
+</div>
+<div class="p-space-sm flex flex-col justify-between flex-1 gap-space-sm">
+<div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface leading-snug line-clamp-1">Pique Macho Tradicional</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Lomo picado, salchicha, papas fritas y locoto</p>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-label-lg text-label-lg font-bold text-primary">Bs 65.00</span>
+<button class="h-12 w-12 rounded-lg bg-primary-container text-on-primary flex items-center justify-center hover:bg-primary active:scale-90 transition-transform shadow-sm" type="button">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Plato 2: Silpancho Cochabambino (En Promo) -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative">
+<div class="relative h-32 w-full overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Bolivian Silpancho from Cochabamba beautifully plated on ceramic tableware, featuring a massive thin breaded beef cutlet topped with a golden fried sunny side up egg, layered over rice and round sliced fried potatoes, finished with fresh diced tomato onion salsa in vibrant warm light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUg0xcIT4oZOSPLM-PfV6R9BsYiwCnDWD6VELy5iT4uQTi_On3zdnb9-CYS6mw1h7LbspxdyXbe66f3cMp3AHbePnvdR-FlhzyAiK0ZXdANOosyou5pYnS9erYOOsqrVXqDE3CGzdBI7Ppd58TbBdO7SaXIihyWmdDhw8XkSgyWrCr2_y61GO2w-SFIqevM5Jgc9LUsUNGT7z4cdMfNyEfXZqkWGL_sD82BjomLHB1Q8VWSlvXlqWEnQ"/>
+<div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded bg-secondary text-on-secondary font-label-sm text-label-sm font-bold shadow-sm">
+<span class="material-symbols-outlined text-[14px]">percent</span>
+<span>PROMO -10%</span>
+</div>
+<div class="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-surface/90 backdrop-blur font-label-sm text-label-sm font-bold text-primary">
+              T2: Platos
+            </div>
+</div>
+<div class="p-space-sm flex flex-col justify-between flex-1 gap-space-sm">
+<div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface leading-snug line-clamp-1">Silpancho Cochabambino</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Carne apanada, arroz, huevo frito y sarza</p>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<div class="flex flex-col leading-none">
+<span class="font-label-sm text-label-sm line-through text-on-surface-variant font-medium">Bs 48.00</span>
+<span class="font-label-lg text-label-lg font-bold text-secondary">Bs 43.20</span>
+</div>
+<button class="h-12 w-12 rounded-lg bg-secondary-container text-on-secondary-container flex items-center justify-center hover:bg-secondary-fixed active:scale-90 transition-transform shadow-sm" type="button">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Plato 3: Sopa de Maní Criolla -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative">
+<div class="relative h-32 w-full overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Traditional Bolivian Sopa de Mani peanut soup in a rustic clay bowl, steaming hot creamy broth garnished with crispy thin shoestring fried potatoes, chopped fresh parsley, beef rib bone and tender macaroni in clean daylight." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQIsTDvbTuYZsateDV76Rmu_qZLK44cyCtAFatQEuDN_alqE745ULjm2D3dQxhV7f8jSYTBJSsL7yk4cMFIutv9xRMV7vBRjlj4Lv7BuVSy3GSGh0A7xbVSw5r2BTX9U-PSZ5Cuw4dDygEg1eA6QhwEzVTsYifRfleDOlKkrgrevQ7uq9-om40oaX88_nxAOhCAeya3tPv_EB0_AyWJcwdGUzGP4xdXm4JEvDlEktRvChdoLaePh1y7w"/>
+<div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold shadow-sm">
+<span class="material-symbols-outlined text-[14px]">soup_kitchen</span>
+<span>T1: SOPAS</span>
+</div>
+</div>
+<div class="p-space-sm flex flex-col justify-between flex-1 gap-space-sm">
+<div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface leading-snug line-clamp-1">Sopa de Maní Criolla</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Caldo de res con pasta de maní y papas al hilo</p>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-label-lg text-label-lg font-bold text-primary">Bs 32.00</span>
+<button class="h-12 w-12 rounded-lg bg-primary-container text-on-primary flex items-center justify-center hover:bg-primary active:scale-90 transition-transform shadow-sm" type="button">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Plato 4: Trucha Frita del Titicaca (AGOTADO) -->
+<div class="flex flex-col bg-surface-container-low rounded-xl shadow-sm overflow-hidden opacity-60 cursor-not-allowed relative">
+<div class="relative h-32 w-full overflow-hidden bg-surface-container-high">
+<img class="w-full h-full object-cover grayscale" data-alt="Whole fried Lake Titicaca trout served crisply with boiled chuño and fresh side salad on an earthen plate in soft ambient restaurant setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDcdwegOmgGnWSctT45Pob-K4Waz3EfZCiugobI5qjNMKyF3yghwPQT_GRa-T_qajPh1pIDNhcSucxStoIbaBACLCT4MIzJk9d7C_vk3_2NUjM7yn-9Mby-oyQMQSediAsoD7IQFmROpm12SQwhA-u3D0-CHrW93VdSqfbMx8uqt4gbZNA4YrX-XxzRScH2d6RbpYHDk6_Nb1KQrahHPx3-cCkPnPubqnYxADdnfVBBdllsUPCWZeIHA"/>
+<div class="absolute inset-0 bg-error-container/40 flex items-center justify-center">
+<span class="px-3 py-1.5 rounded-lg bg-error text-on-error font-label-sm text-label-sm font-bold uppercase tracking-wider flex items-center gap-1 shadow-md">
+<span class="material-symbols-outlined text-[16px]">block</span>
+<span>Agotado Hoy</span>
+</span>
+</div>
+</div>
+<div class="p-space-sm flex flex-col justify-between flex-1 gap-space-sm">
+<div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface line-clamp-1">Trucha del Titicaca</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Trucha dorada con chuño y ensalada fresca</p>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-label-lg text-label-lg font-bold text-on-surface-variant">Bs 50.00</span>
+<div class="h-12 w-12 rounded-lg bg-surface-container-highest text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">lock</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Plato 5: Chicharrón de Cerdo Valluno -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative">
+<div class="relative h-32 w-full overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Crispy golden Chicharron de Cerdo pork chunks cooked in copper cauldron, served over large boiled white mote corn and unpeeled boiled potatoes with spicy red llajua sauce on a Bolivian rustic platter." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkJj93w6A-pUShebEwbTl-WEZMlSZv9yYsXTmLEIa4sdyotSlzOi2N30oKLb-ybEnD56t5BnvwPBdHgx6iJKMi5n3h4bX9igivJpbXumCsQQ7kjp6ZWz-Q4C48q7ttTIpgtKvaYF5FgUC1xG5d1VuPTyUx4JFR3FTc8EsrXA43MN7dwuMoUelMb1MOCzgrVjo7A6-2WoG8m7FOcEzC8wOfUAHWWlbIwxVxh3ItjvTMToBJtZHL4YIbCw"/>
+<div class="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-surface/90 backdrop-blur font-label-sm text-label-sm font-bold text-primary">
+              T2: Platos
+            </div>
+</div>
+<div class="p-space-sm flex flex-col justify-between flex-1 gap-space-sm">
+<div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface leading-snug line-clamp-1">Chicharrón de Cerdo</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Cochinillo crujiente, mote blanco, papa y llajua</p>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-label-lg text-label-lg font-bold text-primary">Bs 55.00</span>
+<button class="h-12 w-12 rounded-lg bg-primary-container text-on-primary flex items-center justify-center hover:bg-primary active:scale-90 transition-transform shadow-sm" type="button">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Plato 6: Milanesa de Res Completa -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative">
+<div class="relative h-32 w-full overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Generous golden fried beef milanesa accompanied by french fries, steamed rice, and fresh shredded beet and carrot salad, restaurant presentation on clean plate." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJNy82cxxmFH1YhD3vqoi2v40f-4V7LaxFyaphLk_uhPskTnMpz6iobs6l7a7RBMVgC2RVXzTuKQYyxOPH5reMpDtmWN1N5L9Lfs0OKan8RoN2zwt3to0X7a79ml-X8fNop4549vkfssBrPHZledqCUItHatKiobeQvPWXR4iK0aLNQIg4FnyqKW8RJbdrikEG-nWLOxc3DxV0YECw9kyAYVdVB9idtVuK3OEvJmwuLhjWOz4x7YqIqQ"/>
+<div class="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-surface/90 backdrop-blur font-label-sm text-label-sm font-bold text-primary">
+              T2: Platos
+            </div>
+</div>
+<div class="p-space-sm flex flex-col justify-between flex-1 gap-space-sm">
+<div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface leading-snug line-clamp-1">Milanesa de Res Completa</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Apanado crocante, arroz graneado y ensalada mixta</p>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-label-lg text-label-lg font-bold text-primary">Bs 38.00</span>
+<button class="h-12 w-12 rounded-lg bg-primary-container text-on-primary flex items-center justify-center hover:bg-primary active:scale-90 transition-transform shadow-sm" type="button">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Plato 7: Salteña de Carne Santa Cruz -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative">
+<div class="relative h-32 w-full overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Traditional baked Bolivian Saltena pastry with deep braided crust and glossy reddish-amber glaze, oozing savory juicy meat filling in elegant macro close up." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtnZyB9WPzUMkOKRiLgTkAWYgDjwTH_gJ_Dwu2tauqjIYHs0Lr6pNnxAlFa7LjuDLlM5PejFsiFG5LUm8CeoftNMJmFVpD05psr81N9bS_8BQMsSkEflDturJp7kXLi-XZudw4piw4ddoYASvjc2ObWtNsXs1pX5WqpB7PWsATY4J1_Iia-NBk8TJB8h75E0OdggaNnrqrz8bp-sWbHyC2vkISOncB1yeO2n_1I4FE7vJSh0HtiJ7yGw"/>
+<div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold shadow-sm">
+<span class="material-symbols-outlined text-[14px]">bakery_dining</span>
+<span>HORNO</span>
+</div>
+</div>
+<div class="p-space-sm flex flex-col justify-between flex-1 gap-space-sm">
+<div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface leading-snug line-clamp-1">Salteña de Carne</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Jigote caldoso de res, papa, huevo y aceituna</p>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-label-lg text-label-lg font-bold text-primary">Bs 12.00</span>
+<button class="h-12 w-12 rounded-lg bg-primary-container text-on-primary flex items-center justify-center hover:bg-primary active:scale-90 transition-transform shadow-sm" type="button">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Plato 8: Api Morado con Pastel de Queso -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative">
+<div class="relative h-32 w-full overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="Steaming hot purple corn Api beverage in a tall clear glass paired with a large puffed fried Bolivian pastel stuffed with melted cheese, dusted with powdered sugar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1XdIP80ZrQy7-umHX5x6O9lFlSJzRGziA63asiXY_0cvlD0k_dq_rx8KommXHmkCYjo7J_jfotLhV-O--Iv_eZ1Hvbx-YXwDtIb-njeCDOvWApTito4W681w1SdUwiPZBz5_hY4iPQhNDewV5keW2CM9ZDBR7Qlru3uIRveNdO5I3h8srtoyllktMuX-K5BGTdjvMC_ZSJv2Kx8Kr08zHPzVrYbbjk0EIfilI6cw87LbL_UmprHL8nQ"/>
+<div class="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold">
+              Inmediato
+            </div>
+</div>
+<div class="p-space-sm flex flex-col justify-between flex-1 gap-space-sm">
+<div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface leading-snug line-clamp-1">Api Morado + Pastel</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Api caliente aromático con pastel inflado de queso</p>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-label-lg text-label-lg font-bold text-primary">Bs 18.00</span>
+<button class="h-12 w-12 rounded-lg bg-primary-container text-on-primary flex items-center justify-center hover:bg-primary active:scale-90 transition-transform shadow-sm" type="button">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Plato 9: Jarra de Mocochinchi Casero -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative">
+<div class="relative h-32 w-full overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="A 1.5-liter glass pitcher of iced Mocochinchi dehydrated peach beverage with cinnamon stick and whole plump dehydrated peach floating inside, condensation on glass in bright sunlight." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdEpHxdEz-1xQdzOz3Ai1mSFxkmb3NW6PQyfKyC4ZeCEHKJaVxnhnhddXyyBjYbWlsl38LfYKqLw6wsvE3-MiXQTEbKO1wyod7bzQBHaK1J1m62GXvOEcK82UO2172WQ0GKOtAWGdq_xBYGGhZmDaDBGpYrAje1sf5cV4kEjoIska4RJVlG83hOFd9XrpFaBCxpm9V_NnYw4jYMmnIPm2gWM0eVpzBQtmHbxRXCjyPOKUUKpyXxn0cUg"/>
+<div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold shadow-sm">
+<span class="material-symbols-outlined text-[14px]">local_cafe</span>
+<span>BEBIDA</span>
+</div>
+</div>
+<div class="p-space-sm flex flex-col justify-between flex-1 gap-space-sm">
+<div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface leading-snug line-clamp-1">Jarra Mocochinchi (1.5L)</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Receta tradicional con clavo, canela y durazno</p>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-label-lg text-label-lg font-bold text-primary">Bs 22.00</span>
+<button class="h-12 w-12 rounded-lg bg-primary-container text-on-primary flex items-center justify-center hover:bg-primary active:scale-90 transition-transform shadow-sm" type="button">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Plato 10: Cerveza Taquiña 620ml -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative">
+<div class="relative h-32 w-full overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" data-alt="A cold Taquina Bolivian beer bottle chilled with water droplets on amber glass alongside an ice-cold pour with white froth head in commercial styling." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkQ3SW46V7YqXpAfw89cJKPaea-i_BCme-cw_TmCRi8dx5X6VKLxcpsWhPr7hshAmde7logE9WegLQDBhXWYQ-saR99HNTR8YxwOO8ZS4wIqMZBRWYrQoamltbggQYkfP0ZdR4DBcdhZwbWoMURRwsfFlWhtiOkZBWMHAFsCuPXPx3Uo-sUyOp4RJVj6ao1SaiyO0JfgqTVAHz_ldRzqIebCvNMiGEbXFO7WZThAqcLycP61Fz7cXG8w"/>
+<div class="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold">
+              Barra
+            </div>
+</div>
+<div class="p-space-sm flex flex-col justify-between flex-1 gap-space-sm">
+<div>
+<h3 class="font-body-lg text-body-lg font-bold text-on-surface leading-snug line-clamp-1">Cerveza Taquiña 620ml</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-1">Cerveza rubia cochabambina bien fría</p>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-label-lg text-label-lg font-bold text-primary">Bs 25.00</span>
+<button class="h-12 w-12 rounded-lg bg-primary-container text-on-primary flex items-center justify-center hover:bg-primary active:scale-90 transition-transform shadow-sm" type="button">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- PANEL DERECHO: Comanda Activa (Col 5 / 35% aprox en xl) -->
+<div class="xl:col-span-4 bg-surface-container-lowest shadow-xl flex flex-col justify-between overflow-hidden">
+<!-- Encabezado de la Comanda Activa -->
+<div class="p-space-md bg-surface-container-low shadow-sm">
+<div class="flex items-center justify-between mb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-md text-headline-md font-bold text-primary">Comanda #4082</span>
+<span class="px-2 py-0.5 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm font-bold">Mesa 5</span>
+</div>
+<div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span>12 min sentados</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary">badge</span>
+            Mesero: <strong class="text-on-surface font-semibold">Carlos M.</strong>
+</span>
+<span>4 Comensales · Salón Principal</span>
+</div>
+</div>
+<!-- Lista Scrollable de Ítems en la Comanda -->
+<div class="flex-1 overflow-y-auto p-space-md flex flex-col gap-space-md">
+<!-- Ítem 1: Sopa de Maní -->
+<div class="p-space-sm rounded-xl bg-surface-container-low shadow-sm flex flex-col gap-space-xs">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-space-xs">
+<span class="px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold">T1 - SOPAS</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">#102</span>
+</div>
+<h4 class="font-body-lg text-body-lg font-bold text-on-surface truncate mt-1">Sopa de Maní Criolla</h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Bs 32.00 c/u</span>
+</div>
+<!-- Controles Táctiles + / - Grandes (min 48px) -->
+<div class="flex items-center gap-1 bg-surface-container rounded-lg p-1">
+<button class="w-10 h-10 rounded-md bg-surface text-on-surface hover:bg-surface-container-highest flex items-center justify-center font-bold text-lg active:scale-90" type="button">
+<span class="material-symbols-outlined text-[20px]">remove</span>
+</button>
+<span class="w-8 text-center font-label-md text-label-md font-bold text-on-surface">1</span>
+<button class="w-10 h-10 rounded-md bg-primary-container text-on-primary flex items-center justify-center font-bold text-lg active:scale-90" type="button">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+<div class="text-right">
+<span class="font-label-lg text-label-lg font-bold text-primary">Bs 32.00</span>
+</div>
+</div>
+<!-- Modificador / Nota de Cocina -->
+<div class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-surface-container font-body-sm text-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary">sticky_note_2</span>
+<span>Bien caliente, con llajua aparte</span>
+</div>
+</div>
+<!-- Ítem 2: Pique Macho Tradicional (Con Nota Crítica de Alergia/Gusto) -->
+<div class="p-space-sm rounded-xl bg-surface-container-low shadow-sm flex flex-col gap-space-xs">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-space-xs">
+<span class="px-2 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold">T2 - PLATOS</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">#204</span>
+</div>
+<h4 class="font-body-lg text-body-lg font-bold text-on-surface truncate mt-1">Pique Macho Tradicional</h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Bs 65.00 c/u</span>
+</div>
+<!-- Controles Táctiles + / - Grandes -->
+<div class="flex items-center gap-1 bg-surface-container rounded-lg p-1">
+<button class="w-10 h-10 rounded-md bg-surface text-on-surface hover:bg-surface-container-highest flex items-center justify-center font-bold text-lg active:scale-90" type="button">
+<span class="material-symbols-outlined text-[20px]">remove</span>
+</button>
+<span class="w-8 text-center font-label-md text-label-md font-bold text-on-surface">1</span>
+<button class="w-10 h-10 rounded-md bg-primary-container text-on-primary flex items-center justify-center font-bold text-lg active:scale-90" type="button">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+<div class="text-right">
+<span class="font-label-lg text-label-lg font-bold text-primary">Bs 65.00</span>
+</div>
+</div>
+<!-- Alerta Destacada en Rojo Claro de Cocina -->
+<div class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[16px]">priority_high</span>
+<span>SIN CEBOLLA, locoto en pocillo aparte</span>
+</div>
+</div>
+<!-- Ítem 3: Silpancho Cochabambino (Con Descuento y Sync QR) -->
+<div class="p-space-sm rounded-xl bg-surface-container-low shadow-sm flex flex-col gap-space-xs">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="px-2 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold">T2 - PLATOS</span>
+<span class="px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">qr_code_2</span>
+<span>QR Mesa sync</span>
+</span>
+</div>
+<h4 class="font-body-lg text-body-lg font-bold text-on-surface truncate mt-1">Silpancho Cochabambino</h4>
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm line-through text-on-surface-variant">Bs 48.00</span>
+<span class="font-label-sm text-label-sm font-bold text-secondary">Bs 43.20 (Promo -10%)</span>
+</div>
+</div>
+<!-- Controles Táctiles + / - Grandes -->
+<div class="flex items-center gap-1 bg-surface-container rounded-lg p-1">
+<button class="w-10 h-10 rounded-md bg-surface text-on-surface hover:bg-surface-container-highest flex items-center justify-center font-bold text-lg active:scale-90" type="button">
+<span class="material-symbols-outlined text-[20px]">remove</span>
+</button>
+<span class="w-8 text-center font-label-md text-label-md font-bold text-on-surface">1</span>
+<button class="w-10 h-10 rounded-md bg-primary-container text-on-primary flex items-center justify-center font-bold text-lg active:scale-90" type="button">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+<div class="text-right">
+<span class="font-label-lg text-label-lg font-bold text-secondary">Bs 43.20</span>
+</div>
+</div>
+<div class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-surface-container font-body-sm text-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary">restaurant</span>
+<span>Huevo bien cocido</span>
+</div>
+</div>
+<!-- Ítem 4: Jarra de Mocochinchi Casero -->
+<div class="p-space-sm rounded-xl bg-surface-container-low shadow-sm flex flex-col gap-space-xs">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-space-xs">
+<span class="px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-bold">INMEDIATO</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">#501</span>
+</div>
+<h4 class="font-body-lg text-body-lg font-bold text-on-surface truncate mt-1">Jarra Mocochinchi (1.5L)</h4>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Bs 22.00 c/u</span>
+</div>
+<!-- Controles Táctiles + / - Grandes -->
+<div class="flex items-center gap-1 bg-surface-container rounded-lg p-1">
+<button class="w-10 h-10 rounded-md bg-surface text-on-surface hover:bg-surface-container-highest flex items-center justify-center font-bold text-lg active:scale-90" type="button">
+<span class="material-symbols-outlined text-[20px]">remove</span>
+</button>
+<span class="w-8 text-center font-label-md text-label-md font-bold text-on-surface">1</span>
+<button class="w-10 h-10 rounded-md bg-primary-container text-on-primary flex items-center justify-center font-bold text-lg active:scale-90" type="button">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+<div class="text-right">
+<span class="font-label-lg text-label-lg font-bold text-primary">Bs 22.00</span>
+</div>
+</div>
+</div>
+<!-- Botón Táctil para Agregar Modificador Libre -->
+<button class="w-full h-12 rounded-xl bg-surface-container hover:bg-surface-container-high text-primary font-body-md text-body-md font-semibold flex items-center justify-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span>+ Agregar nota / modificador general a comanda</span>
+</button>
+</div>
+<!-- Resumen Financiero y Acciones de Despacho (Zona Pinned Inferior) -->
+<div class="p-space-md bg-surface-container-low shadow-[0_-4px_12px_rgba(0,0,0,0.05)] flex flex-col gap-space-md">
+<!-- Bloque de Totales en Moneda Nacional (Bolivianos) -->
+<div class="flex flex-col gap-1 bg-surface-container-lowest p-space-md rounded-xl shadow-sm">
+<div class="flex justify-between items-center text-on-surface-variant font-body-sm text-body-sm">
+<span>Subtotal (4 ítems):</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">Bs 162.20</span>
+</div>
+<div class="flex justify-between items-center text-secondary font-body-sm text-body-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">redeem</span>
+<span>Descuento Almuerzo (-10% Silpancho):</span>
+</span>
+<span class="font-label-md text-label-md font-bold">-Bs 4.80</span>
+</div>
+<div class="h-px bg-surface-container-high my-1"></div>
+<div class="flex justify-between items-baseline">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">TOTAL A PAGAR:</span>
+<div class="flex items-baseline gap-1">
+<span class="font-label-lg text-label-lg font-semibold text-primary">Bs</span>
+<span class="font-headline-xl text-headline-xl font-bold tracking-tight text-primary">157.40</span>
+</div>
+</div>
+</div>
+<!-- Botones de Acción Operativa - Fila 1: Principales (Comanda & Cobro) -->
+<div class="grid grid-cols-2 gap-space-sm">
+<!-- Botón Verde Cocina: Enviar a Cocina -->
+<button class="h-16 rounded-xl bg-tertiary-container hover:bg-tertiary text-on-tertiary font-headline-sm text-headline-sm font-bold flex items-center justify-center gap-space-xs shadow-md transition-all active:scale-95" type="button">
+<span class="material-symbols-outlined text-[26px]">skillet</span>
+<span>ENVIAR COCINA</span>
+</button>
+<!-- Botón Ámbar Cobrar: Caja / Pre-Factura -->
+<button class="h-16 rounded-xl bg-secondary-container hover:bg-secondary-fixed-dim text-on-secondary-container font-headline-sm text-headline-sm font-bold flex items-center justify-center gap-space-xs shadow-md transition-all active:scale-95" type="button">
+<span class="material-symbols-outlined text-[26px]">point_of_sale</span>
+<span>COBRAR BS</span>
+</button>
+</div>
+<!-- Botones de Acción Operativa - Fila 2: Secundarias Operativas -->
+<div class="grid grid-cols-4 gap-space-xs">
+<button class="h-12 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm flex flex-col items-center justify-center transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px] text-primary">move_down</span>
+<span class="font-semibold mt-0.5">Mover Mesa</span>
+</button>
+<button class="h-12 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm flex flex-col items-center justify-center transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px] text-primary">call_split</span>
+<span class="font-semibold mt-0.5">Dividir</span>
+</button>
+<button class="h-12 rounded-lg bg-surface-container hover:bg-error-container text-error font-label-sm text-label-sm flex flex-col items-center justify-center transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">delete_sweep</span>
+<span class="font-semibold mt-0.5">Anular (PIN)</span>
+</button>
+<button class="h-12 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm flex flex-col items-center justify-center transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px] text-primary">receipt_long</span>
+<span class="font-semibold mt-0.5">Pre-Cuenta</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div></main><footer class="w-full bg-surface-container-lowest py-space-md shadow-[0_-1px_6px_rgba(0,0,0,0.03)]"><div class="w-full px-margin-desktop flex flex-col md:flex-row items-center justify-between gap-space-sm text-on-surface-variant"><div class="flex items-center gap-space-md font-label-sm text-label-sm"><span>Terminal ID: <strong class="text-on-surface font-semibold">POS-LPZ-01</strong></span><span>Impuestos Nacionales: <strong class="text-tertiary-container font-semibold">Sincronizado SIAT</strong></span><span>Versión: <strong class="text-on-surface font-semibold">v2.8.4-bol</strong></span></div><div class="font-body-sm text-body-sm">© 2025 Andina GastroOS · Bolivia Gastronómica Tech</div></div></footer></body></html>

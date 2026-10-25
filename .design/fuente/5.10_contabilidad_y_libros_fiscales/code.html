@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"primary":"#00375e","background":"#f7f9fc","secondary-fixed-dim":"#febb2a","on-secondary":"#ffffff","primary-fixed-dim":"#a0cafc","surface-container-lowest":"#ffffff","surface-tint":"#35618d","secondary-fixed":"#ffdea8","error":"#ba1a1a","tertiary":"#003e1a","on-secondary-fixed-variant":"#5e4200","outline-variant":"#c2c7d0","surface-container-highest":"#e0e3e6","surface-container":"#eceef1","on-primary":"#ffffff","outline":"#72777f","inverse-surface":"#2d3133","on-primary-fixed-variant":"#184974","on-error-container":"#93000a","tertiary-fixed-dim":"#86d996","on-surface":"#191c1e","on-secondary-fixed":"#271900","tertiary-fixed":"#a1f5b0","on-primary-container":"#95bff1","surface-dim":"#d8dadd","on-background":"#191c1e","surface-bright":"#f7f9fc","on-tertiary-fixed":"#00210b","surface-container-high":"#e6e8eb","on-primary-fixed":"#001d35","primary-container":"#1f4e79","surface-variant":"#e0e3e6","inverse-on-surface":"#eff1f4","surface":"#f7f9fc","surface-container-low":"#f2f4f7","secondary-container":"#febb2a","on-tertiary":"#ffffff","on-surface-variant":"#42474f","inverse-primary":"#a0cafc","on-secondary-container":"#6d4d00","tertiary-container":"#005827","on-tertiary-container":"#7cce8c","primary-fixed":"#d1e4ff","on-error":"#ffffff","on-tertiary-fixed-variant":"#005224","error-container":"#ffdad6","secondary":"#7c5800"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-tablet":"1.5rem","space-lg":"1.5rem","space-sm":"0.5rem","margin-desktop":"2rem","gutter":"1rem","gutter-tablet":"1.25rem","space-xl":"2rem","space-md":"1rem","gutter-desktop":"1.5rem","space-xs":"0.25rem","margin":"1rem"},"fontFamily":{"headline-md":["Inter"],"headline-xl":["Inter"],"label-lg":["JetBrains Mono"],"headline-xl-mobile":["Inter"],"body-md":["Inter"],"body-lg":["Inter"],"headline-lg-mobile":["Inter"],"label-md":["JetBrains Mono"],"headline-lg":["Inter"],"label-sm":["JetBrains Mono"],"body-sm":["Inter"],"headline-sm":["Inter"]},"fontSize":{"headline-md":["24px",{"lineHeight":"32px","fontWeight":"600"}],"headline-xl":["40px",{"lineHeight":"48px","fontWeight":"700"}],"label-lg":["16px",{"lineHeight":"20px","letterSpacing":"0.5px","fontWeight":"600"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","fontWeight":"700"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"body-lg":["18px",{"lineHeight":"26px","fontWeight":"500"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","fontWeight":"700"}],"label-md":["14px",{"lineHeight":"18px","letterSpacing":"0.25px","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"40px","fontWeight":"700"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.25px","fontWeight":"500"}],"body-sm":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["20px",{"lineHeight":"28px","fontWeight":"600"}]}}}}</script></head><body class="bg-background font-body-md text-on-surface min-h-screen"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-md flex items-center gap-space-sm"><div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[22px]">restaurant</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary tracking-tight leading-none">Andina</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mt-0.5">GastroOS</span></div></div><div class="px-space-md py-space-xs"><div class="p-space-sm rounded-lg bg-surface-container-high/60 flex items-center justify-between"><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">SUCURSAL ACTIVA</span><span class="material-symbols-outlined text-on-surface-variant text-[18px]">store</span></div></div><nav class="flex flex-col px-space-sm mt-space-xs gap-space-xs" data-active-classes="bg-primary-container text-on-primary font-semibold shadow-sm"><div class="px-space-sm pt-space-sm pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Principal</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="panel-del-dueno" href="#"><span class="material-symbols-outlined text-[20px]">analytics</span><span class="font-body-md text-body-md">Panel del Dueño</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="menu-y-fotos" href="#"><span class="material-symbols-outlined text-[20px]">menu_book</span><span class="font-body-md text-body-md">Menú &amp; Fotos</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="recetas-y-costeo" href="#"><span class="material-symbols-outlined text-[20px]">calculate</span><span class="font-body-md text-body-md">Recetas &amp; Costeo</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="inventario-y-almacenes" href="#"><span class="material-symbols-outlined text-[20px]">inventory_2</span><span class="font-body-md text-body-md">Inventario &amp; Almacenes</span></a><div class="px-space-sm pt-space-md pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Operaciones</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="compras-y-proveedores" href="#"><span class="material-symbols-outlined text-[20px]">local_shipping</span><span class="font-body-md text-body-md">Compras &amp; Proveedores</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="mesas-y-salon" href="#"><span class="material-symbols-outlined text-[20px]">qr_code_2</span><span class="font-body-md text-body-md">Mesas &amp; Salón (QR)</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="reservas-y-eventos" href="#"><span class="material-symbols-outlined text-[20px]">event_seat</span><span class="font-body-md text-body-md">Reservas &amp; Eventos</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="personal-y-turnos" href="#"><span class="material-symbols-outlined text-[20px]">badge</span><span class="font-body-md text-body-md">Personal &amp; Turnos</span></a><div class="px-space-sm pt-space-md pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Gestión &amp; Finanzas</div><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="promociones" href="#"><span class="material-symbols-outlined text-[20px]">sell</span><span class="font-body-md text-body-md">Promociones</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="contabilidad-y-libros" href="#"><span class="material-symbols-outlined text-[20px]">account_balance_wallet</span><span class="font-body-md text-body-md">Contabilidad &amp; Libros</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="estadisticas-y-bi" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Estadísticas &amp; BI</span></a><a class="h-12 flex items-center gap-space-sm px-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="configuracion" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-body-md text-body-md">Configuración</span></a></nav></div><div class="p-space-md mt-space-md"><div class="bg-surface-container-high rounded-xl p-space-sm flex items-center gap-space-sm"><div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim ring-4 ring-tertiary-container/30"></div><div class="flex flex-col min-w-0"><span class="font-label-sm text-label-sm font-semibold text-on-surface">KDS &amp; POS Red</span><span class="font-body-sm text-body-sm text-on-surface-variant truncate">12 Nodos Conectados</span></div></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md"><div class="relative flex items-center"><label class="sr-only" for="sucursal-select">Seleccionar Sucursal</label><select class="h-12 pl-space-md pr-10 bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary shadow-sm" id="sucursal-select"><option selected="" value="prado">Prado - La Paz</option><option value="san-miguel">San Miguel - La Paz</option><option value="equipetrol">Equipetrol - Santa Cruz</option></select><span class="material-symbols-outlined text-on-surface-variant absolute right-3 pointer-events-none text-[20px]">expand_more</span></div><div class="h-12 px-space-md rounded-lg bg-tertiary-fixed/30 flex items-center gap-space-xs"><span class="w-2.5 h-2.5 rounded-full bg-tertiary-container animate-pulse"></span><span class="font-label-sm text-label-sm text-tertiary font-semibold uppercase tracking-wide">SIAT Online: Sincronizado</span></div></div><div class="flex items-center gap-space-lg"><div class="hidden xl:flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md"><span class="material-symbols-outlined text-[18px]">schedule</span><span>BOST: Lun 14:35:10 (-04:00)</span></div><div class="flex items-center gap-space-md pl-space-md"><div class="flex flex-col text-right hidden sm:flex"><span class="font-body-md text-body-md font-semibold text-on-surface leading-tight">Alejandro Morales</span><span class="font-body-sm text-body-sm text-on-surface-variant leading-tight">Dueño / Gerente General</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative pt-16 w-full min-h-screen bg-background px-space-lg py-space-lg"><div class="flex flex-col w-full">
+<!-- ENCABEZADO Y BREADCRUMBS -->
+<section class="flex flex-col gap-space-sm mb-space-lg">
+<div class="flex flex-wrap items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<span>Gestión y Finanzas</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-semibold">Contabilidad, Libros Fiscales y Reportes Tributarios</span>
+</div>
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md mt-space-xs">
+<div class="flex flex-col max-w-3xl">
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">
+          Contabilidad y Libros Fiscales
+        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">
+          Generación automática del Libro de Compras y Ventas IVA (LCV), conciliación bancaria con extractos QR/POS y balance preliminar del restaurante.
+        </p>
+</div>
+<!-- BOTONES DE ACCIÓN (≥ 48px height) -->
+<div class="flex flex-wrap items-center gap-space-sm">
+<button class="h-12 px-space-md bg-surface-container-lowest text-primary hover:bg-surface-container shadow-sm rounded-lg font-body-md text-body-md font-semibold flex items-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">sync_alt</span>
+<span>Conciliación Automática</span>
+</button>
+<button class="h-12 px-space-md bg-surface-container-high text-on-surface hover:bg-surface-container-highest shadow-sm rounded-lg font-body-md text-body-md font-semibold flex items-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">lock_clock</span>
+<span>Cierre Contable Mensual</span>
+</button>
+<button class="h-12 px-space-md bg-primary text-on-primary hover:bg-primary-container shadow-sm rounded-lg font-body-md text-body-md font-semibold flex items-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">download</span>
+<span>Exportar SIAT (TXT/Excel)</span>
+</button>
+</div>
+</div>
+</section>
+<!-- TARJETAS DE KPIS FISCALES (PERIODO MAYO 2025) -->
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-md mb-space-lg">
+<!-- KPI 1: Ventas Netas Facturadas -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium uppercase tracking-wider">Ventas Facturadas (Mayo)</span>
+<div class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">point_of_sale</span>
+</div>
+</div>
+<div class="mt-space-md">
+<div class="font-headline-md text-headline-md font-bold text-on-surface tracking-tight">
+          Bs 148,920.00
+        </div>
+<div class="flex items-center gap-space-xs mt-1 text-primary">
+<span class="font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed-variant px-2 py-0.5 rounded">Débito Fiscal 13%</span>
+<span class="font-label-md text-label-md font-semibold text-primary">Bs 19,359.60</span>
+</div>
+</div>
+<div class="mt-space-sm pt-space-xs flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+<span>1,428 comprobantes válidos</span>
+<span class="text-tertiary-container font-semibold flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[16px]">verified</span> 100% SIAT
+        </span>
+</div>
+</div>
+<!-- KPI 2: Compras con Crédito Fiscal -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium uppercase tracking-wider">Compras con Crédito Fiscal</span>
+<div class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+</div>
+</div>
+<div class="mt-space-md">
+<div class="font-headline-md text-headline-md font-bold text-on-surface tracking-tight">
+          Bs 64,310.00
+        </div>
+<div class="flex items-center gap-space-xs mt-1">
+<span class="font-label-sm text-label-sm bg-tertiary-fixed text-tertiary px-2 py-0.5 rounded">Crédito Fiscal 13%</span>
+<span class="font-label-md text-label-md font-semibold text-tertiary">Bs 8,360.30</span>
+</div>
+</div>
+<div class="mt-space-sm pt-space-xs flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+<span>74 facturas proveedores</span>
+<span class="text-on-surface font-medium">Insumos &amp; Servicios</span>
+</div>
+</div>
+<!-- KPI 3: Saldo Tributario a Pagar (F-200) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium uppercase tracking-wider">Saldo IVA a Pagar (F-200)</span>
+<div class="w-9 h-9 rounded-lg bg-error-container flex items-center justify-center text-on-error-container">
+<span class="material-symbols-outlined text-[20px]">account_balance</span>
+</div>
+</div>
+<div class="mt-space-md">
+<div class="font-headline-md text-headline-md font-bold text-error tracking-tight">
+          Bs 10,999.30
+        </div>
+<div class="flex items-center gap-space-xs mt-1 text-on-surface-variant font-body-sm text-body-sm">
+<span>Débito (19.3k) - Crédito (8.3k)</span>
+</div>
+</div>
+<div class="mt-space-sm pt-space-xs flex items-center justify-between bg-error-container/40 p-1.5 rounded-lg">
+<span class="font-label-sm text-label-sm font-semibold text-on-error-container flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span> Vence: 18 de Junio
+        </span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Dígito NIT: 4</span>
+</div>
+</div>
+<!-- KPI 4: Retenciones IUE / IT -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium uppercase tracking-wider">Retenciones IUE / IT</span>
+<div class="w-9 h-9 rounded-lg bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
+<span class="material-symbols-outlined text-[20px]">content_paste_off</span>
+</div>
+</div>
+<div class="mt-space-md">
+<div class="font-headline-md text-headline-md font-bold text-on-surface tracking-tight">
+          Bs 1,420.00
+        </div>
+<div class="flex items-center gap-space-xs mt-1 text-on-surface-variant font-body-sm text-body-sm">
+<span class="font-label-sm text-label-sm bg-secondary-fixed-dim/30 text-on-secondary-container px-2 py-0.5 rounded font-medium">8% Serv. / 5% Bienes</span>
+</div>
+</div>
+<div class="mt-space-sm pt-space-xs flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+<span>Compras mercados populares</span>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">12 Actas F-410</span>
+</div>
+</div>
+</section>
+<!-- PESTAÑAS DE NAVEGACIÓN MODULAR -->
+<div class="flex items-center gap-space-xs bg-surface-container-high/60 p-1.5 rounded-xl mb-space-lg max-w-fit overflow-x-auto">
+<button class="h-10 px-space-md rounded-lg bg-surface-container-lowest text-primary shadow-sm font-body-md text-body-md font-semibold flex items-center gap-space-xs transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">table_chart</span>
+<span>Libro de Ventas SIAT (LCV)</span>
+</button>
+<button class="h-10 px-space-md rounded-lg text-on-surface-variant hover:text-on-surface font-body-md text-body-md font-medium flex items-center gap-space-xs transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">shopping_bag</span>
+<span>Libro de Compras y Gastos</span>
+</button>
+<button class="h-10 px-space-md rounded-lg text-on-surface-variant hover:text-on-surface font-body-md text-body-md font-medium flex items-center gap-space-xs transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+<span>Conciliación Bancaria &amp; QR</span>
+</button>
+<button class="h-10 px-space-md rounded-lg text-on-surface-variant hover:text-on-surface font-body-md text-body-md font-medium flex items-center gap-space-xs transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">account_tree</span>
+<span>Plan de Cuentas y Asientos</span>
+</button>
+</div>
+<!-- LAYOUT PRINCIPAL: TABLA LCV (70%) Y PANEL LATERAL (30%) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- COLUMNA IZQUIERDA: LIBRO DE VENTAS (8 COLS DESKTOP ~ 68%) -->
+<div class="lg:col-span-8 flex flex-col gap-space-md">
+<!-- BARRA DE FILTROS Y CONTROLES -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex flex-wrap items-center gap-space-sm flex-1">
+<!-- Periodo Selector -->
+<div class="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-1.5 rounded-lg h-12">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">calendar_month</span>
+<select class="bg-transparent text-on-surface font-body-md text-body-md font-semibold cursor-pointer focus:outline-none pr-space-sm">
+<option value="2025-05">Mayo 2025</option>
+<option value="2025-04">Abril 2025</option>
+<option value="2025-03">Marzo 2025</option>
+</select>
+</div>
+<!-- Sucursal Selector -->
+<div class="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-1.5 rounded-lg h-12">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">storefront</span>
+<select class="bg-transparent text-on-surface font-body-md text-body-md font-semibold cursor-pointer focus:outline-none pr-space-sm">
+<option value="consolidado">Consolidado Nacional</option>
+<option selected="" value="prado">Prado - La Paz</option>
+<option value="san-miguel">San Miguel - La Paz</option>
+<option value="equipetrol">Equipetrol - Santa Cruz</option>
+</select>
+</div>
+<!-- Estado Fiscal -->
+<div class="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-1.5 rounded-lg h-12">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">tune</span>
+<select class="bg-transparent text-on-surface font-body-md text-body-md cursor-pointer focus:outline-none pr-space-sm">
+<option value="all">Todas (Válidas + Anuladas)</option>
+<option value="valid">Solo Válidas (Aptas Débito)</option>
+<option value="null">Solo Anuladas</option>
+<option value="offline">En Contingencia</option>
+</select>
+</div>
+</div>
+<!-- Buscador rápido en tabla -->
+<div class="relative w-full md:w-64 h-12">
+<span class="material-symbols-outlined absolute left-3 top-3 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full h-full pl-10 pr-space-sm rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md placeholder:text-outline focus:outline-none focus:bg-surface-container-high transition-colors" placeholder="Buscar NIT, CUF, Razón..." type="text"/>
+</div>
+</div>
+<!-- BANNER NORMATIVA SIAT ACTIVA -->
+<div class="bg-surface-container-high/60 rounded-xl p-space-sm flex items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-sm min-w-0">
+<span class="material-symbols-outlined text-primary text-[22px]">gavel</span>
+<div class="truncate">
+<span class="font-label-sm text-label-sm font-bold text-primary uppercase">Normativa Vigente:</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant ml-1">RND 102100000011 (Sistema de Facturación en Línea). Modalidad Electrónica Web.</span>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed-dim ring-2 ring-tertiary-container/30"></span>
+<span class="font-label-sm text-label-sm font-semibold text-tertiary">SIAT ACTIVO</span>
+</div>
+</div>
+<!-- TABLA LCV (ESTÁNDAR IMPUESTOS NACIONALES) -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-space-sm px-space-md font-semibold">N° Factura / CUF</th>
+<th class="py-space-sm px-space-sm font-semibold">Fecha / Hora</th>
+<th class="py-space-sm px-space-sm font-semibold">NIT / CI Cliente</th>
+<th class="py-space-sm px-space-sm font-semibold">Razón Social</th>
+<th class="py-space-sm px-space-sm font-semibold text-right">Total Venta</th>
+<th class="py-space-sm px-space-sm font-semibold text-right">Base IVA</th>
+<th class="py-space-sm px-space-sm font-semibold text-right">Débito 13%</th>
+<th class="py-space-sm px-space-md font-semibold text-center">Estado SIAT</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-low font-body-sm text-body-sm text-on-surface">
+<!-- FILA 1 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-3 px-space-md">
+<div class="font-label-md text-label-md font-bold text-primary">FAC-2025-08912</div>
+<div class="font-label-sm text-label-sm text-outline truncate w-28" title="4B891A9F4E1280AA3C1">CUF: 4B891A...</div>
+</td>
+<td class="py-3 px-space-sm whitespace-nowrap">
+<div class="font-medium">26/05/2025</div>
+<div class="text-on-surface-variant text-[12px]">14:12:04</div>
+</td>
+<td class="py-3 px-space-sm whitespace-nowrap font-label-sm text-label-sm">
+                  1024859023
+                </td>
+<td class="py-3 px-space-sm">
+<div class="font-semibold text-on-surface max-w-[170px] truncate" title="Banco Mercantil Santa Cruz S.A.">
+                    Banco Mercantil Santa Cruz S.A.
+                  </div>
+<div class="text-[12px] text-on-surface-variant">Mesa 12 (Almuerzo Ejecutivo)</div>
+</td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md font-semibold">
+                  Bs 1,450.00
+                </td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md">
+                  Bs 1,450.00
+                </td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md font-bold text-primary">
+                  Bs 188.50
+                </td>
+<td class="py-3 px-space-md text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-tertiary-fixed text-tertiary font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> VÁLIDA
+                  </span>
+</td>
+</tr>
+<!-- FILA 2 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-3 px-space-md">
+<div class="font-label-md text-label-md font-bold text-primary">FAC-2025-08911</div>
+<div class="font-label-sm text-label-sm text-outline truncate w-28" title="8A912C0B5E9110FD4E2">CUF: 8A912C...</div>
+</td>
+<td class="py-3 px-space-sm whitespace-nowrap">
+<div class="font-medium">26/05/2025</div>
+<div class="text-on-surface-variant text-[12px]">13:45:18</div>
+</td>
+<td class="py-3 px-space-sm whitespace-nowrap font-label-sm text-label-sm">
+                  4892019 LP
+                </td>
+<td class="py-3 px-space-sm">
+<div class="font-semibold text-on-surface max-w-[170px] truncate" title="Carlos Rodrigo Paredes">
+                    Carlos Rodrigo Paredes
+                  </div>
+<div class="text-[12px] text-on-surface-variant">Desc. Ley Tercera Edad (-15.00)</div>
+</td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md font-semibold">
+                  Bs 185.00
+                </td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md">
+                  Bs 170.00
+                </td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md font-bold text-primary">
+                  Bs 22.10
+                </td>
+<td class="py-3 px-space-md text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-tertiary-fixed text-tertiary font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> VÁLIDA
+                  </span>
+</td>
+</tr>
+<!-- FILA 3 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-3 px-space-md">
+<div class="font-label-md text-label-md font-bold text-primary">FAC-2025-08910</div>
+<div class="font-label-sm text-label-sm text-outline truncate w-28" title="9C128DA4401827BA5C3">CUF: 9C128D...</div>
+</td>
+<td class="py-3 px-space-sm whitespace-nowrap">
+<div class="font-medium">26/05/2025</div>
+<div class="text-on-surface-variant text-[12px]">13:20:55</div>
+</td>
+<td class="py-3 px-space-sm whitespace-nowrap font-label-sm text-label-sm">
+                  3810294021
+                </td>
+<td class="py-3 px-space-sm">
+<div class="font-semibold text-on-surface max-w-[170px] truncate" title="Constructora Altiplano">
+                    Constructora Altiplano
+                  </div>
+<div class="text-[12px] text-on-surface-variant">Mesa 08 (Facturación POS)</div>
+</td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md font-semibold">
+                  Bs 820.00
+                </td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md">
+                  Bs 820.00
+                </td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md font-bold text-primary">
+                  Bs 106.60
+                </td>
+<td class="py-3 px-space-md text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-tertiary-fixed text-tertiary font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> VÁLIDA
+                  </span>
+</td>
+</tr>
+<!-- FILA 4 -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-3 px-space-md">
+<div class="font-label-md text-label-md font-bold text-primary">FAC-2025-08909</div>
+<div class="font-label-sm text-label-sm text-outline truncate w-28" title="2D891F8301823901C21">CUF: 2D891F...</div>
+</td>
+<td class="py-3 px-space-sm whitespace-nowrap">
+<div class="font-medium">26/05/2025</div>
+<div class="text-on-surface-variant text-[12px]">12:50:11</div>
+</td>
+<td class="py-3 px-space-sm whitespace-nowrap font-label-sm text-label-sm text-outline">
+                  0 (S/N)
+                </td>
+<td class="py-3 px-space-sm">
+<div class="font-semibold text-on-surface max-w-[170px] truncate" title="Consumidor Final">
+                    Consumidor Final
+                  </div>
+<div class="text-[12px] text-on-surface-variant">Barra - Pago Efectivo</div>
+</td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md font-semibold">
+                  Bs 65.00
+                </td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md">
+                  Bs 65.00
+                </td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md font-bold text-primary">
+                  Bs 8.45
+                </td>
+<td class="py-3 px-space-md text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-tertiary-fixed text-tertiary font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> VÁLIDA
+                  </span>
+</td>
+</tr>
+<!-- FILA 5: ANULADA -->
+<tr class="bg-error-container/20 hover:bg-error-container/30 transition-colors">
+<td class="py-3 px-space-md">
+<div class="font-label-md text-label-md font-bold text-error line-through">FAC-2025-08908</div>
+<div class="font-label-sm text-label-sm text-outline truncate w-28" title="7E412A8821098492091">CUF: 7E412A...</div>
+</td>
+<td class="py-3 px-space-sm whitespace-nowrap">
+<div class="font-medium text-error line-through">26/05/2025</div>
+<div class="text-on-surface-variant text-[12px]">12:10:02</div>
+</td>
+<td class="py-3 px-space-sm whitespace-nowrap font-label-sm text-label-sm text-error line-through">
+                  6894012 CB
+                </td>
+<td class="py-3 px-space-sm">
+<div class="font-semibold text-error max-w-[170px] truncate" title="Mariana Quiroga">
+                    Mariana Quiroga
+                  </div>
+<div class="text-[12px] text-error font-medium">Error en digitación NIT - Reemitida</div>
+</td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md font-semibold line-through text-outline">
+                  Bs 240.00
+                </td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md line-through text-outline">
+                  Bs 0.00
+                </td>
+<td class="py-3 px-space-sm text-right font-label-md text-label-md font-bold text-outline">
+                  Bs 0.00
+                </td>
+<td class="py-3 px-space-md text-center">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[14px]">cancel</span> ANULADA
+                  </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- PIE DE TABLA / RESUMEN DE PÁGINA -->
+<div class="bg-surface-container-low p-space-sm flex flex-col sm:flex-row items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm font-body-sm text-body-sm text-on-surface-variant">
+<span>Mostrando 1 a 5 de 1,428 facturas registradas</span>
+<span class="text-outline">|</span>
+<span>Total Página Débito: <strong class="text-primary font-label-sm">Bs 325.65</strong></span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="w-8 h-8 rounded flex items-center justify-center bg-surface-container hover:bg-surface-container-high text-on-surface disabled:opacity-40" disabled="" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<span class="font-label-sm text-label-sm font-bold text-primary px-2">1 / 286</span>
+<button class="w-8 h-8 rounded flex items-center justify-center bg-surface-container hover:bg-surface-container-high text-on-surface" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- COLUMNA DERECHA: CONCILIACIÓN DE TESORERÍA & ASIENTOS AUTOMÁTICOS (4 COLS ~ 32%) -->
+<div class="lg:col-span-4 flex flex-col gap-space-md">
+<!-- TARJETA 1: CONCILIACIÓN AUTOMÁTICA INGRESOS VS BANCOS -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col">
+<div class="flex items-center justify-between pb-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">account_balance</span>
+<h2 class="font-headline-sm text-headline-sm text-primary tracking-tight">Conciliación de Ingresos</h2>
+</div>
+<span class="font-label-sm text-label-sm bg-tertiary-fixed text-tertiary px-2 py-0.5 rounded font-bold uppercase">100% Cuadrado</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-md">
+          Cruce diario automático: Facturación del POS vs. extractos de cuenta BNB / BMSC y arqueos de caja física.
+        </p>
+<!-- DESGLOSE CONCILIACIÓN -->
+<div class="space-y-space-sm bg-surface-container-low p-space-sm rounded-lg font-body-sm text-body-sm">
+<div class="flex items-center justify-between pb-2">
+<span class="text-on-surface font-semibold">Total Facturado en Sistema</span>
+<span class="font-label-md text-label-md font-bold text-primary">Bs 148,920.00</span>
+</div>
+<!-- Item 1: Efectivo -->
+<div class="flex items-start justify-between text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-on-surface">payments</span>
+<div>
+<div class="text-on-surface font-medium">Efectivo en Cajas</div>
+<div class="text-[12px] text-tertiary font-medium">100% arqueado en 4.3</div>
+</div>
+</div>
+<span class="font-label-md text-label-md text-on-surface font-semibold">Bs 42,100.00</span>
+</div>
+<!-- Item 2: QR Simple -->
+<div class="flex items-start justify-between text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary">qr_code_2</span>
+<div>
+<div class="text-on-surface font-medium">Pagos QR Simple (BNB/BMSC)</div>
+<div class="text-[12px] text-tertiary font-medium">Cruce bancario en línea OK</div>
+</div>
+</div>
+<span class="font-label-md text-label-md text-on-surface font-semibold">Bs 68,450.00</span>
+</div>
+<!-- Item 3: Tarjetas Débito / Crédito -->
+<div class="flex items-start justify-between text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary">credit_card</span>
+<div>
+<div class="text-on-surface font-medium">Tarjetas (Linkser / Red Enlace)</div>
+<div class="text-[12px] text-on-surface-variant">Comisión deducida Bs 959.25</div>
+</div>
+</div>
+<span class="font-label-md text-label-md text-on-surface font-semibold">Bs 38,370.00</span>
+</div>
+<!-- Total Balance Diferencia -->
+<div class="pt-2 flex items-center justify-between text-on-surface">
+<div class="flex items-center gap-1 font-semibold text-tertiary">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span>Diferencia no conciliada</span>
+</div>
+<span class="font-label-md text-label-md font-bold text-tertiary">Bs 0.00</span>
+</div>
+</div>
+<div class="mt-space-md text-[12px] text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-outline">info</span>
+<span>Último extracto bancario sincronizado: Hoy a las 14:30 BOST.</span>
+</div>
+</div>
+<!-- TARJETA 2: ASIENTOS CONTABLES DEL DÍA (AUTOMÁTICOS) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">receipt</span>
+<h2 class="font-headline-sm text-headline-sm text-primary tracking-tight">Asientos del Día</h2>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Automáticos</span>
+</div>
+<div class="space-y-space-md mt-space-sm">
+<!-- Asiento 1: Ventas Diarias -->
+<div class="bg-surface-container-low p-space-sm rounded-lg flex flex-col gap-1">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="font-bold text-primary">ASIENTO #1420 · Ventas Diarias</span>
+<span class="text-on-surface-variant">26/05 23:59</span>
+</div>
+<div class="text-[12px] text-on-surface font-medium mt-1">
+              • <strong class="text-primary font-label-sm">DEBE:</strong> Caja General (42.1k) / Banco QR (68.4k) / Banco POS (38.3k)
+            </div>
+<div class="text-[12px] text-on-surface font-medium">
+              • <strong class="text-secondary font-label-sm">HABER:</strong> Ingresos Gastronomía (Bs 129,560.40) / Débito Fiscal IVA 13% (Bs 19,359.60)
+            </div>
+</div>
+<!-- Asiento 2: Costo de Ventas e Inventario -->
+<div class="bg-surface-container-low p-space-sm rounded-lg flex flex-col gap-1">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="font-bold text-primary">ASIENTO #1421 · Costo de Ventas</span>
+<span class="text-on-surface-variant">26/05 23:59</span>
+</div>
+<div class="text-[12px] text-on-surface font-medium mt-1">
+              • <strong class="text-primary font-label-sm">DEBE:</strong> Costo de Alimentos y Bebidas (Bs 47,650.00)
+            </div>
+<div class="text-[12px] text-on-surface font-medium">
+              • <strong class="text-secondary font-label-sm">HABER:</strong> Inventario Almacén Central (Descarga por receta teórica)
+            </div>
+</div>
+</div>
+<!-- BOTÓN DESCARGA FORMULARIOS SIAT -->
+<div class="mt-space-lg pt-space-xs">
+<button class="w-full h-12 px-space-md bg-secondary text-on-secondary hover:bg-secondary-container hover:text-on-secondary-container shadow-sm rounded-lg font-body-md text-body-md font-semibold flex items-center justify-center gap-space-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">description</span>
+<span>Descargar Form. 200 y 400 (SIAT)</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div></main></div></body></html>

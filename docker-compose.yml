@@ -1,0 +1,57 @@
+# GESTRO en producción (Coolify, build pack "Docker Compose"). Estándar Sistemas-Kyros:
+# NO requiere variables de entorno ni secretos cargados a mano.
+#  - La llave maestra (firma de sesiones y cifrado de la configuración) la genera la API en el
+#    primer arranque y vive en el volumen privado gestro_secretos: ni en variables, ni en el
+#    repositorio, ni en la base de datos.
+#  - La base es interna: no publica puertos y solo la alcanza "api" por la red del compose,
+#    por eso no usa contraseña. La API baja al rol app_user (sin BYPASSRLS) en cada transacción.
+#  - Lo que hay en "environment" son literales a la vista, no secretos.
+# El dominio (gestro.kyros-tech.com) se asigna SOLO al servicio "gateway" (puerto 80).
+# F1 agrega redis y worker (tiempo real y colas) en este mismo compose.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gestro
+      POSTGRES_DB: gestro
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - gestro_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gestro -d gestro"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      MODO: produccion
+      BASE_DE_DATOS: postgresql://gestro@db:5432/gestro
+      DIR_SECRETOS: /data/secretos
+      DIR_ARCHIVOS: /data/archivos
+      URL_PUBLICA: https://gestro.kyros-tech.com
+    volumes:
+      - gestro_secretos:/data/secretos
+      - gestro_archivos:/data/archivos
+    depends_on:
+      db:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: deploy/gateway/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  gestro_pgdata:
+  gestro_secretos:
+  gestro_archivos:

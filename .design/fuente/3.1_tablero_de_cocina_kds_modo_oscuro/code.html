@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"tertiary":"#003e1a","surface-container-highest":"#e0e3e6","surface":"#f7f9fc","secondary-container":"#febb2a","inverse-surface":"#2d3133","on-surface":"#191c1e","on-tertiary":"#ffffff","secondary-fixed-dim":"#febb2a","on-tertiary-fixed":"#00210b","inverse-on-surface":"#eff1f4","error":"#ba1a1a","on-error":"#ffffff","surface-tint":"#35618d","surface-variant":"#e0e3e6","on-secondary-container":"#6d4d00","tertiary-container":"#005827","on-secondary-fixed":"#271900","on-secondary":"#ffffff","on-background":"#191c1e","tertiary-fixed":"#a1f5b0","surface-dim":"#d8dadd","outline-variant":"#c2c7d0","primary-container":"#1f4e79","on-secondary-fixed-variant":"#5e4200","outline":"#72777f","on-primary-fixed":"#001d35","tertiary-fixed-dim":"#86d996","surface-container-lowest":"#ffffff","surface-container-low":"#f2f4f7","on-primary-fixed-variant":"#184974","on-surface-variant":"#42474f","background":"#f7f9fc","secondary":"#7c5800","surface-container-high":"#e6e8eb","error-container":"#ffdad6","surface-container":"#eceef1","on-tertiary-fixed-variant":"#005224","inverse-primary":"#a0cafc","primary-fixed":"#d1e4ff","secondary-fixed":"#ffdea8","primary":"#00375e","on-tertiary-container":"#7cce8c","on-primary":"#ffffff","surface-bright":"#f7f9fc","primary-fixed-dim":"#a0cafc","on-error-container":"#93000a","on-primary-container":"#95bff1"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin":"1rem","gutter-desktop":"1.5rem","space-lg":"1.5rem","space-xl":"2rem","gutter":"1rem","space-sm":"0.5rem","space-md":"1rem","gutter-tablet":"1.25rem","space-xs":"0.25rem","margin-tablet":"1.5rem","margin-desktop":"2rem"},"fontFamily":{"headline-md":["Inter"],"label-md":["JetBrains Mono"],"body-sm":["Inter"],"headline-lg":["Inter"],"headline-xl":["Inter"],"body-md":["Inter"],"body-lg":["Inter"],"headline-sm":["Inter"],"label-sm":["JetBrains Mono"],"label-lg":["JetBrains Mono"],"headline-xl-mobile":["Inter"],"headline-lg-mobile":["Inter"]},"fontSize":{"headline-md":["24px",{"lineHeight":"32px","fontWeight":"600"}],"label-md":["14px",{"lineHeight":"18px","letterSpacing":"0.25px","fontWeight":"600"}],"body-sm":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-lg":["32px",{"lineHeight":"40px","fontWeight":"700"}],"headline-xl":["40px",{"lineHeight":"48px","fontWeight":"700"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"body-lg":["18px",{"lineHeight":"26px","fontWeight":"500"}],"headline-sm":["20px",{"lineHeight":"28px","fontWeight":"600"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.25px","fontWeight":"500"}],"label-lg":["16px",{"lineHeight":"20px","letterSpacing":"0.5px","fontWeight":"600"}],"headline-xl-mobile":["28px",{"lineHeight":"36px","fontWeight":"700"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","fontWeight":"700"}]}}}}</script></head><body class="bg-inverse-surface font-body-md text-inverse-on-surface antialiased"><header class="fixed top-0 w-full z-50 bg-inverse-surface/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.4)]"><div class="h-20 w-full px-6 flex items-center justify-between"><div class="flex items-center gap-6"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container font-headline-sm font-bold">K</div><div><span class="font-headline-sm text-headline-sm text-primary-fixed tracking-tight block leading-tight">Andina KDS</span><span class="font-label-sm text-label-sm text-inverse-on-surface/70 uppercase tracking-wider block">Línea de Producción</span></div></div><div class="flex items-center bg-inverse-surface px-4 py-2 rounded-lg ring-1 ring-outline-variant/30 gap-3"><span class="material-symbols-outlined text-secondary-fixed-dim text-[20px]">local_fire_department</span><span class="font-headline-sm text-headline-sm text-inverse-on-surface">Cocina Caliente / Parrilla</span><span class="material-symbols-outlined text-outline text-[18px]">expand_more</span></div></div><div class="flex items-center gap-5"><div class="flex items-center bg-surface-container-lowest/10 px-4 py-2 rounded-lg gap-2"><span class="material-symbols-outlined text-tertiary-fixed text-[20px]">receipt_long</span><span class="font-label-md text-label-md text-inverse-on-surface/80 uppercase">Activas:</span><span class="font-label-lg text-label-lg text-tertiary-fixed font-bold">14 Comandas</span></div><div class="flex items-center bg-surface-container-lowest/10 px-4 py-2 rounded-lg gap-2 text-inverse-on-surface"><span class="material-symbols-outlined text-primary-fixed-dim text-[20px]">schedule</span><span class="font-label-lg text-label-lg font-bold tracking-widest text-primary-fixed">13:42:08</span></div><button class="h-12 px-4 rounded-lg bg-error-container text-on-error-container flex items-center gap-2 font-body-md text-body-md font-semibold hover:bg-error hover:text-on-error transition-colors" type="button"><span class="material-symbols-outlined text-[22px] animate-bounce">notifications_active</span><span class="font-label-md text-label-md">3 Atrasadas</span></button><button class="h-12 w-12 rounded-lg bg-surface-container-lowest/10 text-inverse-on-surface flex items-center justify-center hover:bg-surface-container-lowest/20 hover:text-on-primary transition-colors" title="Pantalla Completa" type="button"><span class="material-symbols-outlined text-[24px]">fullscreen</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-20 px-6 bg-inverse-surface min-h-screen"><div class="flex flex-col w-full pb-8">
+<!-- Sub-Header KDS Control Bar: Large scale readability, tactile filters & sound controls -->
+<div class="w-full bg-inverse-surface rounded-xl p-4 mb-6 shadow-md flex flex-wrap items-center justify-between gap-4">
+<!-- Station Title & Operational Status -->
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[34px]">soup_kitchen</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-surface-container-lowest font-bold tracking-tight">Cocina Principal &amp; Parrilla</span>
+<span class="px-2.5 py-0.5 rounded-full bg-primary-container text-primary-fixed font-label-md text-label-md">ESTACIÓN 1</span>
+</div>
+<div class="flex items-center gap-3 mt-1">
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-tertiary-fixed font-bold uppercase tracking-wider">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary-fixed animate-ping"></span>
+            Línea Operativa Activa
+          </span>
+<span class="text-inverse-on-surface/40">•</span>
+<span class="font-label-sm text-label-sm text-inverse-on-surface/80">7 comandas en cola total</span>
+</div>
+</div>
+</div>
+<!-- Station Station Filter Tabs (Touch hit floor 52px) -->
+<div class="flex items-center gap-2 bg-surface-container-highest/10 p-1.5 rounded-xl">
+<button class="px-5 h-12 rounded-lg bg-secondary-fixed text-on-secondary-fixed font-headline-sm text-headline-sm font-bold shadow-sm transition-transform active:scale-95 flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[22px]">restaurant</span>
+        Todo (7)
+      </button>
+<button class="px-5 h-12 rounded-lg text-inverse-on-surface hover:bg-surface-container-highest/20 font-headline-sm text-headline-sm transition-colors flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[22px]">local_fire_department</span>
+        Calientes (5)
+      </button>
+<button class="px-5 h-12 rounded-lg text-inverse-on-surface hover:bg-surface-container-highest/20 font-headline-sm text-headline-sm transition-colors flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[22px]">lunch_dining</span>
+        Guarniciones (2)
+      </button>
+<button class="px-5 h-12 rounded-lg text-inverse-on-surface hover:bg-surface-container-highest/20 font-headline-sm text-headline-sm transition-colors flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[22px]">icecream</span>
+        Postres (0)
+      </button>
+</div>
+<!-- Acoustic Notification Status & Volume Toggle -->
+<div class="flex items-center gap-3">
+<button class="h-12 px-4 rounded-xl bg-surface-container-highest/15 hover:bg-surface-container-highest/25 text-tertiary-fixed font-label-md text-label-md flex items-center gap-2 transition-colors" type="button">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">volume_up</span>
+<span class="tracking-wide">TIMBRE KDS: ACTIVO</span>
+</button>
+<button class="h-12 w-12 rounded-xl bg-surface-container-highest/15 text-inverse-on-surface flex items-center justify-center hover:bg-surface-container-highest/25 transition-colors" title="Ajustes de Sonido" type="button">
+<span class="material-symbols-outlined text-[24px]">tune</span>
+</button>
+</div>
+</div>
+<!-- 4-Column High Contrast Industrial Kitchen Layout -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+<!-- COL 1: Insumos Críticos & Agotados (Left Sidebar, 280px equivalent on large screen) -->
+<div class="xl:col-span-3 flex flex-col gap-5">
+<!-- Panel de Inventario en Tiempo Real -->
+<div class="bg-surface-container-high/15 rounded-xl p-5 shadow-sm">
+<div class="flex items-center justify-between pb-3 mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-fixed text-[24px]">crisis_alert</span>
+<h2 class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold tracking-tight">Insumos Críticos</h2>
+</div>
+<span class="w-3 h-3 rounded-full bg-secondary-fixed animate-pulse"></span>
+</div>
+<!-- Lista Insumos Bajos -->
+<div class="flex flex-col gap-3">
+<div class="bg-surface-container-highest/10 rounded-lg p-3.5 flex items-center justify-between">
+<div>
+<span class="font-body-lg text-body-lg text-surface-container-lowest font-semibold block">Lomo Picado</span>
+<span class="font-label-sm text-label-sm text-inverse-on-surface/70">Pique Macho / Silpancho</span>
+</div>
+<div class="px-3 py-1 rounded bg-secondary-fixed-dim/20 text-secondary-fixed font-label-md text-label-md font-bold">
+              1.8 kg
+            </div>
+</div>
+<div class="bg-surface-container-highest/10 rounded-lg p-3.5 flex items-center justify-between">
+<div>
+<span class="font-body-lg text-body-lg text-surface-container-lowest font-semibold block">Pechuga de Pollo</span>
+<span class="font-label-sm text-label-sm text-inverse-on-surface/70">Milanesas / Planchas</span>
+</div>
+<div class="px-3 py-1 rounded bg-secondary-fixed-dim/20 text-secondary-fixed font-label-md text-label-md font-bold">
+              2.0 kg
+            </div>
+</div>
+<div class="bg-error-container/30 rounded-lg p-3.5 flex items-center justify-between">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-error text-[18px]">warning</span>
+<span class="font-body-lg text-body-lg text-surface-container-lowest font-bold">Locoto Fresco</span>
+</div>
+<span class="font-label-sm text-label-sm text-error/90 font-medium">Crítico para Llajwa</span>
+</div>
+<div class="px-3 py-1 rounded bg-error text-on-error font-label-md text-label-md font-bold">
+              300 g
+            </div>
+</div>
+</div>
+<!-- Platos Agotados Hoy (+86 Status) -->
+<div class="mt-6 pt-4">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-error text-[20px]">block</span>
+<h3 class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold">Platos Agotados Hoy</h3>
+</div>
+<div class="flex flex-col gap-2">
+<div class="p-3 bg-surface-container-highest/10 rounded-lg flex items-center justify-between">
+<div>
+<span class="font-body-md text-body-md text-inverse-on-surface/50 line-through">Trucha del Titicaca</span>
+<span class="font-label-sm text-label-sm text-secondary-fixed block">Agotado 12:45</span>
+</div>
+<span class="font-label-sm text-label-sm uppercase bg-error/20 text-error px-2 py-0.5 rounded font-bold">86'D</span>
+</div>
+<div class="p-3 bg-surface-container-highest/10 rounded-lg flex items-center justify-between">
+<div>
+<span class="font-body-md text-body-md text-inverse-on-surface/50 line-through">Pastel de Choclo</span>
+<span class="font-label-sm text-label-sm text-secondary-fixed block">Agotado 13:10</span>
+</div>
+<span class="font-label-sm text-label-sm uppercase bg-error/20 text-error px-2 py-0.5 rounded font-bold">86'D</span>
+</div>
+</div>
+<!-- Tactile 86 Button -->
+<button class="mt-4 w-full h-[60px] rounded-xl bg-error text-on-error font-headline-sm text-headline-sm font-bold flex items-center justify-center gap-3 shadow-lg active:scale-98 transition-transform" type="button">
+<span class="material-symbols-outlined text-[26px]">do_not_disturb_on</span>
+            Declarar Ítem Agotado (+86)
+          </button>
+</div>
+<!-- Resumen de Tiempos & KDS Telemetry -->
+<div class="mt-6 pt-4 bg-primary-container/20 rounded-xl p-4">
+<span class="font-label-sm text-label-sm text-primary-fixed uppercase tracking-wider block font-bold">Rendimiento de Turno</span>
+<div class="flex items-baseline justify-between mt-1">
+<span class="font-headline-sm text-headline-sm text-surface-container-lowest">Tiempo Promedio:</span>
+<span class="font-headline-md text-headline-md text-tertiary-fixed font-bold font-label-md">14.2 min</span>
+</div>
+<div class="w-full bg-surface-container-highest/20 h-2 rounded-full overflow-hidden mt-3">
+<div class="bg-tertiary-fixed h-full rounded-full" style="width: 72%"></div>
+</div>
+<span class="font-label-sm text-label-sm text-inverse-on-surface/70 mt-2 block">Meta por plato: &lt; 15.0 min (88% a tiempo)</span>
+</div>
+</div>
+</div>
+<!-- COL 2: NUEVO (Incoming orders, dark blue subtle tint, 2 orders) -->
+<div class="xl:col-span-3 flex flex-col gap-4">
+<div class="flex items-center justify-between bg-primary-container/40 px-4 py-3 rounded-xl">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary-fixed-dim"></span>
+<h2 class="font-headline-md text-headline-md text-primary-fixed font-bold tracking-tight">NUEVO</h2>
+</div>
+<span class="font-headline-sm text-headline-sm bg-primary text-on-primary px-3 py-0.5 rounded-lg font-bold">2</span>
+</div>
+<!-- Ticket #1043 - Mesa 8 -->
+<div class="bg-surface-container-high/20 rounded-xl overflow-hidden shadow-lg flex flex-col">
+<!-- Ticket Header High-Contrast -->
+<div class="bg-primary-container/70 p-4 flex items-center justify-between">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-surface-container-lowest font-black">#1043</span>
+<span class="px-2.5 py-1 rounded bg-secondary-fixed text-on-secondary-fixed font-headline-sm text-headline-sm font-bold">MESA 8</span>
+</div>
+<span class="font-label-sm text-label-sm text-inverse-on-surface/80">Mozo: Roberto V.</span>
+</div>
+<div class="flex flex-col items-end">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-container text-on-tertiary-container font-label-md text-label-md font-bold">
+<span class="material-symbols-outlined text-[16px]">timer</span>
+              2 min
+            </div>
+<span class="font-label-sm text-label-sm text-inverse-on-surface/70 mt-1">13:42</span>
+</div>
+</div>
+<!-- Ticket Body Items -->
+<div class="p-5 flex flex-col gap-4 flex-grow bg-surface-container-high/10">
+<!-- Item 1 -->
+<div>
+<div class="flex items-start justify-between">
+<span class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold">1x Sopa de Maní con Chuleta</span>
+</div>
+<div class="mt-1.5 p-2.5 rounded-lg bg-error-container/30 text-on-error-container flex items-center gap-2">
+<span class="material-symbols-outlined text-error text-[22px]">error</span>
+<span class="font-headline-sm text-headline-sm text-error font-extrabold uppercase">¡SIN CILANTRO!</span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="pt-2">
+<span class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold">1x Milanesa de Res con Papas</span>
+<span class="font-body-md text-body-md text-inverse-on-surface/80 block mt-0.5">• Papas fritas crocantes + Arroz</span>
+</div>
+</div>
+<!-- Gigantic Touch Action Button -->
+<div class="p-4 bg-surface-container-high/20">
+<button class="w-full h-[64px] rounded-xl bg-tertiary-container hover:bg-tertiary text-on-tertiary font-headline-md text-headline-md font-bold flex items-center justify-center gap-3 shadow-md active:scale-98 transition-all" type="button">
+<span class="material-symbols-outlined text-[30px]">play_circle</span>
+            INICIAR PREPARACIÓN
+          </button>
+</div>
+</div>
+<!-- Ticket #1044 - DELIVERY Yaigo #18 -->
+<div class="bg-surface-container-high/20 rounded-xl overflow-hidden shadow-lg flex flex-col">
+<!-- Ticket Header -->
+<div class="bg-primary-container/70 p-4 flex items-center justify-between">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-surface-container-lowest font-black">#1044</span>
+<span class="px-2.5 py-1 rounded bg-secondary-container text-on-secondary-container font-headline-sm text-headline-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[20px]">two_wheeler</span>
+                YAIGO #18
+              </span>
+</div>
+<span class="font-label-md text-label-md text-secondary-fixed font-bold block mt-1 uppercase">Recojo: 14:05 (Faltan 21m)</span>
+</div>
+<div class="flex flex-col items-end">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-container text-on-tertiary-container font-label-md text-label-md font-bold">
+<span class="material-symbols-outlined text-[16px]">timer</span>
+              4 min
+            </div>
+<span class="font-label-sm text-label-sm text-inverse-on-surface/70 mt-1">13:40</span>
+</div>
+</div>
+<!-- Ticket Body Items -->
+<div class="p-5 flex flex-col gap-4 flex-grow bg-surface-container-high/10">
+<div>
+<span class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold">2x Silpancho Cochabambino</span>
+<div class="mt-2 flex flex-col gap-2">
+<div class="p-2.5 rounded-lg bg-error-container/30 flex items-center gap-2">
+<span class="material-symbols-outlined text-error text-[20px]">priority_high</span>
+<span class="font-body-lg text-body-lg text-error font-bold">1x Huevo bien cocido (no tierna)</span>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-highest/20 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-fixed text-[20px]">takeout_dining</span>
+<span class="font-body-lg text-body-lg text-secondary-fixed font-semibold">1x Llajwa aparte en pote extra</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Gigantic Touch Action Button -->
+<div class="p-4 bg-surface-container-high/20">
+<button class="w-full h-[64px] rounded-xl bg-tertiary-container hover:bg-tertiary text-on-tertiary font-headline-md text-headline-md font-bold flex items-center justify-center gap-3 shadow-md active:scale-98 transition-all" type="button">
+<span class="material-symbols-outlined text-[30px]">play_circle</span>
+            INICIAR
+          </button>
+</div>
+</div>
+</div>
+<!-- COL 3: EN PREPARACIÓN (3 orders with stopwatch highlights, delay alerts) -->
+<div class="xl:col-span-3 flex flex-col gap-4">
+<div class="flex items-center justify-between bg-surface-container-high/30 px-4 py-3 rounded-xl">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-secondary-fixed"></span>
+<h2 class="font-headline-md text-headline-md text-surface-container-lowest font-bold tracking-tight">EN PREPARACIÓN</h2>
+</div>
+<span class="font-headline-sm text-headline-sm bg-secondary-fixed text-on-secondary-fixed px-3 py-0.5 rounded-lg font-bold">3</span>
+</div>
+<!-- Ticket #1042 - Mesa 5 (CRITICAL DELAY: 16 min RED FLASH) -->
+<div class="bg-error-container/20 rounded-xl overflow-hidden shadow-xl flex flex-col">
+<!-- Urgent Red Header -->
+<div class="bg-error p-4 flex items-center justify-between text-on-error">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md font-black">#1042</span>
+<span class="px-2.5 py-1 rounded bg-surface-container-lowest text-on-surface font-headline-sm text-headline-sm font-bold">MESA 5 - Salón</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-error/90 font-medium">Capitán: Marcelo</span>
+</div>
+<div class="flex flex-col items-end">
+<div class="flex items-center gap-1.5 px-3 py-1 rounded bg-surface-container-lowest text-error font-headline-sm text-headline-sm font-black animate-pulse">
+<span class="material-symbols-outlined text-[20px]">warning</span>
+              16:14 min
+            </div>
+<span class="font-label-sm text-label-sm text-on-error uppercase font-extrabold tracking-widest mt-1">¡DEMORA CRÍTICA!</span>
+</div>
+</div>
+<!-- Ticket Body Items with High-Contrast Special Prep notes -->
+<div class="p-5 flex flex-col gap-4 flex-grow bg-inverse-surface">
+<!-- Item 1 -->
+<div>
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-surface-container-lowest font-black">1x Pique Macho Tradicional</span>
+<span class="px-2 py-0.5 rounded bg-tertiary-container text-on-tertiary-container font-label-sm text-label-sm font-bold">Frita Lista</span>
+</div>
+<!-- High-impact contrast callout note -->
+<div class="mt-2 p-3 rounded-lg bg-surface-container-lowest/10 text-secondary-fixed-dim">
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-error text-[24px]">cancel</span>
+<span class="font-headline-sm text-headline-sm font-black text-secondary-fixed tracking-tight leading-tight">
+                  ¡SIN CEBOLLA, LOCOTO APARTE EN POCILLO!
+                </span>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="pt-2">
+<span class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold">1x Silpancho Cochabambino</span>
+<span class="font-body-md text-body-md text-inverse-on-surface/80 block mt-0.5">Término normal, papas doradas</span>
+</div>
+<!-- Item 3 -->
+<div class="pt-2">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold">1x Sopa de Maní</span>
+<span class="px-2 py-0.5 rounded bg-tertiary-container text-on-tertiary-container font-label-sm text-label-sm font-bold">En Plato</span>
+</div>
+</div>
+</div>
+<!-- Dual Touch Button Row for Fast Execution -->
+<div class="p-4 bg-inverse-surface flex gap-3">
+<button class="flex-1 h-[60px] rounded-xl bg-surface-container-highest/20 hover:bg-surface-container-highest/30 text-surface-container-lowest font-headline-sm text-headline-sm font-bold flex items-center justify-center gap-1 active:scale-98 transition-all" type="button">
+<span class="material-symbols-outlined text-[22px]">checklist</span>
+            Listo Parcial
+          </button>
+<button class="flex-1 h-[60px] rounded-xl bg-tertiary-container hover:bg-tertiary text-on-tertiary font-headline-sm text-headline-sm font-black flex items-center justify-center gap-2 shadow-lg active:scale-98 transition-all" type="button">
+<span class="material-symbols-outlined text-[26px]">check_circle</span>
+            LISTO COMPLETO
+          </button>
+</div>
+</div>
+<!-- Ticket #1041 - PARA LLEVAR Ticket #38 (11 min warning orange) -->
+<div class="bg-surface-container-high/20 rounded-xl overflow-hidden shadow-lg flex flex-col">
+<div class="bg-secondary p-4 flex items-center justify-between text-on-secondary">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md font-black">#1041</span>
+<span class="px-2.5 py-1 rounded bg-secondary-fixed text-on-secondary-fixed font-headline-sm text-headline-sm font-bold">PARA LLEVAR #38</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-secondary/90 font-medium">Cliente: Valeria Q. (En Caja)</span>
+</div>
+<div class="flex flex-col items-end">
+<div class="flex items-center gap-1 px-2.5 py-1 rounded bg-secondary-container text-on-secondary-container font-headline-sm text-headline-sm font-bold">
+<span class="material-symbols-outlined text-[18px]">timelapse</span>
+              11:02 min
+            </div>
+<span class="font-label-sm text-label-sm text-secondary-fixed font-bold mt-1 uppercase">Atención</span>
+</div>
+</div>
+<div class="p-5 flex flex-col gap-3 flex-grow bg-surface-container-high/10">
+<div>
+<span class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold">2x Silpancho con Arroz Doble</span>
+<span class="font-body-md text-body-md text-secondary-fixed block mt-1 font-semibold">• Empaque térmico individual</span>
+</div>
+<div class="pt-2">
+<span class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold">2x Api Morado Caliente</span>
+<span class="font-body-md text-body-md text-inverse-on-surface/80 block">• Vaso térmico con tapa hermética</span>
+</div>
+</div>
+<div class="p-4 bg-surface-container-high/20">
+<button class="w-full h-[62px] rounded-xl bg-tertiary-container hover:bg-tertiary text-on-tertiary font-headline-md text-headline-md font-bold flex items-center justify-center gap-3 shadow-md active:scale-98 transition-all" type="button">
+<span class="material-symbols-outlined text-[28px]">check_circle</span>
+            LISTO (DESPACHAR)
+          </button>
+</div>
+</div>
+<!-- Ticket #1040 - Mesa 12 (8 min Verde en tiempo) -->
+<div class="bg-surface-container-high/20 rounded-xl overflow-hidden shadow-lg flex flex-col">
+<div class="bg-surface-container-highest/20 p-4 flex items-center justify-between">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md text-surface-container-lowest font-black">#1040</span>
+<span class="px-2.5 py-1 rounded bg-surface-container-highest/40 text-inverse-on-surface font-headline-sm text-headline-sm font-bold">MESA 12</span>
+</div>
+<span class="font-label-sm text-label-sm text-inverse-on-surface/70">Terraza Jardín</span>
+</div>
+<div class="flex flex-col items-end">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-container text-on-tertiary-container font-label-md text-label-md font-bold">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+              08:35 min
+            </div>
+<span class="font-label-sm text-label-sm text-tertiary-fixed font-bold mt-1">A TIEMPO</span>
+</div>
+</div>
+<div class="p-5 flex flex-col gap-2 flex-grow bg-surface-container-high/10">
+<div>
+<span class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold">1x Pique Macho para 2 personas</span>
+<span class="font-body-lg text-body-lg text-secondary-fixed block font-bold mt-1">• Término jugoso de la carne</span>
+</div>
+</div>
+<div class="p-4 bg-surface-container-high/20">
+<button class="w-full h-[60px] rounded-xl bg-tertiary-container hover:bg-tertiary text-on-tertiary font-headline-sm text-headline-sm font-bold flex items-center justify-center gap-2 shadow-md active:scale-98 transition-all" type="button">
+<span class="material-symbols-outlined text-[26px]">done</span>
+            LISTO
+          </button>
+</div>
+</div>
+</div>
+<!-- COL 4: LISTO / POR SERVIR (Orders ready for runners, notification beacons) -->
+<div class="xl:col-span-3 flex flex-col gap-4">
+<div class="flex items-center justify-between bg-tertiary-container/30 px-4 py-3 rounded-xl">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-tertiary-fixed"></span>
+<h2 class="font-headline-md text-headline-md text-tertiary-fixed font-bold tracking-tight">LISTO / POR SERVIR</h2>
+</div>
+<span class="font-headline-sm text-headline-sm bg-tertiary-container text-on-tertiary-container px-3 py-0.5 rounded-lg font-bold">2</span>
+</div>
+<!-- Ticket #1039 - Mesa 3 (Chicharrón Valluno, runner alert) -->
+<div class="bg-surface-container-high/20 rounded-xl overflow-hidden shadow-xl flex flex-col">
+<!-- Ready Header with Green Theme -->
+<div class="bg-tertiary-container p-4 flex items-center justify-between text-on-tertiary">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md font-black">#1039</span>
+<span class="px-2.5 py-1 rounded bg-surface-container-lowest text-on-surface font-headline-sm text-headline-sm font-bold">MESA 3</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-tertiary/90">Salón Principal</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-lowest/20 font-label-md text-label-md font-bold text-on-tertiary">
+              Listo hace 1m 30s
+            </span>
+<span class="font-label-sm text-label-sm text-tertiary-fixed-dim mt-1 font-semibold">Despacho 13:42</span>
+</div>
+</div>
+<div class="p-5 flex flex-col gap-4 flex-grow bg-surface-container-high/10">
+<div>
+<span class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold">1x Chicharrón Valluno Tradicional</span>
+<span class="font-body-md text-body-md text-inverse-on-surface/80 block mt-1">Con mote pelado, papas con cáscara y llajwa fresca</span>
+</div>
+<!-- Runner Alert Beacon Card -->
+<div class="p-3.5 rounded-xl bg-secondary-container/20 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed-dim flex items-center justify-center text-on-secondary-fixed">
+<span class="material-symbols-outlined text-[24px] animate-bounce">notifications_active</span>
+</div>
+<div>
+<span class="font-body-md text-body-md text-secondary-fixed font-bold block">Llamando runner / mesero</span>
+<span class="font-label-sm text-label-sm text-inverse-on-surface font-semibold">Carlos M. notificado a terminal salón</span>
+</div>
+</div>
+</div>
+<!-- Confirm Hand-off button -->
+<div class="p-4 bg-surface-container-high/20 flex gap-2">
+<button class="flex-1 h-[60px] rounded-xl bg-primary-container text-on-primary-container font-headline-sm text-headline-sm font-bold flex items-center justify-center gap-2 active:scale-98 transition-transform" type="button">
+<span class="material-symbols-outlined text-[24px]">send</span>
+            Reclamar Mozo
+          </button>
+<button class="w-16 h-[60px] rounded-xl bg-surface-container-highest/20 hover:bg-tertiary hover:text-on-tertiary text-inverse-on-surface flex items-center justify-center transition-colors" title="Archivar ticket entregado" type="button">
+<span class="material-symbols-outlined text-[26px]">archive</span>
+</button>
+</div>
+</div>
+<!-- Ticket #1038 - Mesa 2 (Sopa de Maní x2, Listo hace 3m) -->
+<div class="bg-surface-container-high/20 rounded-xl overflow-hidden shadow-lg flex flex-col">
+<div class="bg-tertiary-container/80 p-4 flex items-center justify-between text-on-tertiary">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-md text-headline-md font-black">#1038</span>
+<span class="px-2.5 py-1 rounded bg-surface-container-lowest text-on-surface font-headline-sm text-headline-sm font-bold">MESA 2</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-tertiary/90">Mesero: Andrea S.</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="px-2.5 py-1 rounded-full bg-surface-container-lowest/20 font-label-md text-label-md font-bold text-on-tertiary">
+              Listo hace 3m 12s
+            </span>
+<span class="font-label-sm text-label-sm text-secondary-fixed mt-1 font-semibold">Bandeja en pase</span>
+</div>
+</div>
+<div class="p-5 flex flex-col gap-3 flex-grow bg-surface-container-high/10">
+<div>
+<span class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold">2x Sopa de Maní Completa</span>
+<span class="font-body-md text-body-md text-inverse-on-surface/80 block mt-1">Con fideo tostado y perejil picado</span>
+</div>
+<div class="p-3 rounded-lg bg-surface-container-highest/15 flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary-fixed text-[20px]">check</span>
+<span class="font-body-md text-body-md text-inverse-on-surface">Esperando recojo en mostrador</span>
+</div>
+</div>
+<div class="p-4 bg-surface-container-high/20 flex gap-2">
+<button class="w-full h-[60px] rounded-xl bg-surface-container-highest/20 hover:bg-tertiary hover:text-on-tertiary text-surface-container-lowest font-headline-sm text-headline-sm font-bold flex items-center justify-center gap-2 active:scale-98 transition-all" type="button">
+<span class="material-symbols-outlined text-[24px]">task_alt</span>
+            Entregado / Archivar
+          </button>
+</div>
+</div>
+<!-- Quick Metrics Summary Widget for Kitchen Shift -->
+<div class="bg-surface-container-high/15 rounded-xl p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary-fixed text-[28px]">speed</span>
+<div>
+<span class="font-label-sm text-label-sm text-inverse-on-surface/70 uppercase font-bold">Despachos Hoy</span>
+<span class="font-headline-sm text-headline-sm text-surface-container-lowest font-bold block">128 platos</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-tertiary-fixed font-bold block">Sin devoluciones</span>
+<span class="font-label-sm text-label-sm text-inverse-on-surface/60">Turno Almuerzo</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Simple interactive haptic feedback mock for high-stress tactile screen usage
+  document.addEventListener('DOMContentLoaded', () => {
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (navigator.vibrate) {
+          navigator.vibrate(30);
+        }
+      });
+    });
+  });
+</script></main><footer class="w-full bg-inverse-surface/90 py-4 shadow-[0_-1px_6px_rgba(0,0,0,0.2)]"><div class="w-full px-6 flex items-center justify-between text-inverse-on-surface/60 font-label-sm text-label-sm"><div><span>Estación: Cocina Caliente (Est-01)</span> • <span>Impresora Comandas: CONECTADA</span></div><div><span>Andina GastroOS KDS Engine • Tiempo Promedio Despacho: 11.2 min</span></div></div></footer></body></html>

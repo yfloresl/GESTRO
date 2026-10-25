@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.turbo/
+*.tsbuildinfo
+*.log
+.DS_Store
+.claude/settings.local.json
+# Datos locales de desarrollo: llave maestra, adjuntos y base. Nunca al repositorio.
+.datos/
