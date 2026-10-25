@@ -1,14 +1,16 @@
 import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { ROLES, type Rol } from '@gestro/contracts';
+import type { Rol } from '@gestro/contracts';
 import { auditar, esDuplicado } from '../comun/auditoria';
 import { Tenant, TenantDb } from '../database/database.module';
 import { kyrosLinks, roles, staffMembers, userInvitations, userRoles, users } from '../database/esquema';
 import { SecretosService } from '../secretos/secretos.service';
 
 /** El rol «owner» se asigna solo al abrir el restaurante; no se reparte desde aquí. */
-const ASIGNABLES = ROLES.filter((r) => r !== 'owner') as [Rol, ...Rol[]];
+// La API solo importa TIPOS de @gestro/contracts (el paquete no viaja en la imagen). El Record obliga a listar todos los roles.
+const TODOS_LOS_ROLES: Record<Rol, true> = { owner: true, admin: true, cobranzas: true, cajero: true, mesero: true, area_manager: true, cocina: true, almacen: true, contador: true };
+const ASIGNABLES = (Object.keys(TODOS_LOS_ROLES) as Rol[]).filter((r) => r !== 'owner') as [Rol, ...Rol[]];
 export const NuevoPersonal = z.object({
   nombre: z.string().trim().min(2).max(120),
   correo: z.string().trim().email().max(200),
