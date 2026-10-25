@@ -301,3 +301,22 @@ export const subscriptionPayments = pgTable('subscription_payments', {
   expectedAmount: numeric('expected_amount', { precision: 12, scale: 2 }),
   giftMonths: integer('gift_months').notNull().default(0),
 });
+
+export const warehouses = pgTable('warehouses', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  restaurantId: uuid('restaurant_id').notNull(),
+  name: text('name').notNull(),
+});
+
+export const ingredients = pgTable('ingredients', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  restaurantId: uuid('restaurant_id').notNull(),
+  name: text('name').notNull(),
+  category: text('category'),
+  unitCode: text('unit_code').notNull(),
+  minStock: numeric('min_stock', { precision: 14, scale: 3 }).notNull().default('0'),
+  lastCost: numeric('last_cost', { precision: 14, scale: 4 }).notNull().default('0'),
+  perishable: boolean('perishable').notNull().default(false),
+  active: boolean('active').notNull().default(true),
+  costMethod: text('cost_method').notNull().default('promedio'),
+});

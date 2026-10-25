@@ -12,6 +12,7 @@ import { Salon } from './paginas/Salon';
 import { Caja, ReciboPagina } from './paginas/Caja';
 import { Cocina } from './paginas/Cocina';
 import { Configuracion } from './paginas/Configuracion';
+import { Inventario } from './paginas/Inventario';
 import { Pedidos } from './paginas/Pedidos';
 import { Plataforma } from './paginas/Plataforma';
 import { Suscripcion } from './paginas/Suscripcion';
@@ -28,6 +29,7 @@ function Inicio() {
   if (esAdmin || esPlataforma || roles.length === 0) return <Navigate to="panel" replace />;
   if (roles.includes('cocina')) return <Navigate to="/cocina" replace />;
   if (roles.includes('cajero')) return <Navigate to="caja" replace />;
+  if (roles.includes('almacen')) return <Navigate to="inventario" replace />;
   return <Navigate to="salon" replace />;
 }
 import './estilos.css';
@@ -54,6 +56,7 @@ createRoot(document.getElementById('raiz')!).render(
               <Route path="salon" element={<Salon />} />
               <Route path="personal" element={<Personal />} />
               <Route path="pedidos" element={<Pedidos />} />
+              <Route path="inventario" element={<Inventario />} />
               <Route path="caja" element={<Caja />} />
               <Route path="recibo/:id" element={<ReciboPagina />} />
               <Route path="configuracion" element={<Configuracion />} />
