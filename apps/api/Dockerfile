@@ -28,11 +28,14 @@ RUN pnpm install --frozen-lockfile --config.trustLockfile=true --prod --filter @
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 # La API solo importa TIPOS de @gestro/contracts: no hace falta en ejecución.
 RUN mkdir -p /data/secretos /data/archivos && chown -R node:node /data /app && chmod 700 /data/secretos
+COPY apps/api/entrypoint.sh /entrypoint.sh
+RUN chmod 755 /entrypoint.sh
 ENV NODE_ENV=production
-USER node
+# El arranque corrige el dueño de los volúmenes y baja al usuario «node» (no se corre como root).
 WORKDIR /app/apps/api
 EXPOSE 4000
 HEALTHCHECK --interval=15s --timeout=5s --start-period=40s --retries=5 \
   CMD node -e "require('http').get('http://127.0.0.1:4000/api/v1/ready',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 # Las migraciones corren dentro de la propia API al arrancar (main.ts).
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["node", "dist/src/main.js"]
