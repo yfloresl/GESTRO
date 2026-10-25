@@ -1,9 +1,10 @@
-import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { and, asc, desc, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { auditar } from '../comun/auditoria';
 import { Bd, Tenant, TenantDb } from '../database/database.module';
 import { menuItems, orderItems, orders, restaurants, restaurantTables, staffMembers } from '../database/esquema';
+import { ConsumoService } from '../recetas/consumo.service';
 import { EventosGateway, salas } from '../tiempo-real/eventos.gateway';
 import { PushService } from '../tiempo-real/push.service';
 
@@ -44,7 +45,19 @@ export class PedidosService {
     @Inject(TenantDb) private readonly db: TenantDb,
     @Inject(EventosGateway) private readonly eventos: EventosGateway,
     @Inject(PushService) private readonly push: PushService,
+    @Inject(ConsumoService) private readonly consumo: ConsumoService,
   ) {}
+
+  private readonly log = new Logger('Pedidos');
+
+  /**
+   * Descuenta los insumos de lo que acaba de salir a cocina. Va en un punto de guardado: si el inventario falla
+   * por cualquier motivo, la venta sigue su curso (nunca se frena el servicio por un problema de stock).
+   */
+  private async descontarSeguro(tx: Bd, t: Tenant, userId: string | null, itemIds: string[]) {
+    try { await tx.transaction(async (sp) => { await this.consumo.descontar(sp as unknown as Bd, t, userId, itemIds); }); }
+    catch (e) { this.log.warn(`No se pudo descontar el inventario: ${(e as Error).message}`); }
+  }
 
   /** Pedido con sus ítems, listo para la interfaz. Los totales salen de la base (NUMERIC), nunca de aritmética de punto flotante. */
   async vista(tx: Bd, rid: string, id: string): Promise<PedidoVista> {
@@ -118,10 +131,11 @@ export class PedidosService {
         if (!p.available) throw new ConflictException(`«${p.name}» está agotado hoy.`);
       }
       const estado = autoEnviar ? 'enviado' : 'borrador';
-      await tx.insert(orderItems).values(d.items.map((i) => ({
+      const nuevos = await tx.insert(orderItems).values(d.items.map((i) => ({
         restaurantId: t.restaurantId, orderId: id, menuItemId: i.platoId, qty: String(i.cantidad), unitPrice: platos.find((x) => x.id === i.platoId)!.price,
         note: i.nota ?? null, modifiers: i.modificadores ?? [], course: i.tiempo ?? 1, status: estado, fromQr: desdeQr, sentAt: autoEnviar ? sql`now()` as unknown as Date : null,
-      })));
+      }))).returning({ id: orderItems.id });
+      if (autoEnviar) await this.descontarSeguro(tx, t, userId, nuevos.map((n) => n.id));
       if (autoEnviar && o.status === 'borrador') await tx.update(orders).set({ status: 'enviado', sentAt: sql`now()` as unknown as Date }).where(eq(orders.id, id));
       else if (autoEnviar && !o.sentAt) await tx.update(orders).set({ sentAt: sql`now()` as unknown as Date }).where(eq(orders.id, id));
       await this.recalcular(tx, id);
@@ -153,6 +167,7 @@ export class PedidosService {
       if (!enviados.length) throw new ConflictException('No hay platos nuevos para enviar.');
       await tx.update(orders).set({ status: o.status === 'borrador' || o.status === 'listo' || o.status === 'servido' ? 'enviado' : o.status, sentAt: o.sentAt ?? (sql`now()` as unknown as Date), readyAt: null }).where(eq(orders.id, id));
       await this.recalcular(tx, id);
+      await this.descontarSeguro(tx, t, userId, enviados.map((e) => e.id));
       await auditar(tx, t.restaurantId, userId, 'pedido.enviado', 'order', id, { platos: enviados.length });
       return this.vista(tx, t.restaurantId, id);
     });

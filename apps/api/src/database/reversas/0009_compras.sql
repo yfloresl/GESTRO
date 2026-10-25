@@ -1,0 +1,10 @@
+ALTER TABLE payables_receivables DROP COLUMN IF EXISTS purchase_order_id, DROP COLUMN IF EXISTS receipt_id, DROP COLUMN IF EXISTS document_number, DROP COLUMN IF EXISTS created_at, DROP COLUMN IF EXISTS paid_at, DROP COLUMN IF EXISTS paid_by;
+DROP TABLE IF EXISTS supplier_prices, purchase_receipt_lines, purchase_receipts;
+ALTER TABLE purchase_order_lines DROP COLUMN received_qty;
+UPDATE purchase_orders SET status = 'enviada' WHERE status = 'parcial';
+ALTER TABLE purchase_orders DROP CONSTRAINT purchase_orders_status_check;
+ALTER TABLE purchase_orders ADD CONSTRAINT purchase_orders_status_check CHECK (status IN ('borrador','enviada','recibida','cancelada'));
+ALTER TABLE purchase_orders DROP COLUMN notes, DROP COLUMN created_by, DROP COLUMN sent_at, DROP COLUMN plan_date;
+ALTER TABLE ingredients DROP COLUMN preferred_supplier_id, DROP COLUMN default_warehouse_id;
+DROP INDEX IF EXISTS suppliers_nombre;
+ALTER TABLE suppliers DROP COLUMN email, DROP COLUMN payment_days, DROP COLUMN active;

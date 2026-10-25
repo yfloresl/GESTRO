@@ -13,6 +13,7 @@ const Fecha = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export const Insumo = z.object({
   nombre: z.string().trim().min(1).max(120), categoria: z.string().trim().max(60).nullable().optional(), unidad: z.string().trim().min(1).max(10),
   minimo: z.number().min(0).max(1_000_000).default(0), perecedero: z.boolean().default(false), metodoCosto: z.enum(['promedio', 'ultimo']).default('promedio'), activo: z.boolean().default(true),
+  proveedorPreferidoId: z.string().uuid().nullable().optional(), almacenConsumoId: z.string().uuid().nullable().optional(),
 }).strict();
 export const Almacen = z.object({ nombre: z.string().trim().min(1).max(60) }).strict();
 export const Movimiento = z.object({
@@ -34,14 +35,14 @@ export class InventarioService {
 
   insumos(t: Tenant, soloActivos = false) {
     return this.db.run(t, async (tx) => {
-      const r = await tx.execute(sql`SELECT i.id, i.name, i.category, i.unit_code, i.min_stock::float8 AS minimo, i.last_cost::text AS ultimo_costo, i.perishable, i.cost_method, i.active,
-          COALESCE(SUM(s.qty), 0)::text AS stock, COALESCE(SUM(s.qty * s.avg_cost), 0)::numeric(14,2)::text AS valor,
+      const r = await tx.execute(sql`SELECT i.id, i.name, i.category, i.unit_code, i.min_stock::float8 AS minimo, i.last_cost::text AS ultimo_costo, i.perishable, i.cost_method, i.active, i.preferred_supplier_id, i.default_warehouse_id,
+          COALESCE(SUM(s.qty), 0)::numeric(14,3)::text AS stock, COALESCE(SUM(s.qty * s.avg_cost), 0)::numeric(14,2)::text AS valor,
           CASE WHEN COALESCE(SUM(s.qty * s.avg_cost) / NULLIF(SUM(s.qty), 0), 0) > 0 THEN round(SUM(s.qty * s.avg_cost) / NULLIF(SUM(s.qty), 0), 4)::text ELSE i.last_cost::text END AS costo_promedio
         FROM ingredients i LEFT JOIN stock_levels s ON s.ingredient_id = i.id WHERE i.restaurant_id = ${t.restaurantId} ${soloActivos ? sql`AND i.active` : sql``} GROUP BY i.id ORDER BY i.name`);
       return (r.rows as Record<string, unknown>[]).map((x) => {
         const stock = Number(x.stock); const min = Number(x.minimo);
         return {
-          id: x.id, nombre: x.name, categoria: x.category, unidad: x.unit_code, minimo: min, ultimoCosto: x.ultimo_costo, costoPromedio: x.costo_promedio, perecedero: x.perishable, metodoCosto: x.cost_method, activo: x.active,
+          id: x.id, nombre: x.name, categoria: x.category, unidad: x.unit_code, minimo: min, ultimoCosto: x.ultimo_costo, costoPromedio: x.costo_promedio, perecedero: x.perishable, metodoCosto: x.cost_method, activo: x.active, proveedorPreferidoId: x.preferred_supplier_id, almacenConsumoId: x.default_warehouse_id,
           stock: x.stock, valor: x.valor, estado: stock <= 0 ? 'agotado' : min > 0 && stock < min ? 'bajo' : 'optimo',
         };
       });
@@ -53,10 +54,24 @@ export class InventarioService {
       await this.unidadValida(tx, d.unidad);
       try {
         const [i] = await tx.insert(ingredients).values({ restaurantId: t.restaurantId, name: d.nombre, category: d.categoria ?? null, unitCode: d.unidad, minStock: d.minimo.toFixed(3), perishable: d.perecedero, costMethod: d.metodoCosto, active: d.activo }).returning({ id: ingredients.id });
+        await this.preferencias(tx, t, i.id, d);
         await auditar(tx, t.restaurantId, por, 'inventario.insumo_creado', 'ingredient', i.id, d);
         return { id: i.id };
       } catch (e) { if (esDuplicado(e)) throw new ConflictException('Ya existe un insumo con ese nombre.'); throw e; }
     });
+  }
+
+  /** Proveedor preferido y almacén de consumo: deben ser de esta sucursal. */
+  private async validarPreferencias(tx: Bd, t: Tenant, d: z.infer<typeof Insumo>) {
+    if (d.proveedorPreferidoId) { const [p] = (await tx.execute(sql`SELECT 1 FROM suppliers WHERE id = ${d.proveedorPreferidoId} AND restaurant_id = ${t.restaurantId}`)).rows; if (!p) throw new BadRequestException('El proveedor no existe en esta sucursal.'); }
+    if (d.almacenConsumoId) { const [p] = (await tx.execute(sql`SELECT 1 FROM warehouses WHERE id = ${d.almacenConsumoId} AND restaurant_id = ${t.restaurantId}`)).rows; if (!p) throw new BadRequestException('El almacén no existe en esta sucursal.'); }
+  }
+  private async preferencias(tx: Bd, t: Tenant, id: string, d: z.infer<typeof Insumo>) {
+    await this.validarPreferencias(tx, t, d);
+    if (d.proveedorPreferidoId !== undefined || d.almacenConsumoId !== undefined) {
+      await tx.execute(sql`UPDATE ingredients SET preferred_supplier_id = CASE WHEN ${d.proveedorPreferidoId !== undefined} THEN ${d.proveedorPreferidoId ?? null}::uuid ELSE preferred_supplier_id END,
+        default_warehouse_id = CASE WHEN ${d.almacenConsumoId !== undefined} THEN ${d.almacenConsumoId ?? null}::uuid ELSE default_warehouse_id END WHERE id = ${id} AND restaurant_id = ${t.restaurantId}`);
+    }
   }
 
   private async unidadValida(tx: Bd, code: string) {
@@ -77,9 +92,11 @@ export class InventarioService {
         const enReceta = await tx.execute(sql`SELECT 1 FROM recipe_lines l JOIN recipes r ON r.id = l.recipe_id WHERE l.ingredient_id = ${id} AND r.active LIMIT 1`);
         if (enReceta.rows.length) throw new ConflictException('Este insumo se usa en una receta activa: quítalo de la receta antes de desactivarlo.');
       }
+      await this.validarPreferencias(tx, t, d);
       try {
         await tx.update(ingredients).set({ name: d.nombre, category: d.categoria ?? null, unitCode: d.unidad, minStock: d.minimo.toFixed(3), perishable: d.perecedero, costMethod: d.metodoCosto, active: d.activo }).where(eq(ingredients.id, id));
       } catch (e) { if (esDuplicado(e)) throw new ConflictException('Ya existe un insumo con ese nombre.'); throw e; }
+      await this.preferencias(tx, t, id, d);
       await auditar(tx, t.restaurantId, por, 'inventario.insumo_cambiado', 'ingredient', id, d);
       return { ok: true };
     });
@@ -238,7 +255,7 @@ export class InventarioService {
   /** Alertas de stock: bajo el mínimo, en negativo (el inventario del sistema difiere de la realidad) y lotes por vencer. */
   alertas(t: Tenant, diasVencimiento = 7) {
     return this.db.run(t, async (tx) => {
-      const bajos = await tx.execute(sql`SELECT i.id, i.name, i.unit_code, i.min_stock::text AS minimo, COALESCE(SUM(s.qty), 0)::text AS stock FROM ingredients i LEFT JOIN stock_levels s ON s.ingredient_id = i.id
+      const bajos = await tx.execute(sql`SELECT i.id, i.name, i.unit_code, i.min_stock::text AS minimo, COALESCE(SUM(s.qty), 0)::numeric(14,3)::text AS stock FROM ingredients i LEFT JOIN stock_levels s ON s.ingredient_id = i.id
         WHERE i.restaurant_id = ${t.restaurantId} AND i.active AND i.min_stock > 0 GROUP BY i.id HAVING COALESCE(SUM(s.qty), 0) < i.min_stock ORDER BY i.name`);
       const negativos = await tx.execute(sql`SELECT i.id, i.name, i.unit_code, w.name AS almacen, s.qty::text AS qty FROM stock_levels s JOIN ingredients i ON i.id = s.ingredient_id JOIN warehouses w ON w.id = s.warehouse_id WHERE s.restaurant_id = ${t.restaurantId} AND s.qty < 0 ORDER BY i.name`);
       const vencen = await tx.execute(sql`SELECT i.id, i.name, i.unit_code, m.lot, m.expires_on::text AS vence, (m.expires_on - (now() AT TIME ZONE 'America/La_Paz')::date)::int AS dias, w.name AS almacen, sum(m.qty)::text AS saldo

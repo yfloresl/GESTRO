@@ -25,6 +25,17 @@ export function PlanDelDia() {
     const items = Object.entries(porciones).filter(([, v]) => Number(v) > 0).map(([platoId, v]) => ({ platoId, porciones: Math.floor(Number(v)) }));
     try { const r = await api.put<Plan>(`/plan-del-dia/${fecha}`, { items }, sucursalId!); qc.setQueryData(['plan', sucursalId, fecha], r); } catch (e) { setError(mensajeDeError(e)); } finally { setGuardando(false); }
   };
+  const { esAdmin, roles } = useRolesActivos();
+  const puedeComprar = esAdmin || roles.includes('almacen');
+  const [msg, setMsg] = useState<string | null>(null);
+  const generar = async () => {
+    setError(null); setMsg(null);
+    try {
+      const r = await api.post<{ ordenes: { proveedor: string; tarde: boolean; esperadaEl: string }[]; sinProveedor: { insumo: string }[] }>(`/plan-del-dia/${fecha}/ordenes-de-compra`, undefined, sucursalId!);
+      const tarde = r.ordenes.filter((o) => o.tarde).map((o) => `${o.proveedor} (llega el ${o.esperadaEl})`);
+      setMsg(`Se crearon ${r.ordenes.length} orden(es) en borrador, una por proveedor.${tarde.length ? ` Ojo: llegan después de la fecha del plan: ${tarde.join(', ')}.` : ''}${r.sinProveedor.length ? ` Sin proveedor preferido: ${r.sinProveedor.map((s) => s.insumo).join(', ')}.` : ''}`);
+    } catch (e) { setError(mensajeDeError(e)); }
+  };
   const p = plan.data;
   const faltan = p?.insumos.filter((i) => !i.alcanza) ?? [];
 
@@ -47,7 +58,9 @@ export function PlanDelDia() {
             <>
               <div className={`rounded-xl p-space-md flex flex-wrap items-center justify-between gap-space-sm ${p.hayFaltantes ? 'bg-error-container/50' : 'bg-tertiary-fixed/60'}`}>
                 <p className="font-body-md font-semibold flex items-center gap-space-xs"><span className="material-symbols-outlined" aria-hidden="true">{p.hayFaltantes ? 'warning' : 'check_circle'}</span>{p.hayFaltantes ? `Faltan ${faltan.length} insumo(s) para cumplir el plan` : 'Hay stock suficiente para todo el plan'}</p>
-                <p className="font-label-lg">Costo estimado: {bs(p.costoEstimado)}</p></div>
+                <p className="font-label-lg">Costo estimado: {bs(p.costoEstimado)}</p>
+                {p.hayFaltantes && puedeComprar && <button type="button" onClick={generar} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold">Generar órdenes de compra</button>}</div>
+              {msg && <p role="status" className="rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant p-space-sm">{msg}</p>}
               <div className="overflow-x-auto bg-surface-container-lowest border border-outline-variant rounded-xl"><table className="min-w-[34rem] w-full text-body-sm"><caption className="sr-only">Insumos requeridos contra el stock</caption>
                 <thead><tr className="text-left text-on-surface-variant font-label-sm uppercase"><th className="p-3">Insumo</th><th className="p-3 text-right">Requerido</th><th className="p-3 text-right">En stock</th><th className="p-3 text-right">Falta</th></tr></thead>
                 <tbody>{p.insumos.map((i) => <tr key={i.insumoId} className={`border-t border-outline-variant ${i.alcanza ? '' : 'bg-error-container/20'}`}><td className="p-3 font-semibold">{i.insumo}{i.porAlmacen.length > 1 && <span className="block font-normal text-on-surface-variant">{i.porAlmacen.map((a) => `${a.almacen}: ${Number(a.cantidad)}`).join(' · ')}</span>}</td><td className="p-3 text-right font-label-md">{Number(i.requerido)} {i.unidad}</td><td className="p-3 text-right font-label-md">{Number(i.stock)} {i.unidad}</td><td className={`p-3 text-right font-label-md ${i.alcanza ? 'text-tertiary' : 'text-error font-semibold'}`}>{i.alcanza ? 'OK' : `${Number(i.faltante)} ${i.unidad}`}</td></tr>)}</tbody></table></div>

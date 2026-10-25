@@ -23,7 +23,7 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
     { ruta: 'cocina', icono: 'skillet', texto: 'Cocina (KDS)', roles: ['owner', 'admin', 'cocina'], externa: '/cocina' },
     { ruta: 'caja', icono: 'point_of_sale', texto: 'Caja', roles: ['owner', 'admin', 'cajero'] },
     { ruta: 'salon', icono: 'qr_code_2', texto: 'Mesas & Salón (QR)', roles: SALON },
-    { ruta: 'compras', icono: 'local_shipping', texto: 'Compras & Proveedores' },
+    { ruta: 'compras', icono: 'local_shipping', texto: 'Compras & Proveedores', roles: ['owner', 'admin', 'almacen', 'contador'] },
     { ruta: 'reservas', icono: 'event_seat', texto: 'Reservas & Eventos' },
     { ruta: 'personal', icono: 'badge', texto: 'Personal & Turnos', roles: ['owner', 'admin'] },
   ] },

@@ -4,7 +4,7 @@ import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
 
-interface Insumo { id: string; nombre: string; categoria: string | null; unidad: string; minimo: number; ultimoCosto: string; costoPromedio: string; perecedero: boolean; metodoCosto: string; activo: boolean; stock: string; valor: string; estado: 'agotado' | 'bajo' | 'optimo' }
+interface Insumo { id: string; nombre: string; categoria: string | null; unidad: string; minimo: number; ultimoCosto: string; costoPromedio: string; perecedero: boolean; metodoCosto: string; activo: boolean; stock: string; valor: string; estado: 'agotado' | 'bajo' | 'optimo'; proveedorPreferidoId: string | null; almacenConsumoId: string | null }
 interface Almacen { id: string; nombre: string }
 interface Unidad { codigo: string; base: string; factor: number }
 interface Alertas { bajoMinimo: { insumoId: string; insumo: string; unidad: string; stock: string; minimo: string }[]; negativos: { insumoId: string; insumo: string; unidad: string; almacen: string; cantidad: string }[]; porVencer: { insumoId: string; insumo: string; lote: string; vence: string; dias: number; almacen: string; saldo: string; unidad: string }[] }
@@ -153,7 +153,9 @@ function Conteo({ insumos, almacenes, hecho }: { insumos: Insumo[]; almacenes: A
 function Catalogo({ insumos, almacenes, hecho }: { insumos: Insumo[]; almacenes: Almacen[]; hecho(): void }) {
   const { sucursalId } = useRolesActivos(); const [error, setError] = useState<string | null>(null);
   const unidades = useQuery({ queryKey: ['unidades'], queryFn: () => api.get<Unidad[]>('/unidades', sucursalId!), enabled: !!sucursalId, staleTime: Infinity });
+  const proveedores = useQuery({ queryKey: ['proveedores', sucursalId], queryFn: () => api.get<{ id: string; nombre: string; activo: boolean }[]>('/proveedores', sucursalId!).catch(() => []), enabled: !!sucursalId });
   const accion = async (f: () => Promise<unknown>) => { setError(null); try { await f(); hecho(); } catch (e) { setError(mensajeDeError(e)); } };
+  const cuerpo = (i: Insumo, c: object) => ({ nombre: i.nombre, unidad: i.unidad, minimo: i.minimo, categoria: i.categoria, perecedero: i.perecedero, metodoCosto: i.metodoCosto, activo: i.activo, ...c });
   const nuevoInsumo = (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); const f = new FormData(e.currentTarget); const form = e.currentTarget; void accion(async () => { await api.post('/insumos', { nombre: String(f.get('nombre')).trim(), unidad: String(f.get('unidad')), minimo: num(f.get('minimo')) || 0, categoria: String(f.get('categoria')).trim() || null, perecedero: f.get('perecedero') === 'on' }, sucursalId!); form.reset(); }); };
   const nuevoAlmacen = (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); const f = new FormData(e.currentTarget); const form = e.currentTarget; void accion(async () => { await api.post('/almacenes', { nombre: String(f.get('nombre')).trim() }, sucursalId!); form.reset(); }); };
   return (
@@ -174,7 +176,9 @@ function Catalogo({ insumos, almacenes, hecho }: { insumos: Insumo[]; almacenes:
       <ul className="grid grid-cols-1 gap-space-xs lg:grid-cols-2">{insumos.map((i) => (
         <li key={i.id} className={`bg-surface-container-lowest border border-outline-variant rounded-xl p-space-sm flex items-center justify-between gap-space-sm ${i.activo ? '' : 'opacity-60'}`}>
           <div className="min-w-0"><p className="font-semibold truncate">{i.nombre}</p><p className="font-body-sm text-on-surface-variant">{i.unidad} · mínimo {i.minimo}{i.perecedero ? ' · perecedero' : ''}{i.activo ? '' : ' · desactivado'}</p></div>
-          <div className="flex gap-space-xs shrink-0">
+          <div className="flex flex-wrap gap-space-xs shrink-0 justify-end">
+            <select aria-label={`Proveedor preferido de ${i.nombre}`} value={i.proveedorPreferidoId ?? ''} onChange={(e) => accion(() => api.patch(`/insumos/${i.id}`, cuerpo(i, { proveedorPreferidoId: e.target.value || null }), sucursalId!))} className="h-12 max-w-[9rem] rounded-lg border border-outline-variant bg-surface-container-lowest px-space-sm"><option value="">Sin proveedor</option>{(proveedores.data ?? []).filter((p) => p.activo).map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}</select>
+            <select aria-label={`Almacén de consumo de ${i.nombre}`} value={i.almacenConsumoId ?? ''} onChange={(e) => accion(() => api.patch(`/insumos/${i.id}`, cuerpo(i, { almacenConsumoId: e.target.value || null }), sucursalId!))} className="h-12 max-w-[9rem] rounded-lg border border-outline-variant bg-surface-container-lowest px-space-sm"><option value="">Almacén auto</option>{almacenes.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}</select>
             <button type="button" onClick={() => { const m = prompt(`Stock mínimo de ${i.nombre} (${i.unidad})`, String(i.minimo)); if (m !== null && !Number.isNaN(Number(m))) void accion(() => api.patch(`/insumos/${i.id}`, { nombre: i.nombre, unidad: i.unidad, minimo: Number(m), categoria: i.categoria, perecedero: i.perecedero, metodoCosto: i.metodoCosto, activo: i.activo }, sucursalId!)); }} className="h-12 px-space-sm rounded-lg border border-outline-variant text-primary">Mínimo</button>
             <button type="button" onClick={() => accion(() => api.patch(`/insumos/${i.id}`, { nombre: i.nombre, unidad: i.unidad, minimo: i.minimo, categoria: i.categoria, perecedero: i.perecedero, metodoCosto: i.metodoCosto, activo: !i.activo }, sucursalId!))} className="h-12 px-space-sm rounded-lg border border-outline-variant text-on-surface-variant">{i.activo ? 'Desactivar' : 'Activar'}</button>
           </div></li>))}</ul>
