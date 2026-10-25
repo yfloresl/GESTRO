@@ -13,7 +13,7 @@ import { SecretosService } from '../secretos/secretos.service';
 import { ClavesDelEmisor, EmisorNoDisponible, Reclamos, TokenInvalido, urlDeClaves, validarAvisoDeCierre, validarToken } from './validador';
 
 /** Lo que se guarda (cifrado) en app_config. Nada de esto es secreto, pero va igual que el resto. */
-export interface KyrosIdGuardado { activo: boolean; emisor: string; clientId: string; audiencia: string }
+export interface KyrosIdGuardado { activo: boolean; emisor: string; clientId: string; audiencia: string; portalClientId?: string; portalAudiencia?: string }
 
 export const EMISOR_POR_DEFECTO = 'https://auth.kyros-tech.com/realms/kyros';
 /** Una identidad creada con «Crear mi cuenta» tiene auth_time de hasta 5 minutos (patrón del Portal). */
@@ -56,7 +56,24 @@ export class KyrosIdService {
   async ajustes(): Promise<KyrosIdGuardado> {
     const a = await this.config.leer<KyrosIdGuardado>('kyrosId');
     const clientId = a?.clientId || 'gestro-web';
-    return { activo: !!a?.activo, emisor: (a?.emisor || EMISOR_POR_DEFECTO).replace(/\/+$/, ''), clientId, audiencia: a?.audiencia || clientId };
+    return { activo: !!a?.activo, emisor: (a?.emisor || EMISOR_POR_DEFECTO).replace(/\/+$/, ''), clientId, audiencia: a?.audiencia || clientId, portalClientId: a?.portalClientId || 'portal-web', portalAudiencia: a?.portalAudiencia || 'gestro-portal' };
+  }
+
+  /**
+   * Token del Portal Kyros (client `portal-web`, audiencia propia de GESTRO): solo sirve para portal/summary y
+   * portal/account. Devuelve el `sub` y, si hay vínculo, el usuario local. Nunca crea cuentas.
+   */
+  async validarPortal(token: string): Promise<{ sub: string; userId: string | null }> {
+    const a = await this.ajustes();
+    let r: Reclamos;
+    try {
+      r = await validarToken(token, { emisor: a.emisor, clientId: a.portalClientId || 'portal-web', audiencia: a.portalAudiencia || 'gestro-portal' }, this.clavesDe(a.emisor));
+    } catch (e) {
+      if (e instanceof EmisorNoDisponible) throw new HttpException('Kyros ID no responde.', 503);
+      throw new UnauthorizedException();
+    }
+    const [v] = await this.bd.select({ userId: kyrosLinks.userId }).from(kyrosLinks).where(and(eq(kyrosLinks.issuer, a.emisor), eq(kyrosLinks.sub, r.sub)));
+    return { sub: r.sub, userId: v?.userId ?? null };
   }
 
   async guardar(a: KyrosIdGuardado, por: string): Promise<void> {

@@ -2,7 +2,7 @@
 
 Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estándar Sistemas-Kyros, ingreso con Kyros ID y presencia en el Portal Kyros.
 
-## Estado: F1b · Pedidos, cocina y caja (sobre F1a y F0)
+## Estado: F1 completa (F1a, F1b y F1c) sobre F0 · Fundaciones
 
 | Hecho | Detalle |
 |---|---|
@@ -21,7 +21,9 @@ Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estánd
 
 **Pendiente de F1b por decisión de alcance:** dividir cuenta y juntar cuentas, promociones y descuentos, descuento de insumos al enviar (llega con recetas e inventario, F2), PIN de supervisor para anular y asientos contables (F3).
 
-Siguiente: **F1c** (suscripción y pagos del SaaS con voucher manual, tarjeta en el Portal Kyros). Ver `docs/ROADMAP.md`.
+**F1c (hecho):** suscripción por sucursal con pago por QR bancario y **validación manual** del comprobante (la IA no interviene), meses de regalo y descuento por promoción, avisos a 5 días, 1 día y el día del vencimiento, gracia y modo solo lectura (402) sin perder datos; consola de plataforma para Kyros-Tech (pagos, sucursales, planes, promociones, QR e instrucciones de cobro); **tarjeta en el Portal Kyros** con `portal/summary` y `portal/account` (token del client `portal-web`, audiencia `gestro-portal`, CORS solo para el Portal, sin datos personales).
+
+Siguiente: **F2 · Cocina y abastecimiento** (recetas, plan del día, inventario, compras). Ver `docs/ROADMAP.md`.
 
 ## Desarrollo local
 

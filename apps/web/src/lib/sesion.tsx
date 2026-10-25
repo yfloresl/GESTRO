@@ -52,7 +52,8 @@ export function SesionProvider({ children }: { children: ReactNode }) {
 
   const valor = useMemo<Ctx>(() => ({
     estado, sesion, sucursalId, ingresar, salir,
-    elegirSucursal: (id) => { guardar(id); setSucursalId(id); },
+    // Solo se acepta una sucursal de la propia sesión: un valor inválido no deja la pantalla sin sucursal.
+    elegirSucursal: (id) => { if (!sesion?.sucursales.some((s) => s.id === id)) return; guardar(id); setSucursalId(id); },
   }), [estado, sesion, sucursalId, ingresar, salir]);
 
   return <SesionCtx.Provider value={valor}>{children}</SesionCtx.Provider>;

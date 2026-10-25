@@ -19,6 +19,7 @@ export const restaurants = pgTable('restaurants', {
   qrOrderingEnabled: boolean('qr_ordering_enabled').notNull().default(true),
   qrAutoSend: boolean('qr_auto_send').notNull().default(false),
   paidUntil: text('paid_until'),
+  planId: uuid('plan_id'),
   status: text('status').notNull().default('activo'),
 });
 
@@ -250,4 +251,53 @@ export const receipts = pgTable('receipts', {
   customerName: text('customer_name'),
   amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
   issuedAt: timestamp('issued_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const plans = pgTable('plans', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  code: text('code').notNull(),
+  name: text('name').notNull(),
+  monthlyPriceBob: numeric('monthly_price_bob', { precision: 12, scale: 2 }).notNull(),
+  features: jsonb('features').notNull().default({}),
+  active: boolean('active').notNull().default(true),
+});
+
+export const platformSettings = pgTable('platform_settings', {
+  id: smallint('id').primaryKey().default(1),
+  paymentQrUrl: text('payment_qr_url'),
+  paymentInstructions: text('payment_instructions'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const saasPromotions = pgTable('saas_promotions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  monthsRequired: integer('months_required').notNull(),
+  bonusMonths: integer('bonus_months').notNull().default(0),
+  discountPct: numeric('discount_pct', { precision: 5, scale: 2 }).notNull().default('0'),
+  validFrom: date('valid_from').notNull(),
+  validTo: date('valid_to').notNull(),
+  active: boolean('active').notNull().default(true),
+});
+
+export const subscriptionPayments = pgTable('subscription_payments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  restaurantId: uuid('restaurant_id').notNull(),
+  monthsPaid: integer('months_paid').notNull(),
+  amountBob: numeric('amount_bob', { precision: 12, scale: 2 }).notNull(),
+  voucherUrl: text('voucher_url'),
+  promotionId: uuid('promotion_id'),
+  bankReference: text('bank_reference'),
+  status: text('status').notNull().default('pendiente'),
+  validatedBy: uuid('validated_by'),
+  validatedAt: timestamp('validated_at', { withTimezone: true }),
+  periodFrom: date('period_from'),
+  periodTo: date('period_to'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  bank: text('bank'),
+  paidOn: date('paid_on'),
+  createdBy: uuid('created_by'),
+  expectedAmount: numeric('expected_amount', { precision: 12, scale: 2 }),
+  giftMonths: integer('gift_months').notNull().default(0),
 });

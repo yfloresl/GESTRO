@@ -38,6 +38,18 @@ export class StorageService {
     return clave;
   }
 
+  /** Igual que guardarImagen pero con un prefijo propio (p. ej. el QR de cobro de la plataforma). */
+  async guardarImagenEn(prefijo: string, datos: Buffer, maxBytes: number): Promise<string> {
+    if (datos.length === 0 || datos.length > maxBytes) throw new BadRequestException(`La imagen debe pesar menos de ${Math.round(maxBytes / 1024 / 1024)} MB.`);
+    const tipo = tipoDeImagen(datos);
+    if (!tipo) throw new BadRequestException('Solo se aceptan imágenes JPG, PNG o WebP.');
+    const clave = `${prefijo}/${randomUUID()}.${tipo.ext}`;
+    const destino = this.ruta(clave);
+    await mkdir(dirname(destino), { recursive: true });
+    await writeFile(destino, datos, { mode: 0o600 });
+    return clave;
+  }
+
   leer(clave: string): Promise<Buffer> { return readFile(this.ruta(clave)); }
   async borrar(clave: string): Promise<void> { await rm(this.ruta(clave), { force: true }); }
 }

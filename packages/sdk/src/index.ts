@@ -25,10 +25,20 @@ export class GestroClient {
   del<T>(ruta: string, cuerpo?: unknown, sucursal?: string) { return this.pedir<T>(ruta, { method: 'DELETE', body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo), sucursal }); }
   /** Sube una imagen cruda (el tipo se valida en el servidor por su contenido). */
   async subirImagen(ruta: string, imagen: Blob, sucursal: string) {
-    const headers = new Headers({ 'content-type': imagen.type || 'image/jpeg', 'x-restaurant-id': sucursal });
+    const headers = new Headers({ 'content-type': imagen.type || 'image/jpeg' });
+    if (sucursal) headers.set('x-restaurant-id', sucursal);
     if (this.token) headers.set('authorization', `Bearer ${this.token}`);
     const r = await fetch(`${this.base}${ruta}`, { method: 'PUT', headers, body: imagen, credentials: 'same-origin' });
     if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status}`), { status: r.status, cuerpo: await r.json().catch(() => null) });
+  }
+  /** Descarga un archivo protegido (comprobante, QR) con la sesión: no se puede poner en un <img src> directo. */
+  async blob(ruta: string, sucursal?: string): Promise<Blob> {
+    const headers = new Headers();
+    if (this.token) headers.set('authorization', `Bearer ${this.token}`);
+    if (sucursal) headers.set('x-restaurant-id', sucursal);
+    const r = await fetch(`${this.base}${ruta}`, { headers, credentials: 'same-origin' });
+    if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status}`), { status: r.status });
+    return r.blob();
   }
   /** Token vigente: lo necesita Socket.IO para el handshake. */
   get accessToken() { return this.token; }

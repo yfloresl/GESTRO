@@ -13,6 +13,8 @@ import { Caja, ReciboPagina } from './paginas/Caja';
 import { Cocina } from './paginas/Cocina';
 import { Configuracion } from './paginas/Configuracion';
 import { Pedidos } from './paginas/Pedidos';
+import { Plataforma } from './paginas/Plataforma';
+import { Suscripcion } from './paginas/Suscripcion';
 import { Callback } from './paginas/Callback';
 import { Ingreso } from './paginas/Ingreso';
 import { EnConstruccion, Panel } from './paginas/Panel';
@@ -22,6 +24,7 @@ import { useRolesActivos } from './lib/sesion';
 /** Cada persona cae en lo suyo: cocina en su tablero, mesero en el salón, cajero en la caja. */
 function Inicio() {
   const { roles, esAdmin, esPlataforma } = useRolesActivos();
+  if (esPlataforma && roles.length === 0) return <Navigate to="plataforma" replace />;
   if (esAdmin || esPlataforma || roles.length === 0) return <Navigate to="panel" replace />;
   if (roles.includes('cocina')) return <Navigate to="/cocina" replace />;
   if (roles.includes('cajero')) return <Navigate to="caja" replace />;
@@ -54,6 +57,8 @@ createRoot(document.getElementById('raiz')!).render(
               <Route path="caja" element={<Caja />} />
               <Route path="recibo/:id" element={<ReciboPagina />} />
               <Route path="configuracion" element={<Configuracion />} />
+              <Route path="suscripcion" element={<Suscripcion />} />
+              <Route path="plataforma" element={<Plataforma />} />
               <Route path="*" element={<EnConstruccion />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

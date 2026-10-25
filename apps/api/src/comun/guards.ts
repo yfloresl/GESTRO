@@ -89,6 +89,21 @@ export class SubscriptionGuard implements CanActivate {
   }
 }
 
+/** Pagar la suscripción debe poder hacerse justo cuando la sucursal venció (modo solo lectura). */
+export const DeSucursalSiempre = (...roles: (Rol | 'plataforma')[]) =>
+  applyDecorators(Roles(...roles), UseGuards(RestaurantScopeGuard, RolesGuard));
+
+/** Consola de Kyros-Tech: solo personal de plataforma (no depende de ninguna sucursal). */
+@Injectable()
+export class SoloPlataformaGuard implements CanActivate {
+  canActivate(ctx: ExecutionContext): boolean {
+    const actor = ctx.switchToHttp().getRequest<PeticionAutenticada>().actor;
+    if (!actor?.plat) throw new ForbiddenException('Solo para el equipo de plataforma.');
+    return true;
+  }
+}
+export const SoloPlataforma = () => UseGuards(SoloPlataformaGuard);
+
 /** Endpoint de una sucursal: valida X-Restaurant-Id, el rol y que la suscripción permita escribir. */
 export const DeSucursal = (...roles: (Rol | 'plataforma')[]) =>
   applyDecorators(Roles(...roles), UseGuards(RestaurantScopeGuard, RolesGuard, SubscriptionGuard));

@@ -5,6 +5,7 @@ import { Cargando, Marca } from './Marca';
 import { api, ETIQUETA_ROL, useSesion } from '../lib/sesion';
 import { cerrarKyrosId } from '../lib/kyrosid';
 import { useAvisos } from '../lib/avisos';
+import { Link } from 'react-router-dom';
 
 /** Navegación del diseño (5.1). Los módulos de fases siguientes abren un estado vacío hasta construirse. */
 type Item = { ruta: string; icono: string; texto: string; roles?: string[]; externa?: string };
@@ -26,6 +27,8 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
     { ruta: 'personal', icono: 'badge', texto: 'Personal & Turnos', roles: ['owner', 'admin'] },
   ] },
   { titulo: 'Gestión & Finanzas', items: [
+    { ruta: 'suscripcion', icono: 'workspace_premium', texto: 'Suscripción', roles: ['owner', 'admin'] },
+    { ruta: 'plataforma', icono: 'admin_panel_settings', texto: 'Plataforma Kyros', roles: [] },
     { ruta: 'promociones', icono: 'sell', texto: 'Promociones' },
     { ruta: 'contabilidad', icono: 'account_balance_wallet', texto: 'Contabilidad & Libros' },
     { ruta: 'estadisticas', icono: 'query_stats', texto: 'Estadísticas & BI' },
@@ -36,7 +39,9 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
 /** Panel y avisos para todos; cada módulo solo a los roles que lo usan (el servidor vuelve a validar). */
 function visible(it: Item, roles: string[], plataforma: boolean) {
   if (it.ruta === 'panel') return true;
-  if (plataforma) return true;
+  if (it.ruta === 'plataforma') return plataforma;
+  // El equipo de plataforma sin sucursal propia solo ve su consola.
+  if (plataforma && roles.length === 0) return false;
   const permitidos = it.roles ?? ['owner', 'admin'];
   return roles.some((r) => permitidos.includes(r));
 }
@@ -51,6 +56,9 @@ export function Shell() {
   const cuenta = useRef<HTMLDivElement>(null);
   const { nuevas } = useAvisos();
   const cfg = useQuery({ queryKey: ['kyros-id-config'], queryFn: () => api.kyrosIdConfig(), staleTime: Infinity });
+  const activa = sesion?.sucursales.find((s) => s.id === sucursalId);
+  const admin = !!activa?.roles.some((r) => r === 'owner' || r === 'admin');
+  const sus = useQuery({ queryKey: ['suscripcion', sucursalId], queryFn: () => api.get<{ estado: string; diasRestantes: number | null; diasDeGracia: number }>('/suscripcion', sucursalId!), enabled: !!sucursalId && admin, staleTime: 60_000 });
 
   useEffect(() => {
     const cerrar = (e: MouseEvent | KeyboardEvent) => {
@@ -138,6 +146,13 @@ export function Shell() {
           </div>
         </header>
         <main id="contenido" className="relative pt-16 w-full min-h-screen bg-background px-space-md lg:px-space-lg py-space-lg">
+          {sus.data && sus.data.estado !== 'activa' && (
+            <div role="alert" className={`mt-space-md rounded-xl p-space-md flex flex-wrap items-center justify-between gap-space-sm ${sus.data.estado === 'vencida' ? 'bg-error-container text-on-error-container' : 'bg-secondary-fixed text-on-secondary-fixed-variant'}`}>
+              <p className="font-body-md font-semibold flex items-center gap-space-xs"><span className="material-symbols-outlined" aria-hidden="true">{sus.data.estado === 'vencida' ? 'lock' : 'schedule'}</span>
+                {sus.data.estado === 'vencida' ? 'Tu suscripción venció: el sistema está en modo solo lectura. No se pierde nada.' : sus.data.estado === 'gracia' ? `Tu suscripción venció. Tienes unos días de gracia antes del modo solo lectura.` : `Tu suscripción vence ${sus.data.diasRestantes === 0 ? 'hoy' : `en ${sus.data.diasRestantes} ${sus.data.diasRestantes === 1 ? 'día' : 'días'}`}.`}</p>
+              <Link to="/app/suscripcion" className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold flex items-center">Pagar ahora</Link>
+            </div>
+          )}
           <div className="pt-space-lg"><Outlet /></div>
         </main>
       </div>

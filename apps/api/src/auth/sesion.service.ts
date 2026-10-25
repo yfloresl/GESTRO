@@ -24,7 +24,7 @@ export class SesionService {
   ) {}
 
   /** Sucursales y roles del usuario. Salen siempre de GESTRO, nunca de claims del emisor. */
-  private async contexto(userId: string) {
+  async contexto(userId: string) {
     const [u] = await this.bd.select().from(users).where(and(eq(users.id, userId), eq(users.active, true)));
     if (!u) throw new UnauthorizedException('Cuenta no disponible');
     const filas = await this.bd.select({ rid: restaurants.id, nombre: restaurants.name, rol: roles.code })

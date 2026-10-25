@@ -27,4 +27,7 @@ Estado: `usado` entra a código · `derivado` se construyó a partir de tokens/p
 | Caja: apertura, cobros por método y arqueo | 4.1, 4.3 | derivado | Sin teclado numérico grande ni división de cuenta todavía |
 | Recibo imprimible (80 mm) | 4.1 | derivado | Rotulado «RECIBO — NO ES UNA FACTURA» |
 | Pedido del cliente: «Agregar», «Mi pedido» y semáforo de avance | 1.1, 1.3, 1.4 | usado | Sin pago por QR dentro del cliente (1.5) hasta F3 |
+| Suscripción: estado, QR de cobro, declaración de pago y comprobante, historial | 6.1 | usado | Sin pago automático: validación manual por Kyros-Tech |
+| Aviso de vencimiento / solo lectura (franja superior) | 6.1 | derivado | Tonos `secondary-fixed` (por vencer) y `error-container` (vencida) |
+| Consola de plataforma: pagos con comprobante, sucursales, planes, promociones, cobro | 6.2 | usado | Sin gráficos de ingresos ni métricas de uso (llegan con estadísticas) |
 

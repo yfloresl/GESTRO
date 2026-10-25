@@ -14,7 +14,7 @@ export async function crearApp(): Promise<NestExpressApplication> {
   app.set('trust proxy', 1); // detrás del gateway: IP real para los límites de uso
   app.setGlobalPrefix('api/v1');
   app.use(cookieParser());
-  app.useBodyParser('raw', { type: ['image/jpeg', 'image/png', 'image/webp'], limit: '4mb' }); // foto de plato
+  app.useBodyParser('raw', { type: ['image/jpeg', 'image/png', 'image/webp'], limit: '4mb' }); // foto de plato, voucher y QR de cobro
   app.useBodyParser('urlencoded', { extended: false, limit: '16kb' }); // back-channel logout
   app.useGlobalFilters(new FiltroDeErrores());
   app.use((_req: unknown, res: { setHeader(k: string, v: string): void }, next: () => void) => {

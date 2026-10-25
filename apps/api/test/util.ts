@@ -37,9 +37,21 @@ export async function levantar() {
 
   /** Abre un restaurante nuevo («Crear mi cuenta») y devuelve su dueño ya con sesión. */
   async function nuevoRestaurante(nombre = 'Casa Andina') {
-    const canje = await api().post('/api/v1/auth/kyros-id/sesion').send({ accessToken: firmar() });
+    const sub = randomUUID();
+    const canje = await api().post('/api/v1/auth/kyros-id/sesion').send({ accessToken: firmar({ sub }) });
     const reg = await api().post('/api/v1/auth/kyros-id/registro').send({ registroToken: canje.body.registroToken, nombre: 'Rosa Quispe', correo: `${randomUUID()}@t.bo`, restaurante: nombre, razonSocial: `${nombre} SRL` });
-    return { token: reg.body.accessToken as string, rid: reg.body.sucursales[0].id as string, userId: reg.body.usuario.id as string };
+    return { token: reg.body.accessToken as string, rid: reg.body.sucursales[0].id as string, userId: reg.body.usuario.id as string, sub };
+  }
+
+  /** Persona del equipo de Kyros-Tech (is_platform_admin), vinculada a su Kyros ID, con sesión abierta. */
+  async function nuevaPlataforma() {
+    const sub = randomUUID();
+    const u = (await owner.query(`INSERT INTO users (email, full_name, is_platform_admin) VALUES ($1,'Equipo Kyros',true) RETURNING id`, [`${randomUUID()}@kyros-tech.com`])).rows[0].id as string;
+    await owner.query('INSERT INTO kyros_links (issuer, sub, user_id) VALUES ($1,$2,$3)', [emisor, sub, u]);
+    const r = await api().post('/api/v1/auth/kyros-id/sesion').send({ accessToken: firmar({ sub }) });
+    const token = r.body.sesion.accessToken as string;
+    const pet = (m: 'get' | 'post' | 'put' | 'patch', ruta: string) => api()[m](`/api/v1${ruta}`).set('Authorization', `Bearer ${token}`);
+    return { token, userId: u, sub, get: (ruta: string) => pet('get', ruta), post: (ruta: string, c?: object) => pet('post', ruta).send(c), patch: (ruta: string, c?: object) => pet('patch', ruta).send(c), put: (ruta: string, c?: object) => pet('put', ruta).send(c) };
   }
 
   /** Une a una persona invitada con su código y devuelve su sesión. */
@@ -58,5 +70,5 @@ export async function levantar() {
   });
 
   const cerrar = async () => { await app.close(); await owner.end(); srv.close(); };
-  return { app, api, owner, url, firmar, nuevoRestaurante, entrarConCodigo, con, cerrar };
+  return { app, api, owner, url, firmar, nuevoRestaurante, nuevaPlataforma, entrarConCodigo, con, cerrar, emisor };
 }
