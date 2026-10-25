@@ -68,3 +68,12 @@ export const ETIQUETA_ROL: Record<string, string> = {
   owner: 'Dueño', admin: 'Administrador', cobranzas: 'Encargado de cobranzas', cajero: 'Cajero', mesero: 'Mesero',
   area_manager: 'Encargado de área', cocina: 'Jefe de cocina', almacen: 'Almacén', contador: 'Contador',
 };
+
+/** Roles de la persona en la sucursal activa y atajos de permiso para la interfaz (el servidor siempre vuelve a validar). */
+export function useRolesActivos() {
+  const { sesion, sucursalId } = useSesion();
+  const roles = sesion?.sucursales.find((s) => s.id === sucursalId)?.roles ?? [];
+  return { roles, sucursalId, esAdmin: roles.includes('owner') || roles.includes('admin'), esPlataforma: !!sesion?.usuario.esPlataforma };
+}
+
+export const mensajeDeError = (e: unknown, defecto = 'No pudimos completar la acción.') => (e as { cuerpo?: { message?: string } })?.cuerpo?.message ?? defecto;

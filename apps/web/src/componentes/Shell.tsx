@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Cargando, Marca } from './Marca';
 import { api, ETIQUETA_ROL, useSesion } from '../lib/sesion';
 import { cerrarKyrosId } from '../lib/kyrosid';
+import { useAvisos } from '../lib/avisos';
 
 /** Navegación del diseño (5.1). Los módulos de fases siguientes abren un estado vacío hasta construirse. */
 export const GRUPOS: { titulo: string; items: { ruta: string; icono: string; texto: string }[] }[] = [
@@ -35,6 +36,7 @@ export function Shell() {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [rielAbierto, setRielAbierto] = useState(false);
   const cuenta = useRef<HTMLDivElement>(null);
+  const { nuevas } = useAvisos();
   const cfg = useQuery({ queryKey: ['kyros-id-config'], queryFn: () => api.kyrosIdConfig(), staleTime: Infinity });
 
   useEffect(() => {
@@ -74,7 +76,8 @@ export function Shell() {
                   <NavLink key={it.ruta} to={`/app/${it.ruta}`} onClick={() => setRielAbierto(false)}
                     className={({ isActive }) => `h-12 flex items-center gap-space-sm px-space-sm rounded-lg transition-colors ${isActive ? 'bg-primary-container text-on-primary font-semibold shadow-sm' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'}`}>
                     <span className="material-symbols-outlined text-[20px]" aria-hidden="true">{it.icono}</span>
-                    <span className="font-body-md text-body-md">{it.texto}</span>
+                    <span className="font-body-md text-body-md flex-1">{it.texto}</span>
+                    {it.ruta === 'salon' && nuevas > 0 && <span className="min-w-6 h-6 px-1.5 rounded-full bg-error text-on-error font-label-md text-label-md flex items-center justify-center" aria-label={`${nuevas} llamados nuevos`}>{nuevas}</span>}
                   </NavLink>
                 ))}
               </div>

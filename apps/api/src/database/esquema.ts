@@ -1,4 +1,4 @@
-import { boolean, inet, jsonb, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, inet, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 // Solo las tablas que F0 usa. El resto del DDL (66 tablas) se modela aquí al construir cada módulo.
 export const accounts = pgTable('accounts', {
@@ -90,4 +90,76 @@ export const auditLog = pgTable('audit_log', {
   entityId: text('entity_id'),
   after: jsonb('after'),
   ip: inet('ip'),
+});
+
+export const staffMembers = pgTable('staff_members', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  restaurantId: uuid('restaurant_id').notNull(),
+  userId: uuid('user_id'),
+  fullName: text('full_name').notNull(),
+  phone: text('phone'),
+  kind: text('kind').notNull().default('regular'),
+  active: boolean('active').notNull().default(true),
+});
+
+export const areas = pgTable('areas', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  restaurantId: uuid('restaurant_id').notNull(),
+  name: text('name').notNull(),
+  managerStaffId: uuid('manager_staff_id'),
+});
+
+export const restaurantTables = pgTable('restaurant_tables', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  restaurantId: uuid('restaurant_id').notNull(),
+  areaId: uuid('area_id'),
+  number: text('number').notNull(),
+  seats: integer('seats').notNull(),
+  qrToken: text('qr_token').notNull(),
+  posX: integer('pos_x'),
+  posY: integer('pos_y'),
+  active: boolean('active').notNull().default(true),
+});
+
+export const serviceRequests = pgTable('service_requests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  restaurantId: uuid('restaurant_id').notNull(),
+  tableId: uuid('table_id').notNull(),
+  kind: text('kind').notNull(),
+  comment: text('comment'),
+  status: text('status').notNull().default('pendiente'),
+  assignedWaiterId: uuid('assigned_waiter_id'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  attendedAt: timestamp('attended_at', { withTimezone: true }),
+  escalatedAt: timestamp('escalated_at', { withTimezone: true }),
+});
+
+export const menuCategories = pgTable('menu_categories', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  restaurantId: uuid('restaurant_id').notNull(),
+  name: text('name').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+});
+
+export const menuItems = pgTable('menu_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  restaurantId: uuid('restaurant_id').notNull(),
+  categoryId: uuid('category_id'),
+  name: text('name').notNull(),
+  description: text('description'),
+  price: numeric('price', { precision: 12, scale: 2 }).notNull(),
+  photoKey: text('photo_key'),
+  allergens: text('allergens').array().notNull().default([]),
+  prepMinutes: integer('prep_minutes'),
+  available: boolean('available').notNull().default(true),
+  sortOrder: integer('sort_order').notNull().default(0),
+});
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(),
+  endpoint: text('endpoint').notNull(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  userAgent: text('user_agent'),
 });

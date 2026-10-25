@@ -9,6 +9,18 @@ import { ConfiguracionService } from './configuracion/configuracion.service';
 import { DatabaseModule } from './database/database.module';
 import { KyrosIdController } from './kyros-id/kyros-id.controller';
 import { KyrosIdService } from './kyros-id/kyros-id.service';
+import { MenuController, MenuPublicoController } from './menu/menu.controller';
+import { MenuService } from './menu/menu.service';
+import { PersonalController } from './personal/personal.controller';
+import { PersonalService } from './personal/personal.service';
+import { QrController, SolicitudesController, TableTokenGuard } from './qr/qr.controller';
+import { SolicitudesService } from './qr/solicitudes.service';
+import { SalonController } from './salon/salon.controller';
+import { SalonService } from './salon/salon.service';
+import { StorageService } from './storage/storage.service';
+import { EventosGateway } from './tiempo-real/eventos.gateway';
+import { PushController } from './tiempo-real/push.controller';
+import { PushService } from './tiempo-real/push.service';
 import { SaludController } from './salud/salud.controller';
 import { SucursalController } from './tenancy/sucursal.controller';
 import { SecretosService } from './secretos/secretos.service';
@@ -27,9 +39,9 @@ class NucleoModule {}
     // En las pruebas (Vitest) se desactivan para que no se bloqueen entre sí.
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 120 }], skipIf: () => process.env.VITEST !== undefined }),
   ],
-  controllers: [SaludController, AuthController, KyrosIdController, SucursalController],
+  controllers: [SaludController, AuthController, KyrosIdController, SucursalController, PersonalController, MenuController, MenuPublicoController, SalonController, QrController, SolicitudesController, PushController],
   providers: [
-    SesionService, KyrosIdService, JwtAuthGuard,
+    SesionService, KyrosIdService, JwtAuthGuard, StorageService, PersonalService, MenuService, SalonService, SolicitudesService, TableTokenGuard, EventosGateway, PushService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useExisting: JwtAuthGuard },
   ],

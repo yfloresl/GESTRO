@@ -1,0 +1,17 @@
+{
+  "name": "GESTRO · Restaurantes",
+  "short_name": "GESTRO",
+  "description": "Sistema de gestión de restaurantes de Kyros-Tech",
+  "lang": "es",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f7f9fc",
+  "theme_color": "#00375e",
+  "icons": [
+    { "src": "/icono-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icono-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icono-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

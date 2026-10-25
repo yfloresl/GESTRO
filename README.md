@@ -2,7 +2,7 @@
 
 Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estándar Sistemas-Kyros, ingreso con Kyros ID y presencia en el Portal Kyros.
 
-## Estado: F0 · Fundaciones
+## Estado: F1a · Salón con QR (sobre F0 · Fundaciones)
 
 | Hecho | Detalle |
 |---|---|
@@ -13,9 +13,11 @@ Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estánd
 | Sesión | Acceso 15 min en memoria + refresco opaco rotativo en cookie HttpOnly, con revocación de familia por reutilización |
 | Guards | `JwtAuthGuard`, `RestaurantScopeGuard`, `RolesGuard`, `SubscriptionGuard` (402 en solo lectura), Throttler |
 | Web | Tokens del diseño, shell (barra lateral, cabecera, menú de cuenta), ingreso, registro, panel mínimo |
-| Despliegue | `docker-compose.yml` (db, api, gateway), Dockerfiles, nginx con CSP, CI |
+| Despliegue | `docker-compose.yml` (db, api, gateway), Dockerfiles, nginx con CSP |
 
-Siguiente: **F1 · Núcleo y salón** (suscripciones y pagos, menú QR, mesas, solicitudes, pedidos, tiempo real). Ver `docs/ROADMAP.md`.
+**F1a (hecho):** personal con código de invitación, menú y fotos (menú público por slug), áreas, mesas y QR imprimible, asignación de mesero, solicitudes de mesa en tiempo real (Socket.IO), escalamiento al encargado a los 3 min, avisos Web Push con pantalla bloqueada y PWA del cliente en `/m/<token>`.
+
+Siguiente: **F1b** (toma de pedidos del personal, pedido por QR, KDS y recibos) y **F1c** (suscripción y pagos del SaaS con voucher manual, tarjeta en el Portal Kyros). Ver `docs/ROADMAP.md`.
 
 ## Desarrollo local
 

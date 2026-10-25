@@ -25,5 +25,11 @@ node dist/src/scripts/crear-superadmin.js --email yamil@kyros-tech.com --nombre 
 ```
 Crea el usuario de plataforma y lo vincula de una vez. El resto de personas se vinculan con su código de invitación (un solo uso) o abren su propio restaurante con «Crear mi cuenta».
 
-## 4. Pendiente en el Portal (F1)
+## 4. Avisos con pantalla bloqueada (Web Push)
+- Las claves VAPID se generan solas la primera vez y quedan cifradas en `app_config`; no hay variables.
+- **Android:** cada mesero abre GESTRO → Mesas & Salón → «Activar avisos».
+- **iPhone (iOS 16.4 o superior):** primero deben instalar la app: Safari → Compartir → «Agregar a pantalla de inicio», abrirla desde el ícono y activar los avisos. Apple no deja que una web vibre; el sonido y la vibración de la notificación dependen de los ajustes del iPhone.
+- Requiere HTTPS (el dominio de Coolify ya lo tiene). Redis no se usa todavía: el tiempo real corre en una sola instancia de `api`; se agrega Redis cuando se escale a más de una.
+
+## 5. Pendiente en el Portal (F1c)
 `GET /api/v1/portal/summary`, `GET /api/v1/portal/account`, `/entrar?destino=` ya existe en la web, «Cambiar de rol» y registro central de accesos en Kyros ID (el diseño del registro central aún no existe).
