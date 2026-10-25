@@ -20,3 +20,11 @@ Estado: `usado` entra a código · `derivado` se construyó a partir de tokens/p
 | Personal: tarjetas con rol, estado y código de invitación | 5.7 | derivado | Turnos y asistencia llegan en una fase posterior |
 | Aviso de activación de notificaciones (Android / iPhone) | — | derivado | Instrucciones de instalación en iPhone |
 | Hoja imprimible de QR por mesa | 5.6 | derivado | El editor de plano arrastrable queda para después |
+| Toma de pedidos (menú táctil, panel del pedido, hoja de notas y modificadores) | 2.3, 2.4, 2.5 | usado | Tipos mesa / mostrador / llevar / delivery en un solo flujo |
+| Lista de pedidos del día | 2.6 | usado | Filtros «En curso» y «Todos los de hoy» |
+| Anular plato con motivo | 2.7 | derivado | Sin PIN de supervisor: exige rol y motivo (el PIN queda para después) |
+| Tablero de cocina (KDS, modo oscuro) | 3.1 | usado | Sin panel de insumos críticos ni «Declarar agotado (+86)» hasta F2 |
+| Caja: apertura, cobros por método y arqueo | 4.1, 4.3 | derivado | Sin teclado numérico grande ni división de cuenta todavía |
+| Recibo imprimible (80 mm) | 4.1 | derivado | Rotulado «RECIBO — NO ES UNA FACTURA» |
+| Pedido del cliente: «Agregar», «Mi pedido» y semáforo de avance | 1.1, 1.3, 1.4 | usado | Sin pago por QR dentro del cliente (1.5) hasta F3 |
+

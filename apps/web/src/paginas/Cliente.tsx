@@ -4,10 +4,19 @@ import { io } from 'socket.io-client';
 import { Cargando } from '../componentes/Marca';
 
 interface PlatoPub { id: string; nombre: string; descripcion: string | null; precio: string; alergenos: string[]; disponible: boolean; minutosPreparacion: number | null; foto: string | null }
-interface MenuPub { restaurante: { nombre: string; slug: string }; categorias: { id: string | null; nombre: string; platos: PlatoPub[] }[] }
+interface MenuPub { restaurante: { nombre: string; slug: string; pedidosQr?: boolean }; categorias: { id: string | null; nombre: string; platos: PlatoPub[] }[] }
 interface Mesa { token: string; mesa: { numero: string }; restaurante: { nombre: string; slug: string } }
 interface Estado { id: string; tipo: 'atencion' | 'cuenta' | 'servicio'; estado: 'pendiente' | 'atendida' | 'cancelada'; creada: string }
 type Tipo = Estado['tipo'];
+interface MiPedido { total: string; items: { nombre: string; cantidad: string; estado: string; nota: string | null }[] }
+const AVANCE: Record<string, { texto: string; clase: string }> = {
+  por_confirmar: { texto: 'Esperando al mesero', clase: 'bg-secondary-fixed text-on-secondary-fixed-variant' },
+  borrador: { texto: 'Esperando al mesero', clase: 'bg-secondary-fixed text-on-secondary-fixed-variant' },
+  enviado: { texto: 'Recibido en cocina', clase: 'bg-primary-fixed text-on-primary-fixed-variant' },
+  en_preparacion: { texto: 'En preparación', clase: 'bg-secondary-container text-on-secondary-container' },
+  listo: { texto: '¡Listo!', clase: 'bg-tertiary-fixed text-on-tertiary-fixed-variant' },
+  servido: { texto: 'Servido', clase: 'bg-surface-container text-on-surface-variant' },
+};
 
 const ALERGENO: Record<string, string> = { gluten: 'Gluten', lacteos: 'Lácteos', huevo: 'Huevo', pescado: 'Pescado', mariscos: 'Mariscos', mani: 'Maní', frutos_secos: 'Frutos secos', soya: 'Soya', apio: 'Apio', mostaza: 'Mostaza', sesamo: 'Sésamo', sulfitos: 'Sulfitos' };
 const ACCION: Record<Tipo, { texto: string; icono: string; enviado: string; hecho: string }> = {
@@ -31,6 +40,9 @@ export function Cliente() {
   const [cat, setCat] = useState<string>('todas');
   const [busca, setBusca] = useState('');
   const [aviso, setAviso] = useState<string | null>(null);
+  const [carro, setCarro] = useState<Record<string, number>>({});
+  const [verPedido, setVerPedido] = useState(false);
+  const [mio, setMio] = useState<MiPedido | null>(null);
   const token = useRef<string>('');
 
   const llamar = useCallback(async (ruta: string, init?: RequestInit) => {
@@ -39,7 +51,7 @@ export function Cliente() {
     if (!r.ok) throw Object.assign(new Error(cuerpo?.message ?? 'No pudimos completar la acción.'), { status: r.status });
     return cuerpo;
   }, []);
-  const refrescar = useCallback(() => llamar('estado').then(setEstados).catch(() => undefined), [llamar]);
+  const refrescar = useCallback(() => Promise.all([llamar('estado').then(setEstados), llamar('pedido').then((r) => setMio(r.pedido))]).catch(() => undefined), [llamar]);
 
   useEffect(() => {
     let cierre = () => {};
@@ -54,6 +66,7 @@ export function Cliente() {
         await refrescar();
         const socket = io({ path: '/api/socket.io', auth: { token: m.token }, transports: ['websocket', 'polling'] });
         socket.on('solicitud.estado', () => { void refrescar(); });
+        socket.on('pedido.estado', () => { void refrescar(); });
         cierre = () => socket.close();
       } catch (e) { setError((e as Error).message); }
     })();
@@ -112,7 +125,16 @@ export function Cliente() {
                       {!p.disponible && <span className="px-2 py-0.5 rounded bg-error-container text-on-error-container font-label-sm text-label-sm uppercase">Agotado hoy</span>}
                       {p.alergenos.map((a) => <span key={a} className="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-on-surface-variant">{ALERGENO[a] ?? a}</span>)}
                     </div>
-                    <p className="font-label-lg text-label-lg text-primary mt-auto">{bs(p.precio)}</p>
+                    <div className="flex items-end justify-between gap-space-xs mt-auto">
+                      <p className="font-label-lg text-label-lg text-primary whitespace-nowrap">{bs(p.precio)}</p>
+                      {menu.restaurante.pedidosQr && p.disponible && (carro[p.id] ? (
+                        <div className="flex items-center gap-1" role="group" aria-label={`Cantidad de ${p.nombre}`}>
+                          <button type="button" aria-label={`Quitar uno de ${p.nombre}`} onClick={() => setCarro((c) => { const n = { ...c, [p.id]: (c[p.id] ?? 0) - 1 }; if (n[p.id] <= 0) delete n[p.id]; return n; })} className="w-12 h-12 rounded-lg bg-surface-container text-primary font-bold text-xl">−</button>
+                          <span className="w-8 text-center font-label-lg">{carro[p.id]}</span>
+                          <button type="button" aria-label={`Agregar otro ${p.nombre}`} onClick={() => setCarro((c) => ({ ...c, [p.id]: Math.min(20, (c[p.id] ?? 0) + 1) }))} className="w-12 h-12 rounded-lg bg-primary-container text-on-primary font-bold text-xl">+</button>
+                        </div>
+                      ) : <button type="button" onClick={() => setCarro((c) => ({ ...c, [p.id]: 1 }))} className="h-12 px-space-md rounded-lg bg-primary-container text-on-primary font-semibold flex items-center gap-1"><span className="material-symbols-outlined" aria-hidden="true">add</span>Agregar</button>)}
+                    </div>
                   </div>
                 </li>
               ))}
@@ -129,6 +151,12 @@ export function Cliente() {
         {(['atencion', 'cuenta', 'servicio'] as Tipo[]).map((t) => !abiertas(t) && reciente(t) && (
           <p key={t} role="status" className="flex items-center gap-space-xs font-body-sm text-body-sm text-tertiary"><span className="material-symbols-outlined" aria-hidden="true">check_circle</span>{ACCION[t].hecho}</p>
         ))}
+        {menu.restaurante.pedidosQr && (Object.keys(carro).length > 0 || (mio && mio.items.length > 0)) && (
+          <button type="button" onClick={() => setVerPedido(true)} className="min-h-14 rounded-lg bg-primary-container text-on-primary px-space-md flex items-center justify-between gap-space-sm text-left">
+            <span className="flex items-center gap-space-xs font-semibold"><span className="material-symbols-outlined" aria-hidden="true">shopping_basket</span>{Object.keys(carro).length > 0 ? `Ver mi pedido (${Object.values(carro).reduce((a, b) => a + b, 0)})` : 'Mi pedido'}</span>
+            <span className="font-label-lg text-label-lg">{Object.keys(carro).length > 0 ? bs(String(menu.categorias.flatMap((c) => c.platos).reduce((t, p) => t + (carro[p.id] ?? 0) * Number(p.precio), 0))) : mio ? (Number(mio.total) > 0 ? bs(mio.total) : 'Esperando al mesero') : ''}</span>
+          </button>
+        )}
         <div className="grid grid-cols-2 gap-space-sm">
           {(['atencion', 'cuenta'] as Tipo[]).map((t) => (
             <button key={t} type="button" disabled={!!abiertas(t)} onClick={() => setHoja(t)} className="min-h-14 rounded-lg bg-surface-container-high text-on-surface font-body-md font-semibold flex items-center justify-center gap-space-xs px-space-sm disabled:opacity-50"><span className="material-symbols-outlined" aria-hidden="true">{ACCION[t].icono}</span>{ACCION[t].texto}</button>
@@ -136,6 +164,11 @@ export function Cliente() {
         </div>
       </div>
 
+      {verPedido && <HojaPedido menu={menu} carro={carro} setCarro={setCarro} mio={mio} cerrar={() => setVerPedido(false)} enviar={async (comentario) => {
+        const items = Object.entries(carro).map(([platoId, cantidad]) => ({ platoId, cantidad }));
+        const r = await llamar('pedidos', { method: 'POST', body: JSON.stringify({ items, ...(comentario ? { comentario } : {}) }) });
+        setCarro({}); setAviso(r.estado === 'enviado' ? 'Tu pedido llegó a cocina.' : 'Pedido enviado. El mesero lo confirmará en un momento.'); await refrescar(); setVerPedido(false); setTimeout(() => setAviso(null), 6000);
+      }} />}
       {hoja && <HojaSolicitud tipo={hoja} cerrar={() => setHoja(null)} enviar={(c) => enviar(hoja, c)} />}
     </div>
   );
@@ -157,6 +190,35 @@ function HojaSolicitud({ tipo, cerrar, enviar }: { tipo: Tipo; cerrar(): void; e
           <button disabled={enviando} className="h-14 rounded-lg bg-primary text-on-primary font-semibold">{enviando ? 'Enviando…' : 'Enviar'}</button>
         </div>
       </form>
+    </div>
+  );
+}
+
+function HojaPedido({ menu, carro, setCarro, mio, cerrar, enviar }: { menu: MenuPub; carro: Record<string, number>; setCarro: (f: (c: Record<string, number>) => Record<string, number>) => void; mio: MiPedido | null; cerrar(): void; enviar(comentario: string): Promise<void> }) {
+  const [texto, setTexto] = useState(''); const [error, setError] = useState<string | null>(null); const [enviando, setEnviando] = useState(false);
+  const platos = menu.categorias.flatMap((c) => c.platos);
+  const lineas = Object.entries(carro).map(([id, n]) => ({ p: platos.find((x) => x.id === id)!, n })).filter((l) => l.p);
+  const total = lineas.reduce((t, l) => t + l.n * Number(l.p.precio), 0);
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Mi pedido" className="fixed inset-0 z-40 flex items-end bg-inverse-surface/50" onClick={cerrar}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-h-[90vh] overflow-y-auto bg-surface rounded-t-xl p-margin flex flex-col gap-space-md pb-[max(env(safe-area-inset-bottom),1.5rem)]">
+        <div className="flex items-center justify-between"><h2 className="font-headline-md text-headline-md text-primary">Mi pedido</h2><button type="button" aria-label="Cerrar" onClick={cerrar} className="w-12 h-12 rounded-lg"><span className="material-symbols-outlined" aria-hidden="true">close</span></button></div>
+        {mio && mio.items.length > 0 && (
+          <section aria-label="Ya pedido" className="flex flex-col gap-space-xs"><h3 className="font-label-md text-label-md text-on-surface-variant uppercase">Ya pedido</h3>
+            <ul className="flex flex-col gap-space-xs">{mio.items.map((i, k) => <li key={k} className="flex items-center justify-between gap-space-sm rounded-lg bg-surface-container-lowest border border-outline-variant p-space-sm"><span className="font-body-md">{Number(i.cantidad)}× {i.nombre}</span><span className={`px-2 py-0.5 rounded-full font-label-sm text-label-sm whitespace-nowrap ${(AVANCE[i.estado] ?? AVANCE.enviado).clase}`}>{(AVANCE[i.estado] ?? AVANCE.enviado).texto}</span></li>)}</ul>
+          </section>
+        )}
+        {lineas.length > 0 && (
+          <form onSubmit={async (e) => { e.preventDefault(); setError(null); setEnviando(true); try { await enviar(texto.trim()); } catch (er) { setError((er as Error).message); setEnviando(false); } }} className="flex flex-col gap-space-sm">
+            <h3 className="font-label-md text-label-md text-on-surface-variant uppercase">Por enviar</h3>
+            <ul className="flex flex-col gap-space-xs">{lineas.map((l) => <li key={l.p.id} className="flex items-center justify-between gap-space-sm"><span>{l.n}× {l.p.nombre}</span><span className="font-label-md">{bs(String(l.n * Number(l.p.precio)))}</span></li>)}</ul>
+            <label className="flex flex-col gap-space-xs"><span className="font-label-md text-label-md text-on-surface-variant uppercase">Comentario (alergias, sin picante…)</span><textarea value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={300} rows={2} className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest p-space-sm font-body-lg focus:outline-none focus:ring-2 focus:ring-primary" /></label>
+            {error && <p role="alert" className="text-error">{error}</p>}
+            <div className="flex gap-space-sm"><button type="button" onClick={() => setCarro(() => ({}))} className="h-14 px-space-md rounded-lg border border-outline-variant font-semibold">Vaciar</button><button disabled={enviando} className="flex-1 h-14 rounded-lg bg-primary text-on-primary font-semibold">{enviando ? 'Enviando…' : `Enviar pedido · ${bs(String(total))}`}</button></div>
+          </form>
+        )}
+        {lineas.length === 0 && (!mio || mio.items.length === 0) && <p className="text-on-surface-variant">Aún no agregaste platos.</p>}
+      </div>
     </div>
   );
 }

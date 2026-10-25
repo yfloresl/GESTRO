@@ -1,5 +1,5 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { and, asc, eq } from 'drizzle-orm';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { auditar } from '../comun/auditoria';
 import { BD, Bd, Tenant, TenantDb } from '../database/database.module';
@@ -109,6 +109,8 @@ export class MenuService {
 
   borrarPlato(t: Tenant, por: string, id: string) {
     return this.db.run(t, async (tx) => {
+      const usado = await tx.execute(sql`SELECT 1 FROM order_items WHERE menu_item_id = ${id} LIMIT 1`);
+      if (usado.rows.length) throw new ConflictException('Este plato ya tiene pedidos: márcalo como agotado en vez de borrarlo.');
       const [i] = await tx.delete(menuItems).where(and(eq(menuItems.id, id), eq(menuItems.restaurantId, t.restaurantId))).returning({ foto: menuItems.photoKey });
       if (!i) throw new NotFoundException('Plato no encontrado.');
       if (i.foto) await this.storage.borrar(i.foto);
@@ -131,7 +133,7 @@ export class MenuService {
 
   /** Menú público por slug: sin sesión. El slug se resuelve con la conexión de plataforma; el resto, ya con la sucursal fijada. */
   async publico(slug: string) {
-    const [r] = await this.bd.select({ id: restaurants.id, nombre: restaurants.name, estado: restaurants.status }).from(restaurants).where(eq(restaurants.slug, slug));
+    const [r] = await this.bd.select({ id: restaurants.id, nombre: restaurants.name, estado: restaurants.status, pedidosQr: restaurants.qrOrderingEnabled }).from(restaurants).where(eq(restaurants.slug, slug));
     if (!r || r.estado !== 'activo') throw new NotFoundException('Restaurante no encontrado.');
     const t: Tenant = { restaurantId: r.id, restaurantIds: [] };
     return this.db.run(t, async (tx) => {
@@ -142,7 +144,7 @@ export class MenuService {
         minutosPreparacion: i.prepMinutes, foto: i.photoKey ? `/api/v1/public/${slug}/foto/${i.id}` : null,
       });
       return {
-        restaurante: { nombre: r.nombre, slug },
+        restaurante: { nombre: r.nombre, slug, pedidosQr: r.pedidosQr },
         categorias: [
           ...cats.map((c) => ({ id: c.id, nombre: c.name, platos: items.filter((i) => i.categoryId === c.id).map(plato) })),
           ...(items.some((i) => !i.categoryId) ? [{ id: null, nombre: 'Otros', platos: items.filter((i) => !i.categoryId).map(plato) }] : []),

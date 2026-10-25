@@ -10,6 +10,7 @@ import { BD, Bd, Tenant } from '../database/database.module';
 import { restaurantTables } from '../database/esquema';
 import { SecretosService } from '../secretos/secretos.service';
 import { huellaQr } from '../tiempo-real/eventos.gateway';
+import { AgregarItems, PedidosService } from '../pedidos/pedidos.service';
 import { NuevaSolicitud, SesionMesa, SolicitudesService, type MesaCtx } from './solicitudes.service';
 
 type ConMesa = Request & { mesa?: MesaCtx };
@@ -34,13 +35,24 @@ export class TableTokenGuard implements CanActivate {
 /** El cliente de mesa no instala nada: escanea el QR, recibe un token de 4 h y pide atención. */
 @Controller('qr')
 export class QrController {
-  constructor(@Inject(SolicitudesService) private readonly s: SolicitudesService) {}
+  constructor(@Inject(SolicitudesService) private readonly s: SolicitudesService, @Inject(PedidosService) private readonly p: PedidosService) {}
 
   @Publico() @Throttle({ default: { limit: 20, ttl: 60_000 } }) @Post('sesion') @HttpCode(200)
   sesion(@Body() b: unknown) { return this.s.abrirSesion(SesionMesa.parse(b).qrToken); }
 
   @Publico() @UseGuards(TableTokenGuard) @Throttle({ default: { limit: 12, ttl: 60_000 } }) @Post('solicitudes')
   solicitar(@Req() req: ConMesa, @Body() b: unknown) { return this.s.crear(req.mesa!, NuevaSolicitud.parse(b)); }
+
+  /** Pedido del cliente por QR (opcional por sucursal): entra al pedido abierto de la mesa. */
+  @Publico() @UseGuards(TableTokenGuard) @Throttle({ default: { limit: 6, ttl: 60_000 } }) @Post('pedidos') @HttpCode(200)
+  pedir(@Req() req: ConMesa, @Body() b: unknown) {
+    const d = z.object({ comentario: z.string().trim().max(300).optional() }).passthrough().parse(b);
+    return this.p.desdeQr(req.mesa!.restaurantId, req.mesa!.tableId, AgregarItems.parse({ items: (b as { items?: unknown }).items }), d.comentario);
+  }
+
+  /** Mi pedido: sus platos y el avance de cada uno (por confirmar, enviado, en preparación, listo). */
+  @Publico() @UseGuards(TableTokenGuard) @Get('pedido')
+  miPedido(@Req() req: ConMesa) { return this.p.deMesa(req.mesa!.restaurantId, req.mesa!.tableId); }
 
   @Publico() @UseGuards(TableTokenGuard) @Get('estado')
   estado(@Req() req: ConMesa) { return this.s.estadoDeMesa(req.mesa!); }

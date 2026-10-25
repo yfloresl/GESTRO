@@ -11,6 +11,9 @@ import { KyrosIdController } from './kyros-id/kyros-id.controller';
 import { KyrosIdService } from './kyros-id/kyros-id.service';
 import { MenuController, MenuPublicoController } from './menu/menu.controller';
 import { MenuService } from './menu/menu.service';
+import { CajaService } from './pedidos/caja.service';
+import { CajaController, PedidosController } from './pedidos/pedidos.controller';
+import { PedidosService } from './pedidos/pedidos.service';
 import { PersonalController } from './personal/personal.controller';
 import { PersonalService } from './personal/personal.service';
 import { QrController, SolicitudesController, TableTokenGuard } from './qr/qr.controller';
@@ -39,9 +42,9 @@ class NucleoModule {}
     // En las pruebas (Vitest) se desactivan para que no se bloqueen entre sí.
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 120 }], skipIf: () => process.env.VITEST !== undefined }),
   ],
-  controllers: [SaludController, AuthController, KyrosIdController, SucursalController, PersonalController, MenuController, MenuPublicoController, SalonController, QrController, SolicitudesController, PushController],
+  controllers: [SaludController, AuthController, KyrosIdController, SucursalController, PersonalController, MenuController, MenuPublicoController, SalonController, QrController, SolicitudesController, PushController, PedidosController, CajaController],
   providers: [
-    SesionService, KyrosIdService, JwtAuthGuard, StorageService, PersonalService, MenuService, SalonService, SolicitudesService, TableTokenGuard, EventosGateway, PushService,
+    SesionService, KyrosIdService, JwtAuthGuard, StorageService, PersonalService, MenuService, SalonService, SolicitudesService, TableTokenGuard, EventosGateway, PushService, PedidosService, CajaService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useExisting: JwtAuthGuard },
   ],

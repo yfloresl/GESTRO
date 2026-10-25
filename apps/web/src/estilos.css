@@ -16,3 +16,11 @@
   :focus-visible { outline: 2px solid theme('colors.primary'); outline-offset: 2px; }
   .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
 }
+
+/* Impresión de recibos: solo el recibo, a 80 mm. */
+@media print {
+  @page { margin: 4mm; }
+  body.imprimiendo-recibo aside, body.imprimiendo-recibo header, body.imprimiendo-recibo a[href='#contenido'] { display: none !important; }
+  body.imprimiendo-recibo .lg\:pl-72 { padding-left: 0 !important; }
+  body.imprimiendo-recibo main { padding: 0 !important; }
+}

@@ -7,26 +7,39 @@ import { cerrarKyrosId } from '../lib/kyrosid';
 import { useAvisos } from '../lib/avisos';
 
 /** Navegación del diseño (5.1). Los módulos de fases siguientes abren un estado vacío hasta construirse. */
-export const GRUPOS: { titulo: string; items: { ruta: string; icono: string; texto: string }[] }[] = [
+type Item = { ruta: string; icono: string; texto: string; roles?: string[]; externa?: string };
+const SALON = ['owner', 'admin', 'mesero', 'cajero', 'area_manager'];
+export const GRUPOS: { titulo: string; items: Item[] }[] = [
   { titulo: 'Principal', items: [
     { ruta: 'panel', icono: 'analytics', texto: 'Panel del Dueño' },
-    { ruta: 'menu', icono: 'menu_book', texto: 'Menú & Fotos' },
+    { ruta: 'menu', icono: 'menu_book', texto: 'Menú & Fotos', roles: ['owner', 'admin', 'cocina'] },
     { ruta: 'recetas', icono: 'calculate', texto: 'Recetas & Costeo' },
     { ruta: 'inventario', icono: 'inventory_2', texto: 'Inventario & Almacenes' },
   ] },
   { titulo: 'Operaciones', items: [
+    { ruta: 'pedidos', icono: 'receipt_long', texto: 'Pedidos', roles: SALON },
+    { ruta: 'cocina', icono: 'skillet', texto: 'Cocina (KDS)', roles: ['owner', 'admin', 'cocina'], externa: '/cocina' },
+    { ruta: 'caja', icono: 'point_of_sale', texto: 'Caja', roles: ['owner', 'admin', 'cajero'] },
+    { ruta: 'salon', icono: 'qr_code_2', texto: 'Mesas & Salón (QR)', roles: SALON },
     { ruta: 'compras', icono: 'local_shipping', texto: 'Compras & Proveedores' },
-    { ruta: 'salon', icono: 'qr_code_2', texto: 'Mesas & Salón (QR)' },
     { ruta: 'reservas', icono: 'event_seat', texto: 'Reservas & Eventos' },
-    { ruta: 'personal', icono: 'badge', texto: 'Personal & Turnos' },
+    { ruta: 'personal', icono: 'badge', texto: 'Personal & Turnos', roles: ['owner', 'admin'] },
   ] },
   { titulo: 'Gestión & Finanzas', items: [
     { ruta: 'promociones', icono: 'sell', texto: 'Promociones' },
     { ruta: 'contabilidad', icono: 'account_balance_wallet', texto: 'Contabilidad & Libros' },
     { ruta: 'estadisticas', icono: 'query_stats', texto: 'Estadísticas & BI' },
-    { ruta: 'configuracion', icono: 'settings', texto: 'Configuración' },
+    { ruta: 'configuracion', icono: 'settings', texto: 'Configuración', roles: ['owner', 'admin'] },
   ] },
 ];
+
+/** Panel y avisos para todos; cada módulo solo a los roles que lo usan (el servidor vuelve a validar). */
+function visible(it: Item, roles: string[], plataforma: boolean) {
+  if (it.ruta === 'panel') return true;
+  if (plataforma) return true;
+  const permitidos = it.roles ?? ['owner', 'admin'];
+  return roles.some((r) => permitidos.includes(r));
+}
 
 const PORTAL_KYROS = 'https://portal.kyros-tech.com/';
 const CUENTA_KYROS = 'https://auth.kyros-tech.com/realms/kyros/account';
@@ -51,6 +64,7 @@ export function Shell() {
   if (estado === 'anonimo' || !sesion) return <Navigate to="/" replace />;
 
   const sucursal = sesion.sucursales.find((s) => s.id === sucursalId) ?? null;
+  const rolesActivos = sucursal?.roles ?? [];
   const rol = sucursal ? sucursal.roles.map((r) => ETIQUETA_ROL[r] ?? r).join(' / ') : sesion.usuario.esPlataforma ? 'Plataforma Kyros-Tech' : 'Sin sucursal';
 
   const cerrar = async () => { await salir(); if (cfg.data) cerrarKyrosId(cfg.data); };
@@ -72,8 +86,8 @@ export function Shell() {
             {GRUPOS.map((g, i) => (
               <div key={g.titulo} className="flex flex-col gap-space-xs">
                 <div className={`px-space-sm ${i ? 'pt-space-md' : 'pt-space-sm'} pb-space-xs font-label-sm text-label-sm uppercase text-on-surface-variant font-bold tracking-wider`}>{g.titulo}</div>
-                {g.items.map((it) => (
-                  <NavLink key={it.ruta} to={`/app/${it.ruta}`} onClick={() => setRielAbierto(false)}
+                {g.items.filter((it) => visible(it, rolesActivos, sesion.usuario.esPlataforma)).map((it) => (
+                  <NavLink key={it.ruta} to={it.externa ?? `/app/${it.ruta}`} onClick={() => setRielAbierto(false)}
                     className={({ isActive }) => `h-12 flex items-center gap-space-sm px-space-sm rounded-lg transition-colors ${isActive ? 'bg-primary-container text-on-primary font-semibold shadow-sm' : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'}`}>
                     <span className="material-symbols-outlined text-[20px]" aria-hidden="true">{it.icono}</span>
                     <span className="font-body-md text-body-md flex-1">{it.texto}</span>

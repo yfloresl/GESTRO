@@ -1,4 +1,4 @@
-import { boolean, inet, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { bigint, boolean, date, inet, integer, jsonb, numeric, pgTable, primaryKey, smallint, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 // Solo las tablas que F0 usa. El resto del DDL (66 tablas) se modela aquí al construir cada módulo.
 export const accounts = pgTable('accounts', {
@@ -16,6 +16,8 @@ export const restaurants = pgTable('restaurants', {
   slug: text('slug').notNull(),
   isBranch: boolean('is_branch').notNull().default(false),
   billingMode: text('billing_mode').notNull().default('recibo'),
+  qrOrderingEnabled: boolean('qr_ordering_enabled').notNull().default(true),
+  qrAutoSend: boolean('qr_auto_send').notNull().default(false),
   paidUntil: text('paid_until'),
   status: text('status').notNull().default('activo'),
 });
@@ -162,4 +164,90 @@ export const pushSubscriptions = pgTable('push_subscriptions', {
   p256dh: text('p256dh').notNull(),
   auth: text('auth').notNull(),
   userAgent: text('user_agent'),
+});
+
+export const orders = pgTable('orders', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  restaurantId: uuid('restaurant_id').notNull(),
+  tableId: uuid('table_id'),
+  waiterId: uuid('waiter_id'),
+  channel: text('channel').notNull().default('mesero'),
+  orderType: text('order_type').notNull().default('mesa'),
+  ticketNumber: integer('ticket_number'),
+  customerName: text('customer_name'),
+  customerPhone: text('customer_phone'),
+  deliveryAddress: text('delivery_address'),
+  pickupAt: timestamp('pickup_at', { withTimezone: true }),
+  createdBy: uuid('created_by'),
+  status: text('status').notNull().default('borrador'),
+  customerComment: text('customer_comment'),
+  subtotal: numeric('subtotal', { precision: 12, scale: 2 }).notNull().default('0'),
+  discount: numeric('discount', { precision: 12, scale: 2 }).notNull().default('0'),
+  total: numeric('total', { precision: 12, scale: 2 }).notNull().default('0'),
+  openedAt: timestamp('opened_at', { withTimezone: true }).notNull().defaultNow(),
+  sentAt: timestamp('sent_at', { withTimezone: true }),
+  readyAt: timestamp('ready_at', { withTimezone: true }),
+  closedAt: timestamp('closed_at', { withTimezone: true }),
+});
+
+export const orderCounters = pgTable('order_counters', {
+  restaurantId: uuid('restaurant_id').notNull(),
+  day: date('day').notNull(),
+  lastNumber: integer('last_number').notNull().default(0),
+}, (t) => ({ pk: primaryKey({ columns: [t.restaurantId, t.day] }) }));
+
+export const orderItems = pgTable('order_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  restaurantId: uuid('restaurant_id').notNull(),
+  orderId: uuid('order_id').notNull(),
+  menuItemId: uuid('menu_item_id').notNull(),
+  qty: numeric('qty', { precision: 8, scale: 2 }).notNull(),
+  unitPrice: numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
+  note: text('note'),
+  modifiers: jsonb('modifiers').notNull().default([]),
+  course: smallint('course').notNull().default(1),
+  status: text('status').notNull().default('enviado'),
+  startedAt: timestamp('started_at', { withTimezone: true }),
+  readyAt: timestamp('ready_at', { withTimezone: true }),
+  voidedAt: timestamp('voided_at', { withTimezone: true }),
+  voidedBy: uuid('voided_by'),
+  voidReason: text('void_reason'),
+  fromQr: boolean('from_qr').notNull().default(false),
+  sentAt: timestamp('sent_at', { withTimezone: true }),
+});
+
+export const cashSessions = pgTable('cash_sessions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  restaurantId: uuid('restaurant_id').notNull(),
+  cashierId: uuid('cashier_id').notNull(),
+  openedAt: timestamp('opened_at', { withTimezone: true }).notNull().defaultNow(),
+  closedAt: timestamp('closed_at', { withTimezone: true }),
+  openingAmount: numeric('opening_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+  countedAmount: numeric('counted_amount', { precision: 12, scale: 2 }),
+});
+
+export const salesPayments = pgTable('sales_payments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  restaurantId: uuid('restaurant_id').notNull(),
+  orderId: uuid('order_id').notNull(),
+  cashSessionId: uuid('cash_session_id'),
+  method: text('method').notNull(),
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+  document: text('document').notNull().default('recibo'),
+  receiptNumber: bigint('receipt_number', { mode: 'number' }),
+  customerName: text('customer_name'),
+  paidAt: timestamp('paid_at', { withTimezone: true }).notNull().defaultNow(),
+  voidedAt: timestamp('voided_at', { withTimezone: true }),
+  voidedBy: uuid('voided_by'),
+  voidReason: text('void_reason'),
+});
+
+export const receipts = pgTable('receipts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  restaurantId: uuid('restaurant_id').notNull(),
+  number: bigint('number', { mode: 'number' }).notNull(),
+  orderId: uuid('order_id'),
+  customerName: text('customer_name'),
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+  issuedAt: timestamp('issued_at', { withTimezone: true }).notNull().defaultNow(),
 });

@@ -7,6 +7,7 @@ export interface Solicitud {
   id: string; mesaId: string; mesa: string; tipo: 'atencion' | 'cuenta' | 'servicio' | 'otro'; comentario: string | null;
   estado: 'pendiente' | 'atendida' | 'cancelada'; meseroId: string | null; creada: string; atendida: string | null; escalada: boolean; paraMi?: boolean;
 }
+export interface AvisoPedido { id: string; mesa?: string | null; ticket?: number | null; paraMi?: boolean; items?: number }
 export const ETIQUETA_SOLICITUD: Record<string, string> = { atencion: 'Llamado de mesero', cuenta: 'Pide la cuenta', servicio: 'Pide servicio', otro: 'Solicitud' };
 
 interface Ctx { nuevas: number; ultima: Solicitud | null; descartar(): void; sonido: boolean; alternarSonido(): void }
@@ -60,6 +61,14 @@ export function AvisosProvider({ children }: { children: ReactNode }) {
     socket.on('solicitud.nueva', alerta(false));
     socket.on('solicitud.escalada', alerta(true));
     socket.on('solicitud.atendida', () => { void qc.invalidateQueries({ queryKey: ['solicitudes'] }); });
+    // Pedidos: cocina se refresca sola; el mesero se entera cuando un pedido queda listo o el cliente pide por QR.
+    const refrescarPedidos = () => { void qc.invalidateQueries({ queryKey: ['tickets'] }); void qc.invalidateQueries({ queryKey: ['pedidos'] }); void qc.invalidateQueries({ queryKey: ['pedido'] }); };
+    socket.on('ticket.nuevo', () => { refrescarPedidos(); if (sonidoRef.current) pitar(false); });
+    socket.on('ticket.actualizado', refrescarPedidos);
+    socket.on('pedido.cobrado', refrescarPedidos);
+    const aviso = (a: AvisoPedido) => { refrescarPedidos(); if (a.paraMi === false) return; setNuevas((n) => n + 1); if (sonidoRef.current) pitar(true); try { navigator.vibrate?.([300, 120, 300]); } catch { /* sin vibración */ } };
+    socket.on('pedido.listo', aviso);
+    socket.on('pedido.qr', aviso);
     return () => { socket.close(); };
   }, [usuario, sucursalId, qc]);
 

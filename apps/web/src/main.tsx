@@ -9,10 +9,24 @@ import { Cliente } from './paginas/Cliente';
 import { Menu } from './paginas/Menu';
 import { Personal } from './paginas/Personal';
 import { Salon } from './paginas/Salon';
+import { Caja, ReciboPagina } from './paginas/Caja';
+import { Cocina } from './paginas/Cocina';
+import { Configuracion } from './paginas/Configuracion';
+import { Pedidos } from './paginas/Pedidos';
 import { Callback } from './paginas/Callback';
 import { Ingreso } from './paginas/Ingreso';
 import { EnConstruccion, Panel } from './paginas/Panel';
 import { Registro } from './paginas/Registro';
+import { useRolesActivos } from './lib/sesion';
+
+/** Cada persona cae en lo suyo: cocina en su tablero, mesero en el salón, cajero en la caja. */
+function Inicio() {
+  const { roles, esAdmin, esPlataforma } = useRolesActivos();
+  if (esAdmin || esPlataforma || roles.length === 0) return <Navigate to="panel" replace />;
+  if (roles.includes('cocina')) return <Navigate to="/cocina" replace />;
+  if (roles.includes('cajero')) return <Navigate to="caja" replace />;
+  return <Navigate to="salon" replace />;
+}
 import './estilos.css';
 
 const cliente = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
@@ -29,12 +43,17 @@ createRoot(document.getElementById('raiz')!).render(
             <Route path="/callback" element={<Callback />} />
             <Route path="/registro" element={<Registro />} />
             <Route path="/m/:qr" element={<Cliente />} />
+            <Route path="/cocina" element={<Cocina />} />
             <Route path="/app" element={<Shell />}>
-              <Route index element={<Navigate to="panel" replace />} />
+              <Route index element={<Inicio />} />
               <Route path="panel" element={<Panel />} />
               <Route path="menu" element={<Menu />} />
               <Route path="salon" element={<Salon />} />
               <Route path="personal" element={<Personal />} />
+              <Route path="pedidos" element={<Pedidos />} />
+              <Route path="caja" element={<Caja />} />
+              <Route path="recibo/:id" element={<ReciboPagina />} />
+              <Route path="configuracion" element={<Configuracion />} />
               <Route path="*" element={<EnConstruccion />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

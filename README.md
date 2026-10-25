@@ -2,7 +2,7 @@
 
 Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estándar Sistemas-Kyros, ingreso con Kyros ID y presencia en el Portal Kyros.
 
-## Estado: F1a · Salón con QR (sobre F0 · Fundaciones)
+## Estado: F1b · Pedidos, cocina y caja (sobre F1a y F0)
 
 | Hecho | Detalle |
 |---|---|
@@ -17,7 +17,11 @@ Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estánd
 
 **F1a (hecho):** personal con código de invitación, menú y fotos (menú público por slug), áreas, mesas y QR imprimible, asignación de mesero, solicitudes de mesa en tiempo real (Socket.IO), escalamiento al encargado a los 3 min, avisos Web Push con pantalla bloqueada y PWA del cliente en `/m/<token>`.
 
-Siguiente: **F1b** (toma de pedidos del personal, pedido por QR, KDS y recibos) y **F1c** (suscripción y pagos del SaaS con voucher manual, tarjeta en el Portal Kyros). Ver `docs/ROADMAP.md`.
+**F1b (hecho):** toma de pedidos del personal (mesa, mostrador, llevar y delivery) con tickets diarios correlativos, notas y modificadores, anulación de platos con permiso y motivo, mover de mesa; pedido del cliente por QR (con confirmación del mesero o directo a cocina, configurable); tablero de cocina (KDS) en modo oscuro con cronómetro y alerta de demora, aviso al mesero cuando el pedido queda listo; caja con apertura y arqueo, cobro con recibo correlativo (no fiscal) o solo contabilizar, anulación de ventas con motivo.
+
+**Pendiente de F1b por decisión de alcance:** dividir cuenta y juntar cuentas, promociones y descuentos, descuento de insumos al enviar (llega con recetas e inventario, F2), PIN de supervisor para anular y asientos contables (F3).
+
+Siguiente: **F1c** (suscripción y pagos del SaaS con voucher manual, tarjeta en el Portal Kyros). Ver `docs/ROADMAP.md`.
 
 ## Desarrollo local
 
