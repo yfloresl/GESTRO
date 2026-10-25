@@ -4,6 +4,7 @@ import { and, asc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { auditar, esDuplicado } from '../comun/auditoria';
 import { Bd, Tenant, TenantDb } from '../database/database.module';
+import { ContabilidadService } from '../contabilidad/contabilidad.service';
 import { ingredients, warehouses } from '../database/esquema';
 
 const Cant = z.number().positive().max(1_000_000).refine((n) => Math.round(n * 1000) / 1000 === n, 'Máximo 3 decimales');
@@ -27,7 +28,7 @@ export interface Mov { kind: 'compra' | 'consumo' | 'merma' | 'ajuste' | 'traspa
 
 @Injectable()
 export class InventarioService {
-  constructor(@Inject(TenantDb) private readonly db: TenantDb) {}
+  constructor(@Inject(TenantDb) private readonly db: TenantDb, @Inject(ContabilidadService) private readonly conta: ContabilidadService) {}
 
   unidades() { return this.db.run({ restaurantId: '', restaurantIds: [] }, (tx) => tx.execute(sql`SELECT code, base_code, factor_to_base::float8 AS factor FROM units ORDER BY base_code, factor_to_base`).then((r) => (r.rows as { code: string; base_code: string; factor: number }[]).map((u) => ({ codigo: u.code, base: u.base_code, factor: u.factor })))); }
 
@@ -185,9 +186,11 @@ export class InventarioService {
       if ((d.lote || d.vence) && d.tipo !== 'compra' && !(d.tipo === 'ajuste' && d.sentido === 'entrada')) throw new BadRequestException('El lote y el vencimiento solo van en entradas.');
       const entra = d.tipo === 'compra' || (d.tipo === 'ajuste' && d.sentido === 'entrada');
       const c = await this.aUnidadDelInsumo(tx, t, d.insumoId, d.cantidad, d.unidad, d.costoUnitario);
-      const base = { warehouseId: d.almacenId, ingredientId: d.insumoId, reason: d.motivo ?? null, groupId: randomUUID() };
+      const grupo = randomUUID();
+      const base = { warehouseId: d.almacenId, ingredientId: d.insumoId, reason: d.motivo ?? null, groupId: grupo };
       if (entra) await this.registrar(tx, t, por, { ...base, kind: d.tipo === 'compra' ? 'compra' : 'ajuste', qty: c.qty, unitCost: c.costo, lot: d.lote ?? null, expires: d.vence ?? null });
       else await this.salidaFefo(tx, t, por, { ...base, kind: d.tipo === 'merma' ? 'merma' : 'ajuste' }, c.qty);
+      await this.conta.deMovimiento(tx, t, por, d.tipo, grupo);
       // Merma y ajustes son sensibles: quedan en la auditoría general además del kardex.
       if (d.tipo !== 'compra') await auditar(tx, t.restaurantId, por, `inventario.${d.tipo}`, 'ingredient', d.insumoId, { almacenId: d.almacenId, cantidad: c.qty, unidad: c.unidadInsumo, motivo: d.motivo, sentido: d.sentido });
       return { ok: true, cantidadEnUnidadDelInsumo: c.qty, unidad: c.unidadInsumo };
@@ -228,6 +231,7 @@ export class InventarioService {
         }
         salida.push({ insumoId: l.insumoId, nombre: f.name, unidad: f.unit_code, sistema: f.sistema, contado: l.contado.toFixed(3), diferencia: f.dif, valor: f.valor });
       }
+      if (Number(total) !== 0) await this.conta.ajusteRegistrado(tx, t, por, grupo, total);
       await auditar(tx, t.restaurantId, por, 'inventario.conteo', 'warehouse', d.almacenId, { lineas: d.lineas.length, valorDiferencia: total });
       return { almacenId: d.almacenId, lineas: salida, valorDiferencia: total };
     });

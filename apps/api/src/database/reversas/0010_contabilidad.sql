@@ -1,0 +1,15 @@
+DROP TRIGGER IF EXISTS journal_entries_periodo ON journal_entries;
+DROP FUNCTION IF EXISTS journal_periodo_abierto();
+DROP TRIGGER IF EXISTS journal_lines_inmutables ON journal_lines;
+DROP FUNCTION IF EXISTS journal_lines_publicadas_inmutables();
+DROP TRIGGER IF EXISTS journal_entries_inmutable ON journal_entries;
+DROP FUNCTION IF EXISTS journal_publicado_inmutable();
+ALTER TABLE purchase_receipts DROP COLUMN has_iva;
+ALTER TABLE restaurants DROP COLUMN iva_pct, DROP COLUMN it_pct;
+ALTER TABLE fiscal_periods DROP COLUMN closed_at, DROP COLUMN closed_by;
+DROP INDEX IF EXISTS journal_lines_cuenta; DROP INDEX IF EXISTS journal_entries_origen; DROP INDEX IF EXISTS journal_entries_una_reversa;
+ALTER TABLE journal_entries DROP COLUMN created_by, DROP COLUMN posted_at, DROP COLUMN reversal_of;
+DROP INDEX IF EXISTS chart_of_accounts_system_key;
+ALTER TABLE chart_of_accounts DROP COLUMN system_key, DROP COLUMN active;
+DROP TRIGGER IF EXISTS trg_stock_movement_valorizar ON stock_movements;
+DROP FUNCTION IF EXISTS stock_movement_valorizar();

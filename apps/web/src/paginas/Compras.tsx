@@ -94,7 +94,7 @@ function DetalleOrden({ id, cerrar, hecho }: { id: string; cerrar(): void; hecho
     e.preventDefault(); setError(null); const f = new FormData(e.currentTarget);
     const lineas = o!.lineas.map((l) => ({ insumoId: l.insumoId, cantidad: num(f.get(`c-${l.insumoId}`)), costoUnitario: f.get(`p-${l.insumoId}`) ? num(f.get(`p-${l.insumoId}`)) : undefined, lote: String(f.get(`l-${l.insumoId}`) ?? '').trim() || undefined, vence: String(f.get(`v-${l.insumoId}`) ?? '') || undefined })).filter((l) => l.cantidad > 0);
     if (!lineas.length) { setError('Escribe la cantidad recibida de al menos un insumo.'); return; }
-    try { const r = await api.post<{ alertasDePrecio: { insumo: string; alzaPct: string }[] }>(`/ordenes-de-compra/${id}/recibir`, { almacenId: String(f.get('almacen')), factura: String(f.get('factura') ?? '').trim() || undefined, lineas }, sucursalId!); setAlzas(r.alertasDePrecio); setRecibiendo(false); hecho(); } catch (err) { setError(mensajeDeError(err)); }
+    try { const r = await api.post<{ alertasDePrecio: { insumo: string; alzaPct: string }[] }>(`/ordenes-de-compra/${id}/recibir`, { almacenId: String(f.get('almacen')), factura: String(f.get('factura') ?? '').trim() || undefined, conIva: f.get('conIva') === 'on', lineas }, sucursalId!); setAlzas(r.alertasDePrecio); setRecibiendo(false); hecho(); } catch (err) { setError(mensajeDeError(err)); }
   };
   return (
     <div role="dialog" aria-modal="true" aria-label="Orden de compra" className="fixed inset-0 z-[60] flex justify-end bg-inverse-surface/40" onClick={cerrar}>
@@ -113,6 +113,7 @@ function DetalleOrden({ id, cerrar, hecho }: { id: string; cerrar(): void; hecho
           {recibiendo && <form onSubmit={recibir} className="bg-surface-container-low rounded-xl p-space-md flex flex-col gap-space-sm"><h3 className="font-headline-sm text-headline-sm">Recepción</h3>
             <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Almacén donde entra</span><select name="almacen" required className={clases.input}><option value="">Elige…</option>{(almacenes.data ?? []).map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}</select></label>
             <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>N° de factura del proveedor (opcional)</span><input name="factura" maxLength={40} className={clases.input} /></label>
+            <label className="flex items-center gap-space-sm min-h-12"><input name="conIva" type="checkbox" className="w-6 h-6" /><span>La factura trae IVA (crédito fiscal)</span></label>
             {o.lineas.map((l) => <fieldset key={l.insumoId} className="rounded-lg bg-surface-container-lowest border border-outline-variant p-space-sm grid grid-cols-2 gap-space-xs"><legend className="px-1 font-semibold">{l.insumo} <span className="font-normal text-on-surface-variant">(faltan {Number(l.pendiente)} {l.unidad})</span></legend>
               <input name={`c-${l.insumoId}`} aria-label={`Recibido de ${l.insumo}`} placeholder="Recibido" inputMode="decimal" defaultValue={Number(l.pendiente) > 0 ? String(Number(l.pendiente)) : ''} className="h-12 rounded-lg border border-outline-variant px-space-sm font-label-lg" />
               <input name={`p-${l.insumoId}`} aria-label={`Costo de ${l.insumo}`} placeholder={`Bs c/u (${Number(l.costoUnitario)})`} inputMode="decimal" className="h-12 rounded-lg border border-outline-variant px-space-sm font-label-lg" />
@@ -163,7 +164,7 @@ function SugerenciasVista({ hecho }: { hecho(): void }) {
 function PorPagarVista({ hecho }: { hecho(): void }) {
   const { sucursalId, esAdmin, roles } = useRolesActivos(); const puede = esAdmin || roles.includes('contador'); const [error, setError] = useState<string | null>(null);
   const q = useQuery({ queryKey: ['por-pagar', sucursalId], queryFn: () => api.get<PorPagar[]>('/por-pagar', sucursalId!), enabled: !!sucursalId });
-  const pagar = async (c: PorPagar) => { const v = prompt(`Monto a pagar a ${c.proveedor} (saldo Bs ${c.saldo})`, c.saldo); if (v === null) return; setError(null); try { await api.post(`/por-pagar/${c.id}/pagar`, { monto: Number(v.replace(',', '.')) }, sucursalId!); hecho(); } catch (e) { setError(mensajeDeError(e)); } };
+  const pagar = async (c: PorPagar) => { const v = prompt(`Monto a pagar a ${c.proveedor} (saldo Bs ${c.saldo})`, c.saldo); if (v === null) return; const banco = confirm('¿Se paga por banco o transferencia? Aceptar = bancos, Cancelar = efectivo de caja'); setError(null); try { await api.post(`/por-pagar/${c.id}/pagar`, { monto: Number(v.replace(',', '.')), metodo: banco ? 'bancos' : 'caja' }, sucursalId!); hecho(); } catch (e) { setError(mensajeDeError(e)); } };
   const total = (q.data ?? []).reduce((t, c) => t + Number(c.saldo), 0);
   return (
     <section className="flex flex-col gap-space-sm">{error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}

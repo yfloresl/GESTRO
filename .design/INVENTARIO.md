@@ -31,3 +31,4 @@ Estado: `usado` entra a código · `derivado` se construyó a partir de tokens/p
 | Aviso de vencimiento / solo lectura (franja superior) | 6.1 | derivado | Tonos `secondary-fixed` (por vencer) y `error-container` (vencida) |
 | Consola de plataforma: pagos con comprobante, sucursales, planes, promociones, cobro | 6.2 | usado | Sin gráficos de ingresos ni métricas de uso (llegan con estadísticas) |
 
+| Contabilidad & Libros: resumen, asientos (lista, detalle, nuevo), plan de cuentas, reportes, períodos e impuestos | 5.8 | derivado | Hecha con los patrones de Compras (pestañas, paneles laterales, tablas); sin gráficos todavía |

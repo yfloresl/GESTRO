@@ -2,7 +2,7 @@
 
 Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estándar Sistemas-Kyros, ingreso con Kyros ID y presencia en el Portal Kyros.
 
-## Estado: F2 completa (inventario, recetas y compras) sobre F1 y F0
+## Estado: F3 completa (contabilidad) sobre F2, F1 y F0
 
 | Hecho | Detalle |
 |---|---|
@@ -25,7 +25,9 @@ Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estánd
 
 **F2 (hecho):** inventario por movimientos (kardex de solo-añadir, stock que la app no puede editar a mano, costo promedio ponderado, FEFO por lote, traspasos, conteo físico, alertas); recetas con versiones y sub-recetas, costo y margen contra el mínimo de la sucursal; plan del día con insumos contra el stock de cada almacén; compras (proveedores, órdenes, recepción parcial con diferencias, historial y alza de precios, cuentas por pagar); el descuento de insumos ocurre al **enviar a cocina** y nunca frena una venta.
 
-Siguiente: **F3 · Dinero** (contabilidad de nivel medio). Ver `docs/ROADMAP.md`.
+**F3 (hecho):** contabilidad de nivel medio con partida doble. Plan de cuentas de restaurante (plantilla editable) y centros de costo; asientos automáticos de venta cobrada, costo de ventas (al costo promedio, al enviar a cocina), compra recibida (con o sin IVA incluido), pago a proveedor, compra al contado, merma y ajuste/conteo de inventario; asientos manuales en borrador que se publican con correlativo sin huecos; un asiento publicado **no se edita ni se borra** (lo impide la base) y se corrige contrarrestándolo; anular una venta genera su contra-asiento; períodos que se cierran (el dueño reabre) — los asientos automáticos nunca frenan una venta y, si el mes está cerrado, caen en el primer mes abierto. Reportes: sumas y saldos, estado de resultados, balance general, libro mayor, flujo de caja, libros de IVA e impuestos referenciales (IVA 13 % e IT 3 % son parámetros de la sucursal que valida el contador). Una venta a crédito se asienta en cuentas por cobrar, pero el cobro posterior se registra con un asiento manual (no hay pantalla de cobranza todavía).
+
+Siguiente: **F4 · Reservas, eventos, personal y promociones**. Ver `docs/ROADMAP.md`.
 
 ## Desarrollo local
 

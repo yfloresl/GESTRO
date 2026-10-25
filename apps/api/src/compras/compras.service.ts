@@ -1,3 +1,4 @@
+import { ContabilidadService } from '../contabilidad/contabilidad.service';
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { uuidArray } from '../comun/sql';
@@ -23,10 +24,10 @@ export const NuevaOrden = z.object({
   lineas: z.array(z.object({ insumoId: z.string().uuid(), cantidad: Cant, costoUnitario: Costo }).strict()).min(1).max(100),
 }).strict();
 export const Recepcion = z.object({
-  almacenId: z.string().uuid(), factura: z.string().trim().max(40).optional(), notas: z.string().trim().max(300).optional(),
+  almacenId: z.string().uuid(), factura: z.string().trim().max(40).optional(), conIva: z.boolean().default(false), notas: z.string().trim().max(300).optional(),
   lineas: z.array(z.object({ insumoId: z.string().uuid(), cantidad: Cant, costoUnitario: Costo.optional(), lote: z.string().trim().min(1).max(40).optional(), vence: Fecha.optional() }).strict()).min(1).max(100),
 }).strict();
-export const Pago = z.object({ monto: z.number().positive().max(10_000_000).refine((n) => Math.round(n * 100) / 100 === n, 'Máximo 2 decimales').optional() }).strict();
+export const Pago = z.object({ metodo: z.enum(['caja', 'bancos']).default('caja'), monto: z.number().positive().max(10_000_000).refine((n) => Math.round(n * 100) / 100 === n, 'Máximo 2 decimales').optional() }).strict();
 
 const HOY = sql`(now() AT TIME ZONE 'America/La_Paz')::date`;
 
@@ -37,6 +38,7 @@ export class ComprasService {
     @Inject(ConsumoService) private readonly consumo: ConsumoService,
     @Inject(RecetasService) private readonly recetas: RecetasService,
     @Inject(InventarioService) private readonly inventario: InventarioService,
+    @Inject(ContabilidadService) private readonly conta: ContabilidadService,
   ) {}
 
   /* ---------------- proveedores ---------------- */
@@ -185,11 +187,13 @@ export class ComprasService {
         }
         tocados.push(l.insumoId);
       }
+      if (d.conIva) await tx.execute(sql`UPDATE purchase_receipts SET has_iva = true WHERE id = ${recibo.id}`);
       const total = (await tx.execute(sql`UPDATE purchase_receipts SET total = (SELECT COALESCE(SUM(round(received_qty * unit_cost, 2)), 0) FROM purchase_receipt_lines WHERE receipt_id = ${recibo.id}) WHERE id = ${recibo.id} RETURNING total::text AS total`)).rows[0] as { total: string };
       if (Number(total.total) > 0) {
         await tx.execute(sql`INSERT INTO payables_receivables (restaurant_id, direction, counterparty, supplier_id, amount, due_on, purchase_order_id, receipt_id, document_number)
           SELECT ${t.restaurantId}, 'por_pagar', s.name, s.id, ${total.total}::numeric, ${HOY} + s.payment_days, ${id}, ${recibo.id}, ${d.factura ?? null} FROM suppliers s WHERE s.id = ${o.supplier_id}`);
       }
+      await this.conta.compraRecibida(tx, t, por, { reciboId: recibo.id, total: total.total, conIva: d.conIva });
       const abierto = (await tx.execute(sql`SELECT count(*)::int AS n FROM purchase_order_lines WHERE purchase_order_id = ${id} AND received_qty < qty`)).rows[0] as { n: number };
       await tx.execute(sql`UPDATE purchase_orders SET status = ${abierto.n === 0 ? 'recibida' : 'parcial'} WHERE id = ${id}`);
       await this.consumo.revisarAlertas(tx, t, tocados);
@@ -270,6 +274,7 @@ export class ComprasService {
       const monto = d.monto !== undefined ? d.monto.toFixed(2) : p.saldo;
       if (Number(monto) > Number(p.saldo)) throw new BadRequestException(`El pago supera el saldo (Bs ${p.saldo}).`);
       const r = (await tx.execute(sql`UPDATE payables_receivables SET paid = paid + ${monto}::numeric, paid_by = ${por}::uuid, paid_at = CASE WHEN paid + ${monto}::numeric >= amount THEN now() ELSE paid_at END WHERE id = ${id} RETURNING (amount - paid)::text AS saldo`)).rows[0] as { saldo: string };
+      await this.conta.pagoAProveedor(tx, t, por, monto, d.metodo);
       await auditar(tx, t.restaurantId, por, 'compras.pago_proveedor', 'payable', id, { monto, saldo: r.saldo });
       return { ok: true, saldo: r.saldo };
     });

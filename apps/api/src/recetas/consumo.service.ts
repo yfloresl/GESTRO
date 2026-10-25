@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { uuidArray } from '../comun/sql';
 import { Bd, Tenant } from '../database/database.module';
+import { ContabilidadService } from '../contabilidad/contabilidad.service';
 import { InventarioService } from '../inventario/inventario.service';
 import { EventosGateway, salas } from '../tiempo-real/eventos.gateway';
 import { PushService } from '../tiempo-real/push.service';
@@ -20,6 +21,7 @@ export class ConsumoService {
     @Inject(InventarioService) private readonly inventario: InventarioService,
     @Inject(EventosGateway) private readonly eventos: EventosGateway,
     @Inject(PushService) private readonly push: PushService,
+    @Inject(ContabilidadService) private readonly conta: ContabilidadService,
   ) {}
 
   /** Almacén del que se consume: el configurado en el insumo, si no el que más stock tiene, si no el primero. */
@@ -49,6 +51,7 @@ export class ConsumoService {
         tocados.add(insumoId); n++;
       }
     }
+    if (n > 0) await this.conta.costoDeConsumo(tx, t, userId, items.map((i) => i.id));
     if (tocados.size) await this.revisarAlertas(tx, t, [...tocados]);
     return { consumidos: n };
   }

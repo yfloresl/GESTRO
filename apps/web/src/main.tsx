@@ -12,6 +12,7 @@ import { Salon } from './paginas/Salon';
 import { Caja, ReciboPagina } from './paginas/Caja';
 import { Cocina } from './paginas/Cocina';
 import { Compras } from './paginas/Compras';
+import { Contabilidad } from './paginas/Contabilidad';
 import { Configuracion } from './paginas/Configuracion';
 import { Inventario } from './paginas/Inventario';
 import { Pedidos } from './paginas/Pedidos';
@@ -61,6 +62,7 @@ createRoot(document.getElementById('raiz')!).render(
               <Route path="pedidos" element={<Pedidos />} />
               <Route path="inventario" element={<Inventario />} />
               <Route path="compras" element={<Compras />} />
+              <Route path="contabilidad" element={<Contabilidad />} />
               <Route path="recetas" element={<Recetas />} />
               <Route path="plan-del-dia" element={<PlanDelDia />} />
               <Route path="caja" element={<Caja />} />

@@ -5,6 +5,7 @@ import { auditar } from '../comun/auditoria';
 import { Bd, Tenant, TenantDb } from '../database/database.module';
 import { accounts, cashSessions, orders, receipts, restaurants, salesPayments } from '../database/esquema';
 import { EventosGateway, salas } from '../tiempo-real/eventos.gateway';
+import { ContabilidadService } from '../contabilidad/contabilidad.service';
 import { PedidosService } from './pedidos.service';
 
 const Monto = z.number().min(0).max(10_000_000).refine((n) => Math.round(n * 100) / 100 === n, 'Máximo 2 decimales');
@@ -26,6 +27,7 @@ export class CajaService {
     @Inject(TenantDb) private readonly db: TenantDb,
     @Inject(PedidosService) private readonly pedidos: PedidosService,
     @Inject(EventosGateway) private readonly eventos: EventosGateway,
+    @Inject(ContabilidadService) private readonly conta: ContabilidadService,
   ) {}
 
   private async abierta(tx: Bd, t: Tenant, userId: string) {
@@ -97,6 +99,7 @@ export class CajaService {
         await tx.update(salesPayments).set({ receiptNumber: recibo }).where(eq(salesPayments.id, p.id));
       }
       await tx.update(orders).set({ status: 'cobrado', closedAt: sql`now()` as unknown as Date }).where(eq(orders.id, id));
+      await this.conta.ventaCobrada(tx, t, userId, { pagoId: p.id, total: o.total, metodo: d.metodo, documento: d.documento });
       await auditar(tx, t.restaurantId, userId, 'venta.cobrada', 'sales_payment', p.id, { metodo: d.metodo, documento: d.documento, monto: o.total, recibo });
       return { pagoId: p.id, monto: o.total, recibo, documento: d.documento };
     });
@@ -110,6 +113,7 @@ export class CajaService {
       const [p] = await tx.update(salesPayments).set({ voidedAt: sql`now()` as unknown as Date, voidedBy: userId, voidReason: motivo }).where(and(eq(salesPayments.id, id), eq(salesPayments.restaurantId, t.restaurantId), isNull(salesPayments.voidedAt))).returning();
       if (!p) throw new NotFoundException('Pago no encontrado o ya anulado.');
       await tx.update(orders).set({ status: 'anulado' }).where(eq(orders.id, p.orderId));
+      await this.conta.ventaAnulada(tx, t, userId, id, motivo);
       await auditar(tx, t.restaurantId, userId, 'venta.anulada', 'sales_payment', id, { motivo });
       return { ok: true };
     });
