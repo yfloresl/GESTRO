@@ -21,7 +21,7 @@ async function main() {
         `INSERT INTO users (email, full_name, is_platform_admin) VALUES ($1,$2,true)
          ON CONFLICT (email) DO UPDATE SET is_platform_admin = true, active = true RETURNING id`, [email, nombre]);
       await c.query('INSERT INTO kyros_links (issuer, sub, user_id) VALUES ($1,$2,$3)', [emisor, sub, u.rows[0].id]);
-      await c.query(`INSERT INTO audit_log (user_id, action, entity, entity_id) VALUES ($1,'superadmin.reclamado','user',$1)`, [u.rows[0].id]);
+      await c.query(`INSERT INTO audit_log (user_id, action, entity, entity_id) VALUES ($1::uuid,'superadmin.reclamado','user',$1::text)`, [u.rows[0].id]);
       await c.query('COMMIT');
       console.log(`Superadmin listo: ${email}`);
     } catch (e) { await c.query('ROLLBACK'); throw e; } finally { c.release(); }
