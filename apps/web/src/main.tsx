@@ -14,6 +14,8 @@ import { Cocina } from './paginas/Cocina';
 import { Configuracion } from './paginas/Configuracion';
 import { Inventario } from './paginas/Inventario';
 import { Pedidos } from './paginas/Pedidos';
+import { PlanDelDia } from './paginas/PlanDelDia';
+import { Recetas } from './paginas/Recetas';
 import { Plataforma } from './paginas/Plataforma';
 import { Suscripcion } from './paginas/Suscripcion';
 import { Callback } from './paginas/Callback';
@@ -57,6 +59,8 @@ createRoot(document.getElementById('raiz')!).render(
               <Route path="personal" element={<Personal />} />
               <Route path="pedidos" element={<Pedidos />} />
               <Route path="inventario" element={<Inventario />} />
+              <Route path="recetas" element={<Recetas />} />
+              <Route path="plan-del-dia" element={<PlanDelDia />} />
               <Route path="caja" element={<Caja />} />
               <Route path="recibo/:id" element={<ReciboPagina />} />
               <Route path="configuracion" element={<Configuracion />} />

@@ -17,6 +17,7 @@ export const Cobro = z.object({
 }).strict();
 export const AjustesSucursal = z.object({
   pedidosPorQr: z.boolean().optional(), qrSinConfirmacion: z.boolean().optional(), modoDeCobro: z.enum(['recibo', 'ninguno']).optional(),
+  margenMinimo: z.number().min(0).max(100).refine((n) => Math.round(n * 100) / 100 === n, 'Máximo 2 decimales').optional(),
 }).strict();
 
 @Injectable()
@@ -138,14 +139,14 @@ export class CajaService {
 
   ajustes(t: Tenant) {
     return this.db.run(t, async (tx) => {
-      const [r] = await tx.select({ qr: restaurants.qrOrderingEnabled, auto: restaurants.qrAutoSend, modo: restaurants.billingMode }).from(restaurants).where(eq(restaurants.id, t.restaurantId));
-      return { pedidosPorQr: r.qr, qrSinConfirmacion: r.auto, modoDeCobro: r.modo };
+      const [r] = await tx.select({ qr: restaurants.qrOrderingEnabled, auto: restaurants.qrAutoSend, modo: restaurants.billingMode, margen: restaurants.minMarginPct }).from(restaurants).where(eq(restaurants.id, t.restaurantId));
+      return { pedidosPorQr: r.qr, qrSinConfirmacion: r.auto, modoDeCobro: r.modo, margenMinimo: Number(r.margen) };
     });
   }
 
   cambiarAjustes(t: Tenant, userId: string, d: z.infer<typeof AjustesSucursal>) {
     return this.db.run(t, async (tx) => {
-      const cambios = { ...(d.pedidosPorQr !== undefined && { qrOrderingEnabled: d.pedidosPorQr }), ...(d.qrSinConfirmacion !== undefined && { qrAutoSend: d.qrSinConfirmacion }), ...(d.modoDeCobro !== undefined && { billingMode: d.modoDeCobro }) };
+      const cambios = { ...(d.pedidosPorQr !== undefined && { qrOrderingEnabled: d.pedidosPorQr }), ...(d.qrSinConfirmacion !== undefined && { qrAutoSend: d.qrSinConfirmacion }), ...(d.modoDeCobro !== undefined && { billingMode: d.modoDeCobro }), ...(d.margenMinimo !== undefined && { minMarginPct: d.margenMinimo.toFixed(2) }) };
       if (!Object.keys(cambios).length) throw new BadRequestException('Nada que cambiar.');
       await tx.update(restaurants).set(cambios).where(eq(restaurants.id, t.restaurantId));
       await auditar(tx, t.restaurantId, userId, 'sucursal.ajustes', 'restaurant', t.restaurantId, d);

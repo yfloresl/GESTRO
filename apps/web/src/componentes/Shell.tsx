@@ -14,7 +14,8 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
   { titulo: 'Principal', items: [
     { ruta: 'panel', icono: 'analytics', texto: 'Panel del Dueño' },
     { ruta: 'menu', icono: 'menu_book', texto: 'Menú & Fotos', roles: ['owner', 'admin', 'cocina'] },
-    { ruta: 'recetas', icono: 'calculate', texto: 'Recetas & Costeo' },
+    { ruta: 'recetas', icono: 'calculate', texto: 'Recetas & Costeo', roles: ['owner', 'admin', 'cocina', 'almacen', 'contador'] },
+    { ruta: 'plan-del-dia', icono: 'event_note', texto: 'Plan del día', roles: ['owner', 'admin', 'cocina', 'almacen'] },
     { ruta: 'inventario', icono: 'inventory_2', texto: 'Inventario & Almacenes', roles: ['owner', 'admin', 'almacen', 'cocina', 'contador'] },
   ] },
   { titulo: 'Operaciones', items: [

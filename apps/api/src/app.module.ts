@@ -19,6 +19,8 @@ import { PlataformaController, SuscripcionController } from './suscripcion/suscr
 import { SuscripcionService } from './suscripcion/suscripcion.service';
 import { InventarioController } from './inventario/inventario.controller';
 import { InventarioService } from './inventario/inventario.service';
+import { RecetasController } from './recetas/recetas.controller';
+import { RecetasService } from './recetas/recetas.service';
 import { PersonalController } from './personal/personal.controller';
 import { PersonalService } from './personal/personal.service';
 import { QrController, SolicitudesController, TableTokenGuard } from './qr/qr.controller';
@@ -47,9 +49,9 @@ class NucleoModule {}
     // En las pruebas (Vitest) se desactivan para que no se bloqueen entre sí.
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 120 }], skipIf: () => process.env.VITEST !== undefined }),
   ],
-  controllers: [SaludController, AuthController, KyrosIdController, SucursalController, PersonalController, MenuController, MenuPublicoController, SalonController, QrController, SolicitudesController, PushController, PedidosController, CajaController, SuscripcionController, PlataformaController, PortalController, InventarioController],
+  controllers: [SaludController, AuthController, KyrosIdController, SucursalController, PersonalController, MenuController, MenuPublicoController, SalonController, QrController, SolicitudesController, PushController, PedidosController, CajaController, SuscripcionController, PlataformaController, PortalController, InventarioController, RecetasController],
   providers: [
-    SesionService, KyrosIdService, JwtAuthGuard, StorageService, PersonalService, MenuService, SalonService, SolicitudesService, TableTokenGuard, EventosGateway, PushService, PedidosService, CajaService, SuscripcionService, InventarioService,
+    SesionService, KyrosIdService, JwtAuthGuard, StorageService, PersonalService, MenuService, SalonService, SolicitudesService, TableTokenGuard, EventosGateway, PushService, PedidosService, CajaService, SuscripcionService, InventarioService, RecetasService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useExisting: JwtAuthGuard },
   ],

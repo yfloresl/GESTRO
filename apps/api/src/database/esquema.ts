@@ -18,6 +18,7 @@ export const restaurants = pgTable('restaurants', {
   billingMode: text('billing_mode').notNull().default('recibo'),
   qrOrderingEnabled: boolean('qr_ordering_enabled').notNull().default(true),
   qrAutoSend: boolean('qr_auto_send').notNull().default(false),
+  minMarginPct: numeric('min_margin_pct', { precision: 5, scale: 2 }).notNull().default('60'),
   paidUntil: text('paid_until'),
   planId: uuid('plan_id'),
   status: text('status').notNull().default('activo'),

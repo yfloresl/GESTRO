@@ -73,6 +73,10 @@ export class InventarioService {
         const mov = await tx.execute(sql`SELECT 1 FROM stock_movements WHERE ingredient_id = ${id} LIMIT 1`);
         if (mov.rows.length) throw new ConflictException('El insumo ya tiene movimientos: no se puede cambiar su unidad.');
       }
+      if (!d.activo) {
+        const enReceta = await tx.execute(sql`SELECT 1 FROM recipe_lines l JOIN recipes r ON r.id = l.recipe_id WHERE l.ingredient_id = ${id} AND r.active LIMIT 1`);
+        if (enReceta.rows.length) throw new ConflictException('Este insumo se usa en una receta activa: quítalo de la receta antes de desactivarlo.');
+      }
       try {
         await tx.update(ingredients).set({ name: d.nombre, category: d.categoria ?? null, unitCode: d.unidad, minStock: d.minimo.toFixed(3), perishable: d.perecedero, costMethod: d.metodoCosto, active: d.activo }).where(eq(ingredients.id, id));
       } catch (e) { if (esDuplicado(e)) throw new ConflictException('Ya existe un insumo con ese nombre.'); throw e; }

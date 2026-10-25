@@ -20,6 +20,7 @@
     "@nestjs/throttler": "^6.2.1",
     "@nestjs/websockets": "^10.4.22",
     "cookie-parser": "^1.4.7",
+    "decimal.js": "^10.6.0",
     "drizzle-orm": "^0.36.1",
     "pg": "^8.13.1",
     "reflect-metadata": "^0.2.2",
