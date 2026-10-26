@@ -34,7 +34,7 @@ export function Personal() {
   return (
     <div className="flex flex-col gap-space-lg">
       <header>
-        <h1 className="font-headline-lg text-headline-lg text-primary tracking-tight">Personal &amp; Turnos</h1>
+        <h1 className="font-headline-lg text-headline-lg text-primary tracking-tight">Personal</h1>
         <p className="font-body-md text-body-md text-on-surface-variant">Da de alta a tu equipo con su rol. Cada persona entra con su propio Kyros ID usando un código de un solo uso.</p>
       </header>
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}

@@ -59,5 +59,12 @@ La clave **no va en variables de entorno**: se carga desde la consola de platafo
 - Qué recibe Claude: **solo agregados** (indicadores, totales, clases de menú); ni nombres ni teléfonos de personas. El texto del FODA se **valida contra los números** antes de publicarse. El asistente solo usa herramientas de **lectura** con la sucursal fijada por RLS; no hay SQL libre ni escritura.
 - Pendiente: el envío del FODA mensual por correo (llega al panel; el correo espera a que se configure SMTP).
 
-## 7. Pendiente de integración con el Portal
+## 7. Datos de ejemplo para presentar el sistema
+Para ver el sistema «lleno» (estadísticas, proyección, FODA, contabilidad, alertas), en una sucursal **nueva y vacía**:
+```bash
+node dist/src/scripts/crear-datos-demo.js --sucursal <slug> --confirmo
+```
+Carga 15 platos con receta, 19 insumos con stock, 2 proveedores, 8 mesas, 60 días de ventas (≈1 300 pedidos) con su consumo y costo, mermas, asientos contables, una promoción y un evento. Se niega si la sucursal ya tiene pedidos, platos, insumos o asientos. **No usar en un restaurante real.** No hay forma de «descargarlo»: para empezar de cero, crear otra sucursal.
+
+## 8. Pendiente de integración con el Portal
 `portal/summary`, `portal/account` y `/entrar?destino=` ya existen en GESTRO. Falta que Identidad cree el client y la audiencia (sección 2) y agregue la tarjeta al Portal. Quedan para cuando existan en el ecosistema: el registro central de accesos en Kyros ID (su diseño aún no existe) y `?rol=` en `/entrar` (hoy la persona cambia de sucursal desde el selector de la cabecera; sus roles son por sucursal).
