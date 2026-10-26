@@ -13,6 +13,7 @@ import { Caja, ReciboPagina } from './paginas/Caja';
 import { Cocina } from './paginas/Cocina';
 import { Compras } from './paginas/Compras';
 import { Cobranzas } from './paginas/Cobranzas';
+import { Alertas } from './paginas/Alertas';
 import { Contabilidad } from './paginas/Contabilidad';
 import { Estadisticas } from './paginas/Estadisticas';
 import { Promociones } from './paginas/Promociones';
@@ -78,6 +79,7 @@ createRoot(document.getElementById('raiz')!).render(
               <Route path="turnos" element={<Turnos />} />
               <Route path="promociones" element={<Promociones />} />
               <Route path="estadisticas" element={<Estadisticas />} />
+              <Route path="alertas" element={<Alertas />} />
               <Route path="recetas" element={<Recetas />} />
               <Route path="plan-del-dia" element={<PlanDelDia />} />
               <Route path="caja" element={<Caja />} />

@@ -37,7 +37,9 @@ Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estánd
 
 **F5a (hecho): estadísticas y proyecciones.** Indicadores por día precalculados en `kpi_daily` (ingresos, pedidos, ticket, costo de alimentos desde el consumo valorizado, merma, minutos de preparación; trabajo nocturno y a pedido). Resumen con variación contra el período anterior, ventas por hora, día, plato, categoría, mesero, canal y tipo, ingeniería de menú (estrella, caballo, puzzle, perro) con margen real de las recetas, proyección a 4 semanas con banda del 80 % y confianza (con menos de 8 semanas de historia dice «datos insuficientes»), escenarios «¿y si subo 5 %?» y comparación de sucursales.
 
-Siguiente: **F5b alertas**, **F5c FODA y asistente con IA** (clave de Claude cifrada). Ver `docs/ROADMAP.md`.
+**F5b (hecho): alertas con explicación.** Se revisan cada 3 minutos y a pedido: demora de cocina (contra 1,5 × el tiempo de preparación del plato más lento), merma de la semana contra las ventas (límite 5 %), platos bajo el margen mínimo y caída de ventas contra lo habitual del mismo día. Cada una dice qué pasa, con qué números y contra qué límite, y muestra los datos que la sustentan; las que dependen del estado actual se resuelven solas al corregirse, no se duplican y las graves llegan por tiempo real y Web Push a dueño y administración.
+
+Siguiente: **F5c FODA y asistente con IA** (clave de Claude cifrada). Ver `docs/ROADMAP.md`.
 
 ## Desarrollo local
 

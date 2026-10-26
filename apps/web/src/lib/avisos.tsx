@@ -71,6 +71,7 @@ export function AvisosProvider({ children }: { children: ReactNode }) {
     const refrescarReservas = () => { void qc.invalidateQueries({ queryKey: ['reservas'] }); };
     socket.on('reserva.nueva', () => { refrescarReservas(); if (sonidoRef.current) pitar(false); });
     socket.on('reserva.cambio', refrescarReservas);
+    socket.on('alerta.nueva', () => { void qc.invalidateQueries({ queryKey: ['alertas'] }); if (sonidoRef.current) pitar(true); });
     socket.on('pedido.qr', aviso);
     return () => { socket.close(); };
   }, [usuario, sucursalId, qc]);

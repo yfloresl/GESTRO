@@ -35,6 +35,7 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
     { ruta: 'promociones', icono: 'sell', texto: 'Promociones', roles: ['owner', 'admin', 'contador', 'area_manager', 'cajero'] },
     { ruta: 'cobranzas', icono: 'request_quote', texto: 'Cuentas por cobrar', roles: ['owner', 'admin', 'cobranzas', 'cajero', 'contador'] },
     { ruta: 'contabilidad', icono: 'account_balance_wallet', texto: 'Contabilidad & Libros', roles: ['owner', 'admin', 'contador'] },
+    { ruta: 'alertas', icono: 'notifications_active', texto: 'Alertas', roles: ['owner', 'admin', 'contador', 'area_manager'] },
     { ruta: 'estadisticas', icono: 'query_stats', texto: 'Estadísticas & BI', roles: ['owner', 'admin', 'contador', 'area_manager'] },
     { ruta: 'configuracion', icono: 'settings', texto: 'Configuración', roles: ['owner', 'admin'] },
   ] },
