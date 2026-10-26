@@ -251,13 +251,15 @@ function Cobrar({ pedido, cerrar, cobrado }: { pedido: Pedido; cerrar(): void; c
   const caja = useQuery({ queryKey: ['caja', sucursalId], queryFn: () => api.get<{ activa: boolean }>('/caja/actual', sucursalId!), enabled: !!sucursalId });
   const aj = useQuery({ queryKey: ['ajustes', sucursalId], queryFn: () => api.get<{ modoDeCobro: string }>('/sucursal/ajustes', sucursalId!).catch(() => ({ modoDeCobro: 'recibo' })), enabled: !!sucursalId });
   const [metodo, setMetodo] = useState<(typeof METODOS)[number][0]>('efectivo');
-  const [doc, setDoc] = useState<'recibo' | 'ninguno'>('recibo'); const [cliente, setCliente] = useState('');
+  const [doc, setDoc] = useState<'recibo' | 'ninguno'>('recibo'); const [cliente, setCliente] = useState(''); const [telefono, setTelefono] = useState(''); const [dias, setDias] = useState('30');
   const [error, setError] = useState<string | null>(null); const [ocupado, setOcupado] = useState(false);
   const soloContabilizar = aj.data?.modoDeCobro === 'ninguno';
   const cobrar = async () => {
-    setError(null); setOcupado(true);
+    setError(null);
+    if (metodo === 'credito' && !cliente.trim()) { setError('Escribe el nombre del cliente: la venta a crédito queda como cuenta por cobrar.'); return; }
+    setOcupado(true);
     try {
-      const r = await api.post<{ recibo: number | null }>(`/pedidos/${pedido.id}/cobrar`, { metodo, documento: soloContabilizar ? 'ninguno' : doc, nombreCliente: cliente.trim() || undefined }, sucursalId!);
+      const r = await api.post<{ recibo: number | null }>(`/pedidos/${pedido.id}/cobrar`, { metodo, documento: soloContabilizar ? 'ninguno' : doc, nombreCliente: cliente.trim() || undefined, ...(metodo === 'credito' ? { telefonoCliente: telefono.trim() || undefined, diasCredito: Math.max(0, Math.min(365, Math.round(Number(dias) || 0))) } : {}) }, sucursalId!);
       cobrado(); if (r.recibo) { /* el recibo queda disponible desde el pedido */ }
     } catch (e) { setError(mensajeDeError(e)); setOcupado(false); }
   };
@@ -274,7 +276,8 @@ function Cobrar({ pedido, cerrar, cobrado }: { pedido: Pedido; cerrar(): void; c
         </div>
         <p className="font-body-sm text-on-surface-variant">La factura electrónica del SIN estará disponible cuando se conecte el Servicio Fiscal.</p>
       </fieldset>
-      <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Nombre en el recibo (opcional)</span><input value={cliente} onChange={(e) => setCliente(e.target.value)} className={clases.input} /></label>
+      <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>{metodo === 'credito' ? 'Nombre del cliente (obligatorio)' : 'Nombre en el recibo (opcional)'}</span><input value={cliente} onChange={(e) => setCliente(e.target.value)} required={metodo === 'credito'} className={clases.input} /></label>
+      {metodo === 'credito' && <div className="grid grid-cols-2 gap-space-sm"><label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Teléfono (opcional)</span><input value={telefono} onChange={(e) => setTelefono(e.target.value)} inputMode="tel" className={clases.input} /></label><label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Plazo (días)</span><input value={dias} onChange={(e) => setDias(e.target.value)} inputMode="numeric" className={clases.input} /></label></div>}
       {error && <p role="alert" className="text-error">{error}</p>}
       <div className="grid grid-cols-2 gap-space-sm"><button type="button" onClick={cerrar} className="h-14 rounded-lg border border-outline-variant font-semibold">Cancelar</button><button type="button" disabled={ocupado || caja.data?.activa === false} onClick={cobrar} className={clases.primario}>{ocupado ? 'Cobrando…' : 'Confirmar cobro'}</button></div>
     </Hoja>

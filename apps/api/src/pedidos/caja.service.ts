@@ -15,6 +15,8 @@ export const Cobro = z.object({
   metodo: z.enum(['efectivo', 'qr', 'tarjeta', 'transferencia', 'credito']),
   documento: z.enum(['recibo', 'ninguno', 'factura']).default('recibo'),
   nombreCliente: z.string().trim().max(120).optional(),
+  telefonoCliente: z.string().trim().max(30).optional(),
+  diasCredito: z.number().int().min(0).max(365).default(30),
 }).strict();
 export const AjustesSucursal = z.object({
   pedidosPorQr: z.boolean().optional(), qrSinConfirmacion: z.boolean().optional(), modoDeCobro: z.enum(['recibo', 'ninguno']).optional(),
@@ -90,6 +92,8 @@ export class CajaService {
       const sinEnviar = await tx.execute(sql`SELECT count(*)::int AS n FROM order_items WHERE order_id = ${id} AND voided_at IS NULL AND status = 'borrador'`);
       if ((sinEnviar.rows[0] as { n: number }).n > 0) throw new ConflictException('Hay platos sin enviar o sin confirmar. Envíalos o quítalos antes de cobrar.');
       if (!(Number(o.total) > 0)) throw new BadRequestException('El pedido no tiene platos para cobrar.');
+      const cliente = d.nombreCliente ?? o.customer_name;
+      if (d.metodo === 'credito' && !cliente) throw new BadRequestException('Una venta a crédito necesita el nombre del cliente.');
       const [p] = await tx.insert(salesPayments).values({ restaurantId: t.restaurantId, orderId: id, cashSessionId: caja.id, method: d.metodo, amount: o.total, document: d.documento, customerName: d.nombreCliente ?? o.customer_name }).returning();
       let recibo: number | null = null;
       if (d.documento === 'recibo') {
@@ -99,6 +103,10 @@ export class CajaService {
         await tx.update(salesPayments).set({ receiptNumber: recibo }).where(eq(salesPayments.id, p.id));
       }
       await tx.update(orders).set({ status: 'cobrado', closedAt: sql`now()` as unknown as Date }).where(eq(orders.id, id));
+      if (d.metodo === 'credito') {
+        await tx.execute(sql`INSERT INTO payables_receivables (restaurant_id, direction, counterparty, customer_phone, amount, due_on, sales_payment_id, document_number)
+          VALUES (${t.restaurantId}, 'por_cobrar', ${cliente}, ${d.telefonoCliente ?? null}, ${o.total}::numeric, (now() AT TIME ZONE 'America/La_Paz')::date + ${d.diasCredito}::int, ${p.id}, ${recibo ? String(recibo) : null})`);
+      }
       await this.conta.ventaCobrada(tx, t, userId, { pagoId: p.id, total: o.total, metodo: d.metodo, documento: d.documento });
       await auditar(tx, t.restaurantId, userId, 'venta.cobrada', 'sales_payment', p.id, { metodo: d.metodo, documento: d.documento, monto: o.total, recibo });
       return { pagoId: p.id, monto: o.total, recibo, documento: d.documento };
@@ -112,6 +120,11 @@ export class CajaService {
     return this.db.run(t, async (tx) => {
       const [p] = await tx.update(salesPayments).set({ voidedAt: sql`now()` as unknown as Date, voidedBy: userId, voidReason: motivo }).where(and(eq(salesPayments.id, id), eq(salesPayments.restaurantId, t.restaurantId), isNull(salesPayments.voidedAt))).returning();
       if (!p) throw new NotFoundException('Pago no encontrado o ya anulado.');
+      if (p.method === 'credito') {
+        const [cta] = (await tx.execute(sql`SELECT paid::text AS paid FROM payables_receivables WHERE sales_payment_id = ${id} FOR UPDATE`)).rows as { paid: string }[];
+        if (cta && Number(cta.paid) > 0) throw new ConflictException('Esta venta a crédito ya tiene cobros: no se puede anular. Registra una devolución con un asiento manual.');
+        await tx.execute(sql`UPDATE payables_receivables SET voided_at = now() WHERE sales_payment_id = ${id}`);
+      }
       await tx.update(orders).set({ status: 'anulado' }).where(eq(orders.id, p.orderId));
       await this.conta.ventaAnulada(tx, t, userId, id, motivo);
       await auditar(tx, t.restaurantId, userId, 'venta.anulada', 'sales_payment', id, { motivo });

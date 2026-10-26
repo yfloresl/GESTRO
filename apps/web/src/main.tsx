@@ -12,6 +12,7 @@ import { Salon } from './paginas/Salon';
 import { Caja, ReciboPagina } from './paginas/Caja';
 import { Cocina } from './paginas/Cocina';
 import { Compras } from './paginas/Compras';
+import { Cobranzas } from './paginas/Cobranzas';
 import { Contabilidad } from './paginas/Contabilidad';
 import { Configuracion } from './paginas/Configuracion';
 import { Inventario } from './paginas/Inventario';
@@ -34,6 +35,7 @@ function Inicio() {
   if (roles.includes('cocina')) return <Navigate to="/cocina" replace />;
   if (roles.includes('cajero')) return <Navigate to="caja" replace />;
   if (roles.includes('almacen')) return <Navigate to="inventario" replace />;
+  if (roles.includes('cobranzas')) return <Navigate to="cobranzas" replace />;
   return <Navigate to="salon" replace />;
 }
 import './estilos.css';
@@ -63,6 +65,7 @@ createRoot(document.getElementById('raiz')!).render(
               <Route path="inventario" element={<Inventario />} />
               <Route path="compras" element={<Compras />} />
               <Route path="contabilidad" element={<Contabilidad />} />
+              <Route path="cobranzas" element={<Cobranzas />} />
               <Route path="recetas" element={<Recetas />} />
               <Route path="plan-del-dia" element={<PlanDelDia />} />
               <Route path="caja" element={<Caja />} />

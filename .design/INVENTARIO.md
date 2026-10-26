@@ -32,3 +32,5 @@ Estado: `usado` entra a código · `derivado` se construyó a partir de tokens/p
 | Consola de plataforma: pagos con comprobante, sucursales, planes, promociones, cobro | 6.2 | usado | Sin gráficos de ingresos ni métricas de uso (llegan con estadísticas) |
 
 | Contabilidad & Libros: resumen, asientos (lista, detalle, nuevo), plan de cuentas, reportes, períodos e impuestos | 5.8 | derivado | Hecha con los patrones de Compras (pestañas, paneles laterales, tablas); sin gráficos todavía |
+| Cuentas por cobrar: resumen, lista con vencimiento y cobro total o parcial | 5.8 | derivado | Mismo patrón que «Por pagar» de Compras; panel lateral para el cobro |
+| Cobro con método Crédito: nombre, teléfono y plazo | 4.1 | derivado | Campos extra en la hoja de cobro existente |

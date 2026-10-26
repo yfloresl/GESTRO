@@ -20,21 +20,21 @@ async function escenario() {
 }
 type E = Awaited<ReturnType<typeof escenario>>;
 
-const hoy = () => new Date().toISOString().slice(0, 10);
+/** Fecha de hoy en La Paz (UTC-4): la misma que usa el servidor, aunque en UTC ya sea mañana. */
+const hoy = () => new Date(Date.now() - 4 * 3_600_000).toISOString().slice(0, 10);
 const asientos = async (e: E, q = '') => (await e.contador.get(`/contabilidad/asientos${q}`)).body as { id: string; numero: number | null; fecha: string; glosa: string; origen: string; publicado: boolean; esAnulacion: boolean; contrarrestado: boolean; total: string }[];
 const detalle = async (e: E, id: string) => (await e.contador.get(`/contabilidad/asientos/${id}`)).body as { lineas: { cuenta: string; debe: string; haber: string }[] };
 const saldoDe = async (e: E, codigo: string) => (await e.contador.get(`/contabilidad/reportes/mayor/${codigo}`)).body.saldoFinal as string;
 const comprarDirecto = (e: E, cant: number, costo: number) => e.dueno.post('/stock/movimientos', { tipo: 'compra', almacenId: e.cocina, insumoId: e.carne, cantidad: cant, costoUnitario: costo });
 
 /** Vende un pique macho y lo cobra en efectivo. */
-async function vender(e: E) {
+async function vender(e: E, cobro: object = {}) {
   const p = (await e.mesero.post('/pedidos', { tipo: 'mesa', mesaId: e.mesa })).body.pedido;
   await e.mesero.post(`/pedidos/${p.id}/items`, { items: [{ platoId: e.pique, cantidad: 1 }] });
   expect((await e.mesero.post(`/pedidos/${p.id}/enviar`)).status).toBe(200);
   await e.cajero.post('/caja/abrir', { montoInicial: 0 });
-  const c = await e.cajero.post(`/pedidos/${p.id}/cobrar`, { metodo: 'efectivo', documento: 'recibo' });
-  expect(c.status).toBe(200);
-  return { pedido: p.id as string, pagoId: c.body.pagoId as string };
+  const c = await e.cajero.post(`/pedidos/${p.id}/cobrar`, { metodo: 'efectivo', documento: 'recibo', ...cobro });
+  return { pedido: p.id as string, pagoId: c.body.pagoId as string, respuesta: c };
 }
 /** Receta del pique macho: 200 g de carne. */
 async function conReceta(e: E) {
@@ -192,7 +192,7 @@ describe('Asientos manuales e inmutabilidad', () => {
 describe('Cierre de períodos', () => {
   it('cerrado: no se publican asientos manuales ahí, los automáticos se corren al mes siguiente y solo el dueño reabre', async () => {
     const e = await escenario();
-    const ahora = new Date(); const anio = ahora.getFullYear(); const mes = ahora.getMonth() + 1;
+    const anio = Number(hoy().slice(0, 4)); const mes = Number(hoy().slice(5, 7));
     const borrador = (await e.contador.post('/contabilidad/asientos', { fecha: hoy(), glosa: 'Pago de alquiler', lineas: [{ cuenta: '5.2.03', debe: 500 }, { cuenta: '1.1.01', haber: 500 }] })).body.id;
     expect((await e.contador.post('/contabilidad/periodos/cerrar', { anio, mes })).status).toBe(409);
     await e.contador.post(`/contabilidad/asientos/${borrador}/publicar`);
@@ -208,5 +208,71 @@ describe('Cierre de períodos', () => {
     expect((await e.dueno.post('/contabilidad/periodos/reabrir', { anio, mes })).status).toBe(200);
     expect((await e.contador.post(`/contabilidad/asientos/${b2}/publicar`)).status).toBe(200);
     expect((await e.dueno.post('/contabilidad/periodos/reabrir', { anio, mes })).status).toBe(404);
+  });
+});
+
+describe('Cuentas por cobrar (ventas a crédito)', () => {
+  it('crédito pide nombre; nace la deuda con su vencimiento; los cobros parciales y totales se asientan; cobrada no se cobra otra vez', async () => {
+    const e = await escenario();
+    const sin = await vender(e, { metodo: 'credito' });
+    expect(sin.respuesta.status).toBe(400);
+    const v = await vender(e, { metodo: 'credito', nombreCliente: 'Hotel Los Tajibos', telefonoCliente: '70012345', diasCredito: 15 });
+    expect(v.respuesta.status).toBe(200);
+    const cuentas = (await e.contador.get('/por-cobrar')).body as { id: string; cliente: string; telefono: string; monto: string; saldo: string; dias: number; vencida: boolean }[];
+    expect(cuentas).toHaveLength(1);
+    expect(cuentas[0]).toMatchObject({ cliente: 'Hotel Los Tajibos', telefono: '70012345', monto: '130.00', saldo: '130.00', dias: 15, vencida: false });
+    expect(await saldoDe(e, '1.1.03')).toBe('130.00');                      // cuentas por cobrar (el intento fallido dejó el plato en la mesa y se cobra junto)
+    expect(await saldoDe(e, '1.1.01')).toBe('0.00');                        // no entró dinero a caja
+    const id = cuentas[0].id;
+    expect((await e.mesero.get('/por-cobrar')).status).toBe(403);
+    expect((await e.contador.post(`/por-cobrar/${id}/cobrar`, { monto: 500 })).status).toBe(400);
+    const p1 = await e.contador.post(`/por-cobrar/${id}/cobrar`, { monto: 25, via: 'caja' });
+    expect(p1.status).toBe(200); expect(p1.body.saldo).toBe('105.00');
+    const p2 = await e.contador.post(`/por-cobrar/${id}/cobrar`, { via: 'bancos' });
+    expect(p2.status).toBe(200); expect(p2.body.saldo).toBe('0.00');
+    expect((await e.contador.post(`/por-cobrar/${id}/cobrar`, {})).status).toBe(409);
+    expect(await saldoDe(e, '1.1.03')).toBe('0.00');
+    expect(await saldoDe(e, '1.1.01')).toBe('25.00');
+    expect(await saldoDe(e, '1.1.02')).toBe('105.00');
+    expect((await e.contador.get('/por-cobrar')).body).toHaveLength(0);
+    expect((await e.contador.get('/por-cobrar?todas=1')).body).toHaveLength(1);
+    expect((await asientos(e, '?origen=cobro_cuenta'))).toHaveLength(2);
+    expect((await e.contador.get('/contabilidad/reportes/comprobacion')).body.cuadra).toBe(true);
+  });
+
+  it('anular una venta a crédito sin cobros retira la deuda; con cobros no se puede anular', async () => {
+    const e = await escenario();
+    const a = await vender(e, { metodo: 'credito', nombreCliente: 'Cliente A' });
+    expect((await e.dueno.post(`/pagos/${a.pagoId}/anular`, { motivo: 'error de carga' })).status).toBe(200);
+    expect((await e.contador.get('/por-cobrar')).body).toHaveLength(0);
+    expect(await saldoDe(e, '1.1.03')).toBe('0.00');
+    const b = await vender(e, { metodo: 'credito', nombreCliente: 'Cliente B' });
+    const id = (await e.contador.get('/por-cobrar')).body[0].id;
+    await e.contador.post(`/por-cobrar/${id}/cobrar`, { monto: 10 });
+    expect((await e.dueno.post(`/pagos/${b.pagoId}/anular`, { motivo: 'error de carga' })).status).toBe(409);
+    expect(await saldoDe(e, '1.1.03')).toBe('55.00');
+  });
+});
+
+describe('Correlativo de asientos', () => {
+  it('borrar borradores no deja huecos: el número se asigna al publicar', async () => {
+    const e = await escenario();
+    const crear = async (glosa: string) => (await e.contador.post('/contabilidad/asientos', { fecha: hoy(), glosa, lineas: [{ cuenta: '5.2.03', debe: 10 }, { cuenta: '1.1.01', haber: 10 }] })).body.id as string;
+    const [a, b, c] = [await crear('Primero'), await crear('Segundo'), await crear('Tercero')];
+    expect((await e.contador.del(`/contabilidad/asientos/${b}`)).status).toBe(200);
+    expect((await e.contador.post(`/contabilidad/asientos/${c}/publicar`)).body.numero).toBe(1);
+    expect((await e.contador.post(`/contabilidad/asientos/${a}/publicar`)).body.numero).toBe(2);
+    const d = await crear('Cuarto');
+    expect((await e.contador.post(`/contabilidad/asientos/${d}/publicar`)).body.numero).toBe(3);
+    const numeros = (await asientos(e, '?estado=publicado')).map((x) => x.numero).sort();
+    expect(numeros).toEqual([1, 2, 3]);
+  });
+
+  it('un asiento que falla al publicar no consume número', async () => {
+    const e = await escenario();
+    const malo = (await e.contador.post('/contabilidad/asientos', { fecha: hoy(), glosa: 'Descuadrado', lineas: [{ cuenta: '5.2.03', debe: 10 }, { cuenta: '1.1.01', haber: 9 }] })).body.id;
+    expect((await e.contador.post(`/contabilidad/asientos/${malo}/publicar`)).status).toBe(400);
+    const bueno = (await e.contador.post('/contabilidad/asientos', { fecha: hoy(), glosa: 'Cuadrado', lineas: [{ cuenta: '5.2.03', debe: 10 }, { cuenta: '1.1.01', haber: 10 }] })).body.id;
+    expect((await e.contador.post(`/contabilidad/asientos/${bueno}/publicar`)).body.numero).toBe(1);
   });
 });

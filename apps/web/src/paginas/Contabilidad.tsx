@@ -13,7 +13,7 @@ interface Balance { activo: { codigo: string; nombre: string; saldo: string }[];
 interface Periodo { anio: number; mes: number; cerrado: boolean; cerradoEl: string | null; asientos: number }
 type Pestana = 'resumen' | 'asientos' | 'cuentas' | 'reportes' | 'periodos';
 
-const ORIGEN: Record<string, string> = { manual: 'Manual', venta: 'Venta', costo_consumo: 'Costo de ventas', compra: 'Compra', compra_directa: 'Compra al contado', pago_proveedor: 'Pago a proveedor', merma: 'Merma', ajuste_inventario: 'Ajuste de inventario' };
+const ORIGEN: Record<string, string> = { manual: 'Manual', venta: 'Venta', costo_consumo: 'Costo de ventas', compra: 'Compra', compra_directa: 'Compra al contado', pago_proveedor: 'Pago a proveedor', cobro_cuenta: 'Cobro de cuenta', merma: 'Merma', ajuste_inventario: 'Ajuste de inventario' };
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const num = (v: FormDataEntryValue | string | null) => Number(String(v ?? '').replace(',', '.'));
 const hoy = () => new Date().toISOString().slice(0, 10);

@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { auditar, esDuplicado } from '../comun/auditoria';
 import { Bd, Tenant, TenantDb } from '../database/database.module';
 import {
-  Asiento, ClaveCuenta, PLAN_DE_CUENTAS, TipoCuenta, ajusteDeInventario, compraAlContado, compraRecibida, costoDeVentas, merma, MetodoCobro,
+  Asiento, ClaveCuenta, PLAN_DE_CUENTAS, cobroDeCuenta, TipoCuenta, ajusteDeInventario, compraAlContado, compraRecibida, costoDeVentas, merma, MetodoCobro,
   pagoAProveedor, saldoNatural, validarPartidaDoble, ventaCobrada,
 } from './asientos';
 
@@ -222,6 +222,7 @@ export class ContabilidadService {
     await this.registrar(tx, t, por, compraRecibida({ total: p.total, conIva: p.conIva, ivaPct: p.conIva ? (await this.tasas(tx, t)).iva : 0 }), { source: 'compra', sourceId: p.reciboId });
   }
   pagoAProveedor(tx: Bd, t: Tenant, por: string, monto: string, via: 'caja' | 'bancos') { return this.registrar(tx, t, por, pagoAProveedor({ monto, via }), { source: 'pago_proveedor', sourceId: randomUUID() }); }
+  cobroDeCuenta(tx: Bd, t: Tenant, por: string, monto: string, via: 'caja' | 'bancos') { return this.registrar(tx, t, por, cobroDeCuenta({ monto, via }), { source: 'cobro_cuenta', sourceId: randomUUID() }); }
   compraAlContado(tx: Bd, t: Tenant, por: string, grupoId: string, total: string) { return this.registrar(tx, t, por, compraAlContado({ total }), { source: 'compra_directa', sourceId: grupoId }); }
 
   /** Valor del kardex de un grupo de movimientos (con signo: entradas suman, salidas restan). */

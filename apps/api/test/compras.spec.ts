@@ -78,7 +78,7 @@ describe('Órdenes de compra y recepción', () => {
     const costo = (await e.dueno.get('/insumos')).body.find((i: { id: string }) => i.id === e.carne);
     expect(costo.costoPromedio).toBe('20.8000'); // (6×20 + 4×22) ÷ 10
     expect((await recibir(e, id, [[e.carne, 1]])).status).toBe(409); // ya cerrada
-    const dif = await t.owner.query(`SELECT ordered_qty::text, pending_before::text, received_qty::text FROM purchase_receipt_lines ORDER BY received_qty ASC LIMIT 1`);
+    const dif = await t.owner.query(`SELECT ordered_qty::text, pending_before::text, received_qty::text FROM purchase_receipt_lines l JOIN purchase_receipts r ON r.id = l.receipt_id WHERE r.purchase_order_id = $1 ORDER BY received_qty ASC LIMIT 1`, [id]);
     expect(dif.rows[0]).toMatchObject({ ordered_qty: '10.000', pending_before: '4.000', received_qty: '4.000' });
   });
 
