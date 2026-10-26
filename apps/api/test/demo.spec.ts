@@ -1,3 +1,4 @@
+import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { SUB_PRUEBA_KYROS, SUB_PRUEBA_KYROS_ASISTENTE, SUB_PRUEBA_KYROS_TUTOR, esSubDeDemostracion } from '../src/demo/constantes';
 import { vaciarSucursal } from '../src/demo/limpiar';
@@ -148,8 +149,8 @@ describe('Vaciar una sucursal (función interna)', () => {
   it('respeta lo que se conserva y no toca otras sucursales', async () => {
     const a = await t.nuevoRestaurante(); const b = await t.nuevoRestaurante();
     await t.con(a.token, a.rid).post('/menu/platos', { nombre: 'Pique A', precio: 10 }); await t.con(b.token, b.rid).post('/menu/platos', { nombre: 'Pique B', precio: 10 });
-    const c = await (await import('pg')).Pool.prototype.connect.call(new (await import('pg')).Pool({ connectionString: process.env.BASE_DE_DATOS, max: 1 }));
-    try { await c.query('BEGIN'); await vaciarSucursal(c, a.rid, ['user_roles', 'staff_members', 'audit_log']); await c.query('COMMIT'); } finally { c.release(true); }
+    const pool = new Pool({ connectionString: process.env.BASE_DE_DATOS, max: 1 }); const c = await pool.connect();
+    try { await c.query('BEGIN'); await vaciarSucursal(c, a.rid, ['user_roles', 'staff_members', 'audit_log']); await c.query('COMMIT'); } finally { c.release(); await pool.end(); }
     expect(await cuenta('menu_items', a.rid)).toBe(0); expect(await cuenta('menu_items', b.rid)).toBe(1);
     expect(await cuenta('user_roles', a.rid)).toBeGreaterThan(0);
   });

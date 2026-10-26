@@ -9,6 +9,8 @@ import { SecretosService } from '../secretos/secretos.service';
 import type { Rol } from '@gestro/contracts';
 import { Actor, CONSOLIDADO_KEY, PeticionAutenticada, PUBLICO, Roles, ROLES_KEY } from './acceso';
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** Días de gracia después de paid_until antes de pasar a solo lectura (provisional: configurable luego). */
 export const DIAS_DE_GRACIA = 3;
 
@@ -41,13 +43,21 @@ export class JwtAuthGuard implements CanActivate {
 /** X-Restaurant-Id debe estar entre las sucursales del token. Fija el contexto de sucursal. */
 @Injectable()
 export class RestaurantScopeGuard implements CanActivate {
-  constructor(@Inject(Reflector) private readonly reflector: Reflector) {}
+  constructor(@Inject(Reflector) private readonly reflector: Reflector, @Inject(BD) private readonly bd: Bd) {}
 
-  canActivate(ctx: ExecutionContext): boolean {
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest<PeticionAutenticada>();
     const rid = req.headers['x-restaurant-id'];
     const actor = req.actor;
-    if (!actor || typeof rid !== 'string' || !actor.rids.includes(rid)) throw new ForbiddenException('Sucursal no autorizada');
+    if (!actor || typeof rid !== 'string') throw new ForbiddenException('Sucursal no autorizada');
+    // El equipo de plataforma puede entrar a cualquier sucursal en MODO SOPORTE: ve todo (como dueño) pero no escribe nada.
+    const soporte = !actor.rids.includes(rid) && actor.plat && UUID.test(rid);
+    if (!soporte && !actor.rids.includes(rid)) throw new ForbiddenException('Sucursal no autorizada');
+    if (soporte) {
+      const [r] = await this.bd.select({ id: restaurants.id }).from(restaurants).where(eq(restaurants.id, rid));
+      if (!r) throw new ForbiddenException('Sucursal no autorizada');
+      req.soporte = true; req.tenant = { restaurantId: rid, restaurantIds: [] }; return true;
+    }
     const consolidado = this.reflector.get<boolean>(CONSOLIDADO_KEY, ctx.getHandler()) === true;
     // Por defecto la consulta ve UNA sola sucursal; solo @Consolidated() recibe todas las del token.
     req.tenant = { restaurantId: rid, restaurantIds: consolidado ? actor.rids : [] };
@@ -66,7 +76,7 @@ export class RolesGuard implements CanActivate {
     const { actor, tenant } = req;
     if (!actor || !tenant) throw new ForbiddenException('Sin permiso');
     if (requeridos.includes('plataforma') && actor.plat) return true;
-    const propios = actor.roles[tenant.restaurantId] ?? [];
+    const propios = req.soporte ? ['owner'] : (actor.roles[tenant.restaurantId] ?? []);
     if (!propios.some((r) => requeridos.includes(r))) throw new ForbiddenException('Sin permiso en esta sucursal');
     return true;
   }
@@ -102,6 +112,7 @@ export class DemoSoloLecturaGuard implements CanActivate {
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest<PeticionAutenticada>();
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method) || !req.tenant) return true;
+    if (req.soporte) throw new ForbiddenException('Modo de soporte: solo lectura. El equipo de plataforma puede mirar la sucursal, no modificarla.');   // antes de cualquier excepción
     if (this.reflector.get<boolean>(PERMITE_EN_DEMO, ctx.getHandler()) === true) return true;
     const [r] = await this.bd.select({ demo: restaurants.isDemo }).from(restaurants).where(eq(restaurants.id, req.tenant.restaurantId));
     if (r?.demo) throw new ForbiddenException('Esta cuenta es solo de lectura: puedes recorrer todo, pero no modificar los datos de muestra.');

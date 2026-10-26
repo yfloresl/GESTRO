@@ -22,7 +22,8 @@ export interface Actor {
   roles: Record<string, Rol[]>;
 }
 
-export type PeticionAutenticada = Request & { actor?: Actor; tenant?: Tenant };
+/** `soporte`: el equipo de plataforma entró a una sucursal que no es suya (solo lectura, con auditoría de ingreso). */
+export type PeticionAutenticada = Request & { actor?: Actor; tenant?: Tenant; soporte?: boolean };
 
 export const ActorActual = createParamDecorator((_d, ctx: ExecutionContext): Actor => ctx.switchToHttp().getRequest<PeticionAutenticada>().actor!);
 export const TenantActual = createParamDecorator((_d, ctx: ExecutionContext): Tenant => ctx.switchToHttp().getRequest<PeticionAutenticada>().tenant!);

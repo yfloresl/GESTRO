@@ -79,5 +79,9 @@ Identidad crea tres usuarios de Kyros ID con `sub` fijo y una contraseña públi
 - **Solo lectura**: toda escritura devuelve 403 (también la ruta de pagos de suscripción), y la sucursal no recibe pedidos por QR, llamados ni reservas públicas. La única escritura permitida es **«Restablecer mis datos de muestra»** (solo el dueño, máximo una vez cada 5 minutos): borra y recarga SOLO esa sucursal y queda en `audit_log` (`demo.restablecida`). Exige que el usuario de la base sea superusuario (en el compose lo es).
 - Nada de lo que se ve dice «demo»; los datos nunca se mezclan con restaurantes reales (hay una sola sucursal de muestra, marcada `is_demo`).
 
-## 9. Pendiente de integración con el Portal
+## 9. Modo soporte (equipo de plataforma)
+Las secciones de GESTRO son **por sucursal**: un superadmin de plataforma sin sucursal propia solo ve «Panel» y «Plataforma Kyros». Para ayudar a una sucursal: Plataforma → *Sucursales* → **Entrar en modo soporte**. Ve todas las secciones como el dueño, pero el servidor **no deja escribir nada** (403) y cada ingreso queda en la auditoría de esa sucursal (`soporte.ingreso`). El banner superior permite salir. No ve otras sucursales mientras tanto.
+Regla global «superadmin de Kyros ID en todos los sistemas» (rol `kyros-platform-admin` + 2º factor): **todavía no** implementada en GESTRO, a la espera del diseño común del ecosistema. Hoy el superadmin se da de alta una vez con un código de un solo uso (§3) y GESTRO no lee claims de rol ni `acr` del emisor.
+
+## 10. Pendiente de integración con el Portal
 `portal/summary`, `portal/account` y `/entrar?destino=` ya existen en GESTRO. Falta que Identidad cree el client y la audiencia (sección 2) y agregue la tarjeta al Portal. Quedan para cuando existan en el ecosistema: el registro central de accesos en Kyros ID (su diseño aún no existe) y `?rol=` en `/entrar` (hoy la persona cambia de sucursal desde el selector de la cabecera; sus roles son por sucursal).

@@ -45,6 +45,7 @@ import { FodaService } from './ia/foda.service';
 import { IaService } from './ia/ia.service';
 import { DemoController, PlataformaDemoController } from './demo/demo.controller';
 import { DemoService } from './demo/demo.service';
+import { SoporteController } from './demo/soporte.controller';
 import { ConsumoService } from './recetas/consumo.service';
 import { PersonalController } from './personal/personal.controller';
 import { PersonalService } from './personal/personal.service';
@@ -74,7 +75,7 @@ class NucleoModule {}
     // En las pruebas (Vitest) se desactivan para que no se bloqueen entre sí.
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 120 }], skipIf: () => process.env.VITEST !== undefined }),
   ],
-  controllers: [SaludController, AuthController, KyrosIdController, SucursalController, PersonalController, MenuController, MenuPublicoController, SalonController, QrController, SolicitudesController, PushController, PedidosController, CajaController, SuscripcionController, PlataformaController, PortalController, InventarioController, RecetasController, ComprasController, ContabilidadController, CobranzasController, ReservasController, ReservasPublicasController, CateringController, TurnosController, PromocionesController, EstadisticasController, AlertasController, FodaController, AsistenteController, PlataformaIaController, DemoController, PlataformaDemoController],
+  controllers: [SaludController, AuthController, KyrosIdController, SucursalController, PersonalController, MenuController, MenuPublicoController, SalonController, QrController, SolicitudesController, PushController, PedidosController, CajaController, SuscripcionController, PlataformaController, PortalController, InventarioController, RecetasController, ComprasController, ContabilidadController, CobranzasController, ReservasController, ReservasPublicasController, CateringController, TurnosController, PromocionesController, EstadisticasController, AlertasController, FodaController, AsistenteController, PlataformaIaController, DemoController, PlataformaDemoController, SoporteController],
   providers: [
     SesionService, KyrosIdService, JwtAuthGuard, StorageService, PersonalService, MenuService, SalonService, SolicitudesService, TableTokenGuard, EventosGateway, PushService, PedidosService, CajaService, SuscripcionService, InventarioService, RecetasService, ConsumoService, ComprasService, ContabilidadService, CobranzasService, ReservasService, CateringService, TurnosService, PromocionesService, EstadisticasService, AlertasService, IaService, FodaService, AsistenteService, DemoService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },

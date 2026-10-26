@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { clases } from '../componentes/Marca';
-import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
+import { api, mensajeDeError, useRolesActivos, useSesion } from '../lib/sesion';
 import { bs } from '../lib/tipos';
 import { reducirImagen } from '../lib/imagen';
 import { PlataformaDemo } from './PlataformaDemo';
@@ -74,6 +74,8 @@ function Pagos() {
 
 function Sucursales() {
   const qc = useQueryClient();
+  const { entrarSoporte } = useSesion(); const nav = useNavigate();
+  const entrar = async (id: string, nombre: string) => { setError(null); try { await api.post('/plataforma/soporte/entrar', { sucursalId: id }); entrarSoporte(id, nombre); nav('/app/panel'); } catch (e) { setError(mensajeDeError(e)); } };
   const q = useQuery({ queryKey: ['plat-sucursales'], queryFn: () => api.get<SucP[]>('/plataforma/sucursales') });
   const planes = useQuery({ queryKey: ['plat-planes'], queryFn: () => api.get<PlanP[]>('/plataforma/planes') });
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +92,7 @@ function Sucursales() {
           <thead><tr className="text-left text-on-surface-variant font-label-sm uppercase"><th className="p-2">Sucursal</th><th className="p-2">Cuenta</th><th className="p-2">Plan</th><th className="p-2">Habilitada hasta</th><th className="p-2">Estado</th><th className="p-2" /></tr></thead>
           <tbody>{(q.data ?? []).map((s) => (
             <tr key={s.id} className="border-t border-outline-variant align-middle">
-              <td className="p-2 font-semibold">{s.nombre}</td><td className="p-2">{s.cuenta}</td>
+              <td className="p-2 font-semibold">{s.nombre}<button type="button" onClick={() => entrar(s.id, s.nombre)} className="block mt-1 h-12 px-space-sm rounded-lg border border-outline-variant text-primary font-label-md">Entrar en modo soporte</button></td><td className="p-2">{s.cuenta}</td>
               <td className="p-2"><select aria-label={`Plan de ${s.nombre}`} value={s.planId ?? ''} onChange={(e) => ajustar(s.id, { planId: e.target.value || null }, `Cambiar el plan de ${s.nombre}.`)} className="h-12 rounded-lg border border-outline-variant bg-surface-container-lowest px-space-sm"><option value="">Sin plan</option>{(planes.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.nombre} · {bs(p.precioMensual)}</option>)}</select></td>
               <td className="p-2 font-label-md">{s.habilitadaHasta ?? '—'}</td>
               <td className={`p-2 font-semibold ${color[s.suscripcion]}`}>{s.estado !== 'activo' ? s.estado : s.suscripcion.replace('_', ' ')}</td>
