@@ -7,7 +7,7 @@ import { bs, ETIQUETA_ESTADO, ETIQUETA_TIPO, minutosDesde, Pedido } from '../lib
 
 interface Mesa { id: string; numero: string; asientos: number; activa: boolean }
 interface Categoria { id: string; nombre: string }
-interface Plato { id: string; categoriaId: string | null; nombre: string; precio: string; disponible: boolean; descripcion: string | null }
+interface Plato { id: string; categoriaId: string | null; nombre: string; precio: string; precioVigente?: string; promocion?: string | null; disponible: boolean; descripcion: string | null }
 
 const COLOR: Record<string, string> = { borrador: 'bg-surface-container text-on-surface-variant', enviado: 'bg-primary-fixed text-on-primary-fixed-variant', en_preparacion: 'bg-secondary-fixed text-on-secondary-fixed-variant', listo: 'bg-tertiary-fixed text-on-tertiary-fixed-variant', servido: 'bg-surface-container text-on-surface-variant', cobrado: 'bg-surface-container-high text-on-surface-variant', anulado: 'bg-error-container text-on-error-container', por_confirmar: 'bg-secondary-fixed text-on-secondary-fixed-variant' };
 const Chip = ({ estado }: { estado: string }) => <span className={`px-2 py-0.5 rounded-full font-label-sm text-label-sm uppercase whitespace-nowrap ${COLOR[estado] ?? COLOR.borrador}`}>{ETIQUETA_ESTADO[estado] ?? estado}</span>;
@@ -141,7 +141,7 @@ function PedidoDetalle({ id, volver }: { id: string; volver(): void }) {
                 <li key={x.id} className="relative">
                   <button type="button" disabled={!x.disponible || accion.isPending} onClick={() => agregar(x)} className={`w-full min-h-24 text-left rounded-xl border p-space-sm flex flex-col justify-between gap-1 ${x.disponible ? 'bg-surface-container-lowest border-outline-variant hover:border-primary active:bg-primary-fixed' : 'bg-error-container/40 border-error-container text-on-surface-variant'}`}>
                     <span className={`font-body-md font-semibold leading-tight pr-8 ${x.disponible ? "" : "line-through"}`}>{x.nombre}</span>
-                    <span className="font-label-md text-label-md text-primary">{x.disponible ? bs(x.precio) : 'AGOTADO'}</span>
+                    <span className="font-label-md text-label-md text-primary">{!x.disponible ? 'AGOTADO' : x.precioVigente && Number(x.precioVigente) < Number(x.precio) ? <><s className="text-on-surface-variant font-normal mr-1">{bs(x.precio)}</s>{bs(x.precioVigente)}</> : bs(x.precio)}</span>
                   </button>
                   {x.disponible && <button type="button" aria-label={`Agregar ${x.nombre} con nota`} onClick={() => setNota({ plato: x })} className="absolute top-1 right-1 w-9 h-9 rounded-full text-on-surface-variant hover:bg-surface-container"><span className="material-symbols-outlined text-[20px]" aria-hidden="true">edit_note</span></button>}
                 </li>

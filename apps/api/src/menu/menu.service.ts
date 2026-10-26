@@ -1,3 +1,4 @@
+import { PromocionesService } from '../promociones/promociones.service';
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -29,10 +30,11 @@ export class MenuService {
     @Inject(TenantDb) private readonly db: TenantDb,
     @Inject(BD) private readonly bd: Bd,
     @Inject(StorageService) private readonly storage: StorageService,
+    @Inject(PromocionesService) private readonly promos: PromocionesService,
   ) {}
 
-  private vista(i: typeof menuItems.$inferSelect) {
-    return { id: i.id, categoriaId: i.categoryId, nombre: i.name, descripcion: i.description, precio: i.price, alergenos: i.allergens, minutosPreparacion: i.prepMinutes, disponible: i.available, tieneFoto: !!i.photoKey };
+  private vista(i: typeof menuItems.$inferSelect, promo?: { precio: string; promo: string | null }) {
+    return { id: i.id, categoriaId: i.categoryId, nombre: i.name, descripcion: i.description, precio: i.price, precioVigente: promo?.precio ?? i.price, promocion: promo?.promo ?? null, alergenos: i.allergens, minutosPreparacion: i.prepMinutes, disponible: i.available, tieneFoto: !!i.photoKey };
   }
 
   categorias(t: Tenant) {
@@ -68,7 +70,11 @@ export class MenuService {
   }
 
   platos(t: Tenant) {
-    return this.db.run(t, (tx) => tx.select().from(menuItems).where(eq(menuItems.restaurantId, t.restaurantId)).orderBy(asc(menuItems.sortOrder), asc(menuItems.name)).then((r) => r.map((i) => this.vista(i))));
+    return this.db.run(t, async (tx) => {
+      const r = await tx.select().from(menuItems).where(eq(menuItems.restaurantId, t.restaurantId)).orderBy(asc(menuItems.sortOrder), asc(menuItems.name));
+      const precios = await this.promos.precios(tx, t, r.map((i) => ({ id: i.id, precio: i.price })));
+      return r.map((i) => this.vista(i, precios.get(i.id)));
+    });
   }
 
   private async categoriaValida(tx: Bd, t: Tenant, id: string | null | undefined) {
@@ -139,8 +145,9 @@ export class MenuService {
     return this.db.run(t, async (tx) => {
       const cats = await tx.select().from(menuCategories).where(eq(menuCategories.restaurantId, r.id)).orderBy(asc(menuCategories.sortOrder), asc(menuCategories.name));
       const items = await tx.select().from(menuItems).where(eq(menuItems.restaurantId, r.id)).orderBy(asc(menuItems.sortOrder), asc(menuItems.name));
+      const precios = await this.promos.precios(tx, t, items.map((i) => ({ id: i.id, precio: i.price })));
       const plato = (i: typeof items[number]) => ({
-        id: i.id, nombre: i.name, descripcion: i.description, precio: i.price, alergenos: i.allergens, disponible: i.available,
+        id: i.id, nombre: i.name, descripcion: i.description, precio: i.price, precioVigente: precios.get(i.id)!.precio, promocion: precios.get(i.id)!.promo, alergenos: i.allergens, disponible: i.available,
         minutosPreparacion: i.prepMinutes, foto: i.photoKey ? `/api/v1/public/${slug}/foto/${i.id}` : null,
       });
       return {

@@ -1,3 +1,4 @@
+import { PromocionesService } from '../promociones/promociones.service';
 import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { and, asc, desc, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -46,6 +47,7 @@ export class PedidosService {
     @Inject(EventosGateway) private readonly eventos: EventosGateway,
     @Inject(PushService) private readonly push: PushService,
     @Inject(ConsumoService) private readonly consumo: ConsumoService,
+    @Inject(PromocionesService) private readonly promos: PromocionesService,
   ) {}
 
   private readonly log = new Logger('Pedidos');
@@ -131,8 +133,10 @@ export class PedidosService {
         if (!p.available) throw new ConflictException(`«${p.name}» está agotado hoy.`);
       }
       const estado = autoEnviar ? 'enviado' : 'borrador';
+      // El precio con promoción lo decide el servidor en este momento; se guarda junto al precio de carta.
+      const precios = await this.promos.precios(tx, t, platos.map((p) => ({ id: p.id, precio: p.price })));
       const nuevos = await tx.insert(orderItems).values(d.items.map((i) => ({
-        restaurantId: t.restaurantId, orderId: id, menuItemId: i.platoId, qty: String(i.cantidad), unitPrice: platos.find((x) => x.id === i.platoId)!.price,
+        restaurantId: t.restaurantId, orderId: id, menuItemId: i.platoId, qty: String(i.cantidad), unitPrice: precios.get(i.platoId)!.precio, listPrice: precios.get(i.platoId)!.lista, promotionId: precios.get(i.platoId)!.promoId,
         note: i.nota ?? null, modifiers: i.modificadores ?? [], course: i.tiempo ?? 1, status: estado, fromQr: desdeQr, sentAt: autoEnviar ? sql`now()` as unknown as Date : null,
       }))).returning({ id: orderItems.id });
       if (autoEnviar) await this.descontarSeguro(tx, t, userId, nuevos.map((n) => n.id));

@@ -2,7 +2,7 @@
 
 Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estándar Sistemas-Kyros, ingreso con Kyros ID y presencia en el Portal Kyros.
 
-## Estado: F4 en curso (reservas, eventos y turnos hechos) sobre F3, F2, F1 y F0
+## Estado: F4 completa (reservas, eventos, turnos y promociones) sobre F3, F2, F1 y F0 sobre F3, F2, F1 y F0
 
 | Hecho | Detalle |
 |---|---|
@@ -33,7 +33,9 @@ Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estánd
 
 **F4c (hecho): personal, turnos y asistencia.** Funciones del personal, datos laborales (función, costo por hora, sueldo — solo los ven dueño, administración y contador) y personas eventuales sin usuario. Turnos por semana con turnos nocturnos que cruzan la medianoche; la base impide que una persona tenga dos turnos cruzados. Cada persona ve «Mis turnos» y marca su entrada (desde una hora antes) y su salida, que calcula el pago por horas trabajadas. Turnos ligados a un evento suman su costo de personal a la cotización del evento. Reporte de costo por persona y por evento. La nómina contable no se genera: el costo queda como reporte.
 
-Siguiente: **F4d promociones**, luego F5. Ver `docs/ROADMAP.md`.
+**F4d (hecho): promociones.** Descuento por porcentaje o precio fijo, por rango de fechas, días de la semana y horario (happy hour, incluso si cruza la medianoche), para todo el menú o para platos elegidos. El precio con promoción lo decide el servidor al agregar el plato al pedido (por mesero, caja o QR), se guarda junto al precio de carta y por eso ventas, recibos y contabilidad ya reflejan el descuento; si varias aplican, gana el precio más bajo y nunca sube el precio. El menú del personal y el del cliente muestran el precio tachado y el vigente. Reporte del descuento dado por promoción.
+
+Siguiente: **F5 · Inteligencia** (KPIs y proyecciones, alertas, FODA, asistente con IA). Ver `docs/ROADMAP.md`.
 
 ## Desarrollo local
 

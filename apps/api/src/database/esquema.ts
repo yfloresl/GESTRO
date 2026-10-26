@@ -205,6 +205,8 @@ export const orderItems = pgTable('order_items', {
   menuItemId: uuid('menu_item_id').notNull(),
   qty: numeric('qty', { precision: 8, scale: 2 }).notNull(),
   unitPrice: numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
+  listPrice: numeric('list_price', { precision: 12, scale: 2 }),
+  promotionId: uuid('promotion_id'),
   note: text('note'),
   modifiers: jsonb('modifiers').notNull().default([]),
   course: smallint('course').notNull().default(1),

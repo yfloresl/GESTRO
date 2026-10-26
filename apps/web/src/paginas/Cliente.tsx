@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { Cargando } from '../componentes/Marca';
 
-interface PlatoPub { id: string; nombre: string; descripcion: string | null; precio: string; alergenos: string[]; disponible: boolean; minutosPreparacion: number | null; foto: string | null }
+interface PlatoPub { id: string; nombre: string; descripcion: string | null; precio: string; precioVigente?: string; promocion?: string | null; alergenos: string[]; disponible: boolean; minutosPreparacion: number | null; foto: string | null }
 interface MenuPub { restaurante: { nombre: string; slug: string; pedidosQr?: boolean }; categorias: { id: string | null; nombre: string; platos: PlatoPub[] }[] }
 interface Mesa { token: string; mesa: { numero: string }; restaurante: { nombre: string; slug: string } }
 interface Estado { id: string; tipo: 'atencion' | 'cuenta' | 'servicio'; estado: 'pendiente' | 'atendida' | 'cancelada'; creada: string }
@@ -126,7 +126,7 @@ export function Cliente() {
                       {p.alergenos.map((a) => <span key={a} className="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-on-surface-variant">{ALERGENO[a] ?? a}</span>)}
                     </div>
                     <div className="flex items-end justify-between gap-space-xs mt-auto">
-                      <p className="font-label-lg text-label-lg text-primary whitespace-nowrap">{bs(p.precio)}</p>
+                      <p className="font-label-lg text-label-lg text-primary whitespace-nowrap">{p.precioVigente && Number(p.precioVigente) < Number(p.precioVigente ?? p.precio) ? <><s className="text-on-surface-variant font-normal mr-1">{bs(p.precio)}</s>{bs(p.precioVigente)}</> : bs(p.precio)}</p>{p.promocion && p.precioVigente && Number(p.precioVigente) < Number(p.precioVigente ?? p.precio) && <p className="font-label-sm text-label-sm text-tertiary">{p.promocion}</p>}
                       {menu.restaurante.pedidosQr && p.disponible && (carro[p.id] ? (
                         <div className="flex items-center gap-1" role="group" aria-label={`Cantidad de ${p.nombre}`}>
                           <button type="button" aria-label={`Quitar uno de ${p.nombre}`} onClick={() => setCarro((c) => { const n = { ...c, [p.id]: (c[p.id] ?? 0) - 1 }; if (n[p.id] <= 0) delete n[p.id]; return n; })} className="w-12 h-12 rounded-lg bg-surface-container text-primary font-bold text-xl">−</button>
@@ -154,7 +154,7 @@ export function Cliente() {
         {menu.restaurante.pedidosQr && (Object.keys(carro).length > 0 || (mio && mio.items.length > 0)) && (
           <button type="button" onClick={() => setVerPedido(true)} className="min-h-14 rounded-lg bg-primary-container text-on-primary px-space-md flex items-center justify-between gap-space-sm text-left">
             <span className="flex items-center gap-space-xs font-semibold"><span className="material-symbols-outlined" aria-hidden="true">shopping_basket</span>{Object.keys(carro).length > 0 ? `Ver mi pedido (${Object.values(carro).reduce((a, b) => a + b, 0)})` : 'Mi pedido'}</span>
-            <span className="font-label-lg text-label-lg">{Object.keys(carro).length > 0 ? bs(String(menu.categorias.flatMap((c) => c.platos).reduce((t, p) => t + (carro[p.id] ?? 0) * Number(p.precio), 0))) : mio ? (Number(mio.total) > 0 ? bs(mio.total) : 'Esperando al mesero') : ''}</span>
+            <span className="font-label-lg text-label-lg">{Object.keys(carro).length > 0 ? bs(String(menu.categorias.flatMap((c) => c.platos).reduce((t, p) => t + (carro[p.id] ?? 0) * Number(p.precioVigente ?? p.precio), 0))) : mio ? (Number(mio.total) > 0 ? bs(mio.total) : 'Esperando al mesero') : ''}</span>
           </button>
         )}
         <div className="grid grid-cols-2 gap-space-sm">
@@ -198,7 +198,7 @@ function HojaPedido({ menu, carro, setCarro, mio, cerrar, enviar }: { menu: Menu
   const [texto, setTexto] = useState(''); const [error, setError] = useState<string | null>(null); const [enviando, setEnviando] = useState(false);
   const platos = menu.categorias.flatMap((c) => c.platos);
   const lineas = Object.entries(carro).map(([id, n]) => ({ p: platos.find((x) => x.id === id)!, n })).filter((l) => l.p);
-  const total = lineas.reduce((t, l) => t + l.n * Number(l.p.precio), 0);
+  const total = lineas.reduce((t, l) => t + l.n * Number(l.p.precioVigente ?? l.p.precio), 0);
   return (
     <div role="dialog" aria-modal="true" aria-label="Mi pedido" className="fixed inset-0 z-40 flex items-end bg-inverse-surface/50" onClick={cerrar}>
       <div onClick={(e) => e.stopPropagation()} className="w-full max-h-[90vh] overflow-y-auto bg-surface rounded-t-xl p-margin flex flex-col gap-space-md pb-[max(env(safe-area-inset-bottom),1.5rem)]">
@@ -211,7 +211,7 @@ function HojaPedido({ menu, carro, setCarro, mio, cerrar, enviar }: { menu: Menu
         {lineas.length > 0 && (
           <form onSubmit={async (e) => { e.preventDefault(); setError(null); setEnviando(true); try { await enviar(texto.trim()); } catch (er) { setError((er as Error).message); setEnviando(false); } }} className="flex flex-col gap-space-sm">
             <h3 className="font-label-md text-label-md text-on-surface-variant uppercase">Por enviar</h3>
-            <ul className="flex flex-col gap-space-xs">{lineas.map((l) => <li key={l.p.id} className="flex items-center justify-between gap-space-sm"><span>{l.n}× {l.p.nombre}</span><span className="font-label-md">{bs(String(l.n * Number(l.p.precio)))}</span></li>)}</ul>
+            <ul className="flex flex-col gap-space-xs">{lineas.map((l) => <li key={l.p.id} className="flex items-center justify-between gap-space-sm"><span>{l.n}× {l.p.nombre}</span><span className="font-label-md">{bs(String(l.n * Number(l.p.precioVigente ?? l.p.precio)))}</span></li>)}</ul>
             <label className="flex flex-col gap-space-xs"><span className="font-label-md text-label-md text-on-surface-variant uppercase">Comentario (alergias, sin picante…)</span><textarea value={texto} onChange={(e) => setTexto(e.target.value)} maxLength={300} rows={2} className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest p-space-sm font-body-lg focus:outline-none focus:ring-2 focus:ring-primary" /></label>
             {error && <p role="alert" className="text-error">{error}</p>}
             <div className="flex gap-space-sm"><button type="button" onClick={() => setCarro(() => ({}))} className="h-14 px-space-md rounded-lg border border-outline-variant font-semibold">Vaciar</button><button disabled={enviando} className="flex-1 h-14 rounded-lg bg-primary text-on-primary font-semibold">{enviando ? 'Enviando…' : `Enviar pedido · ${bs(String(total))}`}</button></div>
