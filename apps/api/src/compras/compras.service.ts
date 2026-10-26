@@ -244,6 +244,9 @@ export class ComprasService {
     return { ordenes: creadas, sinProveedor: g.sinProveedor };
   }
 
+  /** Órdenes en borrador, una por proveedor preferido, con los insumos que faltan para un evento. */
+  ordenesDeFaltantes(t: Tenant, por: string, items: { insumoId: string; cantidad: string }[]) { return this.db.run(t, (tx) => this.ordenesDe(tx, t, por, items)); }
+
   ordenesSugeridas(t: Tenant, por: string) { return this.db.run(t, async (tx) => this.ordenesDe(tx, t, por, await this.bajoMinimo(tx, t))); }
 
   /** Desde el plan del día: una orden en borrador por proveedor con lo que FALTA. */

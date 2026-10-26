@@ -14,6 +14,7 @@ import { Cocina } from './paginas/Cocina';
 import { Compras } from './paginas/Compras';
 import { Cobranzas } from './paginas/Cobranzas';
 import { Contabilidad } from './paginas/Contabilidad';
+import { Eventos } from './paginas/Eventos';
 import { ReservaWeb } from './paginas/ReservaWeb';
 import { Reservas } from './paginas/Reservas';
 import { Configuracion } from './paginas/Configuracion';
@@ -70,6 +71,7 @@ createRoot(document.getElementById('raiz')!).render(
               <Route path="contabilidad" element={<Contabilidad />} />
               <Route path="cobranzas" element={<Cobranzas />} />
               <Route path="reservas" element={<Reservas />} />
+              <Route path="eventos" element={<Eventos />} />
               <Route path="recetas" element={<Recetas />} />
               <Route path="plan-del-dia" element={<PlanDelDia />} />
               <Route path="caja" element={<Caja />} />

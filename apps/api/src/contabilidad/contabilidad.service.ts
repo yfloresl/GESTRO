@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { auditar, esDuplicado } from '../comun/auditoria';
 import { Bd, Tenant, TenantDb } from '../database/database.module';
 import {
-  Asiento, ClaveCuenta, PLAN_DE_CUENTAS, cobroDeCuenta, TipoCuenta, ajusteDeInventario, compraAlContado, compraRecibida, costoDeVentas, merma, MetodoCobro,
+  Asiento, ClaveCuenta, PLAN_DE_CUENTAS, cierreDeEvento, cobroDeCuenta, pagoDeEvento, TipoCuenta, ajusteDeInventario, compraAlContado, compraRecibida, costoDeVentas, merma, MetodoCobro,
   pagoAProveedor, saldoNatural, validarPartidaDoble, ventaCobrada,
 } from './asientos';
 
@@ -223,6 +223,16 @@ export class ContabilidadService {
   }
   pagoAProveedor(tx: Bd, t: Tenant, por: string, monto: string, via: 'caja' | 'bancos') { return this.registrar(tx, t, por, pagoAProveedor({ monto, via }), { source: 'pago_proveedor', sourceId: randomUUID() }); }
   cobroDeCuenta(tx: Bd, t: Tenant, por: string, monto: string, via: 'caja' | 'bancos') { return this.registrar(tx, t, por, cobroDeCuenta({ monto, via }), { source: 'cobro_cuenta', sourceId: randomUUID() }); }
+  /** Anticipo o saldo cobrado de un evento: queda como anticipo de cliente hasta que el evento se realice. */
+  pagoDeEvento(tx: Bd, t: Tenant, por: string, pagoId: string, monto: string, via: 'caja' | 'bancos') { return this.registrar(tx, t, por, pagoDeEvento({ monto, via }), { source: 'evento_pago', sourceId: pagoId }); }
+  /** Devolución de un cobro de evento cancelado: contrarresta el asiento del cobro. */
+  pagoDeEventoDevuelto(tx: Bd, t: Tenant, por: string, pagoId: string, motivo: string) { return this.contrarrestarOrigen(tx, t, por, 'evento_pago', pagoId, motivo); }
+  cierreDeEvento(tx: Bd, t: Tenant, por: string, eventoId: string, total: string, pagado: string) { return this.registrar(tx, t, por, cierreDeEvento({ total, pagado }), { source: 'evento_cierre', sourceId: eventoId }); }
+  /** Costo de los insumos que salieron del inventario para un evento (al costo promedio). */
+  async costoDeEvento(tx: Bd, t: Tenant, por: string | null, eventoId: string) {
+    const v = (await tx.execute(sql`SELECT COALESCE(SUM(-qty * COALESCE(unit_cost, 0)), 0)::numeric(14,2)::text AS v FROM stock_movements WHERE restaurant_id = ${t.restaurantId} AND kind = 'consumo' AND ref_type = 'event' AND ref_id = ${eventoId}::uuid`)).rows[0] as { v: string };
+    if (Number(v.v) > 0) await this.registrar(tx, t, por, costoDeVentas({ valor: v.v }), { source: 'costo_evento', sourceId: eventoId });
+  }
   compraAlContado(tx: Bd, t: Tenant, por: string, grupoId: string, total: string) { return this.registrar(tx, t, por, compraAlContado({ total }), { source: 'compra_directa', sourceId: grupoId }); }
 
   /** Valor del kardex de un grupo de movimientos (con signo: entradas suman, salidas restan). */

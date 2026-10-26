@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  AsientoDescuadrado, PLAN_DE_CUENTAS, ajusteDeInventario, cobroDeCuenta, compraAlContado, compraRecibida, contrarrestar, costoDeVentas, ivaIncluido, merma, pagoAProveedor, saldoNatural, validarPartidaDoble, ventaCobrada,
+  AsientoDescuadrado, PLAN_DE_CUENTAS, ajusteDeInventario, cierreDeEvento, cobroDeCuenta, pagoDeEvento, compraAlContado, compraRecibida, contrarrestar, costoDeVentas, ivaIncluido, merma, pagoAProveedor, saldoNatural, validarPartidaDoble, ventaCobrada,
 } from '../src/contabilidad/asientos';
 
 const suma = (a: { lineas: { debe: string; haber: string }[] }) => ({ d: a.lineas.reduce((s, l) => s + Number(l.debe), 0), h: a.lineas.reduce((s, l) => s + Number(l.haber), 0) });
@@ -69,5 +69,18 @@ describe('Generadores de asientos (funciones puras)', () => {
     expect(saldoNatural('gasto', 100, 30).toFixed(2)).toBe('70.00');
     expect(saldoNatural('pasivo', 30, 100).toFixed(2)).toBe('70.00');
     expect(saldoNatural('ingreso', 0, 65).toFixed(2)).toBe('65.00');
+  });
+});
+
+describe('Asientos de eventos', () => {
+  it('el cobro anticipado es un pasivo, no una venta', () => {
+    expect(pagoDeEvento({ monto: '2000', via: 'bancos' }).lineas).toEqual([{ cuenta: 'bancos', debe: '2000.00', haber: '0.00' }, { cuenta: 'anticipos', debe: '0.00', haber: '2000.00' }]);
+  });
+  it('al cerrar: anticipos y lo que falta por cobrar pasan a ventas; sin saldo o sin anticipos, solo las líneas necesarias', () => {
+    expect(cierreDeEvento({ total: '6500', pagado: '4500' }).lineas).toEqual([{ cuenta: 'anticipos', debe: '4500.00', haber: '0.00' }, { cuenta: 'cxc', debe: '2000.00', haber: '0.00' }, { cuenta: 'ventas', debe: '0.00', haber: '6500.00' }]);
+    expect(cierreDeEvento({ total: '100', pagado: '100' }).lineas).toHaveLength(2);
+    expect(cierreDeEvento({ total: '100', pagado: '0' }).lineas.map((l) => l.cuenta)).toEqual(['cxc', 'ventas']);
+    expect(() => cierreDeEvento({ total: '100', pagado: '100.01' })).toThrow(AsientoDescuadrado);
+    expect(() => cierreDeEvento({ total: '0', pagado: '0' })).toThrow(AsientoDescuadrado);
   });
 });

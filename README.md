@@ -2,7 +2,7 @@
 
 Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estándar Sistemas-Kyros, ingreso con Kyros ID y presencia en el Portal Kyros.
 
-## Estado: F4 en curso (reservas hechas) sobre F3, F2, F1 y F0
+## Estado: F4 en curso (reservas y eventos hechos) sobre F3, F2, F1 y F0
 
 | Hecho | Detalle |
 |---|---|
@@ -29,7 +29,9 @@ Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estánd
 
 **F4a (hecho): reservas.** Web pública `/r/<slug>` sin cuenta (fecha, personas, horas libres, código para cancelar) y agenda del personal (confirmar, sentar, terminó, no llegó, cancelar, cambiar de mesa, crear a mano). La mesa se asigna sola (la más chica que alcance) y la base impide con una restricción de exclusión que una mesa tenga dos reservas activas cruzadas: si dos clientes piden la última mesa a la vez, uno gana y el otro recibe 409. Cada sucursal decide si las recibe, horario, duración, máximo de personas y si se confirman solas; avisa al personal en tiempo real y por Web Push.
 
-Siguiente: **F4b eventos y catering**, **F4c personal y turnos**, **F4d promociones**. Ver `docs/ROADMAP.md`.
+**F4b (hecho): eventos y catering.** Cotización con el costo real de las recetas (venta a precio de carta, costo, utilidad, margen y precio por invitado), menú con porciones, insumos necesarios contra el stock y órdenes de compra en borrador con lo que falta. Los anticipos son dinero del cliente (pasivo «Anticipos de clientes») hasta que el evento se realiza; al **iniciar** salen del inventario los insumos del menú (una sola vez, con su costo de ventas); al **cerrar** se reconoce el ingreso y lo no cobrado queda como cuenta por cobrar. Cancelar con cobros exige devolverlos (cobro anulado y asiento contrarrestado).
+
+Siguiente: **F4c personal y turnos**, **F4d promociones**, luego F5. Ver `docs/ROADMAP.md`.
 
 ## Desarrollo local
 

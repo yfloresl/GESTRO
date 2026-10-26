@@ -9,7 +9,7 @@ Decimal.set({ precision: 28, rounding: Decimal.ROUND_HALF_UP });
 
 export type ClaveCuenta =
   | 'caja' | 'bancos' | 'cxc' | 'inventarios' | 'credito_fiscal' | 'proveedores' | 'debito_fiscal' | 'it_por_pagar'
-  | 'capital' | 'resultados_acumulados' | 'ventas' | 'costo_ventas' | 'mermas' | 'ajustes_inventario' | 'gastos_generales';
+  | 'anticipos' | 'capital' | 'resultados_acumulados' | 'ventas' | 'costo_ventas' | 'mermas' | 'ajustes_inventario' | 'gastos_generales';
 export interface LineaAsiento { cuenta: ClaveCuenta; debe: string; haber: string }
 export interface Asiento { glosa: string; lineas: LineaAsiento[] }
 
@@ -76,6 +76,20 @@ export function cobroDeCuenta(p: { monto: Decimal.Value; via: 'caja' | 'bancos' 
   return hecho('Cobro de cuenta por cobrar', [debe(p.via, m), haber('cxc', m)]);
 }
 
+/** Cobro de un evento antes de que se realice: es dinero del cliente (pasivo), todavía no es venta. */
+export function pagoDeEvento(p: { monto: Decimal.Value; via: 'caja' | 'bancos' }): Asiento {
+  const m = positivo(p.monto, 'El cobro del evento');
+  return hecho('Cobro de evento (anticipo)', [debe(p.via, m), haber('anticipos', m)]);
+}
+
+/** Evento realizado: lo cobrado por adelantado pasa a ventas y lo que falta queda por cobrar al cliente. */
+export function cierreDeEvento(p: { total: Decimal.Value; pagado: Decimal.Value }): Asiento {
+  const total = positivo(p.total, 'El total del evento'); const pagado = d2(p.pagado);
+  if (pagado.lt(0) || pagado.gt(total)) throw new AsientoDescuadrado('Lo cobrado no puede superar el total del evento');
+  const saldo = total.minus(pagado);
+  return hecho('Evento realizado', [...(pagado.gt(0) ? [debe('anticipos', pagado)] : []), ...(saldo.gt(0) ? [debe('cxc', saldo)] : []), haber('ventas', total)]);
+}
+
 export function merma(p: { valor: Decimal.Value }): Asiento {
   const v = positivo(p.valor, 'El valor de la merma');
   return hecho('Merma de inventario', [debe('mermas', v), haber('inventarios', v)]);
@@ -104,7 +118,7 @@ export const PLAN_DE_CUENTAS: CuentaPlantilla[] = [
   { code: '1.1.05', name: 'Crédito fiscal IVA', type: 'activo', parent: '1.1', key: 'credito_fiscal' },
   { code: '2', name: 'PASIVO', type: 'pasivo', groups: true }, { code: '2.1', name: 'Pasivo corriente', type: 'pasivo', parent: '2', groups: true },
   { code: '2.1.01', name: 'Proveedores por pagar', type: 'pasivo', parent: '2.1', key: 'proveedores' }, { code: '2.1.02', name: 'Débito fiscal IVA', type: 'pasivo', parent: '2.1', key: 'debito_fiscal' },
-  { code: '2.1.03', name: 'IT por pagar', type: 'pasivo', parent: '2.1', key: 'it_por_pagar' },
+  { code: '2.1.03', name: 'IT por pagar', type: 'pasivo', parent: '2.1', key: 'it_por_pagar' }, { code: '2.1.04', name: 'Anticipos de clientes', type: 'pasivo', parent: '2.1', key: 'anticipos' },
   { code: '3', name: 'PATRIMONIO', type: 'patrimonio', groups: true }, { code: '3.1', name: 'Capital y resultados', type: 'patrimonio', parent: '3', groups: true },
   { code: '3.1.01', name: 'Capital', type: 'patrimonio', parent: '3.1', key: 'capital' }, { code: '3.1.02', name: 'Resultados acumulados', type: 'patrimonio', parent: '3.1', key: 'resultados_acumulados' },
   { code: '4', name: 'INGRESOS', type: 'ingreso', groups: true }, { code: '4.1', name: 'Ingresos por ventas', type: 'ingreso', parent: '4', groups: true },

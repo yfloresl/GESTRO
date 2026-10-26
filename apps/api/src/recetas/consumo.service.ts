@@ -56,6 +56,23 @@ export class ConsumoService {
     return { consumidos: n };
   }
 
+  /** Salida de los insumos del menú de un evento (una vez, al iniciarlo). Un plato sin receta no descuenta; el stock puede quedar en negativo. */
+  async descontarEvento(tx: Bd, t: Tenant, userId: string | null, eventoId: string, platos: { platoId: string; porciones: number }[]): Promise<{ insumos: number }> {
+    const cat = await this.recetas.catalogo(tx, t); const tocados = new Set<string>();
+    for (const p of platos) {
+      const receta = cat.recetaDePlato[p.platoId]; if (!receta) continue;
+      for (const [insumoId, q] of consumo(cat, receta, p.porciones)) {
+        const cantidad = r3(q); if (Number(cantidad) <= 0) continue;
+        const almacen = await this.almacenDe(tx, t, insumoId); if (!almacen) continue;
+        await this.inventario.salidaFefo(tx, t, userId, { kind: 'consumo', warehouseId: almacen, ingredientId: insumoId, refType: 'event', refId: eventoId }, cantidad);
+        tocados.add(insumoId);
+      }
+    }
+    await this.conta.costoDeEvento(tx, t, userId, eventoId);
+    if (tocados.size) await this.revisarAlertas(tx, t, [...tocados]);
+    return { insumos: tocados.size };
+  }
+
   /**
    * Abre una alerta «stock bajo» cuando un insumo cae bajo su mínimo (una sola abierta por insumo) y la resuelve
    * cuando se repone. Avisa en tiempo real y por Web Push a dueño, administración y almacén.
