@@ -37,3 +37,4 @@ Estado: `usado` entra a código · `derivado` se construyó a partir de tokens/p
 | Reservas del personal: agenda por día, estados, mesa y ajustes de la web | 5.4 | derivado | Tarjetas como Compras; sin vista de plano |
 | Reserva web pública (/r/:slug): fecha, personas, horas, datos y código | 1.1 | derivado | Página nueva con los tokens de las pantallas de ingreso |
 | Eventos & Catering: lista, cotización con costo de recetas, menú, insumos, cobros y cierre | 5.4 | derivado | Mismo patrón de tarjetas y panel lateral que Compras |
+| Turnos & Asistencia: mis turnos, semana, personas y funciones, costo de personal | 5.7 | derivado | Semana como columnas por día; mismos tokens que el resto |

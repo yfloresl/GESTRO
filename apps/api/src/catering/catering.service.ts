@@ -92,9 +92,13 @@ export class CateringService {
       const falta = faltantes(req.requerido, total);
       insumos = [...req.requerido].map(([id, q]) => ({ insumoId: id, insumo: cat.insumos[id]?.nombre ?? '', unidad: cat.insumos[id]?.unidad ?? '', requerido: r3(q), stock: r3(new Decimal(total[id] ?? 0)), faltante: r3(falta.get(id) ?? new Decimal(0)), alcanza: !falta.has(id) })).sort((a, b) => a.insumo.localeCompare(b.insumo));
     } catch (e) { if (!(e instanceof CicloDeRecetas || e instanceof UnidadIncompatible)) throw e; }
+    const personal = (await tx.execute(sql`SELECT m.full_name AS persona, fn.name AS funcion, round(SUM(extract(epoch FROM (s.ends_at - s.starts_at))) / 3600, 2)::text AS horas,
+        round(SUM(extract(epoch FROM (s.ends_at - s.starts_at))) / 3600 * COALESCE(m.hourly_cost, 0), 2)::text AS costo
+      FROM shifts s JOIN staff_members m ON m.id = s.staff_id LEFT JOIN staff_functions fn ON fn.id = s.function_id WHERE s.event_id = ${f.id} GROUP BY m.id, m.full_name, fn.name ORDER BY m.full_name`)).rows as { persona: string; funcion: string | null; horas: string; costo: string }[];
+    const costoPersonal = personal.reduce((a, p) => a.plus(p.costo), new Decimal(0)); costo = costo.plus(costoPersonal);
     const precio = f.price_total !== null ? new Decimal(f.price_total) : null; const base = precio ?? venta;
     return {
-      platos, ventaACarta: r2(venta), costo: r2(costo), precioPactado: precio ? r2(precio) : null,
+      platos, ventaACarta: r2(venta), costo: r2(costo.minus(costoPersonal)), costoPersonal: r2(costoPersonal), personal, costoTotal: r2(costo), precioPactado: precio ? r2(precio) : null,
       margenPct: base.gt(0) ? base.minus(costo).div(base).mul(100).toFixed(2) : null, utilidad: r2(base.minus(costo)),
       porInvitado: f.guests > 0 && base.gt(0) ? r2(base.div(f.guests)) : null, sinReceta: platos.filter((p) => !p.tieneReceta).map((p) => p.nombre), insumos, hayFaltantes: insumos.some((i) => !i.alcanza),
     };

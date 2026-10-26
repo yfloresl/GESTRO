@@ -26,7 +26,8 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
     { ruta: 'compras', icono: 'local_shipping', texto: 'Compras & Proveedores', roles: ['owner', 'admin', 'almacen', 'contador'] },
     { ruta: 'eventos', icono: 'celebration', texto: 'Eventos & Catering', roles: ['owner', 'admin', 'cocina', 'almacen', 'cajero', 'contador', 'area_manager'] },
     { ruta: 'reservas', icono: 'event_seat', texto: 'Reservas', roles: SALON },
-    { ruta: 'personal', icono: 'badge', texto: 'Personal & Turnos', roles: ['owner', 'admin'] },
+    { ruta: 'personal', icono: 'badge', texto: 'Personal', roles: ['owner', 'admin'] },
+    { ruta: 'turnos', icono: 'schedule', texto: 'Turnos & Asistencia', roles: ['owner', 'admin', 'area_manager', 'contador', 'mesero', 'cajero', 'cocina', 'almacen', 'cobranzas'] },
   ] },
   { titulo: 'Gestión & Finanzas', items: [
     { ruta: 'suscripcion', icono: 'workspace_premium', texto: 'Suscripción', roles: ['owner', 'admin'] },
