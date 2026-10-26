@@ -27,10 +27,10 @@ describe('destinoSeguro (sin redirección abierta)', () => {
 
 describe('URL de autorización', () => {
   const u = new URL(urlDeIngreso(cfg, { state: 's', nonce: 'n', challenge: 'c' }));
-  it('usa PKCE S256, max_age=1800 y NO prompt=login en el ingreso normal', () => {
+  it('usa PKCE S256, max_age=28800 y NO prompt=login en el ingreso normal', () => {
     expect(u.searchParams.get('code_challenge_method')).toBe('S256');
     expect(u.searchParams.get('max_age')).toBe(String(KYROS_LOGIN_MAX_AGE_SECONDS));
-    expect(KYROS_LOGIN_MAX_AGE_SECONDS).toBe(1800);
+    expect(KYROS_LOGIN_MAX_AGE_SECONDS).toBe(28800);
     expect(u.searchParams.has('prompt')).toBe(false);
     expect(u.searchParams.get('redirect_uri')).toBe('https://gestro.kyros-tech.com/callback');
     expect(u.searchParams.get('client_id')).toBe('gestro-web');

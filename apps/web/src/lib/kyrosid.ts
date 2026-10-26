@@ -8,7 +8,7 @@ import type { KyrosIdPublico } from '@gestro/contracts';
  */
 
 /** Autenticación aceptada de hasta 30 min: si Kyros ID ya tiene sesión, no pide la contraseña (app-interna-estandar.md §1.2). */
-export const KYROS_LOGIN_MAX_AGE_SECONDS = 1800;
+export const KYROS_LOGIN_MAX_AGE_SECONDS = 28800;   // 8 h: el SSO dura la jornada, como en el resto del ecosistema
 const CLAVE = 'gestro.pkce';
 
 const b64url = (b: ArrayBuffer | Uint8Array) => btoa(String.fromCharCode(...new Uint8Array(b as ArrayBuffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -27,7 +27,7 @@ export function urlDeIngreso(cfg: KyrosIdPublico, pkce: { state: string; nonce: 
   const q = new URLSearchParams({
     client_id: cfg.clientId, redirect_uri: `${location.origin}/callback`, response_type: 'code', scope: 'openid',
     code_challenge: pkce.challenge, code_challenge_method: 'S256', state: pkce.state, nonce: pkce.nonce,
-    // Ingreso normal: sin prompt=login y con max_age=1800. Nunca 0 ni ausente.
+    // Ingreso normal: sin prompt=login y con max_age=28800 (8 h). Nunca 0 ni ausente.
     max_age: String(KYROS_LOGIN_MAX_AGE_SECONDS),
   });
   return `${base}?${q}`;
