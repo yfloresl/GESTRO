@@ -52,7 +52,7 @@ describe('Reservas por la web pública', () => {
     const a = await e.reservar({ personas: 2 });
     expect(a.status).toBe(201);
     expect(a.body).toMatchObject({ estado: 'confirmada', fecha: laPaz(1), hora: '12:00', personas: 2, duracionMin: 90 });
-    expect(a.body.codigo).toMatch(/^[0-9a-f]{16}$/);
+    expect(a.body.codigo).toMatch(/^[A-HJ-NP-Z2-9]{6}$/);   // corto y sin caracteres confundibles
     expect((await dia(e))[0]).toMatchObject({ cliente: 'Ana Mamani', mesa: '2', origen: 'web', hora: '12:00', hasta: '13:30' });   // la de 2 asientos
     const b = await e.reservar({ personas: 3, cliente: 'Bruno Rojas', telefono: '70022233' });
     expect(b.status).toBe(201);
@@ -92,8 +92,9 @@ describe('Reservas por la web pública', () => {
     await e.reservar({ personas: 2, hora: '19:00', cliente: 'Otra', telefono: '70099900' });
     expect(await horas(e, 3)).not.toContain('19:00');
     const cancelar = (codigo: string) => t.api().post(`/api/v1/public/${e.slug}/reservas/cancelar`).send({ codigo });
-    expect((await cancelar('0000000000000000')).status).toBe(409);
-    expect((await cancelar(a.body.codigo)).status).toBe(200);
+    expect((await cancelar('ZZZ999')).status).toBe(409);
+    expect((await cancelar('ab')).status).toBe(400);
+    expect((await cancelar(` ${a.body.codigo.slice(0, 3).toLowerCase()}-${a.body.codigo.slice(3)} `)).status).toBe(200);   // minúsculas, guion y espacios no importan
     expect((await cancelar(a.body.codigo)).status).toBe(409);
     expect(await horas(e, 3)).toContain('19:00');
   });

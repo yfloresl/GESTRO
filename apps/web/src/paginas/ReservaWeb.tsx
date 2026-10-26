@@ -42,7 +42,7 @@ export function ReservaWeb() {
       <h1 className="font-headline-md text-headline-md text-primary">{cancelada ? 'Reserva cancelada' : hecha.estado === 'confirmada' ? '¡Reserva confirmada!' : 'Recibimos tu reserva'}</h1>
       <p>{hecha.restaurante} · {hecha.fecha} a las <strong>{hecha.hora}</strong> · {hecha.personas} persona(s) · {hecha.duracionMin} min</p>
       {!cancelada && hecha.estado === 'pendiente' && <p className="text-on-surface-variant">El restaurante la confirmará pronto. Te contactarán al teléfono que dejaste.</p>}
-      {!cancelada && <><p className="text-on-surface-variant">Guarda tu código para cancelar o consultar:</p><p className="font-headline-sm text-headline-sm tracking-widest text-center rounded-lg bg-surface-container p-space-sm select-all">{(hecha.codigo.toUpperCase().match(/.{1,4}/g) ?? []).join(' ')}</p>
+      {!cancelada && <><p className="text-on-surface-variant">Tu código de reserva (anótalo o toma captura):</p><p className="font-headline-sm text-headline-sm tracking-widest text-center rounded-lg bg-surface-container p-space-sm select-all">{hecha.codigo.slice(0, 3)}-{hecha.codigo.slice(3)}</p>
         {error && <p role="alert" className="text-error">{error}</p>}<button type="button" onClick={cancelar} className="h-12 rounded-lg border border-error text-error font-semibold">Cancelar mi reserva</button></>}
     </section>);
 

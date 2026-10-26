@@ -49,7 +49,7 @@ export function Reservas() {
             <li key={r.id} className={`bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-xs ${viva ? '' : 'opacity-60'}`}>
               <div className="flex items-center justify-between gap-space-sm"><span className="font-headline-sm text-headline-sm">{r.hora}<span className="font-body-sm text-on-surface-variant"> – {r.hasta}</span></span><span className={`px-2 py-0.5 rounded-full font-label-sm uppercase whitespace-nowrap ${ESTADO[r.estado].c}`}>{ESTADO[r.estado].t}</span></div>
               <p className="font-semibold">{r.cliente} · {r.personas} pers.</p>
-              <p className="font-body-sm text-on-surface-variant">{r.telefono ?? 'Sin teléfono'} · {r.origen === 'web' ? 'Web' : 'Personal'} · código {r.codigo.slice(0, 6).toUpperCase()}</p>
+              <p className="font-body-sm text-on-surface-variant">{r.telefono ?? 'Sin teléfono'} · {r.origen === 'web' ? 'Web' : 'Personal'} · código {r.codigo.slice(0, 3)}-{r.codigo.slice(3)}</p>
               {r.notas && <p className="font-body-sm italic">«{r.notas}»</p>}
               {viva && <label className="flex items-center gap-space-xs"><span className={clases.etiqueta}>Mesa</span>
                 <select aria-label={`Mesa de ${r.cliente}`} value={r.mesaId ?? ''} onChange={(e) => cambiarMesa(r, e.target.value)} className="h-12 flex-1 rounded-lg border border-outline-variant bg-surface-container-lowest px-space-sm"><option value="">Sin mesa</option>{(mesas.data ?? []).filter((m) => m.activa !== false).map((m) => <option key={m.id} value={m.id}>Mesa {m.numero} ({m.asientos})</option>)}</select></label>}

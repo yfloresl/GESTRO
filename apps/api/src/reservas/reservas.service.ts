@@ -21,7 +21,8 @@ export const ReservaDelPersonal = z.object({
 }).strict();
 export const Accion = z.object({ accion: z.enum(['confirmar', 'sentar', 'cumplir', 'no_show', 'cancelar']), mesaId: z.string().uuid().optional() }).strict();
 export const MoverMesa = z.object({ mesaId: z.string().uuid().nullable() }).strict();
-export const Cancelar = z.object({ codigo: z.string().trim().min(8).max(32) }).strict();
+/** Código de la reserva tal como lo escribe el cliente: sin importar mayúsculas, espacios ni guiones. */
+export const Cancelar = z.object({ codigo: z.string().trim().min(4).max(16).transform((s) => s.toUpperCase().replace(/[^A-Z0-9]/g, '')).pipe(z.string().length(6)) }).strict();
 export const AjustesReservas = z.object({
   habilitadas: z.boolean().optional(), duracionMin: z.number().int().min(30).max(360).optional(), abre: Hora.optional(), cierra: Hora.optional(),
   autoConfirmar: z.boolean().optional(), maxPersonas: z.number().int().min(1).max(100).optional(),
@@ -37,6 +38,7 @@ const TRANSICION: Record<z.infer<typeof Accion>['accion'], { desde: Estado[]; ha
   cancelar: { desde: ['pendiente', 'confirmada'], hacia: 'cancelada' },
 };
 const esChoque = (e: unknown) => { const x = e as { code?: string; cause?: { code?: string } }; return x?.code === '23P01' || x?.cause?.code === '23P01'; };
+const esRepetido = (e: unknown) => { const x = e as { code?: string; cause?: { code?: string } }; return x?.code === '23505' || x?.cause?.code === '23505'; };
 const minutos = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
 
 interface Cfg { habilitadas: boolean; dur: number; abre: string; cierra: string; auto: boolean; max: number; tz: string; nombre: string }
@@ -115,6 +117,8 @@ export class ReservasService {
       if (!m) throw new BadRequestException('La mesa no existe en esta sucursal.');
       if (m.seats < d.personas) throw new BadRequestException(`La mesa tiene ${m.seats} asientos: no alcanza para ${d.personas}.`);
     } else mesa = await this.mesaLibre(tx, rid, d.personas, r.ini, r.fin);
+    // El código corto (6 caracteres) es único por sucursal: si dos coinciden, la base lo rechaza y se reintenta con otro.
+    for (let intento = 0; ; intento++) {
     try {
       return await tx.transaction(async (sp) => {
         const x = (await (sp as unknown as Bd).execute(sql`INSERT INTO reservations (restaurant_id, table_id, customer_name, phone, email, party_size, starts_at, ends_at, state, notes, source, created_by)
@@ -123,7 +127,9 @@ export class ReservasService {
       });
     } catch (e) {
       if (esChoque(e)) throw new ConflictException('Esa mesa se acaba de ocupar. Prueba con otro horario.');
+      if (esRepetido(e) && intento < 4) continue;
       throw e;
+    }
     }
   }
 
