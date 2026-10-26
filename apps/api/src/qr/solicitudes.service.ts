@@ -65,6 +65,7 @@ export class SolicitudesService implements OnModuleInit, OnModuleDestroy {
   async crear(ctx: MesaCtx, d: z.infer<typeof NuevaSolicitud>) {
     const t: Tenant = { restaurantId: ctx.restaurantId, restaurantIds: [] };
     const r = await this.db.run(t, async (tx) => {
+      if (((await tx.execute(sql`SELECT is_demo FROM restaurants WHERE id = ${ctx.restaurantId}`)).rows[0] as { is_demo: boolean } | undefined)?.is_demo) throw new HttpException({ code: 'DEMO', message: 'Esta sucursal es de muestra y no recibe pedidos, llamados ni reservas reales.' }, 403);
       const recientes = await tx.select({ n: sql<number>`count(*)::int` }).from(serviceRequests).where(and(eq(serviceRequests.tableId, ctx.tableId), gt(serviceRequests.createdAt, sql`now() - interval '1 minute'`)));
       if ((recientes[0]?.n ?? 0) >= MAX_POR_MINUTO) throw new HttpException({ code: 'TOO_MANY', message: 'Demasiadas solicitudes seguidas. Espera un momento.' }, 429);
       const dst = await this.destino(tx, ctx.restaurantId, ctx.tableId);

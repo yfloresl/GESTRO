@@ -9,6 +9,7 @@ Estado al 2026-10-26. «Probado» = con pruebas automáticas (242 en la API, 4 e
 4. **Clave de IA** (opcional): Plataforma → *Inteligencia artificial* → pegar la clave de Claude, *Probar conexión* y cargar los **precios vigentes** para estimar costos. Sin clave todo funciona; el asistente avisa que no está activo y el FODA se arma con reglas.
 5. **Datos de ejemplo** (opcional, solo para presentar): crear un restaurante con «Crear mi cuenta» y correr `node dist/src/scripts/crear-datos-demo.js --sucursal <slug> --confirmo`. Solo funciona en una sucursal vacía; **no usarlo en un restaurante real**.
 6. Cargar en Plataforma: planes, QR de cobro y promociones SaaS.
+7. **Cuentas Prueba_Kyros** (para presentar el producto dentro del ecosistema): Plataforma → *Restaurante de muestra* → *Cargar*. Detalle en `docs/OPERACION.md` §8.
 
 ## 2. Probado
 - Aislamiento por sucursal (RLS) en todas las tablas con `restaurant_id`, forzado; ninguna ruta devuelve datos de otra sucursal (hay pruebas por módulo).

@@ -17,7 +17,7 @@ export class SucursalController {
   async actual(@TenantActual() t: Tenant) {
     const [r] = await this.db.run(t, (tx) => tx.select().from(restaurants).where(eq(restaurants.id, t.restaurantId)));
     if (!r) throw new NotFoundException('Sucursal no encontrada');
-    return { id: r.id, nombre: r.name, slug: r.slug, modoDeCobro: r.billingMode, pagadoHasta: r.paidUntil, estado: r.status };
+    return { id: r.id, nombre: r.name, slug: r.slug, modoDeCobro: r.billingMode, pagadoHasta: r.paidUntil, estado: r.status, demo: r.isDemo };
   }
 
   @Patch() @DeSucursal('owner', 'admin')

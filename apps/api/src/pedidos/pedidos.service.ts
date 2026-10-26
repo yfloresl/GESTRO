@@ -297,7 +297,8 @@ export class PedidosService {
   async desdeQr(rid: string, mesaId: string, d: z.infer<typeof AgregarItems>, comentario?: string) {
     const t: Tenant = { restaurantId: rid, restaurantIds: [] };
     const info = await this.db.run(t, async (tx) => {
-      const [r] = await tx.select({ habilitado: restaurants.qrOrderingEnabled, auto: restaurants.qrAutoSend }).from(restaurants).where(eq(restaurants.id, rid));
+      const [r] = await tx.select({ habilitado: restaurants.qrOrderingEnabled, auto: restaurants.qrAutoSend, demo: restaurants.isDemo }).from(restaurants).where(eq(restaurants.id, rid));
+      if (r?.demo) throw new ForbiddenException('Esta sucursal es de muestra y no recibe pedidos, llamados ni reservas reales.');
       if (!r?.habilitado) throw new ForbiddenException('Este restaurante todavía no recibe pedidos por QR: llama al mesero.');
       const [ya] = await tx.select({ id: orders.id }).from(orders).where(and(eq(orders.tableId, mesaId), eq(orders.restaurantId, rid), inArray(orders.status, ABIERTO)));
       if (ya) return { id: ya.id, auto: r.auto };

@@ -66,5 +66,18 @@ node dist/src/scripts/crear-datos-demo.js --sucursal <slug> --confirmo
 ```
 Carga 15 platos con receta, 19 insumos con stock, 2 proveedores, 8 mesas, 60 días de ventas (≈1 300 pedidos) con su consumo y costo, mermas, asientos contables, una promoción y un evento. Se niega si la sucursal ya tiene pedidos, platos, insumos o asientos. **No usar en un restaurante real.** No hay forma de «descargarlo»: para empezar de cero, crear otra sucursal.
 
-## 8. Pendiente de integración con el Portal
+## 8. Cuentas de demostración Prueba_Kyros
+Identidad crea tres usuarios de Kyros ID con `sub` fijo y una contraseña pública de demostración (la misma en todos los sistemas del ecosistema). GESTRO las **pre-vincula** al cargar su restaurante de muestra:
+| Usuario | `sub` | Rol en GESTRO |
+|---|---|---|
+| `prueba_kyros` | `3c183200-ca0f-483f-90fd-2cea6c0b0695` | dueño del restaurante de muestra |
+| `prueba_kyros_asistente` | `92209c11-c4a6-40ce-ae54-e607ffc64891` | caja |
+| `prueba_kyros_tutor` | `3969cf14-de90-458c-b2bc-d287adc1469b` | no se usa en GESTRO (siempre 401) |
+
+- **Cargar / quitar**: Plataforma → *Restaurante de muestra*. Crea la sucursal «Casa Andina» con menú y recetas, inventario, 60 días de ventas, contabilidad, una promoción y un evento. Debe estar activado Kyros ID (se vincula a su emisor). Quitarla borra sucursal, cuentas, vínculos y datos.
+- **Sin restaurante de muestra cargado**, las tres cuentas dan **401** al entrar y en `portal/summary`/`portal/account` (como un token inválido); no pueden registrarse.
+- **Solo lectura**: toda escritura devuelve 403 (también la ruta de pagos de suscripción), y la sucursal no recibe pedidos por QR, llamados ni reservas públicas. La única escritura permitida es **«Restablecer mis datos de muestra»** (solo el dueño, máximo una vez cada 5 minutos): borra y recarga SOLO esa sucursal y queda en `audit_log` (`demo.restablecida`). Exige que el usuario de la base sea superusuario (en el compose lo es).
+- Nada de lo que se ve dice «demo»; los datos nunca se mezclan con restaurantes reales (hay una sola sucursal de muestra, marcada `is_demo`).
+
+## 9. Pendiente de integración con el Portal
 `portal/summary`, `portal/account` y `/entrar?destino=` ya existen en GESTRO. Falta que Identidad cree el client y la audiencia (sección 2) y agregue la tarjeta al Portal. Quedan para cuando existan en el ecosistema: el registro central de accesos en Kyros ID (su diseño aún no existe) y `?rol=` en `/entrar` (hoy la persona cambia de sucursal desde el selector de la cabecera; sus roles son por sucursal).

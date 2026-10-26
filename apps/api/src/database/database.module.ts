@@ -7,7 +7,7 @@ import * as esquema from './esquema';
 
 export const BD = Symbol('BD');
 export type Bd = NodePgDatabase<typeof esquema>;
-const POOL = Symbol('POOL');
+export const POOL = Symbol('POOL');
 
 /** Contexto de sucursal de una petición (lo fija RestaurantScopeGuard). */
 export interface Tenant { restaurantId: string; restaurantIds: string[]; plataforma?: boolean }
@@ -45,6 +45,6 @@ export class TenantDb {
     { provide: BD, inject: [POOL], useFactory: (pool: Pool): Bd => drizzle(pool, { schema: esquema }) },
     TenantDb, CierreDePool,
   ],
-  exports: [BD, TenantDb],
+  exports: [BD, TenantDb, POOL],
 })
 export class DatabaseModule {}

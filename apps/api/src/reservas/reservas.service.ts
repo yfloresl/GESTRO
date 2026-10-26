@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { auditar } from '../comun/auditoria';
@@ -142,9 +142,9 @@ export class ReservasService {
   /* ---------------- público (sin sesión) ---------------- */
 
   private async sucursal(slug: string) {
-    const [r] = await this.bd.select({ id: restaurants.id, estado: restaurants.status }).from(restaurants).where(eq(restaurants.slug, slug));
+    const [r] = await this.bd.select({ id: restaurants.id, estado: restaurants.status, demo: restaurants.isDemo }).from(restaurants).where(eq(restaurants.slug, slug));
     if (!r || r.estado !== 'activo') throw new NotFoundException('Restaurante no encontrado.');
-    return { restaurantId: r.id, restaurantIds: [] } as Tenant;
+    return { restaurantId: r.id, restaurantIds: [], ...(r.demo ? { demo: true } : {}) } as Tenant & { demo?: boolean };
   }
 
   async publica(slug: string) {
@@ -174,6 +174,7 @@ export class ReservasService {
 
   async reservar(slug: string, d: z.infer<typeof ReservaPublica>) {
     const t = await this.sucursal(slug);
+    if ((t as { demo?: boolean }).demo) throw new ForbiddenException('Esta sucursal es de muestra y no recibe pedidos, llamados ni reservas reales.');
     return this.db.run(t, async (tx) => {
       const c = await this.cfg(tx, t.restaurantId);
       if (!c.habilitadas) throw new NotFoundException('Este restaurante no recibe reservas por la web.');
@@ -188,6 +189,7 @@ export class ReservasService {
 
   async cancelarPublica(slug: string, codigo: string) {
     const t = await this.sucursal(slug);
+    if ((t as { demo?: boolean }).demo) throw new ForbiddenException('Esta sucursal es de muestra y no recibe pedidos, llamados ni reservas reales.');
     return this.db.run(t, async (tx) => {
       const r = (await tx.execute(sql`UPDATE reservations SET state = 'cancelada' WHERE restaurant_id = ${t.restaurantId} AND code = ${codigo} AND state IN ('pendiente','confirmada') AND starts_at > now() RETURNING id`)).rows[0] as { id: string } | undefined;
       if (!r) throw new ConflictException('No encontramos una reserva activa con ese código (o ya no se puede cancelar).');

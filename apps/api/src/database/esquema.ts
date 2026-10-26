@@ -22,6 +22,7 @@ export const restaurants = pgTable('restaurants', {
   paidUntil: text('paid_until'),
   planId: uuid('plan_id'),
   status: text('status').notNull().default('activo'),
+  isDemo: boolean('is_demo').notNull().default(false),
 });
 
 export const users = pgTable('users', {

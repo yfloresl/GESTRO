@@ -6,6 +6,7 @@ import { api, ETIQUETA_ROL, useSesion } from '../lib/sesion';
 import { cerrarKyrosId } from '../lib/kyrosid';
 import { useAvisos } from '../lib/avisos';
 import { Link } from 'react-router-dom';
+import { BannerMuestra } from './BannerMuestra';
 
 /** Navegación del diseño (5.1). Los módulos de fases siguientes abren un estado vacío hasta construirse. */
 type Item = { ruta: string; icono: string; texto: string; roles?: string[]; externa?: string };
@@ -160,6 +161,7 @@ export function Shell() {
               <Link to="/app/suscripcion" className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold flex items-center">Pagar ahora</Link>
             </div>
           )}
+          <BannerMuestra />
           <div className="pt-space-lg"><Outlet /></div>
         </main>
       </div>

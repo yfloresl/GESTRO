@@ -2,6 +2,7 @@ import { applyDecorators, CanActivate, ExecutionContext, UseGuards, ForbiddenExc
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { eq } from 'drizzle-orm';
+import { SetMetadata } from '@nestjs/common';
 import { BD, Bd } from '../database/database.module';
 import { restaurants } from '../database/esquema';
 import { SecretosService } from '../secretos/secretos.service';
@@ -89,9 +90,28 @@ export class SubscriptionGuard implements CanActivate {
   }
 }
 
+/** Endpoints que SÍ pueden usarse en la sucursal de demostración (que es de solo lectura). */
+export const PERMITE_EN_DEMO = 'gestro:permite-en-demo';
+export const PermiteEnDemo = () => SetMetadata(PERMITE_EN_DEMO, true);
+
+/** La sucursal de demostración es de solo lectura: cualquier escritura devuelve 403, salvo los endpoints marcados con @PermiteEnDemo. */
+@Injectable()
+export class DemoSoloLecturaGuard implements CanActivate {
+  constructor(@Inject(BD) private readonly bd: Bd, @Inject(Reflector) private readonly reflector: Reflector) {}
+
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
+    const req = ctx.switchToHttp().getRequest<PeticionAutenticada>();
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method) || !req.tenant) return true;
+    if (this.reflector.get<boolean>(PERMITE_EN_DEMO, ctx.getHandler()) === true) return true;
+    const [r] = await this.bd.select({ demo: restaurants.isDemo }).from(restaurants).where(eq(restaurants.id, req.tenant.restaurantId));
+    if (r?.demo) throw new ForbiddenException('Esta cuenta es solo de lectura: puedes recorrer todo, pero no modificar los datos de muestra.');
+    return true;
+  }
+}
+
 /** Pagar la suscripción debe poder hacerse justo cuando la sucursal venció (modo solo lectura). */
 export const DeSucursalSiempre = (...roles: (Rol | 'plataforma')[]) =>
-  applyDecorators(Roles(...roles), UseGuards(RestaurantScopeGuard, RolesGuard));
+  applyDecorators(Roles(...roles), UseGuards(RestaurantScopeGuard, RolesGuard, DemoSoloLecturaGuard));
 
 /** Consola de Kyros-Tech: solo personal de plataforma (no depende de ninguna sucursal). */
 @Injectable()
@@ -106,4 +126,4 @@ export const SoloPlataforma = () => UseGuards(SoloPlataformaGuard);
 
 /** Endpoint de una sucursal: valida X-Restaurant-Id, el rol y que la suscripción permita escribir. */
 export const DeSucursal = (...roles: (Rol | 'plataforma')[]) =>
-  applyDecorators(Roles(...roles), UseGuards(RestaurantScopeGuard, RolesGuard, SubscriptionGuard));
+  applyDecorators(Roles(...roles), UseGuards(RestaurantScopeGuard, RolesGuard, DemoSoloLecturaGuard, SubscriptionGuard));

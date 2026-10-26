@@ -1,3 +1,4 @@
+import { esSubDeDemostracion } from '../demo/constantes';
 import { BadRequestException, ConflictException, ForbiddenException, HttpException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { and, eq, gt, isNull, lt } from 'drizzle-orm';
@@ -73,6 +74,7 @@ export class KyrosIdService {
       throw new UnauthorizedException();
     }
     const [v] = await this.bd.select({ userId: kyrosLinks.userId }).from(kyrosLinks).where(and(eq(kyrosLinks.issuer, a.emisor), eq(kyrosLinks.sub, r.sub)));
+    if (!v && esSubDeDemostracion(r.sub)) throw new UnauthorizedException();   // sin demostración cargada: como un token inválido
     return { sub: r.sub, userId: v?.userId ?? null };
   }
 
@@ -108,6 +110,7 @@ export class KyrosIdService {
     await this.usarJti(r);
 
     const [vinculo] = await this.bd.select().from(kyrosLinks).where(and(eq(kyrosLinks.issuer, a.emisor), eq(kyrosLinks.sub, r.sub)));
+    if (!vinculo && esSubDeDemostracion(r.sub)) throw new UnauthorizedException('No pudimos verificar tu ingreso.');   // las cuentas Prueba_Kyros solo valen con la demostración cargada
     if (vinculo) {
       const [u] = await this.bd.select().from(users).where(eq(users.id, vinculo.userId));
       if (!u?.active) throw new ForbiddenException('Tu cuenta está desactivada.');

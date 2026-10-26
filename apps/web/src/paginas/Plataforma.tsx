@@ -5,14 +5,15 @@ import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
 import { reducirImagen } from '../lib/imagen';
+import { PlataformaDemo } from './PlataformaDemo';
 import { PlataformaIa } from './PlataformaIa';
 
 interface PagoP { id: string; sucursal: string; cuenta: string; meses: number; mesesDeRegalo: number; monto: string; esperado: string | null; coincide: boolean | null; referencia: string; banco: string | null; fechaPago: string | null; estado: string; motivo: string | null; tieneVoucher: boolean; creado: string; habilitadaHasta: string | null; promocion: string | null }
 interface SucP { id: string; nombre: string; cuenta: string; estado: string; habilitadaHasta: string | null; diasRestantes: number | null; suscripcion: string; plan: string | null; planId: string | null }
 interface PlanP { id: string; codigo: string; nombre: string; precioMensual: string; activo: boolean }
 interface PromoP { id: string; nombre: string; mesesRequeridos: number; mesesDeRegalo: number; descuentoPct: number; desde: string; hasta: string; activa: boolean }
-type Pestana = 'pagos' | 'sucursales' | 'planes' | 'promociones' | 'cobro' | 'ia';
-const PESTANAS: [Pestana, string][] = [['pagos', 'Pagos'], ['sucursales', 'Sucursales'], ['planes', 'Planes'], ['promociones', 'Promociones'], ['cobro', 'Cobro'], ['ia', 'Inteligencia artificial']];
+type Pestana = 'pagos' | 'sucursales' | 'planes' | 'promociones' | 'cobro' | 'ia' | 'demo';
+const PESTANAS: [Pestana, string][] = [['pagos', 'Pagos'], ['sucursales', 'Sucursales'], ['planes', 'Planes'], ['promociones', 'Promociones'], ['cobro', 'Cobro'], ['ia', 'Inteligencia artificial'], ['demo', 'Restaurante de muestra']];
 
 /** Consola de Kyros-Tech: valida los pagos a mano (la IA nunca aprueba) y administra planes, promociones y cobro. */
 export function Plataforma() {
@@ -25,7 +26,7 @@ export function Plataforma() {
       <div className="flex gap-space-xs overflow-x-auto" role="tablist" aria-label="Secciones">
         {PESTANAS.map(([k, n]) => <button key={k} role="tab" aria-selected={p === k} onClick={() => setP(k)} className={`h-12 px-space-md rounded-lg font-semibold whitespace-nowrap ${p === k ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}>{n}</button>)}
       </div>
-      {p === 'pagos' && <Pagos />}{p === 'sucursales' && <Sucursales />}{p === 'planes' && <Planes />}{p === 'promociones' && <Promociones />}{p === 'cobro' && <Cobro />}{p === 'ia' && <PlataformaIa />}
+      {p === 'pagos' && <Pagos />}{p === 'sucursales' && <Sucursales />}{p === 'planes' && <Planes />}{p === 'promociones' && <Promociones />}{p === 'cobro' && <Cobro />}{p === 'ia' && <PlataformaIa />}{p === 'demo' && <PlataformaDemo />}
     </div>
   );
 }
