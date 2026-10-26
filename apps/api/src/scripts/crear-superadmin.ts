@@ -28,6 +28,7 @@ async function main() {
       if (sub) {
         await c.query('INSERT INTO kyros_links (issuer, sub, user_id) VALUES ($1,$2,$3)', [emisor, sub, u.rows[0].id]);
       } else if (!yaVinculado) {
+        await c.query('DELETE FROM user_invitations WHERE user_id = $1 AND used_at IS NULL', [u.rows[0].id]);   // un código nuevo anula los anteriores sin usar
         codigo = `gst-${randomBytes(32).toString('base64url')}`;
         await c.query(`INSERT INTO user_invitations (user_id, token_hash, expires_at) VALUES ($1,$2, now() + interval '24 hours')`, [u.rows[0].id, createHash('sha256').update(codigo).digest('hex')]);
       }
