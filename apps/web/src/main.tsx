@@ -14,6 +14,8 @@ import { Cocina } from './paginas/Cocina';
 import { Compras } from './paginas/Compras';
 import { Cobranzas } from './paginas/Cobranzas';
 import { Contabilidad } from './paginas/Contabilidad';
+import { ReservaWeb } from './paginas/ReservaWeb';
+import { Reservas } from './paginas/Reservas';
 import { Configuracion } from './paginas/Configuracion';
 import { Inventario } from './paginas/Inventario';
 import { Pedidos } from './paginas/Pedidos';
@@ -54,6 +56,7 @@ createRoot(document.getElementById('raiz')!).render(
             <Route path="/callback" element={<Callback />} />
             <Route path="/registro" element={<Registro />} />
             <Route path="/m/:qr" element={<Cliente />} />
+            <Route path="/r/:slug" element={<ReservaWeb />} />
             <Route path="/cocina" element={<Cocina />} />
             <Route path="/app" element={<Shell />}>
               <Route index element={<Inicio />} />
@@ -66,6 +69,7 @@ createRoot(document.getElementById('raiz')!).render(
               <Route path="compras" element={<Compras />} />
               <Route path="contabilidad" element={<Contabilidad />} />
               <Route path="cobranzas" element={<Cobranzas />} />
+              <Route path="reservas" element={<Reservas />} />
               <Route path="recetas" element={<Recetas />} />
               <Route path="plan-del-dia" element={<PlanDelDia />} />
               <Route path="caja" element={<Caja />} />

@@ -68,6 +68,9 @@ export function AvisosProvider({ children }: { children: ReactNode }) {
     socket.on('pedido.cobrado', refrescarPedidos);
     const aviso = (a: AvisoPedido) => { refrescarPedidos(); if (a.paraMi === false) return; setNuevas((n) => n + 1); if (sonidoRef.current) pitar(true); try { navigator.vibrate?.([300, 120, 300]); } catch { /* sin vibración */ } };
     socket.on('pedido.listo', aviso);
+    const refrescarReservas = () => { void qc.invalidateQueries({ queryKey: ['reservas'] }); };
+    socket.on('reserva.nueva', () => { refrescarReservas(); if (sonidoRef.current) pitar(false); });
+    socket.on('reserva.cambio', refrescarReservas);
     socket.on('pedido.qr', aviso);
     return () => { socket.close(); };
   }, [usuario, sucursalId, qc]);

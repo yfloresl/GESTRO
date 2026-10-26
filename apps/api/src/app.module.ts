@@ -27,6 +27,8 @@ import { ContabilidadController } from './contabilidad/contabilidad.controller';
 import { ContabilidadService } from './contabilidad/contabilidad.service';
 import { CobranzasController } from './cobranzas/cobranzas.controller';
 import { CobranzasService } from './cobranzas/cobranzas.service';
+import { ReservasController, ReservasPublicasController } from './reservas/reservas.controller';
+import { ReservasService } from './reservas/reservas.service';
 import { ConsumoService } from './recetas/consumo.service';
 import { PersonalController } from './personal/personal.controller';
 import { PersonalService } from './personal/personal.service';
@@ -56,9 +58,9 @@ class NucleoModule {}
     // En las pruebas (Vitest) se desactivan para que no se bloqueen entre sí.
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 120 }], skipIf: () => process.env.VITEST !== undefined }),
   ],
-  controllers: [SaludController, AuthController, KyrosIdController, SucursalController, PersonalController, MenuController, MenuPublicoController, SalonController, QrController, SolicitudesController, PushController, PedidosController, CajaController, SuscripcionController, PlataformaController, PortalController, InventarioController, RecetasController, ComprasController, ContabilidadController, CobranzasController],
+  controllers: [SaludController, AuthController, KyrosIdController, SucursalController, PersonalController, MenuController, MenuPublicoController, SalonController, QrController, SolicitudesController, PushController, PedidosController, CajaController, SuscripcionController, PlataformaController, PortalController, InventarioController, RecetasController, ComprasController, ContabilidadController, CobranzasController, ReservasController, ReservasPublicasController],
   providers: [
-    SesionService, KyrosIdService, JwtAuthGuard, StorageService, PersonalService, MenuService, SalonService, SolicitudesService, TableTokenGuard, EventosGateway, PushService, PedidosService, CajaService, SuscripcionService, InventarioService, RecetasService, ConsumoService, ComprasService, ContabilidadService, CobranzasService,
+    SesionService, KyrosIdService, JwtAuthGuard, StorageService, PersonalService, MenuService, SalonService, SolicitudesService, TableTokenGuard, EventosGateway, PushService, PedidosService, CajaService, SuscripcionService, InventarioService, RecetasService, ConsumoService, ComprasService, ContabilidadService, CobranzasService, ReservasService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useExisting: JwtAuthGuard },
   ],

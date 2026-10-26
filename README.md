@@ -2,7 +2,7 @@
 
 Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estándar Sistemas-Kyros, ingreso con Kyros ID y presencia en el Portal Kyros.
 
-## Estado: F3 completa (contabilidad) sobre F2, F1 y F0
+## Estado: F4 en curso (reservas hechas) sobre F3, F2, F1 y F0
 
 | Hecho | Detalle |
 |---|---|
@@ -27,7 +27,9 @@ Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estánd
 
 **F3 (hecho):** contabilidad de nivel medio con partida doble. Plan de cuentas de restaurante (plantilla editable) y centros de costo; asientos automáticos de venta cobrada, costo de ventas (al costo promedio, al enviar a cocina), compra recibida (con o sin IVA incluido), pago a proveedor, compra al contado, merma y ajuste/conteo de inventario; asientos manuales en borrador que se publican con correlativo sin huecos; un asiento publicado **no se edita ni se borra** (lo impide la base) y se corrige contrarrestándolo; anular una venta genera su contra-asiento; períodos que se cierran (el dueño reabre) — los asientos automáticos nunca frenan una venta y, si el mes está cerrado, caen en el primer mes abierto. Reportes: sumas y saldos, estado de resultados, balance general, libro mayor, flujo de caja, libros de IVA e impuestos referenciales (IVA 13 % e IT 3 % son parámetros de la sucursal que valida el contador). Las ventas a crédito (nombre del cliente, teléfono y plazo) nacen como cuenta por cobrar; la pantalla **Cuentas por cobrar** registra cobros totales o parciales por caja o banco, cada uno con su asiento, y anular una venta a crédito sin cobros retira la deuda. El correlativo de asientos no tiene huecos: los borradores llevan un número provisional y el definitivo se asigna al publicar.
 
-Siguiente: **F4 · Reservas, eventos, personal y promociones**. Ver `docs/ROADMAP.md`.
+**F4a (hecho): reservas.** Web pública `/r/<slug>` sin cuenta (fecha, personas, horas libres, código para cancelar) y agenda del personal (confirmar, sentar, terminó, no llegó, cancelar, cambiar de mesa, crear a mano). La mesa se asigna sola (la más chica que alcance) y la base impide con una restricción de exclusión que una mesa tenga dos reservas activas cruzadas: si dos clientes piden la última mesa a la vez, uno gana y el otro recibe 409. Cada sucursal decide si las recibe, horario, duración, máximo de personas y si se confirman solas; avisa al personal en tiempo real y por Web Push.
+
+Siguiente: **F4b eventos y catering**, **F4c personal y turnos**, **F4d promociones**. Ver `docs/ROADMAP.md`.
 
 ## Desarrollo local
 

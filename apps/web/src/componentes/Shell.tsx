@@ -24,7 +24,7 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
     { ruta: 'caja', icono: 'point_of_sale', texto: 'Caja', roles: ['owner', 'admin', 'cajero'] },
     { ruta: 'salon', icono: 'qr_code_2', texto: 'Mesas & Salón (QR)', roles: SALON },
     { ruta: 'compras', icono: 'local_shipping', texto: 'Compras & Proveedores', roles: ['owner', 'admin', 'almacen', 'contador'] },
-    { ruta: 'reservas', icono: 'event_seat', texto: 'Reservas & Eventos' },
+    { ruta: 'reservas', icono: 'event_seat', texto: 'Reservas', roles: SALON },
     { ruta: 'personal', icono: 'badge', texto: 'Personal & Turnos', roles: ['owner', 'admin'] },
   ] },
   { titulo: 'Gestión & Finanzas', items: [
