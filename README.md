@@ -2,7 +2,7 @@
 
 Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estándar Sistemas-Kyros, ingreso con Kyros ID y presencia en el Portal Kyros.
 
-## Estado: F4 completa (reservas, eventos, turnos y promociones) sobre F3, F2, F1 y F0 sobre F3, F2, F1 y F0
+## Estado: F5 en curso (estadísticas hechas) sobre F4, F3, F2, F1 y F0 sobre F3, F2, F1 y F0
 
 | Hecho | Detalle |
 |---|---|
@@ -35,7 +35,9 @@ Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estánd
 
 **F4d (hecho): promociones.** Descuento por porcentaje o precio fijo, por rango de fechas, días de la semana y horario (happy hour, incluso si cruza la medianoche), para todo el menú o para platos elegidos. El precio con promoción lo decide el servidor al agregar el plato al pedido (por mesero, caja o QR), se guarda junto al precio de carta y por eso ventas, recibos y contabilidad ya reflejan el descuento; si varias aplican, gana el precio más bajo y nunca sube el precio. El menú del personal y el del cliente muestran el precio tachado y el vigente. Reporte del descuento dado por promoción.
 
-Siguiente: **F5 · Inteligencia** (KPIs y proyecciones, alertas, FODA, asistente con IA). Ver `docs/ROADMAP.md`.
+**F5a (hecho): estadísticas y proyecciones.** Indicadores por día precalculados en `kpi_daily` (ingresos, pedidos, ticket, costo de alimentos desde el consumo valorizado, merma, minutos de preparación; trabajo nocturno y a pedido). Resumen con variación contra el período anterior, ventas por hora, día, plato, categoría, mesero, canal y tipo, ingeniería de menú (estrella, caballo, puzzle, perro) con margen real de las recetas, proyección a 4 semanas con banda del 80 % y confianza (con menos de 8 semanas de historia dice «datos insuficientes»), escenarios «¿y si subo 5 %?» y comparación de sucursales.
+
+Siguiente: **F5b alertas**, **F5c FODA y asistente con IA** (clave de Claude cifrada). Ver `docs/ROADMAP.md`.
 
 ## Desarrollo local
 
