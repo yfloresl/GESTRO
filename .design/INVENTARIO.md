@@ -41,3 +41,6 @@ Estado: `usado` entra a código · `derivado` se construyó a partir de tokens/p
 | Promociones: tarjetas con estado, formulario (regla, fechas, días, horario, platos) y efecto en ventas | 5.9 | derivado | Precio tachado + vigente en el menú del personal y del cliente |
 | Estadísticas & BI: resumen, ventas, menú, proyección con banda y escenarios, sucursales | 5.10 | derivado | Gráficos SVG propios con tokens (barras y línea con banda) |
 | Alertas: lista con severidad, explicación y datos que la sustentan, revisar ahora y resolver | 5.11 | derivado | Tarjetas con `details` para la evidencia |
+| Informe FODA: cuatro cuadrantes con evidencia desplegable, historial y generación | 5.12 | derivado | Bordes superiores de color por cuadrante |
+| Asistente: preguntas, respuesta con tablas y fuentes | 5.13 | derivado | Renderizador de Markdown propio y seguro (sin HTML) |
+| Consola de plataforma: pestaña Inteligencia artificial (clave, modelos, precios, límites, uso) | 6.2 | derivado | La clave nunca se muestra |

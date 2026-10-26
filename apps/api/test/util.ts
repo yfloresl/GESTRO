@@ -50,8 +50,8 @@ export async function levantar() {
     await owner.query('INSERT INTO kyros_links (issuer, sub, user_id) VALUES ($1,$2,$3)', [emisor, sub, u]);
     const r = await api().post('/api/v1/auth/kyros-id/sesion').send({ accessToken: firmar({ sub }) });
     const token = r.body.sesion.accessToken as string;
-    const pet = (m: 'get' | 'post' | 'put' | 'patch', ruta: string) => api()[m](`/api/v1${ruta}`).set('Authorization', `Bearer ${token}`);
-    return { token, userId: u, sub, get: (ruta: string) => pet('get', ruta), post: (ruta: string, c?: object) => pet('post', ruta).send(c), patch: (ruta: string, c?: object) => pet('patch', ruta).send(c), put: (ruta: string, c?: object) => pet('put', ruta).send(c) };
+    const pet = (m: 'get' | 'post' | 'put' | 'patch' | 'delete', ruta: string) => api()[m](`/api/v1${ruta}`).set('Authorization', `Bearer ${token}`);
+    return { token, userId: u, sub, get: (ruta: string) => pet('get', ruta), post: (ruta: string, c?: object) => pet('post', ruta).send(c), patch: (ruta: string, c?: object) => pet('patch', ruta).send(c), put: (ruta: string, c?: object) => pet('put', ruta).send(c), del: (ruta: string) => pet('delete', ruta) };
   }
 
   /** Une a una persona invitada con su código y devuelve su sesión. */

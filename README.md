@@ -2,7 +2,7 @@
 
 Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estándar Sistemas-Kyros, ingreso con Kyros ID y presencia en el Portal Kyros.
 
-## Estado: F5 en curso (estadísticas hechas) sobre F4, F3, F2, F1 y F0 sobre F3, F2, F1 y F0
+## Estado: F5 completa (estadísticas, alertas, FODA e IA) sobre F4, F3, F2, F1 y F0 sobre F3, F2, F1 y F0
 
 | Hecho | Detalle |
 |---|---|
@@ -39,7 +39,9 @@ Sistema de Gestión de Restaurantes (SaaS multi-sucursal) de Kyros-Tech. Estánd
 
 **F5b (hecho): alertas con explicación.** Se revisan cada 3 minutos y a pedido: demora de cocina (contra 1,5 × el tiempo de preparación del plato más lento), merma de la semana contra las ventas (límite 5 %), platos bajo el margen mínimo y caída de ventas contra lo habitual del mismo día. Cada una dice qué pasa, con qué números y contra qué límite, y muestra los datos que la sustentan; las que dependen del estado actual se resuelven solas al corregirse, no se duplican y las graves llegan por tiempo real y Web Push a dueño y administración.
 
-Siguiente: **F5c FODA y asistente con IA** (clave de Claude cifrada). Ver `docs/ROADMAP.md`.
+**F5c (hecho): FODA e IA.** Módulo de IA con la clave de Claude **cifrada en la base** y administrada desde la consola de plataforma (modelos por tarea, precios, límites diario y mensual, registro de tokens y costo en `ai_jobs`, reintentos y tiempo máximo). **FODA automático**: se arma primero con reglas sobre los indicadores reales (cada punto cita su métrica y muestra la evidencia); si hay IA, Claude redacta con solo los agregados y su texto se **valida contra los números** (cifras inventadas o métricas inexistentes se descartan); con pocos datos lo declara; el del mes anterior se genera solo el día 1. **Asistente de gestión**: preguntas en lenguaje natural con herramientas de solo lectura bajo RLS (resumen, ventas, menú, resultados, alertas, stock, cuentas, proyección) y fuentes citadas.
+
+Siguiente: **F6 · Piloto** (endurecimiento, pruebas en dispositivos reales, datos de ejemplo y puesta en marcha). Ver `docs/ROADMAP.md`.
 
 ## Desarrollo local
 

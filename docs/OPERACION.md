@@ -34,7 +34,7 @@ Identidad entrega el `sub` de la persona. En la terminal del contenedor `api`:
 ```bash
 node dist/src/scripts/crear-superadmin.js --email yamil@kyros-tech.com --nombre "Nombre" --sub <sub de Kyros ID>
 ```
-Crea el usuario de plataforma y lo vincula de una vez. El resto de personas se vinculan con su código de invitación (un solo uso) o abren su propio restaurante con «Crear mi cuenta».
+Crea el usuario de plataforma y lo vincula de una vez. **Sin `--sub`** (no hace falta saberlo) entrega un **código de un solo uso, válido 24 horas**: la persona entra a GESTRO con Kyros ID y lo escribe en «Tengo un código de invitación»; queda vinculada por su identidad. No hay contraseñas. El resto de personas se vinculan con su código de invitación (un solo uso) o abren su propio restaurante con «Crear mi cuenta».
 
 ## 4. Avisos con pantalla bloqueada (Web Push)
 - Las claves VAPID se generan solas la primera vez y quedan cifradas en `app_config`; no hay variables.
@@ -51,5 +51,13 @@ Crea el usuario de plataforma y lo vincula de una vez. El resto de personas se v
 6. **Vencimiento:** el titular recibe aviso a 5 días, 1 día y el día en que vence. Pasado el periodo de gracia (3 días, provisional) la sucursal queda en solo lectura; pagar sigue funcionando.
 - Los restaurantes nuevos arrancan con 15 días de prueba (provisional hasta que Kyros-Tech defina los planes).
 
-## 6. Pendiente de integración con el Portal
+## 6. Inteligencia artificial (clave de Claude)
+La clave **no va en variables de entorno**: se carga desde la consola de plataforma (Plataforma → *Inteligencia artificial*) con una cuenta de plataforma. Se guarda **cifrada** en la base (AES-256-GCM, llave maestra del volumen `gestro_secretos`), nunca se vuelve a mostrar (solo sus últimos 4 caracteres) y nunca sale en ninguna respuesta de la API.
+- *Probar conexión* hace una llamada mínima. *Quitar clave* / *Apagar la IA* cortan el asistente y el FODA con IA al instante; el FODA sigue armándose con reglas y todo lo demás funciona igual.
+- Modelos por tarea (por defecto `claude-sonnet-5-5` para FODA y asistente, `claude-haiku-5-5` para pruebas). **Carga los precios vigentes** de tu cuenta de Anthropic para que el costo se calcule: sin precios, el costo queda sin calcular y el límite mensual no se aplica.
+- Topes: consultas por día por sucursal (200 por defecto) y gasto mensual de la plataforma (opcional). Cada llamada queda en `ai_jobs` (tarea, modelo, tokens, costo, estado).
+- Qué recibe Claude: **solo agregados** (indicadores, totales, clases de menú); ni nombres ni teléfonos de personas. El texto del FODA se **valida contra los números** antes de publicarse. El asistente solo usa herramientas de **lectura** con la sucursal fijada por RLS; no hay SQL libre ni escritura.
+- Pendiente: el envío del FODA mensual por correo (llega al panel; el correo espera a que se configure SMTP).
+
+## 7. Pendiente de integración con el Portal
 `portal/summary`, `portal/account` y `/entrar?destino=` ya existen en GESTRO. Falta que Identidad cree el client y la audiencia (sección 2) y agregue la tarjeta al Portal. Quedan para cuando existan en el ecosistema: el registro central de accesos en Kyros ID (su diseño aún no existe) y `?rol=` en `/entrar` (hoy la persona cambia de sucursal desde el selector de la cabecera; sus roles son por sucursal).

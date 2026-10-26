@@ -14,7 +14,9 @@ import { Cocina } from './paginas/Cocina';
 import { Compras } from './paginas/Compras';
 import { Cobranzas } from './paginas/Cobranzas';
 import { Alertas } from './paginas/Alertas';
+import { Asistente } from './paginas/Asistente';
 import { Contabilidad } from './paginas/Contabilidad';
+import { Foda } from './paginas/Foda';
 import { Estadisticas } from './paginas/Estadisticas';
 import { Promociones } from './paginas/Promociones';
 import { Turnos } from './paginas/Turnos';
@@ -80,6 +82,8 @@ createRoot(document.getElementById('raiz')!).render(
               <Route path="promociones" element={<Promociones />} />
               <Route path="estadisticas" element={<Estadisticas />} />
               <Route path="alertas" element={<Alertas />} />
+              <Route path="foda" element={<Foda />} />
+              <Route path="asistente" element={<Asistente />} />
               <Route path="recetas" element={<Recetas />} />
               <Route path="plan-del-dia" element={<PlanDelDia />} />
               <Route path="caja" element={<Caja />} />
