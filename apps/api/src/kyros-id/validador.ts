@@ -16,7 +16,7 @@ export class TokenInvalido extends Error {}
 export class EmisorNoDisponible extends Error {}
 
 export interface Reclamos {
-  sub: string; iss: string; azp: string; exp: number; jti?: string; iat?: number; auth_time?: number;
+  sub: string; iss: string; azp: string; exp: number; jti?: string; iat?: number; auth_time?: number; acr?: string;
   preferred_username?: string; email?: string; given_name?: string; family_name?: string; name?: string;
   [extra: string]: unknown;
 }
@@ -184,3 +184,8 @@ export async function validarToken(token: string, esperado: Esperado, claves: Cl
   if (r.jti !== undefined && (typeof r.jti !== 'string' || !r.jti || r.jti.length > 200)) throw new TokenInvalido('jti inválido.');
   return r as Reclamos;
 }
+
+/** Rol de realm que da el claim `kyros_pa` (SuperAdmin central). */
+export const ROL_PLATAFORMA = 'kyros-platform-admin';
+/** Forma exacta `["kyros-platform-admin"]`, leída solo del access token ya verificado. Cualquier otra forma = sin claim. `realm_access` se ignora. */
+export const claimPlataformaValido = (r: Reclamos): boolean => Array.isArray(r.kyros_pa) && r.kyros_pa.length === 1 && r.kyros_pa[0] === ROL_PLATAFORMA;

@@ -35,6 +35,9 @@ describe('URL de autorización', () => {
     expect(u.searchParams.get('redirect_uri')).toBe('https://gestro.kyros-tech.com/callback');
     expect(u.searchParams.get('client_id')).toBe('gestro-web');
   });
+  it('solo la confirmación del administrador de plataforma pide prompt=login', () => {
+    expect(new URL(urlDeIngreso(cfg, { state: 's', nonce: 'n', challenge: 'c' }, { reauth: true })).searchParams.get('prompt')).toBe('login');
+  });
   it('«Crear mi cuenta» usa el endpoint de registro de Keycloak', () => {
     expect(urlDeIngreso(cfg, { state: 's', nonce: 'n', challenge: 'c' }, { registro: true })).toContain('/protocol/openid-connect/registrations?');
   });

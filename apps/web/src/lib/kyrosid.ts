@@ -20,7 +20,7 @@ export function destinoSeguro(destino: string | null | undefined): string {
   return destino;
 }
 
-export interface OpcionesIngreso { registro?: boolean; destino?: string }
+export interface OpcionesIngreso { registro?: boolean; destino?: string; /** Fuerza contraseña + segundo factor ahora (SuperAdmin central: PLATAFORMA_REAUTH). */ reauth?: boolean }
 
 export function urlDeIngreso(cfg: KyrosIdPublico, pkce: { state: string; nonce: string; challenge: string }, o: OpcionesIngreso = {}): string {
   const base = o.registro ? cfg.authorizationEndpoint.replace(/\/auth$/, '/registrations') : cfg.authorizationEndpoint;
@@ -30,6 +30,7 @@ export function urlDeIngreso(cfg: KyrosIdPublico, pkce: { state: string; nonce: 
     // Ingreso normal: sin prompt=login y con max_age=28800 (8 h). Nunca 0 ni ausente.
     max_age: String(KYROS_LOGIN_MAX_AGE_SECONDS),
   });
+  if (o.reauth) q.set('prompt', 'login');   // solo para confirmar la identidad del administrador de plataforma; el ingreso normal nunca lo lleva
   return `${base}?${q}`;
 }
 

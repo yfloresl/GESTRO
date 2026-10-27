@@ -1,7 +1,7 @@
 import { esSubDeDemostracion } from '../demo/constantes';
 import { BadRequestException, ConflictException, ForbiddenException, HttpException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { and, eq, gt, isNull, lt } from 'drizzle-orm';
+import { and, count, eq, gt, isNull, lt, sql } from 'drizzle-orm';
 import type { Response } from 'express';
 import { z } from 'zod';
 import type { KyrosIdPublico, Rol, SesionRespuesta } from '@gestro/contracts';
@@ -11,14 +11,19 @@ import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { BD, Bd } from '../database/database.module';
 import { accounts, kyrosLinks, kyrosUsedTokens, restaurants, roles, userInvitations, userRoles, users } from '../database/esquema';
 import { SecretosService } from '../secretos/secretos.service';
-import { ClavesDelEmisor, EmisorNoDisponible, Reclamos, TokenInvalido, urlDeClaves, validarAvisoDeCierre, validarToken } from './validador';
+import { claimPlataformaValido, ClavesDelEmisor, EmisorNoDisponible, Reclamos, TokenInvalido, urlDeClaves, validarAvisoDeCierre, validarToken } from './validador';
 
 /** Lo que se guarda (cifrado) en app_config. Nada de esto es secreto, pero va igual que el resto. */
-export interface KyrosIdGuardado { activo: boolean; emisor: string; clientId: string; audiencia: string; portalClientId?: string; portalAudiencia?: string }
+export interface KyrosIdGuardado { activo: boolean; emisor: string; clientId: string; audiencia: string; portalClientId?: string; portalAudiencia?: string; plataformaSso?: boolean; plataformaMax?: number }
 
 export const EMISOR_POR_DEFECTO = 'https://auth.kyros-tech.com/realms/kyros';
 /** Una identidad creada con «Crear mi cuenta» tiene auth_time de hasta 5 minutos (patrón del Portal). */
 const RECIEN_CREADA_S = 300;
+/** SuperAdmin central: sesión de 60 min absolutos; reentrar con un usuario ya creado acepta SSO de hasta 10 h (máximo del realm); tope de identidades. */
+const CENTRAL_VIDA_MS = 60 * 60_000;
+const CENTRAL_REENTRADA_S = 10 * 3600;
+export const CENTRAL_TOPE = 5;
+const reauth = () => new UnauthorizedException({ code: 'PLATAFORMA_REAUTH', message: 'Confirma tu identidad con Kyros ID para entrar como administrador de plataforma.' });
 /** Días de prueba de un restaurante nuevo (provisional hasta que Kyros-Tech fije los planes). */
 export const DIAS_DE_PRUEBA = 15;
 
@@ -57,7 +62,7 @@ export class KyrosIdService {
   async ajustes(): Promise<KyrosIdGuardado> {
     const a = await this.config.leer<KyrosIdGuardado>('kyrosId');
     const clientId = a?.clientId || 'gestro-web';
-    return { activo: !!a?.activo, emisor: (a?.emisor || EMISOR_POR_DEFECTO).replace(/\/+$/, ''), clientId, audiencia: a?.audiencia || clientId, portalClientId: a?.portalClientId || 'portal-web', portalAudiencia: a?.portalAudiencia || 'gestro-portal' };
+    return { activo: !!a?.activo, emisor: (a?.emisor || EMISOR_POR_DEFECTO).replace(/\/+$/, ''), clientId, audiencia: a?.audiencia || clientId, portalClientId: a?.portalClientId || 'portal-web', portalAudiencia: a?.portalAudiencia || 'gestro-portal', plataformaSso: a?.plataformaSso === true, plataformaMax: a?.plataformaMax ?? CENTRAL_TOPE };
   }
 
   /**
@@ -109,19 +114,77 @@ export class KyrosIdService {
     }
     await this.usarJti(r);
 
+    const central = a.plataformaSso === true && claimPlataformaValido(r);   // apagado = el claim se ignora por completo
     const [vinculo] = await this.bd.select().from(kyrosLinks).where(and(eq(kyrosLinks.issuer, a.emisor), eq(kyrosLinks.sub, r.sub)));
     if (!vinculo && esSubDeDemostracion(r.sub)) throw new UnauthorizedException('No pudimos verificar tu ingreso.');   // las cuentas Prueba_Kyros solo valen con la demostración cargada
     if (vinculo) {
       const [u] = await this.bd.select().from(users).where(eq(users.id, vinculo.userId));
+      if (vinculo.origen === 'PLATAFORMA') return this.reentrarCentral(a, r, u, central, ip, res);
       if (!u?.active) throw new ForbiddenException('Tu cuenta está desactivada.');
+      // Nunca se escala una cuenta existente: el claim no la toca (se audita y entra como la cuenta normal que es).
+      if (central && !u.isPlatformAdmin) await this.auditarCentral('plataforma.ingreso_superadmin_central_rechazado', a.emisor, r, ip, { motivo: 'sub_vinculado_a_cuenta_no_superadmin' });
       return { estado: 'sesion', sesion: await this.sesion.abrir(u.id, r.sub, ip, res) };
     }
+    if (central) return this.crearCentral(a, r, ip, res);
     const reciente = typeof r.auth_time === 'number' && Date.now() / 1000 - r.auth_time <= RECIEN_CREADA_S;
     const registroToken = await this.jwt.signAsync({ iss: a.emisor, reciente }, {
       secret: this.secretos.firma('registro-kyros'), algorithm: 'HS256', audience: 'registro', subject: r.sub, expiresIn: '15m',
     });
     // Sin consultar cuentas: la respuesta es la misma exista o no el correo.
     return { estado: 'sin_vinculo', puedeRegistrarse: reciente, registroToken };
+  }
+
+  private autenticacion(r: Reclamos) {
+    return { acr: typeof r.acr === 'string' ? r.acr : null, auth_time: typeof r.auth_time === 'number' ? r.auth_time : null };
+  }
+
+  /** Auditoría del SuperAdmin central: sin tokens ni correo, con el `sub` en huella. */
+  private async auditarCentral(accion: string, emisor: string, r: Reclamos, ip: string, extra: Record<string, unknown>, userId: string | null = null): Promise<void> {
+    const despues = { issuer: emisor, sub: this.secretos.huella(r.sub), ...this.autenticacion(r), ...extra };
+    await this.bd.execute(sql`INSERT INTO audit_log (user_id, action, entity, entity_id, after, ip) VALUES (${userId}::uuid, ${accion}, 'user', ${userId}::text, ${JSON.stringify(despues)}::jsonb, ${ip || null}::inet)`);
+  }
+
+  /** Regla de frescura: crear (o volver tras revocación) exige contraseña + TOTP tecleados ahora (acr=1, ≤5 min); reentrar acepta SSO (acr 0/1, ≤10 h). */
+  private frescuraCentral(r: Reclamos, creando: boolean): 'acr' | 'auth_time' | null {
+    const ahora = Date.now() / 1000;
+    if (creando ? r.acr !== '1' : (r.acr !== '0' && r.acr !== '1')) return 'acr';
+    if (typeof r.auth_time !== 'number' || ahora - r.auth_time > (creando ? RECIEN_CREADA_S : CENTRAL_REENTRADA_S) || r.auth_time > ahora + 10) return 'auth_time';
+    return null;
+  }
+
+  private async reentrarCentral(a: KyrosIdGuardado, r: Reclamos, u: typeof users.$inferSelect | undefined, central: boolean, ip: string, res: Response): Promise<ResultadoCanje> {
+    if (!central) throw new UnauthorizedException('No pudimos verificar tu ingreso.');   // interruptor apagado o rol retirado: como un token sin claim
+    if (!u?.active) {
+      await this.auditarCentral('plataforma.ingreso_superadmin_central_rechazado', a.emisor, r, ip, { motivo: 'cuenta_suspendida' }, u?.id ?? null);
+      throw new ForbiddenException('Tu cuenta está desactivada.');
+    }
+    const falla = this.frescuraCentral(r, false);
+    if (falla) { await this.auditarCentral('plataforma.ingreso_superadmin_central_rechazado', a.emisor, r, ip, { motivo: falla }, u.id); throw reauth(); }
+    await this.auditarCentral('plataforma.ingreso_superadmin_central', a.emisor, r, ip, { creado: false }, u.id);
+    return { estado: 'sesion', sesion: await this.sesion.abrir(u.id, r.sub, ip, res, new Date(Date.now() + CENTRAL_VIDA_MS)) };
+  }
+
+  /** Alta al vuelo acotada: solo un SUPERADMIN de plataforma, sin contraseña, con correo reservado, tope de identidades y cerrojo contra carreras. */
+  private async crearCentral(a: KyrosIdGuardado, r: Reclamos, ip: string, res: Response): Promise<ResultadoCanje> {
+    const falla = this.frescuraCentral(r, true);
+    if (falla) { await this.auditarCentral('plataforma.ingreso_superadmin_central_rechazado', a.emisor, r, ip, { motivo: falla }); throw reauth(); }
+    const tope = Math.max(1, Math.min(a.plataformaMax ?? CENTRAL_TOPE, CENTRAL_TOPE));
+    const userId = await this.bd.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('gestro-superadmin-central'))`);
+      const [ya] = await tx.select({ userId: kyrosLinks.userId }).from(kyrosLinks).where(and(eq(kyrosLinks.issuer, a.emisor), eq(kyrosLinks.sub, r.sub)));
+      if (ya) return ya.userId;
+      const [{ n }] = await tx.select({ n: count() }).from(kyrosLinks).where(eq(kyrosLinks.origen, 'PLATAFORMA'));
+      if (n >= tope) return null;
+      const [u] = await tx.insert(users).values({ email: `pa-${this.secretos.huella(a.emisor + r.sub).slice(0, 24)}@kyros-id.invalid`, fullName: 'SuperAdmin Kyros ID' }).returning({ id: users.id });
+      await tx.insert(kyrosLinks).values({ issuer: a.emisor, sub: r.sub, userId: u.id, origen: 'PLATAFORMA' });
+      return u.id;
+    });
+    if (!userId) {
+      await this.auditarCentral('plataforma.ingreso_superadmin_central_rechazado', a.emisor, r, ip, { motivo: 'tope' });
+      throw new ForbiddenException('Se alcanzó el máximo de administradores de plataforma de Kyros ID.');
+    }
+    await this.auditarCentral('plataforma.ingreso_superadmin_central', a.emisor, r, ip, { creado: true }, userId);
+    return { estado: 'sesion', sesion: await this.sesion.abrir(userId, r.sub, ip, res, new Date(Date.now() + CENTRAL_VIDA_MS)) };
   }
 
   /** Cada `jti` se canjea una sola vez. */

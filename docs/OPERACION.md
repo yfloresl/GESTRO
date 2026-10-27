@@ -85,3 +85,13 @@ Regla global «superadmin de Kyros ID en todos los sistemas» (rol `kyros-platfo
 
 ## 10. Pendiente de integración con el Portal
 `portal/summary`, `portal/account` y `/entrar?destino=` ya existen en GESTRO. Falta que Identidad cree el client y la audiencia (sección 2) y agregue la tarjeta al Portal. Quedan para cuando existan en el ecosistema: el registro central de accesos en Kyros ID (su diseño aún no existe) y `?rol=` en `/entrar` (hoy la persona cambia de sucursal desde el selector de la cabecera; sus roles son por sucursal).
+
+## 11. SuperAdmin central de Kyros ID (interruptor APAGADO por defecto)
+Quien tiene el rol `kyros-platform-admin` en Kyros ID (con TOTP) entra a GESTRO directo a la consola de plataforma, sin código de invitación. Diseño: `kyros-standards/docs/superadmin-central-standard.md`.
+- **Encender / apagar** (en la terminal del contenedor `api`): `node dist/src/scripts/activar-kyros-id.js --activo si --client gestro-web --plataforma-sso si` (`no` lo apaga; sin la opción no cambia). Se activa recién después de desplegar Identidad y probar con la persona titular.
+- Solo se lee el claim `kyros_pa` (exactamente `["kyros-platform-admin"]`) del access token ya verificado; `realm_access` se ignora.
+- Se crea un único usuario SUPERADMIN por `sub` (correo reservado `pa-…@kyros-id.invalid`, sin contraseña, `is_platform_admin` NO se guarda: el privilegio es del claim vigente). Nunca se actualiza desde claims y nunca se promueve una cuenta existente. Tope: 5 identidades centrales.
+- Crear exige `acr=1` y `auth_time` ≤ 5 min (si no, 401 `PLATAFORMA_REAUTH` y la web reinicia con `prompt=login` una sola vez). Reentrar acepta `acr` 0/1 y ≤ 10 h.
+- La sesión dura como máximo 60 min absolutos (el refresco no la extiende) y no se renueva con el interruptor apagado o el vínculo retirado. El cierre de sesión global (back-channel) la revoca.
+- Auditoría: `plataforma.ingreso_superadmin_central`, `plataforma.ingreso_superadmin_central_rechazado` (motivos `acr`, `auth_time`, `tope`, `sub_vinculado_a_cuenta_no_superadmin`, `cuenta_suspendida`) y `plataforma.sesion_central_revocada`.
+- El código de un solo uso (`crear-superadmin.js`) sigue siendo el respaldo de emergencia. Dentro de una sucursal ajena rige el modo soporte (solo lectura).

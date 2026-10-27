@@ -57,6 +57,7 @@ export const refreshTokens = pgTable('refresh_tokens', {
   usedAt: timestamp('used_at', { withTimezone: true }),
   ip: inet('ip'),
   kyrosSub: text('kyros_sub'),
+  centralHasta: timestamp('central_hasta', { withTimezone: true }),
 });
 
 export const appConfig = pgTable('app_config', {
@@ -70,6 +71,7 @@ export const kyrosLinks = pgTable('kyros_links', {
   issuer: text('issuer').notNull(),
   sub: text('sub').notNull(),
   userId: uuid('user_id').notNull(),
+  origen: text('origen').notNull().default('LOCAL'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ pk: primaryKey({ columns: [t.issuer, t.sub] }) }));
 

@@ -1,11 +1,12 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { Response } from 'express';
 import type { Rol, SesionRespuesta } from '@gestro/contracts';
 import { entorno } from '../config/entorno';
+import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { BD, Bd } from '../database/database.module';
-import { refreshTokens, restaurants, roles, userRoles, users } from '../database/esquema';
+import { kyrosLinks, refreshTokens, restaurants, roles, userRoles, users } from '../database/esquema';
 import { SecretosService } from '../secretos/secretos.service';
 
 export const COOKIE_REFRESCO = 'gestro_rt';
@@ -21,7 +22,13 @@ export class SesionService {
     @Inject(BD) private readonly bd: Bd,
     @Inject(JwtService) private readonly jwt: JwtService,
     @Inject(SecretosService) private readonly secretos: SecretosService,
+    @Inject(ConfiguracionService) private readonly config: ConfiguracionService,
   ) {}
+
+  /** Interruptor del SuperAdmin central (apagado por defecto): si está apagado, las sesiones centrales no se renuevan. */
+  async centralEncendido(): Promise<boolean> {
+    return !!(await this.config.leer<{ plataformaSso?: boolean }>('kyrosId'))?.plataformaSso;
+  }
 
   /** Sucursales y roles del usuario. Salen siempre de GESTRO, nunca de claims del emisor. */
   async contexto(userId: string) {
@@ -41,29 +48,32 @@ export class SesionService {
     return { usuario: u, sucursales: [...mapa.values()] };
   }
 
-  private async respuesta(userId: string): Promise<SesionRespuesta> {
+  /** `central`: la sesión nació de un claim kyros_pa vigente; el privilegio es del claim, nunca de la fila (no se persiste). */
+  private async respuesta(userId: string, central = false): Promise<SesionRespuesta> {
     const { usuario, sucursales } = await this.contexto(userId);
+    const plat = usuario.isPlatformAdmin || central;
     const accessToken = await this.jwt.signAsync(
-      { plat: usuario.isPlatformAdmin, rids: sucursales.map((s) => s.id), roles: Object.fromEntries(sucursales.map((s) => [s.id, s.roles])) },
+      { plat, rids: sucursales.map((s) => s.id), roles: Object.fromEntries(sucursales.map((s) => [s.id, s.roles])) },
       { secret: this.secretos.firma('acceso'), algorithm: 'HS256', audience: 'staff', subject: usuario.id, expiresIn: VIDA_ACCESO },
     );
-    return { accessToken, usuario: { id: usuario.id, nombre: usuario.fullName, esPlataforma: usuario.isPlatformAdmin }, sucursales };
+    return { accessToken, usuario: { id: usuario.id, nombre: usuario.fullName, esPlataforma: plat }, sucursales };
   }
 
-  private poner(res: Response, token: string) {
+  private poner(res: Response, token: string, vence?: Date) {
     res.cookie(COOKIE_REFRESCO, token, {
-      httpOnly: true, secure: entorno.produccion, sameSite: 'strict', path: '/api/v1/auth', maxAge: VIDA_REFRESCO_MS,
+      httpOnly: true, secure: entorno.produccion, sameSite: 'strict', path: '/api/v1/auth', maxAge: vence ? Math.max(0, vence.getTime() - Date.now()) : VIDA_REFRESCO_MS,
     });
   }
 
   /** Abre una sesión nueva (una familia de refresco nueva). */
-  async abrir(userId: string, kyrosSub: string | null, ip: string, res: Response): Promise<SesionRespuesta> {
+  async abrir(userId: string, kyrosSub: string | null, ip: string, res: Response, centralHasta?: Date): Promise<SesionRespuesta> {
     const token = this.secretos.tokenAleatorio();
+    const vence = new Date(Math.min(Date.now() + VIDA_REFRESCO_MS, centralHasta?.getTime() ?? Infinity));
     await this.bd.insert(refreshTokens).values({
-      userId, tokenHash: this.secretos.huella(token), expiresAt: new Date(Date.now() + VIDA_REFRESCO_MS), kyrosSub, ip: ip || null,
+      userId, tokenHash: this.secretos.huella(token), expiresAt: vence, kyrosSub, ip: ip || null, centralHasta: centralHasta ?? null,
     });
-    this.poner(res, token);
-    return this.respuesta(userId);
+    this.poner(res, token, vence);
+    return this.respuesta(userId, !!centralHasta);
   }
 
   /**
@@ -81,17 +91,27 @@ export class SesionService {
       await this.bd.update(refreshTokens).set({ revokedAt: new Date() }).where(and(eq(refreshTokens.familyId, fila.familyId), isNull(refreshTokens.revokedAt)));
       throw new UnauthorizedException('Sesión vencida');
     }
+    // Sesión central: tope absoluto de 60 min, interruptor encendido y vínculo de plataforma vigente. Si algo falla, se corta la familia.
+    if (fila.centralHasta) {
+      const [v] = await this.bd.select({ o: kyrosLinks.origen }).from(kyrosLinks).where(eq(kyrosLinks.userId, fila.userId));
+      if (fila.centralHasta.getTime() <= Date.now() || !(await this.centralEncendido()) || v?.o !== 'PLATAFORMA') {
+        await this.bd.update(refreshTokens).set({ revokedAt: new Date() }).where(and(eq(refreshTokens.familyId, fila.familyId), isNull(refreshTokens.revokedAt)));
+        await this.bd.execute(sql`INSERT INTO audit_log (user_id, action, entity, entity_id, after) VALUES (${fila.userId}::uuid, 'plataforma.sesion_central_revocada', 'user', ${fila.userId}::text, ${JSON.stringify({ motivo: fila.centralHasta.getTime() <= Date.now() ? 'tope' : 'interruptor_o_vinculo' })}::jsonb)`);
+        throw new UnauthorizedException('Sesión vencida');
+      }
+    }
     // Marcar como usado de forma atómica: si dos pestañas lo usan a la vez, solo una gana.
     const gana = await this.bd.update(refreshTokens).set({ usedAt: new Date() })
       .where(and(eq(refreshTokens.id, fila.id), isNull(refreshTokens.usedAt))).returning({ id: refreshTokens.id });
     if (!gana.length) throw new UnauthorizedException('Sesión vencida');
     const nuevo = this.secretos.tokenAleatorio();
+    const vence = new Date(Math.min(Date.now() + VIDA_REFRESCO_MS, fila.centralHasta?.getTime() ?? Infinity));
     await this.bd.insert(refreshTokens).values({
-      userId: fila.userId, tokenHash: this.secretos.huella(nuevo), expiresAt: new Date(Date.now() + VIDA_REFRESCO_MS),
-      familyId: fila.familyId, kyrosSub: fila.kyrosSub, ip: ip || null,
+      userId: fila.userId, tokenHash: this.secretos.huella(nuevo), expiresAt: vence,
+      familyId: fila.familyId, kyrosSub: fila.kyrosSub, ip: ip || null, centralHasta: fila.centralHasta,
     });
-    this.poner(res, nuevo);
-    return this.respuesta(fila.userId);
+    this.poner(res, nuevo, vence);
+    return this.respuesta(fila.userId, !!fila.centralHasta);
   }
 
   async salir(token: string | undefined, res: Response): Promise<void> {
