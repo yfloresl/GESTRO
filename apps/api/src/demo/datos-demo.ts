@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { PoolClient } from 'pg';
 import { PLAN_DE_CUENTAS } from '../contabilidad/asientos';
+import { ampliarDemo } from './datos-demo-ampliacion';
 
 /** Generador pseudoaleatorio con semilla fija: los datos de muestra salen siempre iguales (y no comparte estado entre llamadas). */
 function crearAzar(semilla: number) {
@@ -91,7 +92,7 @@ export async function cargarDatosDemo(c: PoolClient, rid: string, tz: string, di
         const almuerzo = azar() < 0.7; const h = almuerzo ? 12 + Math.floor(azar() * 2) : 19 + Math.floor(azar() * 3); const m = Math.floor(azar() * 60);
         const prepMax = Math.max(...items.map((i) => i.plato.d.real)) + entre(-2, 3);
         pedidos.push({ id: randomUUID(), dia: f, ts: iso(f, h, m), ready: new Date(Date.parse(iso(f, h, m)) + Math.max(3, prepMax) * 60_000).toISOString(), canal, tipo: canal === 'caja' ? 'mostrador' : 'mesa', mesa: canal === 'caja' ? null : mesas[Math.floor(azar() * mesas.length)],
-          metodo: elegir<string>([['efectivo', 55], ['qr', 30], ['tarjeta', 15]]), items, total: r2(total) });
+          metodo: k <= 25 ? elegir<string>([['efectivo', 50], ['qr', 28], ['tarjeta', 14], ['credito', 8]]) : elegir<string>([['efectivo', 55], ['qr', 30], ['tarjeta', 15]]), items, total: r2(total) });
       }
       dias.push({ fecha: f, pedidos });
     }
@@ -139,8 +140,9 @@ export async function cargarDatosDemo(c: PoolClient, rid: string, tz: string, di
         [rid, almacen, mov.map((x) => x.ing), mov.map((x) => x.qty), mov.map((x) => x.ref), mov.map((x) => x.ts)]);
       const ventasDia = dia.pedidos.reduce((s, p) => s + p.total, 0); const efectivo = dia.pedidos.filter((p) => p.metodo === 'efectivo').reduce((s, p) => s + p.total, 0);
       const costoDia = (await c.query(`SELECT COALESCE(SUM(-qty * unit_cost), 0)::float8 AS v FROM stock_movements WHERE restaurant_id = $1 AND kind = 'consumo' AND created_at >= $2::timestamptz AND created_at < $2::timestamptz + interval '1 day'`, [rid, iso(dia.fecha, 0, 0)])).rows[0].v as number;
-      const ef = r2(efectivo); const ba = r2(ventasDia - efectivo);
-      await asiento(dia.fecha, 'Ventas del día', 'venta', [['caja', ef, 0], ['bancos', ba, 0], ['ventas', 0, r2(ef + ba)]]);
+      const credito = dia.pedidos.filter((p) => p.metodo === 'credito').reduce((s, p) => s + p.total, 0);
+      const ef = r2(efectivo); const cr = r2(credito); const ba = r2(ventasDia - efectivo - credito);
+      await asiento(dia.fecha, 'Ventas del día', 'venta', [['caja', ef, 0], ['bancos', ba, 0], ['cxc', cr, 0], ['ventas', 0, r2(ef + ba + cr)]]);
       await asiento(dia.fecha, 'Costo de ventas del día', 'costo_consumo', [['costo_ventas', costoDia, 0], ['inventarios', 0, costoDia]]);
       totalVentas += ventasDia; totalPedidos += dia.pedidos.length;
       if (idx % 4 === 1) {                                                  // una merma chica cada pocos días, de lo perecedero
@@ -149,6 +151,9 @@ export async function cargarDatosDemo(c: PoolClient, rid: string, tz: string, di
         await asiento(dia.fecha, 'Merma de inventario', 'merma', [['mermas', q * i.u.costo, 0], ['inventarios', 0, q * i.u.costo]]);
       }
     }
+
+    // --- Reservas, cuentas por cobrar y por pagar, compras, turnos y salón en vivo ---
+    const abiertos = await ampliarDemo({ c, rid, hoy, tz, mesas, prov, almacen, ing, platos, fecha, iso, r2, asiento });
 
     // --- Un insumo bajo el mínimo (para ver las alertas de stock) ---
     await c.query(`INSERT INTO stock_movements (restaurant_id, warehouse_id, ingredient_id, kind, qty, reason) SELECT $1, $2, i.id, 'ajuste', 1.2 - COALESCE(s.qty, 0), 'Conteo de cierre' FROM ingredients i LEFT JOIN stock_levels s ON s.ingredient_id = i.id AND s.warehouse_id = $2 WHERE i.restaurant_id = $1 AND i.name = 'Queso'`, [rid, almacen]);
@@ -159,5 +164,5 @@ export async function cargarDatosDemo(c: PoolClient, rid: string, tz: string, di
     const ev = (await c.query(`INSERT INTO events (restaurant_id, name, kind, client_name, client_phone, guests, starts_at, ends_at, price_total, notes) VALUES ($1,'Cumpleaños de Doña Rosa','privado','Familia Mamani','70012345',40, $2::timestamptz, $3::timestamptz, 2600, 'Celebración familiar con menú de fondo y bebidas') RETURNING id`, [rid, iso(fecha(hoy, 14), 19, 0), iso(fecha(hoy, 14), 23, 0)])).rows[0].id as string;
     for (const [n, porc] of [['Pique macho', 20], ['Milanesa de pollo', 15], ['Ensalada mixta', 40], ['Refresco', 40]] as const) await c.query(`INSERT INTO event_menu (restaurant_id, event_id, menu_item_id, portions) VALUES ($1,$2,$3,$4)`, [rid, ev, platos.find((p) => p.d.n === n)!.id, porc]);
 
-  return { platos: PLATOS.length, insumos: INGREDIENTES.length, pedidos: totalPedidos, ventas: r2(totalVentas), asientos: numero };
+  return { platos: PLATOS.length, insumos: INGREDIENTES.length, pedidos: totalPedidos + abiertos, ventas: r2(totalVentas), asientos: numero };
 }
