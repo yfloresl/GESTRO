@@ -1,4 +1,4 @@
-import { SUB_PRUEBA_KYROS_MESERO, SUB_PRUEBA_KYROS_COCINA, SUB_PRUEBA_KYROS_CONTADOR, SUB_PRUEBA_KYROS_COBRANZAS, SUB_PRUEBA_KYROS_ALMACEN } from '../src/demo/constantes';
+import { SUB_PRUEBA_KYROS_MESERO, SUB_PRUEBA_KYROS_COCINA, SUB_PRUEBA_KYROS_CONTADOR, SUB_PRUEBA_KYROS_COBRANZAS, SUB_PRUEBA_KYROS_ALMACEN, SUB_PRUEBA_KYROS_AREA } from '../src/demo/constantes';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { SUB_PRUEBA_KYROS, SUB_PRUEBA_KYROS_ASISTENTE, SUB_PRUEBA_KYROS_TUTOR, esSubDeDemostracion } from '../src/demo/constantes';
@@ -33,7 +33,7 @@ describe('Cuentas de demostración Prueba_Kyros', { timeout: 120_000 }, () => {
     const d = await cargar(); expect(d.pedidos).toBeGreaterThan(50);
     const est = (await plat.get('/plataforma/demo')).body;
     expect(est).toMatchObject({ cargada: true, sucursal: { nombre: 'Casa Andina' } });
-    expect(est.cuentas.map((x: { usuario: string; rol: string; vinculada: boolean }) => [x.usuario, x.rol, x.vinculada])).toEqual([['prueba_kyros', 'owner', true], ['prueba_kyros_asistente', 'cajero', true], ['prueba_kyros_mesero', 'mesero', true], ['prueba_kyros_cocina', 'cocina', true], ['prueba_kyros_almacen', 'almacen', true], ['prueba_kyros_cobranzas', 'cobranzas', true], ['prueba_kyros_contador', 'contador', true]]);
+    expect(est.cuentas.map((x: { usuario: string; rol: string; vinculada: boolean }) => [x.usuario, x.rol, x.vinculada])).toEqual([['prueba_kyros', 'owner', true], ['prueba_kyros_asistente', 'cajero', true], ['prueba_kyros_gestro_mesero', 'mesero', true], ['prueba_kyros_gestro_cocina', 'cocina', true], ['prueba_kyros_gestro_almacen', 'almacen', true], ['prueba_kyros_gestro_cobranzas', 'cobranzas', true], ['prueba_kyros_gestro_contador', 'contador', true], ['prueba_kyros_gestro_area', 'area_manager', true]]);
     const admin = await sesionDe(SUB_PRUEBA_KYROS);
     expect(admin.sesion.usuario.nombre).toBe('Prueba Kyros'); expect(admin.roles).toEqual(['owner']);
     expect((await sesionDe(SUB_PRUEBA_KYROS_ASISTENTE)).roles).toEqual(['cajero']);
@@ -64,6 +64,7 @@ describe('Cuentas de demostración Prueba_Kyros', { timeout: 120_000 }, () => {
     const cobranzas = await sesionDe(SUB_PRUEBA_KYROS_COBRANZAS); expect(cobranzas.roles).toEqual(['cobranzas']); expect((await cobranzas.api.get('/por-cobrar')).status).toBe(200);
     const contador = await sesionDe(SUB_PRUEBA_KYROS_CONTADOR); expect(contador.roles).toEqual(['contador']); expect((await contador.api.get('/contabilidad/cuentas')).status).toBe(200);
     expect((await cobranzas.api.get('/contabilidad/cuentas')).status).toBe(403);
+    const area = await sesionDe(SUB_PRUEBA_KYROS_AREA); expect(area.roles).toEqual(['area_manager']); expect((await area.api.get('/contabilidad/cuentas')).status).toBe(403);
   });
 
   it('nada de lo que se ve dice «demo» o «ejemplo» y los datos están completos (menú, recetas, ventas, asientos)', async () => {

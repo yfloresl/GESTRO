@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, mensajeDeError } from '../lib/sesion';
 
-const ETIQUETA: Record<string, string> = { owner: 'administrador', cajero: 'caja', mesero: 'mesero', cocina: 'cocina', almacen: 'almacén', cobranzas: 'cobranzas', contador: 'contador' };
+const ETIQUETA: Record<string, string> = { owner: 'administrador', cajero: 'caja', mesero: 'mesero', cocina: 'cocina', almacen: 'almacén', cobranzas: 'cobranzas', contador: 'contador', area_manager: 'encargado de área' };
 interface Estado { cargada: boolean; sucursal?: { id: string; nombre: string; slug: string }; ultimoReinicio?: string | null; cuentas: { usuario: string; rol: string; vinculada: boolean }[] }
 
 /** Consola de plataforma: la sucursal de muestra de las cuentas Prueba_Kyros (se pre-vinculan por su sub fijo de Kyros ID). */
