@@ -52,3 +52,37 @@ describe('Paquetes por módulo', () => {
     } finally { await plat.patch(`/plataforma/planes/${esencial}/paquete`, { aplicar: false }); }
   });
 });
+
+describe('Planes y precios (portada)', () => {
+  it('catálogo aprobado: USD 20/35/60, contabilidad en Profesional y no repetida en Cadena; interruptor apagado por defecto y sin revelar nada', async () => {
+    const r = await plat.get('/plataforma/planes');
+    const por = Object.fromEntries((r.body as { codigo: string; precioUsd: string | null; modulos: string[] }[]).map((p) => [p.codigo, p]));
+    expect([por.esencial.precioUsd, por.profesional.precioUsd, por.cadena.precioUsd].map(Number)).toEqual([20, 35, 60]);
+    expect(por.profesional.modulos).toContain('contabilidad'); expect(por.cadena.modulos.filter((m) => m === 'contabilidad')).toHaveLength(1);
+    expect(por.cadena.modulos).toEqual(expect.arrayContaining(['sucursales', 'compras', 'delivery'])); expect(por.esencial.modulos).not.toContain('contabilidad');
+    await t.owner.query(`UPDATE platform_settings SET show_pricing = false`);
+    expect((await t.api().get('/api/v1/public/planes')).body).toEqual({ publicado: false });
+  });
+
+  it('plataforma publica y oculta (auditado); el público ve USD y módulos, sin importar el tipo de cambio; un dueño no puede publicar', async () => {
+    const dueno = await t.nuevoRestaurante('Sin Publicar');
+    expect((await t.con(dueno.token, dueno.rid).patch('/plataforma/planes-publicos', { publicar: true })).status).toBe(403);
+    expect((await plat.patch('/plataforma/planes-publicos', { publicar: 'si' })).status).toBe(400);
+    try {
+      expect((await plat.patch('/plataforma/planes-publicos', { publicar: true })).status).toBe(200);
+      const p = (await t.api().get('/api/v1/public/planes')).body;
+      expect(p.publicado).toBe(true); expect(p.planes.map((x: { usd: number }) => x.usd)).toEqual([20, 35, 60]);
+      expect(p.planes[1].modulos.map((m: { codigo: string }) => m.codigo)).toContain('contabilidad');
+      expect(p.tipoCambio === null || (p.tipoCambio.bob > 1 && typeof p.tipoCambio.fecha === 'string')).toBe(true);   // nunca un valor fijo inventado
+      expect(Number((await t.owner.query(`SELECT count(*)::int n FROM audit_log WHERE action = 'plataforma.planes_publicados'`)).rows[0].n)).toBeGreaterThan(0);
+    } finally { await plat.patch('/plataforma/planes-publicos', { publicar: false }); }
+    expect((await t.api().get('/api/v1/public/planes')).body).toEqual({ publicado: false });
+  });
+
+  it('el lector del tipo de cambio acepta varias formas y rechaza lo absurdo', async () => {
+    const { leerTipoCambio } = await import('../src/suscripcion/planes-publicos');
+    expect(leerTipoCambio({ tipoCambio: 9.5, fecha: '2026-10-31T10:00:00Z' })).toEqual({ bob: 9.5, fecha: '2026-10-31' });
+    expect(leerTipoCambio({ data: { venta: '9,10' } })).toEqual({ bob: 9.1, fecha: null });
+    expect(leerTipoCambio({ tipoCambio: 0 })).toBeNull(); expect(leerTipoCambio({ tipoCambio: 'abc' })).toBeNull(); expect(leerTipoCambio(null)).toBeNull();
+  });
+});
