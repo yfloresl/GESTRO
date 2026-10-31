@@ -6,6 +6,29 @@ import { destinoSeguro, iniciarIngreso } from '../lib/kyrosid';
 import { api, useSesion } from '../lib/sesion';
 
 /** Un solo ingreso visible: «Entrar con Kyros ID». También atiende /entrar?destino= (entrada directa desde el Portal). */
+interface PlanesPublicos { publicado: boolean; planes?: { codigo: string; nombre: string; usd: number; modulos: { codigo: string; nombre: string }[] }[]; tipoCambio?: { bob: number; fecha: string; vigente: boolean } | null; nota?: string }
+
+/** «Planes y precios»: solo aparece si plataforma lo publicó (interruptor apagado por defecto). USD siempre; Bs al tipo de cambio del día con su fecha. */
+function PlanesYPrecios() {
+  const q = useQuery({ queryKey: ['planes-publicos'], queryFn: async () => (await fetch('/api/v1/public/planes')).json() as Promise<PlanesPublicos>, retry: 0, staleTime: 3_600_000 });
+  if (!q.data?.publicado || !q.data.planes?.length) return null;
+  const tc = q.data.tipoCambio;
+  return (
+    <section aria-labelledby="planes" className="flex flex-col gap-space-sm border-t border-outline-variant pt-space-md">
+      <h2 id="planes" className="font-headline-sm text-headline-sm text-primary">Planes y precios</h2>
+      <ul className="flex flex-col gap-space-xs">{q.data.planes.map((p) => (
+        <li key={p.codigo} className="rounded-xl border border-outline-variant p-space-sm">
+          <details>
+            <summary className="flex items-baseline justify-between gap-space-sm cursor-pointer min-h-12 items-center"><span className="font-semibold">{p.nombre}</span>
+              <span className="text-right"><span className="font-label-lg text-primary">USD {p.usd}/mes</span>{tc && <span className="block font-body-sm text-on-surface-variant">≈ Bs {(p.usd * tc.bob).toFixed(2)}</span>}</span></summary>
+            <ul className="mt-space-xs list-disc pl-space-md font-body-sm text-on-surface-variant">{p.modulos.map((m) => <li key={m.codigo}>{m.nombre}</li>)}</ul>
+          </details>
+        </li>))}</ul>
+      <p className="font-body-sm text-on-surface-variant">{q.data.nota}{tc ? ` Bs al tipo de cambio ${tc.vigente ? 'del' : 'conocido al'} ${tc.fecha}.` : ' Precios en dólares.'}</p>
+    </section>
+  );
+}
+
 export function Ingreso({ directo = false }: { directo?: boolean }) {
   const { estado } = useSesion();
   const [params] = useSearchParams();
@@ -44,6 +67,7 @@ export function Ingreso({ directo = false }: { directo?: boolean }) {
         </div>
       )}
       {error && <p role="alert" className="text-error font-body-sm text-body-sm">{error}</p>}
+      <PlanesYPrecios />
     </TarjetaCentrada>
   );
 }

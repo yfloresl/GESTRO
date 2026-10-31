@@ -265,6 +265,7 @@ export const plans = pgTable('plans', {
   name: text('name').notNull(),
   monthlyPriceBob: numeric('monthly_price_bob', { precision: 12, scale: 2 }).notNull(),
   features: jsonb('features').notNull().default({}),
+  monthlyPriceUsd: numeric('monthly_price_usd', { precision: 10, scale: 2 }),
   active: boolean('active').notNull().default(true),
 });
 
@@ -272,6 +273,7 @@ export const platformSettings = pgTable('platform_settings', {
   id: smallint('id').primaryKey().default(1),
   paymentQrUrl: text('payment_qr_url'),
   paymentInstructions: text('payment_instructions'),
+  showPricing: boolean('show_pricing').notNull().default(false),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

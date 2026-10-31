@@ -237,7 +237,7 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
     return { ok: true };
   }
 
-  planes() { return this.bd.select().from(plans).orderBy(plans.monthlyPriceBob).then((r) => r.map((p) => ({ id: p.id, codigo: p.code, nombre: p.name, precioMensual: p.monthlyPriceBob, activo: p.active, modulos: alcanceDe(p.features).modulos, aplicado: alcanceDe(p.features).aplicado }))); }
+  planes() { return this.bd.select().from(plans).orderBy(plans.monthlyPriceBob).then((r) => r.map((p) => ({ id: p.id, codigo: p.code, nombre: p.name, precioMensual: p.monthlyPriceBob, activo: p.active, precioUsd: p.monthlyPriceUsd, modulos: alcanceDe(p.features).modulos, aplicado: alcanceDe(p.features).aplicado }))); }
   async crearPlan(d: z.infer<typeof Plan>) {
     try { const [p] = await this.bd.insert(plans).values({ code: d.codigo, name: d.nombre, monthlyPriceBob: d.precioMensual.toFixed(2), active: d.activo }).returning({ id: plans.id }); return { id: p.id }; }
     catch (e) { if (esDuplicado(e)) throw new ConflictException('Ya existe un plan con ese código.'); throw e; }

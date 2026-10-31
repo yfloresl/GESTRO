@@ -13,21 +13,20 @@ export const MODULOS = {
   cobranzas: 'Cobranzas',
   sucursales: 'Varias sucursales',
   contabilidad: 'Contabilidad',
-  compras: 'Compras y proveedores',
+  compras: 'Compras avanzadas',
   delivery: 'Delivery',
 } as const;
 export type Modulo = keyof typeof MODULOS;
 
 const ESENCIAL: Modulo[] = ['menu_salon', 'caja', 'cierre'];
-const PROFESIONAL: Modulo[] = [...ESENCIAL, 'cocina', 'inventario', 'reservas', 'cobranzas'];
-const CADENA: Modulo[] = [...PROFESIONAL, 'sucursales', 'contabilidad', 'compras', 'delivery'];
+const PROFESIONAL: Modulo[] = [...ESENCIAL, 'cocina', 'inventario', 'reservas', 'cobranzas', 'contabilidad'];
+const CADENA: Modulo[] = [...PROFESIONAL, 'sucursales', 'compras', 'delivery'];
 
 export const PAQUETES = [
-  { codigo: 'esencial', nombre: 'Esencial', usd: 25, modulos: ESENCIAL },
-  { codigo: 'profesional', nombre: 'Profesional', usd: 49, modulos: PROFESIONAL },
-  { codigo: 'cadena', nombre: 'Cadena', usd: 99, modulos: CADENA },
+  { codigo: 'esencial', nombre: 'Esencial', usd: 20, modulos: ESENCIAL },
+  { codigo: 'profesional', nombre: 'Profesional', usd: 35, modulos: PROFESIONAL },
+  { codigo: 'cadena', nombre: 'Cadena', usd: 60, modulos: CADENA },
 ] as const;
-export const TIPO_DE_CAMBIO = 6.96;
 
 /** Primer segmento de la ruta → módulo. Lo que no está aquí es del paquete base (siempre disponible). */
 const RUTA_A_MODULO: Record<string, Modulo> = {
