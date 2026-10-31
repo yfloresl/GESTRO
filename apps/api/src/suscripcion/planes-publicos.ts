@@ -11,28 +11,26 @@ const URL_TIPO_CAMBIO = 'https://www.kyros-tech.com/api/v1/tipo-cambio';
 const CACHE_MS = 6 * 3_600_000;
 export type TipoCambio = { bob: number; fecha: string; vigente: boolean };
 
-/** Saca un número y una fecha de la respuesta sin atarse a un contrato exacto. Devuelve null si no hay un valor razonable. */
-export function leerTipoCambio(j: unknown): { bob: number; fecha: string | null } | null {
-  const n = (v: unknown) => { const x = typeof v === 'string' ? Number(v.replace(',', '.')) : v; return typeof x === 'number' && Number.isFinite(x) && x > 1 && x < 100 ? x : null; };
-  const buscar = (o: unknown, llaves: string[]): unknown => { if (!o || typeof o !== 'object') return undefined; for (const k of llaves) if (k in (o as object)) return (o as Record<string, unknown>)[k]; return undefined; };
-  for (const raiz of [j, buscar(j, ['data', 'resultado', 'result'])]) {
-    const v = n(buscar(raiz, ['tipoCambio', 'tipo_cambio', 'bob', 'usdBob', 'usd_bob', 'venta', 'oficial', 'rate', 'valor', 'cambio']));
-    if (v !== null) { const f = buscar(raiz, ['fecha', 'date', 'actualizado', 'updatedAt', 'updated_at']); return { bob: v, fecha: typeof f === 'string' ? f.slice(0, 10) : null }; }
-  }
-  return null;
+/** Contrato de Kyros-Tech: {usd_bob, fecha, fuente, antiguedad_dias, desactualizado}. Cualquier otra forma se descarta. */
+export function leerTipoCambio(j: unknown): { bob: number; fecha: string; vigente: boolean } | null {
+  const o = j as { usd_bob?: unknown; fecha?: unknown; desactualizado?: unknown } | null;
+  if (!o || typeof o.usd_bob !== 'number' || !Number.isFinite(o.usd_bob) || o.usd_bob <= 1 || o.usd_bob >= 100) return null;
+  if (typeof o.fecha !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(o.fecha)) return null;
+  return { bob: o.usd_bob, fecha: o.fecha, vigente: o.desactualizado !== true };
 }
 
 @Injectable()
 export class TipoCambioService {
-  private ultimo: { bob: number; fecha: string; en: number } | null = null;
+  private ultimo: { bob: number; fecha: string; vigente: boolean; en: number } | null = null;
 
-  /** Caché de 6 h; si el servicio no responde se usa el último valor bueno con SU fecha (vigente = false). Sin ninguno: null (solo dólares). */
+  /** Caché de 6 h. 503 = el servicio no tiene valor: solo dólares. Si la red falla se usa el último valor bueno con SU fecha (vigente = false). */
   async actual(): Promise<TipoCambio | null> {
-    if (this.ultimo && Date.now() - this.ultimo.en < CACHE_MS) return { bob: this.ultimo.bob, fecha: this.ultimo.fecha, vigente: true };
+    if (this.ultimo && Date.now() - this.ultimo.en < CACHE_MS) return { bob: this.ultimo.bob, fecha: this.ultimo.fecha, vigente: this.ultimo.vigente };
     try {
       const r = await fetch(URL_TIPO_CAMBIO, { signal: AbortSignal.timeout(4000), headers: { accept: 'application/json' } });
+      if (r.status === 503) { this.ultimo = null; return null; }
       const v = r.ok ? leerTipoCambio(await r.json()) : null;
-      if (v) { this.ultimo = { bob: v.bob, fecha: v.fecha ?? new Date().toISOString().slice(0, 10), en: Date.now() }; return { bob: this.ultimo.bob, fecha: this.ultimo.fecha, vigente: true }; }
+      if (v) { this.ultimo = { ...v, en: Date.now() }; return v; }
     } catch { /* se usa el respaldo */ }
     return this.ultimo ? { bob: this.ultimo.bob, fecha: this.ultimo.fecha, vigente: false } : null;
   }

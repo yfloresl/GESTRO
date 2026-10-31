@@ -79,10 +79,10 @@ describe('Planes y precios (portada)', () => {
     expect((await t.api().get('/api/v1/public/planes')).body).toEqual({ publicado: false });
   });
 
-  it('el lector del tipo de cambio acepta varias formas y rechaza lo absurdo', async () => {
+  it('el lector sigue el contrato {usd_bob, fecha, desactualizado} y descarta cualquier otra cosa', async () => {
     const { leerTipoCambio } = await import('../src/suscripcion/planes-publicos');
-    expect(leerTipoCambio({ tipoCambio: 9.5, fecha: '2026-10-31T10:00:00Z' })).toEqual({ bob: 9.5, fecha: '2026-10-31' });
-    expect(leerTipoCambio({ data: { venta: '9,10' } })).toEqual({ bob: 9.1, fecha: null });
-    expect(leerTipoCambio({ tipoCambio: 0 })).toBeNull(); expect(leerTipoCambio({ tipoCambio: 'abc' })).toBeNull(); expect(leerTipoCambio(null)).toBeNull();
+    expect(leerTipoCambio({ usd_bob: 9.5, fecha: '2026-10-31', fuente: 'x', antiguedad_dias: 0, desactualizado: false })).toEqual({ bob: 9.5, fecha: '2026-10-31', vigente: true });
+    expect(leerTipoCambio({ usd_bob: 9.5, fecha: '2026-10-20', desactualizado: true })).toEqual({ bob: 9.5, fecha: '2026-10-20', vigente: false });
+    for (const malo of [{ tipoCambio: 9.5, fecha: '2026-10-31' }, { usd_bob: '9.5', fecha: '2026-10-31' }, { usd_bob: 0, fecha: '2026-10-31' }, { usd_bob: 9.5 }, { usd_bob: 9.5, fecha: '31/10/2026' }, null]) expect(leerTipoCambio(malo)).toBeNull();
   });
 });
