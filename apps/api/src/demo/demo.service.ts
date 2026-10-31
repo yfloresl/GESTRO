@@ -9,6 +9,8 @@ import { CUENTAS_DEMO, ESPERA_REINICIO_MIN } from './constantes';
 import { cargarDatosDemo } from './datos-demo';
 import { vaciarSucursal } from './limpiar';
 
+export const FRASE_RESTABLECER = 'RESTABLECER DEMO';
+export const RestablecerDemo = z.object({ frase: z.literal(FRASE_RESTABLECER) }).strict();
 export const CargarDemo = z.object({ dias: z.number().int().min(7).max(90).default(60) }).strict();
 /** Al reiniciar se conserva la estructura (sucursal, personas, roles y vínculos), el registro de auditoría y el uso de IA (para no saltarse el tope diario). */
 const CONSERVAR = ['user_roles', 'staff_members', 'audit_log', 'ai_jobs', 'subscription_payments'];
@@ -30,8 +32,11 @@ export class DemoService {
   /** Crea las cuentas de la lista que falten (usuario, rol, personal y vínculo por `sub` fijo); las que ya existen no se tocan. */
   private async asegurarCuentas(c: PoolClient, rid: string, cuentaId: string, emisor: string) {
     for (const cu of CUENTAS_DEMO) {
-      if ((await c.query(`SELECT 1 FROM kyros_links WHERE issuer = $1 AND sub = $2`, [emisor, cu.sub])).rows.length || (await c.query(`SELECT 1 FROM users WHERE email = $1`, [cu.correo])).rows.length) continue;
-      const u = (await c.query(`INSERT INTO users (account_id, email, full_name) VALUES ($1, $2, $3) RETURNING id`, [cuentaId, cu.correo, cu.nombre])).rows[0].id as string;
+      if ((await c.query(`SELECT 1 FROM kyros_links WHERE issuer = $1 AND sub = $2`, [emisor, cu.sub])).rows.length) continue;
+      const previo = (await c.query(`SELECT id FROM users WHERE email = $1 AND account_id = $2`, [cu.correo, cuentaId])).rows[0] as { id: string } | undefined;
+      if (previo) { await c.query(`INSERT INTO kyros_links (issuer, sub, user_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`, [emisor, cu.sub, previo.id]); continue; }   // usuario sin vínculo: se reconecta
+      if ((await c.query(`SELECT 1 FROM users WHERE email = $1`, [cu.correo])).rows.length) continue;
+      const u =(await c.query(`INSERT INTO users (account_id, email, full_name) VALUES ($1, $2, $3) RETURNING id`, [cuentaId, cu.correo, cu.nombre])).rows[0].id as string;
       await c.query(`INSERT INTO user_roles (restaurant_id, user_id, role_id) SELECT $1, $2, id FROM roles WHERE code = $3`, [rid, u, cu.rol]);
       await c.query(`INSERT INTO staff_members (restaurant_id, user_id, full_name) VALUES ($1, $2, $3)`, [rid, u, cu.nombre]);
       await c.query(`INSERT INTO kyros_links (issuer, sub, user_id) VALUES ($1, $2, $3)`, [emisor, cu.sub, u]);
@@ -99,6 +104,33 @@ export class DemoService {
    * «Restablecer mis datos de muestra»: borra y recarga SOLO la sucursal de demostración, como mucho una vez cada 5 minutos, y deja auditoría.
    * La sucursal se verifica en la base (no por lo que diga la petición).
    */
+  /** Vacía la sucursal de muestra y la deja como al crearla: cuentas que falten, suscripción y todos los datos. Quien llama ya verificó que es la de demostración. */
+  private async recargar(c: PoolClient, rid: string, emisor: string, tz: string, dias: number) {
+    await vaciarSucursal(c, rid, CONSERVAR);
+    await c.query(`SET LOCAL session_replication_role = 'origin'`);
+    const cuentaId = (await c.query(`SELECT account_id FROM restaurants WHERE id = $1`, [rid])).rows[0].account_id as string;
+    await this.asegurarCuentas(c, rid, cuentaId, emisor);      // cuentas nuevas de la lista que aún no existan en una demostración ya cargada
+    await this.asegurarSuscripcion(c, rid);
+    return cargarDatosDemo(c, rid, tz, dias);
+  }
+
+  /**
+   * «Restablecer cuentas demo» del equipo de plataforma: devuelve la sucursal de muestra a su estado de creación, sin límite de frecuencia
+   * (el que quiere es quien administra la plataforma) y con auditoría. Solo toca la sucursal marcada `is_demo`.
+   */
+  async restablecerPorPlataforma(por: string) {
+    const { emisor } = await this.kyros.ajustes();
+    if (!emisor) throw new BadRequestException('Primero activa Kyros ID.');
+    return this.conTransaccion(async (c) => {
+      const r = (await c.query(`SELECT id, timezone, demo_days FROM restaurants WHERE is_demo FOR UPDATE`)).rows[0] as { id: string; timezone: string; demo_days: number } | undefined;
+      if (!r) throw new NotFoundException('No hay demostración cargada.');
+      await c.query(`UPDATE restaurants SET demo_reset_at = now() WHERE id = $1`, [r.id]);
+      const res = await this.recargar(c, r.id, emisor, r.timezone, r.demo_days);
+      await c.query(`INSERT INTO audit_log (restaurant_id, user_id, action, entity, entity_id, after) VALUES ($1::uuid, $2::uuid, 'demo.restablecida_por_plataforma', 'restaurant', $1::text, $3::jsonb)`, [r.id, por, JSON.stringify(res)]);
+      return { ok: true, ...res };
+    });
+  }
+
   async restablecer(restaurantId: string, userId: string) {
     const { emisor } = await this.kyros.ajustes();
     return this.conTransaccion(async (c) => {
@@ -108,12 +140,7 @@ export class DemoService {
         if (!es?.is_demo) throw new ForbiddenException('Esta sucursal no es de demostración.');
         throw new HttpException(`Ya restableciste tus datos hace poco. Intenta de nuevo en unos minutos (máximo una vez cada ${ESPERA_REINICIO_MIN} minutos).`, HttpStatus.TOO_MANY_REQUESTS);
       }
-      await vaciarSucursal(c, restaurantId, CONSERVAR);
-      await c.query(`SET LOCAL session_replication_role = 'origin'`);
-      const cuentaId = (await c.query(`SELECT account_id FROM restaurants WHERE id = $1`, [restaurantId])).rows[0].account_id as string;
-      await this.asegurarCuentas(c, restaurantId, cuentaId, emisor);      // cuentas nuevas de la lista que aún no existan en una demostración ya cargada
-      await this.asegurarSuscripcion(c, restaurantId);
-      const res = await cargarDatosDemo(c, restaurantId, r.timezone, r.demo_days);
+      const res = await this.recargar(c, restaurantId, emisor, r.timezone, r.demo_days);
       await c.query(`INSERT INTO audit_log (restaurant_id, user_id, action, entity, entity_id, after) VALUES ($1::uuid, $2::uuid, 'demo.restablecida', 'restaurant', $1::text, $3::jsonb)`, [restaurantId, userId, JSON.stringify(res)]);
       return { ok: true, ...res };
     });

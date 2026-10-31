@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, normalize, sep } from 'node:path';
@@ -50,6 +50,9 @@ export class StorageService {
     return clave;
   }
 
-  leer(clave: string): Promise<Buffer> { return readFile(this.ruta(clave)); }
+  /** Un archivo que no está (p. ej. el comprobante de un pago de muestra) responde 404, nunca 500. */
+  leer(clave: string): Promise<Buffer> {
+    return readFile(this.ruta(clave)).catch((e: NodeJS.ErrnoException) => { throw e.code === 'ENOENT' ? new NotFoundException('Archivo no encontrado.') : e; });
+  }
   async borrar(clave: string): Promise<void> { await rm(this.ruta(clave), { force: true }); }
 }

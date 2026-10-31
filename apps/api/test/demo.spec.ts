@@ -140,6 +140,21 @@ describe('Restablecer mis datos de muestra', { timeout: 120_000 }, () => {
     expect((await a.api.get('/auth/yo')).status).toBe(200);                                             // la sesión y los vínculos sobreviven al reinicio
     expect((await entrar(SUB_PRUEBA_KYROS)).status).toBe(200);
   });
+
+  it('botón de plataforma: exige la frase exacta, solo plataforma, restaura datos y cuentas, audita y no tiene límite de 5 min', async () => {
+    const d = await cargar(); const pedidosAntes = await cuenta('orders', d.sucursal.id);
+    const dueno = await sesionDe(SUB_PRUEBA_KYROS);
+    expect((await dueno.api.post('/plataforma/demo/restablecer', { frase: 'RESTABLECER DEMO' })).status).toBe(403);   // el dueño de la demo no es plataforma
+    for (const mala of [{}, { frase: 'restablecer demo' }, { frase: 'RESTABLECER DEMO', otra: 1 }]) expect((await plat.post('/plataforma/demo/restablecer', mala)).status).toBe(400);
+    await t.owner.query(`INSERT INTO menu_items (restaurant_id, name, price) VALUES ($1, 'Plato intruso', 10)`, [d.sucursal.id]);
+    await t.owner.query(`DELETE FROM kyros_links WHERE sub = $1`, [SUB_PRUEBA_KYROS_MESERO]);                         // cuenta faltante: debe volver
+    const r1 = await plat.post('/plataforma/demo/restablecer', { frase: 'RESTABLECER DEMO' });
+    expect(r1.status).toBe(200); expect(r1.body.pedidos).toBe(pedidosAntes);
+    expect((await plat.post('/plataforma/demo/restablecer', { frase: 'RESTABLECER DEMO' })).status).toBe(200);        // sin límite de 5 min
+    expect(Number((await t.owner.query(`SELECT count(*)::int AS n FROM menu_items WHERE restaurant_id = $1 AND name = 'Plato intruso'`, [d.sucursal.id])).rows[0].n)).toBe(0);
+    expect((await entrar(SUB_PRUEBA_KYROS_MESERO)).status).toBe(200);
+    expect(Number((await t.owner.query(`SELECT count(*)::int n FROM audit_log WHERE restaurant_id = $1 AND action = 'demo.restablecida_por_plataforma'`, [d.sucursal.id])).rows[0].n)).toBe(2);
+  });
 });
 
 describe('Quitar la demostración y Portal', { timeout: 120_000 }, () => {
