@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import QRCode from 'qrcode';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { clases } from '../componentes/Marca';
 import { BannerAvisos } from '../componentes/BannerAvisos';
 import { ETIQUETA_SOLICITUD, Solicitud, useAvisos } from '../lib/avisos';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
+import { bs, ETIQUETA_ESTADO, Pedido } from '../lib/tipos';
 
 interface Area { id: string; nombre: string; encargadoId: string | null }
 interface Mesa { id: string; numero: string; asientos: number; areaId: string | null; activa: boolean; meseroId: string | null; urlQr?: string }
@@ -31,6 +33,9 @@ export function Salon() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['solicitudes', sucursalId] }), onError: (e) => { setError(mensajeDeError(e)); void qc.invalidateQueries({ queryKey: ['solicitudes', sucursalId] }); },
   });
 
+  // Pedidos en curso: la mesa muestra que está ocupada y lleva al pedido.
+  const abiertos = useQuery({ queryKey: ['pedidos', sucursalId, 'abiertos'], queryFn: () => api.get<Pedido[]>('/pedidos?filtro=abiertos', sucursalId!), enabled: !!sucursalId, refetchInterval: 30_000 });
+  const pedidoDe = useMemo(() => new Map((abiertos.data ?? []).filter((p) => p.mesaId).map((p) => [p.mesaId!, p])), [abiertos.data]);
   const pendientes = sol.data ?? [];
   const porMesa = useMemo(() => { const m = new Map<string, Solicitud[]>(); for (const s of pendientes) m.set(s.mesaId, [...(m.get(s.mesaId) ?? []), s]); return m; }, [pendientes]);
   const visibles = (mesas.data ?? []).filter((m) => m.activa && (areaSel === 'todas' || m.areaId === areaSel));
@@ -84,13 +89,15 @@ export function Salon() {
               const llamado = abiertas.find((s) => s.tipo !== 'cuenta'); const cuenta = abiertas.find((s) => s.tipo === 'cuenta');
               const fondo = llamado ? 'bg-error-container border-error' : cuenta ? 'bg-secondary-fixed border-secondary-container' : 'bg-surface-container-lowest border-outline-variant';
               const cuadro = llamado ? 'bg-error text-on-error' : cuenta ? 'bg-secondary-container text-on-secondary-container' : 'bg-primary-container text-on-primary';
+              const pedido = pedidoDe.get(m.id);
               return (
                 <li key={m.id} className={`rounded-xl border-2 p-space-sm flex flex-col gap-space-xs ${fondo}`}>
                   <div className="flex items-center gap-space-sm">
                     <span className={`w-12 h-12 rounded-lg flex items-center justify-center font-label-lg text-label-lg ${cuadro}`}>{m.numero.padStart(2, '0')}</span>
                     <div className="min-w-0"><p className="font-body-md font-semibold truncate">Mesa {m.numero}</p><p className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1"><span className="material-symbols-outlined text-[16px]" aria-hidden="true">group</span>{m.asientos} pers</p></div>
                   </div>
-                  <p className="font-label-sm text-label-sm uppercase font-semibold">{llamado ? `Llamado · ${hace(llamado.creada)}` : cuenta ? `Cuenta · ${hace(cuenta.creada)}` : 'Sin llamados'}</p>
+                  <p className="font-label-sm text-label-sm uppercase font-semibold">{llamado ? `Llamado · ${hace(llamado.creada)}` : cuenta ? `Cuenta · ${hace(cuenta.creada)}` : pedido ? 'Ocupada' : 'Libre'}</p>
+                  {pedido && <Link to={`/app/pedidos?abrir=${pedido.id}`} className="font-body-sm text-primary underline">{ETIQUETA_ESTADO[pedido.estado] ?? pedido.estado} · {bs(pedido.total)}{pedido.cliente ? ` · ${pedido.cliente}` : ''}</Link>}
                 </li>
               );
             })}

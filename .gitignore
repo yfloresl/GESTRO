@@ -7,3 +7,5 @@ dist/
 .claude/settings.local.json
 # Datos locales de desarrollo: llave maestra, adjuntos y base. Nunca al repositorio.
 .datos/
+.local/
+apps/web/public/_tokens.json

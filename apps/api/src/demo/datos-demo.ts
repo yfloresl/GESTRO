@@ -155,6 +155,12 @@ export async function cargarDatosDemo(c: PoolClient, rid: string, tz: string, di
     // --- Reservas, cuentas por cobrar y por pagar, compras, turnos y salón en vivo ---
     const abiertos = await ampliarDemo({ c, rid, hoy, tz, mesas, prov, almacen, ing, platos, fecha, iso, r2, asiento });
 
+    // --- Conteo de cierre: la bodega queda bien surtida (nada en negativo ni casi vacío) ---
+    await c.query(`INSERT INTO stock_movements (restaurant_id, warehouse_id, ingredient_id, kind, qty, reason)
+      SELECT $1, $2, i.id, 'ajuste', round(GREATEST(i.min_stock * 2.5, 1) - COALESCE(s.qty, 0), 3), 'Conteo de cierre'
+      FROM ingredients i LEFT JOIN stock_levels s ON s.ingredient_id = i.id AND s.warehouse_id = $2
+      WHERE i.restaurant_id = $1 AND COALESCE(s.qty, 0) < GREATEST(i.min_stock * 2.5, 1)`, [rid, almacen]);
+
     // --- Un insumo bajo el mínimo (para ver las alertas de stock) ---
     await c.query(`INSERT INTO stock_movements (restaurant_id, warehouse_id, ingredient_id, kind, qty, reason) SELECT $1, $2, i.id, 'ajuste', 1.2 - COALESCE(s.qty, 0), 'Conteo de cierre' FROM ingredients i LEFT JOIN stock_levels s ON s.ingredient_id = i.id AND s.warehouse_id = $2 WHERE i.restaurant_id = $1 AND i.name = 'Queso'`, [rid, almacen]);
 
