@@ -9,7 +9,7 @@ import { levantar } from './util';
 describe.skipIf(!process.env.CAPTURA)('arnés local', () => {
   it('sirve la demo en :4000 hasta que exista .local/parar', async () => {
     const t = await levantar(); const plat = await t.nuevaPlataforma();
-    await plat.del('/plataforma/demo'); expect((await plat.post('/plataforma/demo', { dias: 30 })).status).toBe(200);
+    await plat.del('/plataforma/demo'); expect((await plat.post('/plataforma/demo', { dias: 75 })).status).toBe(200);
     const destino = Number(new URL(t.url).port);
     createServer((c) => { const s = createConnection(destino, '127.0.0.1'); c.pipe(s); s.pipe(c); c.on('error', () => s.destroy()); s.on('error', () => c.destroy()); }).listen(4000, '127.0.0.1');
     const tokens: Record<string, string[]> = {};
