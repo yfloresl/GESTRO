@@ -1,3 +1,4 @@
+import { SUB_PRUEBA_KYROS_MESERO, SUB_PRUEBA_KYROS_COCINA, SUB_PRUEBA_KYROS_CONTADOR, SUB_PRUEBA_KYROS_COBRANZAS, SUB_PRUEBA_KYROS_ALMACEN, SUB_PRUEBA_KYROS_AREA } from '../src/demo/constantes';
 import { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { SUB_PRUEBA_KYROS, SUB_PRUEBA_KYROS_ASISTENTE, SUB_PRUEBA_KYROS_TUTOR, esSubDeDemostracion } from '../src/demo/constantes';
@@ -32,13 +33,38 @@ describe('Cuentas de demostración Prueba_Kyros', { timeout: 120_000 }, () => {
     const d = await cargar(); expect(d.pedidos).toBeGreaterThan(50);
     const est = (await plat.get('/plataforma/demo')).body;
     expect(est).toMatchObject({ cargada: true, sucursal: { nombre: 'Casa Andina' } });
-    expect(est.cuentas).toEqual([{ usuario: 'prueba_kyros', rol: 'owner', vinculada: true }, { usuario: 'prueba_kyros_asistente', rol: 'cajero', vinculada: true }]);
+    expect(est.cuentas.map((x: { usuario: string; rol: string; vinculada: boolean }) => [x.usuario, x.rol, x.vinculada])).toEqual([['prueba_kyros', 'owner', true], ['prueba_kyros_asistente', 'cajero', true], ['prueba_kyros_gestro_mesero', 'mesero', true], ['prueba_kyros_gestro_cocina', 'cocina', true], ['prueba_kyros_gestro_almacen', 'almacen', true], ['prueba_kyros_gestro_cobranzas', 'cobranzas', true], ['prueba_kyros_gestro_contador', 'contador', true], ['prueba_kyros_gestro_area', 'area_manager', true]]);
     const admin = await sesionDe(SUB_PRUEBA_KYROS);
     expect(admin.sesion.usuario.nombre).toBe('Prueba Kyros'); expect(admin.roles).toEqual(['owner']);
     expect((await sesionDe(SUB_PRUEBA_KYROS_ASISTENTE)).roles).toEqual(['cajero']);
     expect((await entrar(SUB_PRUEBA_KYROS_TUTOR)).status).toBe(401);
     expect((await plat.post('/plataforma/demo', {})).status).toBe(409);                              // una sola demostración
     expect((await t.con((await t.nuevoRestaurante()).token, '00000000-0000-0000-0000-000000000000').get('/plataforma/demo')).status).toBeGreaterThanOrEqual(400);
+  });
+
+  it('cobertura: reservas, cuentas por cobrar y pagar, compras, turnos, salón en vivo, suscripción y cuentas por rol (con su 403 sin permiso)', async () => {
+    const d = await cargar(); const rid = d.sucursal.id;
+    const n = async (sentencia: string) => Number((await t.owner.query(sentencia, [rid])).rows[0].n);
+    expect(await n(`SELECT count(DISTINCT state)::int n FROM reservations WHERE restaurant_id = $1`)).toBeGreaterThanOrEqual(4);
+    expect(await n(`SELECT count(*)::int n FROM payables_receivables WHERE restaurant_id = $1 AND direction = 'por_cobrar'`)).toBeGreaterThan(0);
+    expect(await n(`SELECT count(*)::int n FROM payables_receivables WHERE restaurant_id = $1 AND direction = 'por_pagar'`)).toBe(1);
+    expect(await n(`SELECT count(DISTINCT status)::int n FROM purchase_orders WHERE restaurant_id = $1`)).toBe(3);
+    expect(await n(`SELECT count(*)::int n FROM shifts WHERE restaurant_id = $1`)).toBeGreaterThan(30);
+    expect(await n(`SELECT count(*)::int n FROM orders WHERE restaurant_id = $1 AND status NOT IN ('cobrado','anulado')`)).toBe(4);
+    expect(await n(`SELECT count(*)::int n FROM service_requests WHERE restaurant_id = $1 AND status = 'pendiente'`)).toBe(2);
+    expect(await n(`SELECT count(*)::int n FROM restaurants r JOIN plans p ON p.id = r.plan_id WHERE r.id = $1`)).toBe(1);
+    expect(await n(`SELECT count(*)::int n FROM subscription_payments WHERE restaurant_id = $1 AND status = 'validado'`)).toBe(1);
+    // Todos los asientos cuadran (también los de crédito y cobro de cuentas por cobrar).
+    expect(await n(`SELECT count(*)::int n FROM (SELECT entry_id FROM journal_lines WHERE restaurant_id = $1 GROUP BY entry_id HAVING sum(debit) <> sum(credit)) x`)).toBe(0);
+    // Cada rol ve lo suyo y recibe 403 en lo que no le toca.
+    const mesero = await sesionDe(SUB_PRUEBA_KYROS_MESERO); expect(mesero.roles).toEqual(['mesero']);
+    expect((await mesero.api.get('/mesas')).status).toBe(200); expect((await mesero.api.get('/contabilidad/cuentas')).status).toBe(403);
+    const cocina = await sesionDe(SUB_PRUEBA_KYROS_COCINA); expect(cocina.roles).toEqual(['cocina']); expect((await cocina.api.get('/contabilidad/cuentas')).status).toBe(403);
+    const almacen = await sesionDe(SUB_PRUEBA_KYROS_ALMACEN); expect(almacen.roles).toEqual(['almacen']); expect((await almacen.api.get('/por-cobrar')).status).toBe(403);
+    const cobranzas = await sesionDe(SUB_PRUEBA_KYROS_COBRANZAS); expect(cobranzas.roles).toEqual(['cobranzas']); expect((await cobranzas.api.get('/por-cobrar')).status).toBe(200);
+    const contador = await sesionDe(SUB_PRUEBA_KYROS_CONTADOR); expect(contador.roles).toEqual(['contador']); expect((await contador.api.get('/contabilidad/cuentas')).status).toBe(200);
+    expect((await cobranzas.api.get('/contabilidad/cuentas')).status).toBe(403);
+    const area = await sesionDe(SUB_PRUEBA_KYROS_AREA); expect(area.roles).toEqual(['area_manager']); expect((await area.api.get('/contabilidad/cuentas')).status).toBe(403);
   });
 
   it('nada de lo que se ve dice «demo» o «ejemplo» y los datos están completos (menú, recetas, ventas, asientos)', async () => {
@@ -66,9 +92,10 @@ describe('Solo lectura', { timeout: 120_000 }, () => {
     expect((await c.api.post('/caja/abrir', { montoInicial: 0 })).status).toBe(403);
     expect((await a.api.post('/suscripcion/pagos', {})).status).toBe(403);                              // ni siquiera la ruta de pagos, que se salta el control de suscripción
     const antes = await cuenta('menu_items', d.sucursal.id); expect(antes).toBe(15);
+    const reservasAntes = await cuenta('reservations', d.sucursal.id); const llamadosAntes = await cuenta('service_requests', d.sucursal.id);
     const pub = await t.api().post(`/api/v1/public/${d.sucursal.slug}/reservas`).send({ cliente: 'Ana Mamani', telefono: '70011122', personas: 2, fecha: '2030-01-01', hora: '12:00' });
     expect([403, 404]).toContain(pub.status);                                                           // reservas apagadas (404) o bloqueadas (403): nunca se crean
-    expect(await cuenta('reservations', d.sucursal.id)).toBe(0);
+    expect(await cuenta('reservations', d.sucursal.id)).toBe(reservasAntes);
     const qr = (await t.owner.query('SELECT qr_token FROM restaurant_tables WHERE restaurant_id = $1 LIMIT 1', [d.sucursal.id])).rows[0].qr_token as string;
     const ses = await t.api().post('/api/v1/qr/sesion').send({ qrToken: qr });
     if (ses.status === 200) {
@@ -77,7 +104,7 @@ describe('Solo lectura', { timeout: 120_000 }, () => {
       const pedido = await t.api().post('/api/v1/qr/pedidos').set('Authorization', `Bearer ${ses.body.token}`).send({ items: [{ platoId: (await t.owner.query('SELECT id FROM menu_items WHERE restaurant_id = $1 LIMIT 1', [d.sucursal.id])).rows[0].id, cantidad: 1 }] });
       expect(pedido.status).toBe(403);
     }
-    expect(await cuenta('service_requests', d.sucursal.id)).toBe(0);
+    expect(await cuenta('service_requests', d.sucursal.id)).toBe(llamadosAntes);
   });
 
   it('una sucursal normal no se ve afectada: sus dueños escriben con libertad y no pueden usar el reinicio', async () => {
@@ -112,6 +139,21 @@ describe('Restablecer mis datos de muestra', { timeout: 120_000 }, () => {
     expect((await a.api.post('/demo/restablecer')).status).toBe(200);                                   // pasado el tiempo, se puede otra vez
     expect((await a.api.get('/auth/yo')).status).toBe(200);                                             // la sesión y los vínculos sobreviven al reinicio
     expect((await entrar(SUB_PRUEBA_KYROS)).status).toBe(200);
+  });
+
+  it('botón de plataforma: exige la frase exacta, solo plataforma, restaura datos y cuentas, audita y no tiene límite de 5 min', async () => {
+    const d = await cargar(); const pedidosAntes = await cuenta('orders', d.sucursal.id);
+    const dueno = await sesionDe(SUB_PRUEBA_KYROS);
+    expect((await dueno.api.post('/plataforma/demo/restablecer', { frase: 'RESTABLECER DEMO' })).status).toBe(403);   // el dueño de la demo no es plataforma
+    for (const mala of [{}, { frase: 'restablecer demo' }, { frase: 'RESTABLECER DEMO', otra: 1 }]) expect((await plat.post('/plataforma/demo/restablecer', mala)).status).toBe(400);
+    await t.owner.query(`INSERT INTO menu_items (restaurant_id, name, price) VALUES ($1, 'Plato intruso', 10)`, [d.sucursal.id]);
+    await t.owner.query(`DELETE FROM kyros_links WHERE sub = $1`, [SUB_PRUEBA_KYROS_MESERO]);                         // cuenta faltante: debe volver
+    const r1 = await plat.post('/plataforma/demo/restablecer', { frase: 'RESTABLECER DEMO' });
+    expect(r1.status).toBe(200); expect(r1.body.pedidos).toBe(pedidosAntes);
+    expect((await plat.post('/plataforma/demo/restablecer', { frase: 'RESTABLECER DEMO' })).status).toBe(200);        // sin límite de 5 min
+    expect(Number((await t.owner.query(`SELECT count(*)::int AS n FROM menu_items WHERE restaurant_id = $1 AND name = 'Plato intruso'`, [d.sucursal.id])).rows[0].n)).toBe(0);
+    expect((await entrar(SUB_PRUEBA_KYROS_MESERO)).status).toBe(200);
+    expect(Number((await t.owner.query(`SELECT count(*)::int n FROM audit_log WHERE restaurant_id = $1 AND action = 'demo.restablecida_por_plataforma'`, [d.sucursal.id])).rows[0].n)).toBe(2);
   });
 });
 

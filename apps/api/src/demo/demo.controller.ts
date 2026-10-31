@@ -3,7 +3,7 @@ import { Throttle } from '@nestjs/throttler';
 import { Actor, ActorActual, TenantActual } from '../comun/acceso';
 import { DeSucursal, PermiteEnDemo, SoloPlataforma } from '../comun/guards';
 import type { Tenant } from '../database/database.module';
-import { CargarDemo, DemoService } from './demo.service';
+import { CargarDemo, DemoService, RestablecerDemo } from './demo.service';
 
 /** Consola de plataforma: cargar y quitar la sucursal de demostración de las cuentas Prueba_Kyros. */
 @Controller('plataforma/demo')
@@ -13,6 +13,8 @@ export class PlataformaDemoController {
 
   @Get() estado() { return this.d.estado(); }
   @Post() @HttpCode(200) cargar(@ActorActual() a: Actor, @Body() b: unknown) { return this.d.cargar(a.sub, CargarDemo.parse(b ?? {})); }
+  /** Exige escribir la frase exacta; devuelve la demostración a su estado de creación y queda en la auditoría. */
+  @Post('restablecer') @HttpCode(200) restablecer(@ActorActual() a: Actor, @Body() b: unknown) { RestablecerDemo.parse(b); return this.d.restablecerPorPlataforma(a.sub); }
   @Delete() quitar(@ActorActual() a: Actor) { return this.d.quitar(a.sub); }
 }
 

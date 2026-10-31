@@ -73,6 +73,16 @@ Identidad crea tres usuarios de Kyros ID con `sub` fijo y una contraseña públi
 | `prueba_kyros` | `3c183200-ca0f-483f-90fd-2cea6c0b0695` | dueño del restaurante de muestra |
 | `prueba_kyros_asistente` | `92209c11-c4a6-40ce-ae54-e607ffc64891` | caja |
 | `prueba_kyros_tutor` | `3969cf14-de90-458c-b2bc-d287adc1469b` | no se usa en GESTRO (siempre 401) |
+| `prueba_kyros_gestro_mesero` | `0f4d6bd2-ab9b-482e-9e21-e0bf61a0b584` | mesero |
+| `prueba_kyros_gestro_cocina` | `75ec2b33-5e9d-4712-895d-552cb49daf4b` | cocina |
+| `prueba_kyros_gestro_almacen` | `cf1b7962-1bb4-4526-a563-e2d805e1ffa7` | almacén |
+| `prueba_kyros_gestro_cobranzas` | `97c3f591-1fa7-4487-958a-8fa1f43dc556` | cobranzas |
+| `prueba_kyros_gestro_contador` | `76f5c6e8-ff7e-40b5-b2c7-1ab52a0fca35` | contador |
+| `prueba_kyros_gestro_area` | `0819aca5-6243-498f-a725-3069c40f0748` | encargado de área |
+
+**Las seis cuentas por rol son nuevas: Identidad las crea con ESE `sub` fijo** (públicas con la clave demo, sin MFA; GESTRO no guarda contraseñas). Sirven para mostrar el menú de cada rol y el 403 sin permiso. En una demostración ya cargada, la dueña pulsa **«Restablecer mis datos de muestra»** y se crean las que falten.
+
+La sucursal de muestra también trae: reservas en todos sus estados (con reserva web activa), ventas a crédito con cuentas por cobrar abiertas, vencidas, con abono y saldadas, una cuenta por pagar a proveedor, órdenes de compra (borrador, enviada, recibida), personal con turnos y asistencia, salón en vivo (4 pedidos abiertos, tablero de cocina, 2 llamados de mesa pendientes) y una suscripción con plan y un pago validado.
 
 - **Cargar / quitar**: Plataforma → *Restaurante de muestra*. Crea la sucursal «Casa Andina» con menú y recetas, inventario, 60 días de ventas, contabilidad, una promoción y un evento. Debe estar activado Kyros ID (se vincula a su emisor). Quitarla borra sucursal, cuentas, vínculos y datos.
 - **Sin restaurante de muestra cargado**, las tres cuentas dan **401** al entrar y en `portal/summary`/`portal/account` (como un token inválido); no pueden registrarse.
