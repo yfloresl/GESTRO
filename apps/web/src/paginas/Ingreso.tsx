@@ -24,7 +24,7 @@ function PlanesYPrecios() {
             <ul className="mt-space-xs list-disc pl-space-md font-body-sm text-on-surface-variant">{p.modulos.map((m) => <li key={m.codigo}>{m.nombre}</li>)}</ul>
           </details>
         </li>))}</ul>
-      <p className="font-body-sm text-on-surface-variant">{q.data.nota}{tc ? ` Bs al tipo de cambio ${tc.vigente ? 'del' : 'conocido al'} ${tc.fecha}.` : ' Precios en dólares.'}</p>
+      <p className="font-body-sm text-on-surface-variant">{q.data.nota}{tc ? (tc.vigente ? ` Bs al tipo de cambio del ${tc.fecha}.` : ` Bs según el valor del ${tc.fecha}.`) : ' Precios en dólares.'}</p>
     </section>
   );
 }
