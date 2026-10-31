@@ -105,3 +105,9 @@ Quien tiene el rol `kyros-platform-admin` en Kyros ID (con TOTP) entra a GESTRO 
 - La sesión dura como máximo 60 min absolutos (el refresco no la extiende) y no se renueva con el interruptor apagado o el vínculo retirado. El cierre de sesión global (back-channel) la revoca.
 - Auditoría: `plataforma.ingreso_superadmin_central`, `plataforma.ingreso_superadmin_central_rechazado` (motivos `acr`, `auth_time`, `tope`, `sub_vinculado_a_cuenta_no_superadmin`, `cuenta_suspendida`) y `plataforma.sesion_central_revocada`.
 - El código de un solo uso (`crear-superadmin.js`) sigue siendo el respaldo de emergencia. Dentro de una sucursal ajena rige el modo soporte (solo lectura).
+
+## 12. Paquetes por módulo (entitlements)
+
+Catálogo: Esencial USD 25 (menú y salón, caja y comandas, cierre diario), Profesional USD 49 (+ cocina con pantalla, inventario y recetas, reservas y cobranzas), Cadena USD 99 (+ varias sucursales, contabilidad, compras, delivery). Tipo de cambio 6.96. Sin límite por usuario; comensales y terceros (QR, reservas web, portal) nunca pagan ni se bloquean.
+
+**Apagado por defecto**: un plan solo restringe cuando `features.aplicar = true`. Plataforma lo enciende por plan con `PATCH /plataforma/planes/:id/paquete {"aplicar":true}` (y lo apaga igual). Con el plan aplicado, las rutas de personal de un módulo no incluido responden 402 `PLAN_SIN_MODULO` («Tu plan no incluye …»). `GET /suscripcion/alcance` (todo el personal) dice qué incluye la sucursal. Plataforma y modo soporte no se bloquean. Pendiente: tope de sucursales por plan y ocultar en la web los módulos no incluidos.

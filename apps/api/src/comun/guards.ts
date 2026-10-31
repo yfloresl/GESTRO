@@ -4,7 +4,8 @@ import { JwtService } from '@nestjs/jwt';
 import { eq } from 'drizzle-orm';
 import { SetMetadata } from '@nestjs/common';
 import { BD, Bd } from '../database/database.module';
-import { restaurants } from '../database/esquema';
+import { plans, restaurants } from '../database/esquema';
+import { alcanceDe, MODULOS, moduloDeRuta } from '../suscripcion/paquetes';
 import { SecretosService } from '../secretos/secretos.service';
 import type { Rol } from '@gestro/contracts';
 import { Actor, CONSOLIDADO_KEY, PeticionAutenticada, PUBLICO, Roles, ROLES_KEY } from './acceso';
@@ -100,6 +101,22 @@ export class SubscriptionGuard implements CanActivate {
   }
 }
 
+/** Paquetes: si el plan de la sucursal aplica entitlements (features.aplicar) y no incluye el módulo de la ruta, 402 PLAN_SIN_MODULO. Apagado por defecto. */
+@Injectable()
+export class PaqueteGuard implements CanActivate {
+  constructor(@Inject(BD) private readonly bd: Bd) {}
+
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
+    const req = ctx.switchToHttp().getRequest<PeticionAutenticada>();
+    const modulo = moduloDeRuta(req.originalUrl ?? req.url);
+    if (!modulo || !req.tenant || req.soporte || req.actor?.plat) return true;
+    const [r] = await this.bd.select({ features: plans.features }).from(restaurants).leftJoin(plans, eq(plans.id, restaurants.planId)).where(eq(restaurants.id, req.tenant.restaurantId));
+    const a = alcanceDe(r?.features);
+    if (!a.aplicado || a.modulos!.includes(modulo)) return true;
+    throw new HttpException({ code: 'PLAN_SIN_MODULO', modulo, message: `Tu plan no incluye ${MODULOS[modulo]}.` }, 402);
+  }
+}
+
 /** Endpoints que SÍ pueden usarse en la sucursal de demostración (que es de solo lectura). */
 export const PERMITE_EN_DEMO = 'gestro:permite-en-demo';
 export const PermiteEnDemo = () => SetMetadata(PERMITE_EN_DEMO, true);
@@ -137,4 +154,4 @@ export const SoloPlataforma = () => UseGuards(SoloPlataformaGuard);
 
 /** Endpoint de una sucursal: valida X-Restaurant-Id, el rol y que la suscripción permita escribir. */
 export const DeSucursal = (...roles: (Rol | 'plataforma')[]) =>
-  applyDecorators(Roles(...roles), UseGuards(RestaurantScopeGuard, RolesGuard, DemoSoloLecturaGuard, SubscriptionGuard));
+  applyDecorators(Roles(...roles), UseGuards(RestaurantScopeGuard, RolesGuard, DemoSoloLecturaGuard, SubscriptionGuard, PaqueteGuard));
