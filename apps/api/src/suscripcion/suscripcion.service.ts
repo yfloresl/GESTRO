@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { auditar, esDuplicado } from '../comun/auditoria';
 import { DIAS_DE_GRACIA } from '../comun/guards';
 import { BD, Bd, Tenant, TenantDb } from '../database/database.module';
+import { alcanceDe, MODULOS, type Modulo } from './paquetes';
 import { auditLog, plans, platformSettings, restaurants, saasPromotions, subscriptionPayments } from '../database/esquema';
 import { StorageService } from '../storage/storage.service';
 import { EventosGateway, salas } from '../tiempo-real/eventos.gateway';
@@ -55,6 +56,23 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
   }
 
   /* ---------------- lado del restaurante ---------------- */
+
+  /** Qué módulos incluye el plan de la sucursal (para que la web oculte lo que no hay). Visible a todo el personal. */
+  async alcance(t: Tenant) {
+    return this.db.run(t, async (tx) => {
+      const f = (await tx.execute(sql`SELECT p.code, p.name, p.features FROM restaurants r LEFT JOIN plans p ON p.id = r.plan_id WHERE r.id = ${t.restaurantId}`)).rows[0] as { code: string | null; name: string | null; features: unknown } | undefined;
+      const a = alcanceDe(f?.features);
+      const incluidos = a.aplicado ? a.modulos! : (Object.keys(MODULOS) as Modulo[]);
+      return { plan: f?.name ?? null, codigo: f?.code ?? null, aplicado: a.aplicado, modulos: Object.entries(MODULOS).map(([codigo, nombre]) => ({ codigo, nombre, incluido: incluidos.includes(codigo as Modulo) })) };
+    });
+  }
+
+  /** Plataforma enciende/apaga la aplicación de los módulos de un plan (por defecto apagada). */
+  async aplicarPaquete(id: string, aplicar: boolean) {
+    const r = await this.bd.execute(sql`UPDATE plans SET features = jsonb_set(features, '{aplicar}', to_jsonb(${aplicar}::boolean)) WHERE id = ${id} AND features ? 'modulos' RETURNING id`);
+    if (!r.rows.length) throw new NotFoundException('Plan no encontrado o sin módulos definidos.');
+    return { ok: true, aplicar };
+  }
 
   async mia(t: Tenant) {
     return this.db.run(t, async (tx) => {
@@ -219,7 +237,7 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
     return { ok: true };
   }
 
-  planes() { return this.bd.select().from(plans).orderBy(plans.monthlyPriceBob).then((r) => r.map((p) => ({ id: p.id, codigo: p.code, nombre: p.name, precioMensual: p.monthlyPriceBob, activo: p.active }))); }
+  planes() { return this.bd.select().from(plans).orderBy(plans.monthlyPriceBob).then((r) => r.map((p) => ({ id: p.id, codigo: p.code, nombre: p.name, precioMensual: p.monthlyPriceBob, activo: p.active, modulos: alcanceDe(p.features).modulos, aplicado: alcanceDe(p.features).aplicado }))); }
   async crearPlan(d: z.infer<typeof Plan>) {
     try { const [p] = await this.bd.insert(plans).values({ code: d.codigo, name: d.nombre, monthlyPriceBob: d.precioMensual.toFixed(2), active: d.activo }).returning({ id: plans.id }); return { id: p.id }; }
     catch (e) { if (esDuplicado(e)) throw new ConflictException('Ya existe un plan con ese código.'); throw e; }

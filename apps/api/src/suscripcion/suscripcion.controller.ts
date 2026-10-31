@@ -24,6 +24,9 @@ export class SuscripcionController {
   @Get() @DeSucursalSiempre(...DUENOS)
   mia(@TenantActual() t: Tenant) { return this.s.mia(t); }
 
+  @Get('alcance') @DeSucursalSiempre()
+  alcance(@TenantActual() t: Tenant) { return this.s.alcance(t); }
+
   @Get('calculo') @DeSucursalSiempre(...DUENOS)
   calculo(@TenantActual() t: Tenant, @Query('meses', ParseIntPipe) meses: number) { return this.s.calculo(t, meses); }
 
@@ -65,6 +68,7 @@ export class PlataformaController {
 
   @Get('planes') planes() { return this.s.planes(); }
   @Post('planes') crearPlan(@Body() b: unknown) { return this.s.crearPlan(Plan.parse(b)); }
+  @Patch('planes/:id/paquete') aplicarPaquete(@Param('id', ParseUUIDPipe) id: string, @Body() b: unknown) { return this.s.aplicarPaquete(id, z.object({ aplicar: z.boolean() }).strict().parse(b).aplicar); }
   @Patch('planes/:id') cambiarPlan(@Param('id', ParseUUIDPipe) id: string, @Body() b: unknown) { return this.s.cambiarPlan(id, Plan.parse(b)); }
 
   @Get('sucursales') sucursales() { return this.s.sucursales(); }
