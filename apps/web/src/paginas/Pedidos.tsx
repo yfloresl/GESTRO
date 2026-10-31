@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs, ETIQUETA_ESTADO, ETIQUETA_TIPO, minutosDesde, Pedido } from '../lib/tipos';
@@ -15,7 +15,8 @@ const Chip = ({ estado }: { estado: string }) => <span className={`px-2 py-0.5 r
 /** Pedidos: lista del día (2.6) y pantalla de toma de pedidos del personal (2.3, 2.4, 2.5, 2.7). */
 export function Pedidos() {
   const { sucursalId } = useRolesActivos();
-  const [abierto, setAbierto] = useState<string | null>(null);
+  const [sp] = useSearchParams();
+  const [abierto, setAbierto] = useState<string | null>(sp.get('abrir'));
   const [nuevo, setNuevo] = useState(false);
   const [filtro, setFiltro] = useState<'abiertos' | 'hoy'>('abiertos');
   const lista = useQuery({ queryKey: ['pedidos', sucursalId, filtro], queryFn: () => api.get<Pedido[]>(`/pedidos?filtro=${filtro}`, sucursalId!), enabled: !!sucursalId, refetchInterval: 30_000 });

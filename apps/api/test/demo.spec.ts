@@ -78,6 +78,9 @@ describe('Cuentas de demostración Prueba_Kyros', { timeout: 120_000 }, () => {
     const res = (await a.api.get(`/contabilidad/reportes/balance`)).body; expect(res.cuadra).toBe(true);
     expect((await a.api.get('/contabilidad/reportes/comprobacion')).body.cuadra).toBe(true);
     expect((await a.api.get('/estadisticas/resumen')).body.actual.pedidos).toBeGreaterThan(50);
+    const stock = (await t.owner.query(`SELECT i.name, COALESCE(s.qty, 0)::float8 AS qty, i.min_stock::float8 AS min FROM ingredients i LEFT JOIN stock_levels s ON s.ingredient_id = i.id WHERE i.restaurant_id = $1`, [d.sucursal.id])).rows as { name: string; qty: number; min: number }[];
+    expect(stock.filter((x) => x.qty < 0)).toEqual([]);                                                // nunca en negativo
+    expect(stock.filter((x) => x.qty < x.min).map((x) => x.name)).toEqual(['Queso']);                  // una sola alerta de stock bajo
   });
 });
 

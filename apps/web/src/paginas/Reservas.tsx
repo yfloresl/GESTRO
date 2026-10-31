@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
+import { Dato, Ficha, Telefono } from '../componentes/Ficha';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 
@@ -20,7 +21,7 @@ const num = (v: FormDataEntryValue | null) => Number(String(v ?? '').replace(','
 export function Reservas() {
   const { sucursalId, esAdmin } = useRolesActivos();
   const qc = useQueryClient();
-  const [fecha, setFecha] = useState(hoy()); const [nueva, setNueva] = useState(false); const [error, setError] = useState<string | null>(null);
+  const [fecha, setFecha] = useState(hoy()); const [nueva, setNueva] = useState(false); const [ficha, setFicha] = useState<Reserva | null>(null); const [error, setError] = useState<string | null>(null);
   const q = useQuery({ queryKey: ['reservas', sucursalId, fecha], queryFn: () => api.get<Reserva[]>(`/reservas?fecha=${fecha}`, sucursalId!), enabled: !!sucursalId });
   const mesas = useQuery({ queryKey: ['mesas', sucursalId], queryFn: () => api.get<Mesa[]>('/mesas', sucursalId!), enabled: !!sucursalId });
   if (!sucursalId) return null;
@@ -48,7 +49,7 @@ export function Reservas() {
           return (
             <li key={r.id} className={`bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-xs ${viva ? '' : 'opacity-60'}`}>
               <div className="flex items-center justify-between gap-space-sm"><span className="font-headline-sm text-headline-sm">{r.hora}<span className="font-body-sm text-on-surface-variant"> – {r.hasta}</span></span><span className={`px-2 py-0.5 rounded-full font-label-sm uppercase whitespace-nowrap ${ESTADO[r.estado].c}`}>{ESTADO[r.estado].t}</span></div>
-              <p className="font-semibold">{r.cliente} · {r.personas} pers.</p>
+              <button type="button" onClick={() => setFicha(r)} aria-label={`Ver ficha de ${r.cliente}`} className="font-semibold text-left text-primary underline-offset-2 hover:underline">{r.cliente} · {r.personas} pers.</button>
               <p className="font-body-sm text-on-surface-variant">{r.telefono ?? 'Sin teléfono'} · {r.origen === 'web' ? 'Web' : 'Personal'} · código {r.codigo.slice(0, 3)}-{r.codigo.slice(3)}</p>
               {r.notas && <p className="font-body-sm italic">«{r.notas}»</p>}
               {viva && <label className="flex items-center gap-space-xs"><span className={clases.etiqueta}>Mesa</span>
@@ -63,6 +64,10 @@ export function Reservas() {
             </li>);
         })}</ul>)}
       {esAdmin && <AjustesWeb />}
+      {ficha && <Ficha titulo={ficha.cliente} subtitulo={`Reserva ${ficha.codigo.slice(0, 3)}-${ficha.codigo.slice(3)}`} cerrar={() => setFicha(null)}><div>
+        <Dato etiqueta="Estado" valor={ESTADO[ficha.estado].t} /><Dato etiqueta="Horario" valor={`${fecha} · ${ficha.hora} – ${ficha.hasta}`} /><Dato etiqueta="Personas" valor={ficha.personas} />
+        <Dato etiqueta="Mesa" valor={ficha.mesa ? `Mesa ${ficha.mesa}` : 'Sin mesa'} /><Dato etiqueta="Teléfono" valor={<Telefono valor={ficha.telefono} />} /><Dato etiqueta="Reservó por" valor={ficha.origen === 'web' ? 'La web del restaurante' : 'El personal'} />
+        <Dato etiqueta="Notas" valor={ficha.notas ?? '—'} /></div></Ficha>}
       {nueva && <NuevaReserva fecha={fecha} cerrar={() => setNueva(false)} hecho={() => { setNueva(false); refrescar(); }} />}
     </div>
   );

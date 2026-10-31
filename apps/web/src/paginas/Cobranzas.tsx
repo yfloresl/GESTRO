@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
+import { Dato, Ficha, Telefono } from '../componentes/Ficha';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
@@ -10,7 +11,7 @@ interface Cuenta { id: string; cliente: string; telefono: string | null; monto: 
 export function Cobranzas() {
   const { sucursalId } = useRolesActivos();
   const qc = useQueryClient();
-  const [todas, setTodas] = useState(false); const [cobrando, setCobrando] = useState<Cuenta | null>(null);
+  const [todas, setTodas] = useState(false); const [cobrando, setCobrando] = useState<Cuenta | null>(null); const [ficha, setFicha] = useState<string | null>(null);
   const q = useQuery({ queryKey: ['por-cobrar', sucursalId, todas], queryFn: () => api.get<Cuenta[]>(`/por-cobrar${todas ? '?todas=1' : ''}`, sucursalId!), enabled: !!sucursalId });
   if (!sucursalId) return null;
   const lista = q.data ?? [];
@@ -28,12 +29,13 @@ export function Cobranzas() {
           const cobrada = !(Number(c.saldo) > 0);
           return (
             <li key={c.id} className={`border rounded-xl p-space-md flex items-center justify-between gap-space-sm ${c.vencida ? 'bg-error-container/30 border-error-container' : 'bg-surface-container-lowest border-outline-variant'} ${cobrada ? 'opacity-60' : ''}`}>
-              <div className="min-w-0"><p className="font-semibold truncate">{c.cliente}</p>
+              <div className="min-w-0"><button type="button" onClick={() => setFicha(c.cliente)} aria-label={`Ver ficha de ${c.cliente}`} className="font-semibold truncate text-left text-primary underline-offset-2 hover:underline max-w-full">{c.cliente}</button>
                 <p className="font-body-sm text-on-surface-variant">{c.telefono ? `${c.telefono} · ` : ''}{cobrada ? 'Cobrada' : c.vencida ? `Venció hace ${-c.dias} día(s)` : c.dias === 0 ? 'Vence hoy' : `Vence en ${c.dias} día(s)`} ({c.vence})</p>
                 <p className="font-label-lg text-primary">{cobrada ? bs(c.monto) : `Saldo ${bs(c.saldo)}`}{!cobrada && Number(c.pagado) > 0 ? <span className="font-body-sm text-on-surface-variant"> de {bs(c.monto)}</span> : null}</p></div>
               {!cobrada && <button type="button" onClick={() => setCobrando(c)} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold whitespace-nowrap">Cobrar</button>}
             </li>);
         })}</ul>)}
+      {ficha && <FichaCliente cliente={ficha} cuentas={lista.filter((c) => c.cliente === ficha)} cobrar={(c) => { setFicha(null); setCobrando(c); }} cerrar={() => setFicha(null)} />}
       {cobrando && <Cobro cuenta={cobrando} cerrar={() => setCobrando(null)} hecho={() => { setCobrando(null); void qc.invalidateQueries({ queryKey: ['por-cobrar'] }); void qc.invalidateQueries({ queryKey: ['conta'] }); }} />}
     </div>
   );
@@ -59,5 +61,29 @@ function Cobro({ cuenta, cerrar, hecho }: { cuenta: Cuenta; cerrar(): void; hech
         <button disabled={ocupado} className={clases.primario}>{ocupado ? 'Registrando…' : 'Registrar cobro'}</button>
       </form>
     </div>
+  );
+}
+
+function FichaCliente({ cliente, cuentas, cobrar, cerrar }: { cliente: string; cuentas: Cuenta[]; cobrar(c: Cuenta): void; cerrar(): void }) {
+  const saldo = cuentas.reduce((t, c) => t + Number(c.saldo), 0); const vencido = cuentas.filter((c) => c.vencida).reduce((t, c) => t + Number(c.saldo), 0);
+  const total = cuentas.reduce((t, c) => t + Number(c.monto), 0);
+  return (
+    <Ficha titulo={cliente} subtitulo="Cliente con crédito" cerrar={cerrar}>
+      <div>
+        <Dato etiqueta="Teléfono" valor={<Telefono valor={cuentas[0]?.telefono ?? null} />} />
+        <Dato etiqueta="Ventas a crédito" valor={`${cuentas.length} · ${bs(total)}`} />
+        <Dato etiqueta="Saldo por cobrar" valor={<strong>{bs(saldo)}</strong>} />
+        <Dato etiqueta="Vencido" valor={vencido > 0 ? <span className="text-error font-semibold">{bs(vencido)}</span> : bs(0)} />
+      </div>
+      <ul className="flex flex-col gap-space-sm">{cuentas.map((c) => {
+        const cobrada = !(Number(c.saldo) > 0);
+        return (
+          <li key={c.id} className="border border-outline-variant rounded-xl p-space-sm flex items-center justify-between gap-space-sm">
+            <div><p className="font-label-lg">{cobrada ? `Cobrada · ${bs(c.monto)}` : `Saldo ${bs(c.saldo)} de ${bs(c.monto)}`}</p>
+              <p className="font-body-sm text-on-surface-variant">Vence {c.vence}{!cobrada && c.vencida ? ` · venció hace ${-c.dias} día(s)` : ''}</p></div>
+            {!cobrada && <button type="button" onClick={() => cobrar(c)} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold">Cobrar</button>}
+          </li>);
+      })}</ul>
+    </Ficha>
   );
 }
