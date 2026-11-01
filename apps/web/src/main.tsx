@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StrictMode } from 'react';
+import { ReactNode, StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Shell } from './componentes/Shell';
@@ -37,6 +37,12 @@ import { Registro } from './paginas/Registro';
 import { useRolesActivos } from './lib/sesion';
 
 /** Cada persona cae en lo suyo: cocina en su tablero, mesero en el salón, cajero en la caja. */
+/** El Panel del Dueño solo se abre para dueño o administrador; cualquier otro rol vuelve a su pantalla de inicio. */
+function SoloDueno({ children }: { children: ReactNode }) {
+  const { esAdmin } = useRolesActivos();
+  return esAdmin ? <>{children}</> : <Navigate to="/app" replace />;
+}
+
 function Inicio() {
   const { roles, esAdmin, esPlataforma } = useRolesActivos();
   if (esPlataforma && roles.length === 0) return <Navigate to="plataforma" replace />;
@@ -67,7 +73,7 @@ createRoot(document.getElementById('raiz')!).render(
             <Route path="/cocina" element={<Cocina />} />
             <Route path="/app" element={<Shell />}>
               <Route index element={<Inicio />} />
-              <Route path="panel" element={<Panel />} />
+              <Route path="panel" element={<SoloDueno><Panel /></SoloDueno>} />
               <Route path="menu" element={<Menu />} />
               <Route path="salon" element={<Salon />} />
               <Route path="personal" element={<Personal />} />

@@ -58,6 +58,11 @@ export async function cargarDatosDemo(c: PoolClient, rid: string, tz: string, di
     // --- Mesas, proveedores, almacenes ---
     const mesas: string[] = [];
     for (let i = 1; i <= 8; i++) mesas.push((await c.query(`INSERT INTO restaurant_tables (restaurant_id, number, seats) VALUES ($1,$2,$3) ON CONFLICT (restaurant_id, number) DO UPDATE SET seats = EXCLUDED.seats RETURNING id`, [rid, String(i), i <= 4 ? 2 : i <= 7 ? 4 : 6])).rows[0].id);
+    const reparto = [['Salón principal', [0, 1, 2]], ['Aire acondicionado', [3, 4]], ['Fumadores', [5, 6]], ['VIP', [7]]] as const;
+    for (const [nombre, idx] of reparto) {
+      const a = (await c.query(`INSERT INTO areas (restaurant_id, name) VALUES ($1,$2) ON CONFLICT (restaurant_id, name) DO UPDATE SET name = EXCLUDED.name RETURNING id`, [rid, nombre])).rows[0].id as string;
+      await c.query(`UPDATE restaurant_tables SET area_id = $1 WHERE id = ANY($2::uuid[])`, [a, idx.map((i) => mesas[i])]);
+    }
     const prov = [] as string[];
     for (const [n, dias, pago] of [['Distribuidora Andina', 2, 15], ['Carnes del Valle', 1, 0]] as const) prov.push((await c.query(`INSERT INTO suppliers (restaurant_id, name, lead_days, payment_days) VALUES ($1,$2,$3,$4) RETURNING id`, [rid, n, dias, pago])).rows[0].id);
     const almacen = (await c.query(`INSERT INTO warehouses (restaurant_id, name) VALUES ($1,'Cocina') ON CONFLICT (restaurant_id, name) DO UPDATE SET name = EXCLUDED.name RETURNING id`, [rid])).rows[0].id as string;

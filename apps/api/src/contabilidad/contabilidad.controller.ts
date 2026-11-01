@@ -48,6 +48,8 @@ export class ContabilidadController {
   resultados(@TenantActual() t: Tenant, @Query('desde') d?: string, @Query('hasta') h?: string) { return this.c.estadoDeResultados(t, rango(d, h)); }
   @Get('reportes/balance') @DeSucursal(...CONTA)
   balance(@TenantActual() t: Tenant, @Query('hasta') h?: string) { return this.c.balanceGeneral(t, rango(undefined, h)); }
+  @Get('reportes/mayor-general') @DeSucursal(...CONTA)
+  mayorGeneral(@TenantActual() t: Tenant, @Query('desde') d?: string, @Query('hasta') h?: string) { return this.c.libroMayorGeneral(t, rango(d, h)); }
   @Get('reportes/mayor/:codigo') @DeSucursal(...CONTA)
   mayor(@TenantActual() t: Tenant, @Param('codigo') codigo: string, @Query('desde') d?: string, @Query('hasta') h?: string) { return this.c.libroMayor(t, codigo, rango(d, h)); }
   @Get('reportes/flujo-de-caja') @DeSucursal(...CONTA)

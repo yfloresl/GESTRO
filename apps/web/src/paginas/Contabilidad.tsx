@@ -184,23 +184,28 @@ function PlanDeCuentas() {
   );
 }
 
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+function MayorDeCuenta({ m: d }: { m: any }) {
+  return <><p className="text-on-surface-variant">{d.codigo} {d.nombre} · saldo inicial {bs(d.saldoInicial)} · saldo final <strong>{bs(d.saldoFinal)}</strong></p><Tabla titulo={`${d.codigo} ${d.nombre}`} cabecera={['N°', 'Fecha · glosa', 'Debe', 'Haber', 'Saldo']} filas={d.movimientos.map((m: Record<string, string>) => [String(m.numero), `${m.fecha} · ${m.glosa}`, Number(m.debe) ? bs(m.debe) : '', Number(m.haber) ? bs(m.haber) : '', bs(m.saldo)])} vacio="Sin movimientos." /></>;
+}
+
 type Reporte = 'comprobacion' | 'mayor' | 'flujo' | 'ventas' | 'compras';
 function Reportes() {
   const { sucursalId } = useRolesActivos();
-  const [rep, setRep] = useState<Reporte>('comprobacion'); const [r, setR] = useState({ desde: primeroDelMes(), hasta: hoy() }); const [cuenta, setCuenta] = useState('1.1.01');
+  const [rep, setRep] = useState<Reporte>('comprobacion'); const [r, setR] = useState({ desde: primeroDelMes(), hasta: hoy() }); const [cuenta, setCuenta] = useState('todas');
   const cuentas = useQuery({ queryKey: ['conta', 'cuentas', sucursalId], queryFn: () => api.get<Cuenta[]>('/contabilidad/cuentas', sucursalId!), enabled: !!sucursalId });
-  const ruta = rep === 'mayor' ? `/contabilidad/reportes/mayor/${cuenta}` : rep === 'flujo' ? '/contabilidad/reportes/flujo-de-caja' : rep === 'ventas' ? '/contabilidad/reportes/libro-de-ventas' : rep === 'compras' ? '/contabilidad/reportes/libro-de-compras' : '/contabilidad/reportes/comprobacion';
+  const ruta = rep === 'mayor' ? (cuenta === 'todas' ? '/contabilidad/reportes/mayor-general' : `/contabilidad/reportes/mayor/${cuenta}`) : rep === 'flujo' ? '/contabilidad/reportes/flujo-de-caja' : rep === 'ventas' ? '/contabilidad/reportes/libro-de-ventas' : rep === 'compras' ? '/contabilidad/reportes/libro-de-compras' : '/contabilidad/reportes/comprobacion';
   const q = useQuery({ queryKey: ['conta', 'reporte', sucursalId, rep, cuenta, r], queryFn: () => api.get<Record<string, unknown>>(`${ruta}?desde=${r.desde}&hasta=${r.hasta}`, sucursalId!), enabled: !!sucursalId });
   const d = q.data as any; // eslint-disable-line @typescript-eslint/no-explicit-any
   return (
     <section className="flex flex-col gap-space-md">
       <div className="flex flex-wrap gap-space-xs">{([['comprobacion', 'Sumas y saldos'], ['mayor', 'Libro mayor'], ['flujo', 'Flujo de caja'], ['ventas', 'Libro de ventas IVA'], ['compras', 'Libro de compras IVA']] as [Reporte, string][]).map(([k, n]) => <button key={k} aria-pressed={rep === k} onClick={() => setRep(k)} className={`h-12 px-space-md rounded-full font-label-md ${rep === k ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'}`}>{n}</button>)}</div>
       <div className="flex flex-wrap items-end gap-space-sm"><Rango desde={r.desde} hasta={r.hasta} set={(desde, hasta) => setR({ desde, hasta })} />
-        {rep === 'mayor' && <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Cuenta</span><select value={cuenta} onChange={(e) => setCuenta(e.target.value)} className={clases.input}>{(cuentas.data ?? []).filter((c) => c.aceptaAsientos).map((c) => <option key={c.id} value={c.codigo}>{c.codigo} {c.nombre}</option>)}</select></label>}</div>
+        {rep === 'mayor' && <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Cuenta</span><select value={cuenta} onChange={(e) => setCuenta(e.target.value)} className={clases.input}><option value="todas">Todas las cuentas</option>{(cuentas.data ?? []).filter((c) => c.aceptaAsientos).map((c) => <option key={c.id} value={c.codigo}>{c.codigo} {c.nombre}</option>)}</select></label>}</div>
       {q.isLoading || !d ? <p role="status">Cargando…</p> : <>
         {rep === 'comprobacion' && <><Tabla titulo="Balance de comprobación de sumas y saldos" cabecera={['Código', 'Cuenta', 'Debe', 'Haber', 'Deudor', 'Acreedor']} filas={d.filas.map((f: Record<string, string>) => [f.codigo, f.nombre, bs(f.debe), bs(f.haber), bs(f.deudor), bs(f.acreedor)])} vacio="Sin movimientos." />
           <p role="status" className={d.cuadra ? 'text-tertiary' : 'text-error'}>Totales: debe {bs(d.totalDebe)} · haber {bs(d.totalHaber)} — {d.cuadra ? 'cuadra' : 'NO cuadra'}</p></>}
-        {rep === 'mayor' && <><p className="text-on-surface-variant">Saldo inicial {bs(d.saldoInicial)} · saldo final <strong>{bs(d.saldoFinal)}</strong></p><Tabla titulo={`${d.codigo} ${d.nombre}`} cabecera={['N°', 'Fecha · glosa', 'Debe', 'Haber', 'Saldo']} filas={d.movimientos.map((m: Record<string, string>) => [String(m.numero), `${m.fecha} · ${m.glosa}`, Number(m.debe) ? bs(m.debe) : '', Number(m.haber) ? bs(m.haber) : '', bs(m.saldo)])} vacio="Sin movimientos." /></>}
+        {rep === 'mayor' && (cuenta === 'todas' ? (d.cuentas.length === 0 ? <p className="text-on-surface-variant">Sin movimientos en el periodo.</p> : d.cuentas.map((m: Record<string, unknown>) => <MayorDeCuenta key={String(m.codigo)} m={m} />)) : <MayorDeCuenta m={d} />)}
         {rep === 'flujo' && <><div className="grid grid-cols-2 gap-gutter md:grid-cols-4"><Tarjeta t="Saldo inicial" v={bs(d.saldoInicial)} /><Tarjeta t="Entradas" v={bs(d.entradas)} /><Tarjeta t="Salidas" v={bs(d.salidas)} /><Tarjeta t="Saldo final" v={bs(d.saldoFinal)} destacar /></div>
           <Tabla titulo="Caja y bancos por origen" cabecera={['Origen', '', 'Entradas', 'Salidas']} filas={d.porOrigen.map((o: Record<string, string>) => [ORIGEN[o.origen] ?? o.origen, '', bs(o.entradas), bs(o.salidas)])} vacio="Sin movimientos." /></>}
         {(rep === 'ventas' || rep === 'compras') && <><p className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-sm">{d.nota}</p><Tabla titulo={rep === 'ventas' ? 'Libro de ventas (débito fiscal)' : 'Libro de compras (crédito fiscal)'} cabecera={['Fecha', 'Detalle', 'Importe', 'IVA']} filas={d.filas.map((f: Record<string, string>) => [f.fecha, `${f.proveedor ? `${f.proveedor} · ` : ''}${f.factura ? `Fact. ${f.factura} · ` : ''}${f.glosa}`, bs(f.importe), bs(f.iva)])} vacio="Sin registros en el rango." /><p className="font-label-lg">Total IVA: {bs(d.totalIva)}</p></>}

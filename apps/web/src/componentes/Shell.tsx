@@ -13,7 +13,7 @@ type Item = { ruta: string; icono: string; texto: string; roles?: string[]; exte
 const SALON = ['owner', 'admin', 'mesero', 'cajero', 'area_manager'];
 export const GRUPOS: { titulo: string; items: Item[] }[] = [
   { titulo: 'Principal', items: [
-    { ruta: 'panel', icono: 'analytics', texto: 'Panel del Dueño' },
+    { ruta: 'panel', icono: 'analytics', texto: 'Panel del Dueño', roles: ['owner', 'admin'] },
     { ruta: 'menu', icono: 'menu_book', texto: 'Menú & Fotos', roles: ['owner', 'admin', 'cocina'] },
     { ruta: 'recetas', icono: 'calculate', texto: 'Recetas & Costeo', roles: ['owner', 'admin', 'cocina', 'almacen', 'contador'] },
     { ruta: 'plan-del-dia', icono: 'event_note', texto: 'Plan del día', roles: ['owner', 'admin', 'cocina', 'almacen'] },
@@ -44,9 +44,9 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
   ] },
 ];
 
-/** Panel y avisos para todos; cada módulo solo a los roles que lo usan (el servidor vuelve a validar). */
+/** Cada módulo solo a los roles que lo usan (el servidor vuelve a validar). El Panel del Dueño es solo del dueño y administrador. */
 function visible(it: Item, roles: string[], plataforma: boolean) {
-  if (it.ruta === 'panel') return true;
+  if (it.ruta === 'panel') return roles.some((r) => r === 'owner' || r === 'admin');   // la información del dueño es solo del dueño
   if (it.ruta === 'plataforma') return plataforma;
   // El equipo de plataforma sin sucursal propia solo ve su consola.
   if (plataforma && roles.length === 0) return false;
