@@ -12,6 +12,7 @@ export const Mesa = z.object({
   posX: z.number().int().min(0).max(5000).nullable().optional(), posY: z.number().int().min(0).max(5000).nullable().optional(), activa: z.boolean().optional(),
 }).strict();
 export const MesaParcial = Mesa.partial();
+export const AsignacionGrupo = z.object({ meseroId: z.string().uuid(), areaId: z.string().uuid().nullable().optional() }).strict();   // sin areaId = todo el restaurante
 export const Asignacion = z.object({ mesaId: z.string().uuid(), meseroId: z.string().uuid() }).strict();
 
 @Injectable()
@@ -113,17 +114,34 @@ export class SalonService {
     });
   }
 
+  private async asignarMesa(tx: Bd, t: Tenant, por: string, mesaId: string, meseroId: string) {
+    await tx.execute(sql`UPDATE table_assignments SET valid_during = tstzrange(lower(valid_during), now()) WHERE table_id = ${mesaId} AND valid_during @> now() AND lower(valid_during) < now()`);
+    await tx.execute(sql`DELETE FROM table_assignments WHERE table_id = ${mesaId} AND valid_during @> now() AND lower(valid_during) >= now()`);
+    await tx.execute(sql`INSERT INTO table_assignments (restaurant_id, table_id, waiter_id, valid_during) VALUES (${t.restaurantId}, ${mesaId}, ${meseroId}, tstzrange(now(), NULL))`);
+    await auditar(tx, t.restaurantId, por, 'salon.mesero_asignado', 'table', mesaId, { mesaId, meseroId });
+  }
+
   /** Reasignar a mitad del turno cierra la asignación vigente y abre la nueva; las solicitudes abiertas no se pierden. */
   asignar(t: Tenant, por: string, d: z.infer<typeof Asignacion>) {
     return this.db.run(t, async (tx) => {
       await this.personaValida(tx, t, d.meseroId);
       const [m] = await tx.select({ id: restaurantTables.id }).from(restaurantTables).where(and(eq(restaurantTables.id, d.mesaId), eq(restaurantTables.restaurantId, t.restaurantId)));
       if (!m) throw new NotFoundException('Mesa no encontrada.');
-      await tx.execute(sql`UPDATE table_assignments SET valid_during = tstzrange(lower(valid_during), now()) WHERE table_id = ${d.mesaId} AND valid_during @> now() AND lower(valid_during) < now()`);
-      await tx.execute(sql`DELETE FROM table_assignments WHERE table_id = ${d.mesaId} AND valid_during @> now() AND lower(valid_during) >= now()`);
-      await tx.execute(sql`INSERT INTO table_assignments (restaurant_id, table_id, waiter_id, valid_during) VALUES (${t.restaurantId}, ${d.mesaId}, ${d.meseroId}, tstzrange(now(), NULL))`);
-      await auditar(tx, t.restaurantId, por, 'salon.mesero_asignado', 'table', d.mesaId, d);
+      await this.asignarMesa(tx, t, por, d.mesaId, d.meseroId);
       return { ok: true };
+    });
+  }
+
+  /** Un mesero para toda un área (o para todo el restaurante si no se indica área): se asigna a cada mesa activa. */
+  asignarGrupo(t: Tenant, por: string, d: z.infer<typeof AsignacionGrupo>) {
+    return this.db.run(t, async (tx) => {
+      await this.personaValida(tx, t, d.meseroId);
+      const filtro = d.areaId ? sql`AND area_id = ${d.areaId}` : sql``;
+      const mesas = (await tx.execute(sql`SELECT id FROM restaurant_tables WHERE restaurant_id = ${t.restaurantId} AND active ${filtro}`)).rows as { id: string }[];
+      if (d.areaId && !mesas.length && !(await tx.execute(sql`SELECT 1 FROM areas WHERE id = ${d.areaId} AND restaurant_id = ${t.restaurantId}`)).rows.length) throw new NotFoundException('Área no encontrada.');
+      for (const m of mesas) await this.asignarMesa(tx, t, por, m.id, d.meseroId);
+      await auditar(tx, t.restaurantId, por, 'salon.mesero_asignado_grupo', 'area', d.areaId ?? t.restaurantId, { ...d, mesas: mesas.length });
+      return { ok: true, mesas: mesas.length };
     });
   }
 }

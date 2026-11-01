@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, Inject, Param, ParseUUIDPipe, Patch, P
 import { Actor, ActorActual, TenantActual } from '../comun/acceso';
 import { DeSucursal } from '../comun/guards';
 import type { Tenant } from '../database/database.module';
-import { Area, Asignacion, Mesa, MesaParcial, SalonService } from './salon.service';
+import { Area, Asignacion, AsignacionGrupo, Mesa, MesaParcial, SalonService } from './salon.service';
 
 const EDITA = ['owner', 'admin'] as const;
 
@@ -31,6 +31,8 @@ export class SalonController {
 
   @Get('asignaciones') @DeSucursal()
   asignaciones(@TenantActual() t: Tenant) { return this.salon.asignaciones(t); }
+  @Put('asignaciones/grupo') @DeSucursal(...EDITA, 'area_manager')
+  asignarGrupo(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Body() b: unknown) { return this.salon.asignarGrupo(t, a.sub, AsignacionGrupo.parse(b)); }
   @Put('asignaciones') @DeSucursal(...EDITA, 'area_manager')
   asignar(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Body() b: unknown) { return this.salon.asignar(t, a.sub, Asignacion.parse(b)); }
 }

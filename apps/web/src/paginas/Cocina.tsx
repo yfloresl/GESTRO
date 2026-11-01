@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import { cerrarKyrosId } from '../lib/kyrosid';
 import { Cargando } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos, useSesion } from '../lib/sesion';
 import { ETIQUETA_TIPO, minutosDesde, Ticket } from '../lib/tipos';
@@ -14,7 +15,8 @@ const COLUMNAS: { id: Ticket['estado']; titulo: string; clase: string; punto: st
 
 /** Tablero de cocina (pantalla 3.1, modo oscuro): toques grandes, cronómetro por comanda y alerta de demora. */
 export function Cocina() {
-  const { estado, sesion } = useSesion();
+  const { estado, sesion, salir } = useSesion();
+  const cfg = useQuery({ queryKey: ['kyros-id-config'], queryFn: () => api.kyrosIdConfig(), staleTime: Infinity });
   const { sucursalId, roles, esAdmin } = useRolesActivos();
   const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +43,7 @@ export function Cocina() {
           <div><h1 className="font-headline-sm text-headline-sm leading-tight">Cocina</h1><p className="font-label-sm text-label-sm uppercase tracking-wider opacity-70">Línea de producción</p></div></div>
         <div className="font-label-md text-label-md bg-white/10 rounded-lg px-space-md py-space-xs">ACTIVAS: {tickets.length} comandas</div>
         {atrasados > 0 && <div role="alert" className="font-label-md text-label-md bg-error-container text-on-error-container rounded-lg px-space-md py-space-xs flex items-center gap-1"><span className="material-symbols-outlined text-[18px]" aria-hidden="true">notifications_active</span>{atrasados} atrasadas</div>}
-        <div className="ml-auto flex items-center gap-space-sm"><span className="font-label-md text-label-md opacity-70">{new Date().toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/La_Paz' })}</span><Link to="/app" className="h-12 px-space-md rounded-lg bg-white/10 flex items-center font-semibold">Salir</Link></div>
+        <div className="ml-auto flex items-center gap-space-sm"><span className="font-label-md text-label-md opacity-70">{new Date().toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/La_Paz' })}</span>{esAdmin && <Link to="/app" className="h-12 px-space-md rounded-lg bg-white/10 flex items-center font-semibold">Volver</Link>}<button type="button" onClick={async () => { await salir(); if (cfg.data) cerrarKyrosId(cfg.data); }} className="h-12 px-space-md rounded-lg bg-white/10 flex items-center font-semibold">Salir</button></div>
       </header>
       {error && <p role="alert" className="mx-space-md mt-space-sm rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
 

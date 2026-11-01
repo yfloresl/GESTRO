@@ -439,6 +439,16 @@ export class ContabilidadService {
     });
   }
 
+  /** Libro mayor de TODAS las cuentas con saldo inicial o movimiento en el periodo, ordenadas por código. */
+  async libroMayorGeneral(t: Tenant, r: z.infer<typeof Rango>) {
+    const { desde, hasta } = this.rango(r);
+    const codigos = await this.db.run(t, async (tx) => (await tx.execute(sql`SELECT DISTINCT a.code FROM journal_lines l JOIN journal_entries e ON e.id = l.entry_id JOIN chart_of_accounts a ON a.id = l.account_id
+      WHERE e.restaurant_id = ${t.restaurantId} AND e.posted AND e.entry_date <= ${hasta}::date ORDER BY a.code`)).rows.map((x) => (x as { code: string }).code));
+    const cuentas = [];
+    for (const c of codigos) { const m = await this.libroMayor(t, c, r); if (m.movimientos.length || Number(m.saldoInicial) !== 0) cuentas.push(m); }
+    return { desde: desde ?? null, hasta, cuentas };
+  }
+
   flujoDeCaja(t: Tenant, r: z.infer<typeof Rango>) {
     return this.db.run(t, async (tx) => {
       await this.asegurarPlan(tx, t); const { desde, hasta } = this.rango(r);

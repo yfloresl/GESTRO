@@ -124,13 +124,14 @@ function Configurar({ areas, mesas, refrescar }: { areas: Area[]; mesas: Mesa[];
 
   return (
     <details className="bg-surface-container-low rounded-xl p-space-md">
-      <summary className="font-headline-sm text-headline-sm cursor-pointer min-h-12 flex items-center">Configurar salón</summary>
+      <summary className="font-headline-sm text-headline-sm cursor-pointer min-h-12 flex items-center">Configurar salón: áreas, mesas y meseros</summary>
       <div className="flex flex-col gap-space-lg mt-space-md">
         {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
         <div className="grid grid-cols-1 gap-gutter lg:grid-cols-2">
           <form onSubmit={nuevaArea} className="bg-surface-container-lowest rounded-xl border border-outline-variant p-space-md flex flex-col gap-space-sm">
             <h3 className="font-body-lg font-semibold">Nueva área</h3>
-            <input name="nombre" required placeholder="Salón principal, Terraza…" aria-label="Nombre del área" className={clases.input} />
+            <input name="nombre" required list="sugerencias-area" placeholder="Salón principal, Terraza, VIP…" aria-label="Nombre del área" className={clases.input} />
+            <datalist id="sugerencias-area">{['Salón principal', 'Terraza', 'VIP', 'Aire acondicionado', 'Fumadores', 'No fumadores', 'Jardín', 'Barra'].map((n) => <option key={n} value={n} />)}</datalist>
             <select name="encargado" aria-label="Encargado del área" className={clases.input}><option value="">Sin encargado</option>{encargados.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}</select>
             <button className={clases.secundario}>Agregar área</button>
           </form>
@@ -140,6 +141,18 @@ function Configurar({ areas, mesas, refrescar }: { areas: Area[]; mesas: Mesa[];
             <select name="area" aria-label="Área de la mesa" className={clases.input}><option value="">Sin área</option>{areas.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}</select>
             <button className={clases.secundario}>Agregar mesa</button>
           </form>
+        </div>
+
+        <div className="bg-surface-container-lowest rounded-xl border border-outline-variant p-space-md flex flex-col gap-space-sm">
+          <h3 className="font-body-lg font-semibold">Mesero por área o para todo el restaurante</h3>
+          <p className="text-on-surface-variant font-body-sm">Elige un mesero y se asigna a todas las mesas del área (o del restaurante). Después puedes ajustar mesa por mesa.</p>
+          <ul className="flex flex-col gap-space-xs">
+            {[{ id: null as string | null, nombre: 'Todo el restaurante' }, ...areas].map((a) => (
+              <li key={a.id ?? 'todo'} className="flex flex-wrap items-center justify-between gap-space-sm">
+                <span className="font-semibold">{a.nombre}<span className="font-normal text-on-surface-variant"> · {mesas.filter((m) => m.activa && (a.id === null || m.areaId === a.id)).length} mesas</span></span>
+                <select aria-label={`Mesero para ${a.nombre}`} value="" onChange={(e) => e.target.value && accion(() => api.put('/asignaciones/grupo', { meseroId: e.target.value, areaId: a.id }, sucursalId!))} className="h-12 rounded-lg border border-outline-variant bg-surface-container-lowest px-space-sm"><option value="">Asignar mesero…</option>{meseros.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}</select>
+              </li>))}
+          </ul>
         </div>
 
         <div className="overflow-x-auto"><table className="min-w-[40rem] w-full text-body-sm">
