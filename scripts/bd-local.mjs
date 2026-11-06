@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const raiz = join(dirname(fileURLToPath(import.meta.url)), "..");
 const datos = join(raiz, ".datos", "pg");
 const registro = join(raiz, ".datos", "pg.log");
-const PUERTO = "5434";
+const PUERTO = process.env.GESTRO_PG_PUERTO ?? "5434";   // solo desarrollo: cámbialo si otro proyecto ya ocupa el 5434
 
 function binarios() {
   const exe = process.platform === "win32" ? ".exe" : "";

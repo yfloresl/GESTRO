@@ -1,8 +1,9 @@
 import { Pool } from 'pg';
 import { aplicarMigraciones } from '../src/database/migraciones';
 
-const ADMIN = 'postgresql://gestro@127.0.0.1:5434/postgres';
-const PRUEBAS = 'postgresql://gestro@127.0.0.1:5434/gestro_pruebas';
+const PG = process.env.GESTRO_PG_PUERTO ?? '5434';
+const ADMIN = `postgresql://gestro@127.0.0.1:${PG}/postgres`;
+const PRUEBAS = `postgresql://gestro@127.0.0.1:${PG}/gestro_pruebas`;
 
 /** Base de pruebas limpia en cada corrida: se recrea y se le aplican las migraciones reales. */
 export default async function preparar() {
