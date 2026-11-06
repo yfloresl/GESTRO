@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Categoria { id: string; nombre: string; orden: number }
 interface Plato { id: string; categoriaId: string | null; nombre: string; descripcion: string | null; precio: string; alergenos: string[]; minutosPreparacion: number | null; disponible: boolean; tieneFoto: boolean }
@@ -70,7 +71,7 @@ export function Menu() {
         )}
       </div>
 
-      {platos.isLoading ? <p role="status">Cargando menú…</p> : lista.length === 0 ? (
+      {platos.isLoading ? <ListaEsqueleto /> : lista.length === 0 ? (
         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-xl text-center">
           <span className="material-symbols-outlined text-[40px] text-primary" aria-hidden="true">menu_book</span>
           <h2 className="font-headline-sm text-headline-sm mt-space-xs">{platos.data?.length ? 'Ningún plato coincide' : 'Tu menú está vacío'}</h2>

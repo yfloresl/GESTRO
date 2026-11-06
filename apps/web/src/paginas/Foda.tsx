@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Punto { texto: string; metrica: string }
 interface Informe { id: string; desde: string; hasta: string; modelo: string; creado: string; suficiente: boolean; motivo: string | null; fortalezas: Punto[]; debilidades: Punto[]; oportunidades: Punto[]; amenazas: Punto[]; evidencia: Record<string, { valor: string | number; detalle: string }>; descartadosPorValidacion: number; iaNoDisponible: string | null }
@@ -33,7 +34,7 @@ export function Foda() {
           <button type="button" disabled={ocupado} onClick={generar} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold flex items-center gap-space-xs disabled:opacity-60"><span className="material-symbols-outlined" aria-hidden="true">auto_awesome</span>{ocupado ? 'Generando…' : 'Generar informe'}</button></div>}</header>
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
       {(lista.data ?? []).length > 1 && <div className="flex gap-space-xs overflow-x-auto">{lista.data!.map((r) => <button key={r.id} aria-pressed={id === r.id} onClick={() => setSel(r.id)} className={`h-12 px-space-md rounded-full font-label-md whitespace-nowrap ${id === r.id ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'}`}>{r.desde.slice(5)} → {r.hasta.slice(5)}</button>)}</div>}
-      {lista.isLoading ? <p role="status">Cargando…</p> : !id ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Todavía no hay informes. {esAdmin ? 'Genera el primero con el botón de arriba.' : 'Pídele al dueño que lo genere.'} El informe del mes anterior se arma solo el día 1 de cada mes.</p> : !inf ? <p role="status">Cargando informe…</p> : <>
+      {lista.isLoading ? <ListaEsqueleto /> : !id ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Todavía no hay informes. {esAdmin ? 'Genera el primero con el botón de arriba.' : 'Pídele al dueño que lo genere.'} El informe del mes anterior se arma solo el día 1 de cada mes.</p> : !inf ? <ListaEsqueleto /> : <>
         <p className="font-body-sm text-on-surface-variant">Período {inf.desde} → {inf.hasta} · {inf.modelo === 'reglas' ? 'Armado con reglas sobre tus indicadores' : `Redactado con IA (${inf.modelo}) y verificado contra tus números`} · {new Date(inf.creado).toLocaleString('es-BO')}</p>
         {inf.iaNoDisponible && <p role="status" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-sm">La IA no estuvo disponible ({inf.iaNoDisponible}); se muestra el análisis armado con reglas.</p>}
         {inf.descartadosPorValidacion > 0 && <p role="status" className="font-body-sm text-on-surface-variant">Se descartaron {inf.descartadosPorValidacion} punto(s) redactados por la IA porque sus cifras no coincidían con tus datos.</p>}

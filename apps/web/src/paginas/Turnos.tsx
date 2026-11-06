@@ -3,6 +3,7 @@ import { FormEvent, useState } from 'react';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Turno { id: string; personaId: string; persona: string; funcion: string | null; eventoId: string | null; evento: string | null; notas: string | null; fecha: string; horaInicio: string; horaFin: string; cruzaDia: boolean; entrada: string | null; salida: string | null; horas: string; pago?: string | null; costoPlanificado?: string }
 interface Persona { id: string; nombre: string; telefono: string | null; documento: string | null; tipo: string; activo: boolean; funcionId: string | null; funcion: string | null; tieneUsuario: boolean; costoHora?: string | null; sueldoMensual?: string | null }
@@ -40,7 +41,7 @@ function Mis() {
   const lista = q.data ?? [];
   return (
     <section className="flex flex-col gap-space-sm">{error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
-      {q.isLoading ? <p role="status">Cargando…</p> : lista.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">No tienes turnos programados en los próximos días.</p> : (
+      {q.isLoading ? <ListaEsqueleto /> : lista.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">No tienes turnos programados en los próximos días.</p> : (
         <ul className="grid grid-cols-1 gap-gutter md:grid-cols-2">{lista.map((t) => (
           <li key={t.id} className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-xs">
             <p className="font-headline-sm text-headline-sm">{nomDia(t.fecha)} · {t.horaInicio}–{t.horaFin}{t.cruzaDia && <span className="font-body-sm text-on-surface-variant"> (+1 día)</span>}</p>
@@ -68,7 +69,7 @@ function Semana({ programa }: { programa: boolean }) {
         <button type="button" aria-label="Semana siguiente" onClick={() => setIni(sumar(ini, 7))} className="w-12 h-12 rounded-lg bg-surface-container"><span className="material-symbols-outlined" aria-hidden="true">chevron_right</span></button>
         <button type="button" onClick={() => setIni(lunes(hoy()))} className="h-12 px-space-md rounded-lg border border-outline-variant font-semibold">Esta semana</button>
         {programa && <button type="button" onClick={() => setNuevo({ fecha: hoy() >= ini && hoy() <= fin ? hoy() : ini })} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold ml-auto">Nuevo turno</button>}</div>
-      {q.isLoading ? <p role="status">Cargando…</p> : (
+      {q.isLoading ? <ListaEsqueleto /> : (
         <div className="grid grid-cols-1 gap-gutter md:grid-cols-7">{dias.map((d) => (
           <div key={d} className={`rounded-xl border p-space-sm flex flex-col gap-space-xs ${d === hoy() ? 'border-primary bg-primary-fixed/30' : 'border-outline-variant bg-surface-container-lowest'}`}>
             <div className="flex items-center justify-between"><h3 className="font-label-lg capitalize">{nomDia(d)}</h3>{programa && <button type="button" aria-label={`Agregar turno el ${d}`} onClick={() => setNuevo({ fecha: d })} className="w-10 h-10 rounded-lg hover:bg-surface-container"><span className="material-symbols-outlined" aria-hidden="true">add</span></button>}</div>
@@ -175,7 +176,7 @@ function CostoVista() {
       <div className="flex flex-wrap items-end gap-space-sm">
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Desde</span><input type="date" value={r.desde} onChange={(e) => setR({ ...r, desde: e.target.value })} className={clases.input} /></label>
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Hasta</span><input type="date" value={r.hasta} onChange={(e) => setR({ ...r, hasta: e.target.value })} className={clases.input} /></label></div>
-      {!c ? <p role="status">Cargando…</p> : <>
+      {!c ? <ListaEsqueleto /> : <>
         <div className="grid grid-cols-2 gap-gutter"><div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md"><p className="font-label-sm uppercase text-on-surface-variant">Pago por horas trabajadas</p><p className="font-headline-sm text-headline-sm text-primary">{bs(c.totalPagoPorHoras)}</p></div>
           <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md"><p className="font-label-sm uppercase text-on-surface-variant">Costo planificado</p><p className="font-headline-sm text-headline-sm text-primary">{bs(c.totalPlanificado)}</p></div></div>
         <div className="overflow-x-auto bg-surface-container-lowest border border-outline-variant rounded-xl"><table className="w-full text-body-sm"><caption className="text-left p-3 font-headline-sm text-headline-sm">Por persona</caption><thead><tr className="text-left text-on-surface-variant font-label-sm uppercase"><th className="p-3">Persona</th><th className="p-3 text-right">Turnos</th><th className="p-3 text-right">H. prog.</th><th className="p-3 text-right">H. trab.</th><th className="p-3 text-right">Pago</th><th className="p-3 text-right">Planificado</th></tr></thead>

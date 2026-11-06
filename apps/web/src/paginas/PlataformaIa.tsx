@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError } from '../lib/sesion';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Estado { configurada: boolean; ultimosCaracteres: string | null; activa: boolean; baseUrl: string; modelos: { foda: string; asistente: string; rapido: string }; precios: Record<string, { entrada: number; salida: number }>; limiteMensualUsd: number | null; limiteDiarioPorSucursal: number;
   usoDelMes: { llamadas: number; tokensEntrada: number; tokensSalida: number; costoUsd: string } }
@@ -20,7 +21,7 @@ export function PlataformaIa() {
     for (const m of [s('m_foda'), s('m_asistente'), s('m_rapido')]) if (m && s(`pe_${m}`) !== '' && s(`ps_${m}`) !== '') precios[m] = { entrada: num(f.get(`pe_${m}`)), salida: num(f.get(`ps_${m}`)) };
     void accion(() => api.put('/plataforma/ia', { baseUrl: s('url'), modelos: { foda: s('m_foda'), asistente: s('m_asistente'), rapido: s('m_rapido') }, precios, limiteMensualUsd: s('limite') ? num(f.get('limite')) : null, limiteDiarioPorSucursal: Math.round(num(f.get('diario'))) }), 'Ajustes guardados.');
   };
-  if (!e) return <p role="status">Cargando…</p>;
+  if (!e) return <ListaEsqueleto />;
   const modelos = [...new Set([e.modelos.foda, e.modelos.asistente, e.modelos.rapido])];
   return (
     <section className="flex flex-col gap-space-md">

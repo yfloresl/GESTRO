@@ -3,6 +3,7 @@ import { FormEvent, useState } from 'react';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Promo { id: string; nombre: string; alcance: string; descuentoPct: string | null; precioFijo: string | null; desde: string; hasta: string; diasSemana: number[] | null; horaDesde: string | null; horaHasta: string | null; platos: string[]; platosNombres: string[]; activa: boolean; estado: 'vigente' | 'programada' | 'vencida' | 'inactiva' | 'fuera_de_horario'; vigenteAhora: boolean }
 interface Uso { promociones: { id: string; nombre: string; unidades: string; vendido: string; descuento: string }[]; totalDescuento: string }
@@ -33,7 +34,7 @@ export function Promociones() {
       <header className="flex flex-wrap items-end justify-between gap-space-sm"><div><h1 className="font-headline-lg text-headline-lg text-primary tracking-tight">Promociones</h1><p className="font-body-md text-body-md text-on-surface-variant">El precio con promoción lo aplica el sistema al tomar el pedido; si hay varias, gana la más baja.</p></div>
         {esAdmin && <button type="button" onClick={() => setEditando('nueva')} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold flex items-center gap-space-xs"><span className="material-symbols-outlined" aria-hidden="true">add_circle</span>Nueva promoción</button>}</header>
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
-      {q.isLoading ? <p role="status">Cargando…</p> : (q.data ?? []).length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Todavía no hay promociones.</p> : (
+      {q.isLoading ? <ListaEsqueleto /> : (q.data ?? []).length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Todavía no hay promociones.</p> : (
         <ul className="grid grid-cols-1 gap-gutter md:grid-cols-2 xl:grid-cols-3">{q.data!.map((p) => (
           <li key={p.id} className={`bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-xs ${p.estado === 'vencida' || p.estado === 'inactiva' ? 'opacity-70' : ''}`}>
             <div className="flex items-center justify-between gap-space-sm"><span className="font-headline-sm text-headline-sm truncate">{p.nombre}</span><span className={`px-2 py-0.5 rounded-full font-label-sm uppercase whitespace-nowrap ${ESTADO[p.estado].c}`}>{ESTADO[p.estado].t}</span></div>

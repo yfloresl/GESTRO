@@ -3,6 +3,7 @@ import { FormEvent, useState } from 'react';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Cuenta { id: string; codigo: string; nombre: string; tipo: string; aceptaAsientos: boolean; activa: boolean; claveDelSistema: string | null; codigoPadre: string | null; conMovimientos: boolean }
 interface Fila { id: string; numero: number | null; fecha: string; glosa: string; origen: string; publicado: boolean; esAnulacion: boolean; contrarrestado: boolean; total: string }
@@ -57,7 +58,7 @@ function Resumen() {
   return (
     <section className="flex flex-col gap-space-md">
       <Rango desde={r.desde} hasta={r.hasta} set={(desde, hasta) => setR({ desde, hasta })} />
-      {res.isLoading ? <p role="status">Cargando…</p> : e && <>
+      {res.isLoading ? <ListaEsqueleto /> : e && <>
         <div className="grid grid-cols-2 gap-gutter md:grid-cols-5"><Tarjeta t="Ingresos" v={bs(e.ingresos)} /><Tarjeta t="Costo de ventas" v={bs(e.costos)} /><Tarjeta t="Utilidad bruta" v={`${bs(e.utilidadBruta)}${e.margenBrutoPct ? ` · ${e.margenBrutoPct}%` : ''}`} /><Tarjeta t="Gastos" v={bs(e.gastos)} /><Tarjeta t="Resultado" v={bs(e.resultado)} destacar /></div>
         <Tabla titulo="Estado de resultados" filas={e.cuentas.map((c) => [c.codigo, c.nombre, bs(c.saldo)])} vacio="Aún no hay movimientos en este rango." />
       </>}
@@ -88,7 +89,7 @@ function Asientos() {
     <section className="flex flex-col gap-space-sm">
       <div className="flex flex-wrap items-center justify-between gap-space-sm"><div className="flex flex-wrap gap-space-xs">{[['', 'Todos'], ['borrador', 'Borradores'], ['publicado', 'Publicados']].map(([k, n]) => <button key={k} aria-pressed={estado === k} onClick={() => setEstado(k)} className={`h-12 px-space-md rounded-full font-label-md ${estado === k ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'}`}>{n}</button>)}</div>
         <button type="button" onClick={() => setNuevo(true)} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold flex items-center gap-space-xs"><span className="material-symbols-outlined" aria-hidden="true">add_circle</span>Nuevo asiento</button></div>
-      {q.isLoading ? <p role="status">Cargando…</p> : (q.data ?? []).length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Todavía no hay asientos. Nacen solos al cobrar, comprar o registrar mermas.</p> : (
+      {q.isLoading ? <ListaEsqueleto /> : (q.data ?? []).length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Todavía no hay asientos. Nacen solos al cobrar, comprar o registrar mermas.</p> : (
         <ul className="flex flex-col gap-space-xs">{q.data!.map((a) => <li key={a.id}><button type="button" onClick={() => setAbierto(a.id)} className="w-full text-left bg-surface-container-lowest border border-outline-variant rounded-xl p-space-sm px-space-md flex items-center justify-between gap-space-sm hover:border-primary">
           <span className="min-w-0"><span className="font-semibold">{a.numero !== null ? `N° ${a.numero}` : 'Borrador'} · {a.glosa}</span><span className="block font-body-sm text-on-surface-variant">{a.fecha} · {ORIGEN[a.origen] ?? a.origen}{a.esAnulacion ? ' · anulación' : ''}{a.contrarrestado ? ' · contrarrestado' : ''}</span></span>
           <span className="font-label-lg text-primary whitespace-nowrap">{bs(a.total)}</span></button></li>)}</ul>)}
@@ -110,7 +111,7 @@ function DetalleAsiento({ id, cerrar, hecho }: { id: string; cerrar(): void; hec
     <div role="dialog" aria-modal="true" aria-label="Asiento" className="fixed inset-0 z-[60] flex justify-end bg-inverse-surface/40" onClick={cerrar}>
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-xl bg-surface h-full overflow-y-auto p-space-md flex flex-col gap-space-md">
         <div className="flex items-center justify-between"><h2 className="font-headline-md text-headline-md text-primary">{a ? (a.numero !== null ? `Asiento N° ${a.numero}` : 'Borrador') : 'Asiento'}</h2><button type="button" aria-label="Cerrar" onClick={cerrar} className="w-12 h-12 rounded-lg hover:bg-surface-container"><span className="material-symbols-outlined" aria-hidden="true">close</span></button></div>
-        {!a ? <p role="status">Cargando…</p> : <>
+        {!a ? <ListaEsqueleto /> : <>
           <p className="text-on-surface-variant">{a.fecha} · {ORIGEN[a.origen] ?? a.origen} — {a.glosa}</p>
           <Tabla titulo="Líneas" cabecera={['Cuenta', 'Nombre', 'Debe', 'Haber']} filas={a.lineas.map((l) => [l.cuenta, l.nombre, Number(l.debe) ? bs(l.debe) : '', Number(l.haber) ? bs(l.haber) : ''])} />
           {error && <p role="alert" className="text-error">{error}</p>}
@@ -177,7 +178,7 @@ function PlanDeCuentas() {
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Tipo</span><select name="tipo" required className={clases.input}>{['activo', 'pasivo', 'patrimonio', 'ingreso', 'costo', 'gasto'].map((t) => <option key={t} value={t}>{t}</option>)}</select></label>
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Cuenta padre</span><select name="padre" className={clases.input}><option value="">(ninguna)</option>{(q.data ?? []).filter((c) => !c.conMovimientos).map((c) => <option key={c.id} value={c.codigo}>{c.codigo} {c.nombre}</option>)}</select></label>
         <button className={`${clases.primario} col-span-2 md:col-span-5`}>Agregar cuenta</button></form>
-      {q.isLoading ? <p role="status">Cargando…</p> : <ul className="flex flex-col gap-1">{(q.data ?? []).map((c) => <li key={c.id} style={{ paddingLeft: `${(c.codigo.split('.').length - 1) * 1.25}rem` }} className={`flex items-center justify-between gap-space-sm rounded-lg bg-surface-container-lowest border border-outline-variant p-space-sm ${c.activa ? '' : 'opacity-60'}`}>
+      {q.isLoading ? <ListaEsqueleto /> : <ul className="flex flex-col gap-1">{(q.data ?? []).map((c) => <li key={c.id} style={{ paddingLeft: `${(c.codigo.split('.').length - 1) * 1.25}rem` }} className={`flex items-center justify-between gap-space-sm rounded-lg bg-surface-container-lowest border border-outline-variant p-space-sm ${c.activa ? '' : 'opacity-60'}`}>
         <span className={c.aceptaAsientos ? '' : 'font-bold'}>{c.codigo} · {c.nombre} <span className="font-body-sm text-on-surface-variant">({c.tipo}{c.claveDelSistema ? ' · del sistema' : ''})</span></span>
         {c.aceptaAsientos && !c.claveDelSistema && <button type="button" onClick={() => alternar(c)} className="h-12 px-space-sm rounded-lg border border-outline-variant font-label-md">{c.activa ? 'Desactivar' : 'Activar'}</button>}</li>)}</ul>}
     </section>
@@ -202,7 +203,7 @@ function Reportes() {
       <div className="flex flex-wrap gap-space-xs">{([['comprobacion', 'Sumas y saldos'], ['mayor', 'Libro mayor'], ['flujo', 'Flujo de caja'], ['ventas', 'Libro de ventas IVA'], ['compras', 'Libro de compras IVA']] as [Reporte, string][]).map(([k, n]) => <button key={k} aria-pressed={rep === k} onClick={() => setRep(k)} className={`h-12 px-space-md rounded-full font-label-md ${rep === k ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'}`}>{n}</button>)}</div>
       <div className="flex flex-wrap items-end gap-space-sm"><Rango desde={r.desde} hasta={r.hasta} set={(desde, hasta) => setR({ desde, hasta })} />
         {rep === 'mayor' && <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Cuenta</span><select value={cuenta} onChange={(e) => setCuenta(e.target.value)} className={clases.input}><option value="todas">Todas las cuentas</option>{(cuentas.data ?? []).filter((c) => c.aceptaAsientos).map((c) => <option key={c.id} value={c.codigo}>{c.codigo} {c.nombre}</option>)}</select></label>}</div>
-      {q.isLoading || !d ? <p role="status">Cargando…</p> : <>
+      {q.isLoading || !d ? <ListaEsqueleto /> : <>
         {rep === 'comprobacion' && <><Tabla titulo="Balance de comprobación de sumas y saldos" cabecera={['Código', 'Cuenta', 'Debe', 'Haber', 'Deudor', 'Acreedor']} filas={d.filas.map((f: Record<string, string>) => [f.codigo, f.nombre, bs(f.debe), bs(f.haber), bs(f.deudor), bs(f.acreedor)])} vacio="Sin movimientos." />
           <p role="status" className={d.cuadra ? 'text-tertiary' : 'text-error'}>Totales: debe {bs(d.totalDebe)} · haber {bs(d.totalHaber)} — {d.cuadra ? 'cuadra' : 'NO cuadra'}</p></>}
         {rep === 'mayor' && (cuenta === 'todas' ? (d.cuentas.length === 0 ? <p className="text-on-surface-variant">Sin movimientos en el periodo.</p> : d.cuentas.map((m: Record<string, unknown>) => <MayorDeCuenta key={String(m.codigo)} m={m} />)) : <MayorDeCuenta m={d} />)}

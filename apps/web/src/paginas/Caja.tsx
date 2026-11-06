@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs, CajaEstado, Recibo } from '../lib/tipos';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 const METODO: Record<string, string> = { efectivo: 'Efectivo', qr: 'QR', tarjeta: 'Tarjeta', transferencia: 'Transferencia', credito: 'Crédito' };
 const num = (v: FormDataEntryValue | null) => Number(String(v ?? '').replace(',', '.'));
@@ -36,7 +37,7 @@ export function Caja() {
           <p className="font-semibold">{Number(cierre.diferencia) === 0 ? 'La caja cuadra.' : `Diferencia: ${bs(cierre.diferencia)} (${Number(cierre.diferencia) < 0 ? 'faltante' : 'sobrante'})`}</p>
         </section>
       )}
-      {q.isLoading ? <p role="status">Cargando…</p> : !c?.activa ? (
+      {q.isLoading ? <ListaEsqueleto /> : !c?.activa ? (
         <form onSubmit={abrir} className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm">
           <h2 className="font-headline-sm text-headline-sm">Abrir caja</h2>
           <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Efectivo inicial (Bs)</span><input name="monto" required inputMode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" defaultValue="0" className={`${clases.input} font-label-lg`} /></label>
@@ -68,7 +69,7 @@ export function ReciboPagina() {
   const q = useQuery({ queryKey: ['recibo', id], queryFn: () => api.get<Recibo>(`/recibos/${id}`, sucursalId!), enabled: !!sucursalId && !!id });
   useEffect(() => { document.body.classList.add('imprimiendo-recibo'); return () => document.body.classList.remove('imprimiendo-recibo'); }, []);
   const r = q.data;
-  if (q.isLoading) return <p role="status">Cargando recibo…</p>;
+  if (q.isLoading) return <ListaEsqueleto />;
   if (!r) return <p role="alert" className="text-error">No encontramos ese recibo.</p>;
   return (
     <div className="flex flex-col items-center gap-space-md">

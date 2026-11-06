@@ -7,6 +7,7 @@ import { cerrarKyrosId } from '../lib/kyrosid';
 import { useAvisos } from '../lib/avisos';
 import { Link } from 'react-router-dom';
 import { BannerMuestra } from './BannerMuestra';
+import { SelectorTema } from './SelectorTema';
 
 /** Navegación del diseño (5.1). Los módulos de fases siguientes abren un estado vacío hasta construirse. */
 type Item = { ruta: string; icono: string; texto: string; roles?: string[]; externa?: string };
@@ -133,6 +134,8 @@ export function Shell() {
               </div>
             )}
           </div>
+          <div className="flex items-center gap-space-xs">
+          <SelectorTema />
           <div ref={cuenta} className="relative">
             <button type="button" aria-haspopup="menu" aria-expanded={menuAbierto} onClick={() => setMenuAbierto((v) => !v)} className="flex items-center gap-space-md pl-space-md min-h-12">
               <span className="hidden sm:flex flex-col text-right">
@@ -151,6 +154,7 @@ export function Shell() {
                 <p className="px-space-sm pb-space-xs pt-space-xs font-body-sm text-body-sm text-on-surface-variant">Cerrar sesión cierra tu cuenta Kyros en todos los sistemas.</p>
               </div>
             )}
+          </div>
           </div>
         </header>
         <main id="contenido" className="relative pt-16 w-full min-h-screen bg-background px-space-md lg:px-space-lg py-space-lg">

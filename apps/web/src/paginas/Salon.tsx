@@ -2,11 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import QRCode from 'qrcode';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Dato, Ficha } from '../componentes/Ficha';
 import { clases } from '../componentes/Marca';
 import { BannerAvisos } from '../componentes/BannerAvisos';
 import { ETIQUETA_SOLICITUD, Solicitud, useAvisos } from '../lib/avisos';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs, ETIQUETA_ESTADO, Pedido } from '../lib/tipos';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Area { id: string; nombre: string; encargadoId: string | null }
 interface Mesa { id: string; numero: string; asientos: number; areaId: string | null; activa: boolean; meseroId: string | null; urlQr?: string }
@@ -19,7 +21,7 @@ export function Salon() {
   const { sucursalId, esAdmin } = useRolesActivos();
   const qc = useQueryClient();
   const { descartar } = useAvisos();
-  const [areaSel, setAreaSel] = useState<string>('todas');
+  const [areaSel, setAreaSel] = useState<string>('todas'); const [fichaMesa, setFichaMesa] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [, reloj] = useState(0);
   useEffect(() => { descartar(); const t = setInterval(() => reloj((n) => n + 1), 30_000); return () => clearInterval(t); }, [descartar]);
@@ -54,7 +56,7 @@ export function Salon() {
           <span className="material-symbols-outlined text-error" aria-hidden="true">notifications_active</span>Llamados
           <span className="px-2 rounded-full bg-error text-on-error font-label-md text-label-md" aria-label={`${pendientes.length} pendientes`}>{pendientes.length}</span>
         </h2>
-        {sol.isLoading ? <p role="status">Cargando…</p> : pendientes.length === 0 ? (
+        {sol.isLoading ? <ListaEsqueleto /> : pendientes.length === 0 ? (
           <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Sin llamados pendientes. Cuando un cliente avise desde su QR, aparecerá aquí con sonido.</p>
         ) : (
           <ul className="grid grid-cols-1 gap-gutter md:grid-cols-2 xl:grid-cols-3">
@@ -80,7 +82,7 @@ export function Salon() {
             <button key={a.id} role="tab" aria-selected={areaSel === a.id} onClick={() => setAreaSel(a.id)} className={`h-12 px-space-md rounded-xl whitespace-nowrap font-body-md font-semibold ${areaSel === a.id ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}>{a.nombre}</button>
           ))}
         </div>
-        {mesas.isLoading ? <p role="status">Cargando mesas…</p> : visibles.length === 0 ? (
+        {mesas.isLoading ? <ListaEsqueleto /> : visibles.length === 0 ? (
           <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">{esAdmin ? 'Aún no hay mesas. Agrégalas abajo, en «Configurar salón».' : 'Todavía no hay mesas cargadas.'}</p>
         ) : (
           <ul className="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-space-sm">
@@ -91,12 +93,14 @@ export function Salon() {
               const cuadro = llamado ? 'bg-error text-on-error' : cuenta ? 'bg-secondary-container text-on-secondary-container' : 'bg-primary-container text-on-primary';
               const pedido = pedidoDe.get(m.id);
               return (
-                <li key={m.id} className={`rounded-xl border-2 p-space-sm flex flex-col gap-space-xs ${fondo}`}>
+                <li key={m.id} className={`rounded-xl border-2 p-space-sm flex flex-col gap-space-xs hover:shadow-md transition-shadow ${fondo}`}>
+                  <button type="button" onClick={() => setFichaMesa(m.id)} aria-label={`Ver detalle de la mesa ${m.numero}`} className="text-left flex flex-col gap-space-xs">
                   <div className="flex items-center gap-space-sm">
                     <span className={`w-12 h-12 rounded-lg flex items-center justify-center font-label-lg text-label-lg ${cuadro}`}>{m.numero.padStart(2, '0')}</span>
                     <div className="min-w-0"><p className="font-body-md font-semibold truncate">Mesa {m.numero}</p><p className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1"><span className="material-symbols-outlined text-[16px]" aria-hidden="true">group</span>{m.asientos} pers</p></div>
                   </div>
                   <p className="font-label-sm text-label-sm uppercase font-semibold">{llamado ? `Llamado · ${hace(llamado.creada)}` : cuenta ? `Cuenta · ${hace(cuenta.creada)}` : pedido ? 'Ocupada' : 'Libre'}</p>
+                  </button>
                   {pedido && <Link to={`/app/pedidos?abrir=${pedido.id}`} className="font-body-sm text-primary underline">{ETIQUETA_ESTADO[pedido.estado] ?? pedido.estado} · {bs(pedido.total)}{pedido.cliente ? ` · ${pedido.cliente}` : ''}</Link>}
                 </li>
               );
@@ -105,6 +109,20 @@ export function Salon() {
         )}
       </section>
 
+      {fichaMesa && (() => {
+        const m = (mesas.data ?? []).find((x) => x.id === fichaMesa); if (!m) return null;
+        const abiertas = porMesa.get(m.id) ?? []; const pedido = pedidoDe.get(m.id);
+        return (
+          <Ficha titulo={`Mesa ${m.numero}`} subtitulo={areas.data?.find((a) => a.id === m.areaId)?.nombre ?? 'Sin área'} cerrar={() => setFichaMesa(null)}>
+            <div><Dato etiqueta="Asientos" valor={`${m.asientos} personas`} /><Dato etiqueta="Estado" valor={pedido ? 'Ocupada' : 'Libre'} /><Dato etiqueta="Llamados" valor={abiertas.length ? `${abiertas.length} pendiente(s)` : 'Ninguno'} /></div>
+            {abiertas.map((s) => (
+              <div key={s.id} className="rounded-xl border-2 border-error-container bg-error-container/40 p-space-sm flex items-center justify-between gap-space-sm">
+                <div><p className="font-semibold text-on-error-container">{ETIQUETA_SOLICITUD[s.tipo]} · {hace(s.creada)}</p>{s.comentario && <p className="font-body-sm">«{s.comentario}»</p>}</div>
+                <button type="button" disabled={atender.isPending} onClick={() => atender.mutate(s.id)} className="h-12 px-space-md rounded-lg bg-error text-on-error font-semibold">Atendido</button>
+              </div>))}
+            {pedido && <Link to={`/app/pedidos?abrir=${pedido.id}`} className={clases.primario}>Abrir el pedido · {bs(pedido.total)}</Link>}
+          </Ficha>);
+      })()}
       {esAdmin && <Configurar areas={areas.data ?? []} mesas={mesas.data ?? []} refrescar={() => { void qc.invalidateQueries({ queryKey: ['areas', sucursalId] }); void qc.invalidateQueries({ queryKey: ['mesas', sucursalId] }); }} />}
     </div>
   );

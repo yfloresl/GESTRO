@@ -44,3 +44,11 @@ Estado: `usado` entra a código · `derivado` se construyó a partir de tokens/p
 | Informe FODA: cuatro cuadrantes con evidencia desplegable, historial y generación | 5.12 | derivado | Bordes superiores de color por cuadrante |
 | Asistente: preguntas, respuesta con tablas y fuentes | 5.13 | derivado | Renderizador de Markdown propio y seguro (sin HTML) |
 | Consola de plataforma: pestaña Inteligencia artificial (clave, modelos, precios, límites, uso) | 6.2 | derivado | La clave nunca se muestra |
+
+## Derivados (2026-11-06)
+| Elemento | Origen | Estado |
+|---|---|---|
+| Modo oscuro de toda la app (`apps/web/tokens-oscuro.json`) | La plantilla solo trae oscuro para el KDS. Se derivó de los mismos tokens (superficies M3 oscuras; primario aclarado para conservar texto blanco sobre botones; `*-fixed` e `inverse-*` iguales en ambos modos) | derivado: pedir a diseño la paleta oscura oficial |
+| Selector claro/oscuro en la cabecera | Patrón de botón de icono de la cabecera | derivado |
+| Esqueletos de carga, animaciones de panel/página | Tokens existentes (surface-container-high), 150-200 ms, desactivadas con «reducir movimiento» | derivado |
+| Ficha emergente (cliente, reserva, mesa) | Panel lateral de «Cobrar»/«Nueva reserva» | derivado |

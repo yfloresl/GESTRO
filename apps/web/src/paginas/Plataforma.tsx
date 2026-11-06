@@ -7,6 +7,7 @@ import { bs } from '../lib/tipos';
 import { reducirImagen } from '../lib/imagen';
 import { PlataformaDemo } from './PlataformaDemo';
 import { PlataformaIa } from './PlataformaIa';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface PagoP { id: string; sucursal: string; cuenta: string; meses: number; mesesDeRegalo: number; monto: string; esperado: string | null; coincide: boolean | null; referencia: string; banco: string | null; fechaPago: string | null; estado: string; motivo: string | null; tieneVoucher: boolean; creado: string; habilitadaHasta: string | null; promocion: string | null }
 interface SucP { id: string; nombre: string; cuenta: string; estado: string; habilitadaHasta: string | null; diasRestantes: number | null; suscripcion: string; plan: string | null; planId: string | null }
@@ -35,7 +36,7 @@ function Voucher({ id }: { id: string }) {
   const [url, setUrl] = useState<string | null>(null); const [fallo, setFallo] = useState(false);
   useEffect(() => { let u: string | null = null; api.blob(`/plataforma/pagos/${id}/voucher`).then((b) => { u = URL.createObjectURL(b); setUrl(u); }).catch(() => setFallo(true)); return () => { if (u) URL.revokeObjectURL(u); }; }, [id]);
   if (fallo) return <p className="text-on-surface-variant">Sin comprobante.</p>;
-  return url ? <a href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt="Comprobante de pago" className="max-h-72 rounded-lg border border-outline-variant object-contain" /></a> : <p role="status">Cargando comprobante…</p>;
+  return url ? <a href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt="Comprobante de pago" className="max-h-72 rounded-lg border border-outline-variant object-contain" /></a> : <ListaEsqueleto />;
 }
 
 function Pagos() {
@@ -51,7 +52,7 @@ function Pagos() {
     <section className="flex flex-col gap-space-sm">
       <div className="flex gap-space-xs">{(['pendiente', 'validado', 'rechazado'] as const).map((k) => <button key={k} onClick={() => setEstado(k)} aria-pressed={estado === k} className={`h-12 px-space-md rounded-lg font-semibold capitalize ${estado === k ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'}`}>{k === 'validado' ? 'Aprobados' : k === 'pendiente' ? 'Pendientes' : 'Rechazados'}</button>)}</div>
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
-      {q.isLoading ? <p role="status">Cargando…</p> : (q.data ?? []).length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">No hay pagos {estado === 'pendiente' ? 'pendientes' : estado === 'validado' ? 'aprobados' : 'rechazados'}.</p> : (
+      {q.isLoading ? <ListaEsqueleto /> : (q.data ?? []).length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">No hay pagos {estado === 'pendiente' ? 'pendientes' : estado === 'validado' ? 'aprobados' : 'rechazados'}.</p> : (
         <ul className="grid grid-cols-1 gap-gutter xl:grid-cols-2">{q.data!.map((x) => (
           <li key={x.id} className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm">
             <div className="flex flex-wrap items-start justify-between gap-space-sm"><div><h2 className="font-headline-sm text-headline-sm">{x.sucursal}</h2><p className="font-body-sm text-on-surface-variant">{x.cuenta} · {new Date(x.creado).toLocaleString('es-BO')}</p></div>
@@ -87,7 +88,7 @@ function Sucursales() {
   return (
     <section className="flex flex-col gap-space-sm">
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
-      {q.isLoading ? <p role="status">Cargando…</p> : (
+      {q.isLoading ? <ListaEsqueleto /> : (
         <div className="overflow-x-auto"><table className="min-w-[48rem] w-full text-body-sm"><caption className="sr-only">Sucursales de todos los restaurantes</caption>
           <thead><tr className="text-left text-on-surface-variant font-label-sm uppercase"><th className="p-2">Sucursal</th><th className="p-2">Cuenta</th><th className="p-2">Plan</th><th className="p-2">Habilitada hasta</th><th className="p-2">Estado</th><th className="p-2" /></tr></thead>
           <tbody>{(q.data ?? []).map((s) => (

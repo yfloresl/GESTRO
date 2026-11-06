@@ -4,6 +4,7 @@ import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
 import { reducirImagen } from '../lib/imagen';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Pago { id: string; meses: number; mesesDeRegalo: number; monto: string; esperado: string | null; referencia: string | null; banco: string | null; estado: 'pendiente' | 'validado' | 'rechazado'; motivo: string | null; tieneVoucher: boolean; desde: string | null; hasta: string | null; creado: string }
 interface Mia { habilitadaHasta: string | null; diasRestantes: number | null; estado: 'activa' | 'por_vencer' | 'gracia' | 'vencida'; plan: string | null; precioMensual: string | null; diasDeGracia: number; cobro: { instrucciones: string | null; tieneQr: boolean }; pagos: Pago[] }
@@ -59,7 +60,7 @@ export function Suscripcion() {
   return (
     <div className="flex flex-col gap-space-lg max-w-4xl">
       <header><h1 className="font-headline-lg text-headline-lg text-primary tracking-tight">Suscripción</h1><p className="font-body-md text-body-md text-on-surface-variant">Cada sucursal se paga por separado, por mes. Si vence, queda en solo lectura: tus datos no se borran.</p></header>
-      {q.isLoading ? <p role="status">Cargando…</p> : !m ? <p role="alert" className="text-error">No pudimos cargar la suscripción.</p> : (
+      {q.isLoading ? <ListaEsqueleto /> : !m ? <p role="alert" className="text-error">No pudimos cargar la suscripción.</p> : (
         <>
           <section className="grid grid-cols-1 gap-gutter sm:grid-cols-3">
             <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md"><p className={clases.etiqueta}>Estado</p><p className={`mt-space-xs inline-flex items-center gap-1 px-2 py-1 rounded-full font-label-md ${est!.clase}`}><span className="material-symbols-outlined text-[18px]" aria-hidden="true">{est!.icono}</span>{est!.texto}</p></div>
