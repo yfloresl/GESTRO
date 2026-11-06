@@ -27,12 +27,12 @@ export class KyrosIdController {
 
   @Publico() @Throttle(INGRESO) @Post('vincular') @HttpCode(200)
   vincular(@Body() body: unknown, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    return this.kyros.vincular(VincularSchema.parse(body), ipDe(req), res);
+    return this.kyros.vincular(VincularSchema.parse(body), ipDe(req), res, req.headers['user-agent']);
   }
 
   @Publico() @Throttle(INGRESO) @Post('registro') @HttpCode(200)
   registrar(@Body() body: unknown, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    return this.kyros.registrar(RegistroSchema.parse(body), ipDe(req), res);
+    return this.kyros.registrar(RegistroSchema.parse(body), ipDe(req), res, req.headers['user-agent']);
   }
 
   /** Aviso de cierre de sesión global, firmado por Kyros ID (application/x-www-form-urlencoded: logout_token). */

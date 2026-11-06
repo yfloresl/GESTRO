@@ -1,4 +1,5 @@
 import { esSubDeDemostracion } from '../demo/constantes';
+import { AceptacionSchema, exigirAceptacion, registrarAceptacion } from '../legal/legal';
 import { BadRequestException, ConflictException, ForbiddenException, HttpException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { and, count, eq, gt, isNull, lt, sql } from 'drizzle-orm';
@@ -38,10 +39,12 @@ export const RegistroSchema = z.object({
   restaurante: z.string().trim().min(2).max(120),
   razonSocial: z.string().trim().min(2).max(160),
   nit: z.string().trim().max(30).optional(),
+  ...AceptacionSchema,
 }).strict();
 
 export const VincularSchema = z.object({
   registroToken: z.string().min(20).max(4096),
+  ...AceptacionSchema,
   codigo: z.string().trim().min(16).max(128),
 }).strict();
 
@@ -205,7 +208,8 @@ export class KyrosIdService {
   }
 
   /** Primer vínculo del personal: el código de invitación prueba quién debe ocupar el usuario. Nunca por correo. */
-  async vincular(d: z.infer<typeof VincularSchema>, ip: string, res: Response): Promise<SesionRespuesta> {
+  async vincular(d: z.infer<typeof VincularSchema>, ip: string, res: Response, ua?: string): Promise<SesionRespuesta> {
+    exigirAceptacion(d);
     const reg = await this.leerRegistro(d.registroToken);
     const hash = this.secretos.huella(d.codigo);
     const [inv] = await this.bd.select().from(userInvitations).where(and(eq(userInvitations.tokenHash, hash), isNull(userInvitations.usedAt), gt(userInvitations.expiresAt, new Date())));
@@ -215,11 +219,13 @@ export class KyrosIdService {
     const [u] = await this.bd.select().from(users).where(and(eq(users.id, inv.userId), eq(users.active, true)));
     if (!u) throw new ForbiddenException('Tu cuenta está desactivada.');
     await this.crearVinculo(reg.emisor, reg.sub, u.id);
+    await registrarAceptacion(this.bd, u.id, reg.sub, ip, ua, 'registro');
     return this.sesion.abrir(u.id, reg.sub, ip, res);
   }
 
   /** «Completa tu registro»: solo una identidad recién creada con «Crear mi cuenta» abre su restaurante. */
-  async registrar(d: z.infer<typeof RegistroSchema>, ip: string, res: Response): Promise<SesionRespuesta> {
+  async registrar(d: z.infer<typeof RegistroSchema>, ip: string, res: Response, ua?: string): Promise<SesionRespuesta> {
+    exigirAceptacion(d);
     const reg = await this.leerRegistro(d.registroToken);
     if (!reg.reciente) throw new ForbiddenException('Para registrar un restaurante, crea tu cuenta con «Crear mi cuenta».');
     const hasta = new Date(Date.now() + DIAS_DE_PRUEBA * 86_400_000).toISOString().slice(0, 10);
@@ -232,6 +238,7 @@ export class KyrosIdService {
       const [rol] = await tx.select().from(roles).where(eq(roles.code, 'owner' satisfies Rol));
       await tx.insert(userRoles).values({ restaurantId: rest.id, userId: u.id, roleId: rol.id });
       await tx.insert(kyrosLinks).values({ issuer: reg.emisor, sub: reg.sub, userId: u.id });
+      await registrarAceptacion(tx, u.id, reg.sub, ip, ua, 'registro');
       return u.id;
     }).catch((e) => {
       if (/unique|duplicate/i.test(String(e?.message ?? e)) || e?.code === '23505' || e?.cause?.code === '23505') throw new ConflictException('Ese correo o esa identidad ya está registrada.');

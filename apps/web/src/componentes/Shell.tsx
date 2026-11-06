@@ -8,6 +8,7 @@ import { useAvisos } from '../lib/avisos';
 import { Link } from 'react-router-dom';
 import { BannerMuestra } from './BannerMuestra';
 import { SelectorTema } from './SelectorTema';
+import { AceptarLegal } from './AceptarLegal';
 
 /** Navegación del diseño (5.1). Los módulos de fases siguientes abren un estado vacío hasta construirse. */
 type Item = { ruta: string; icono: string; texto: string; roles?: string[]; externa?: string };
@@ -166,6 +167,7 @@ export function Shell() {
             </div>
           )}
           <BannerMuestra />
+          <AceptarLegal />
           <div className="pt-space-lg"><Outlet /></div>
         </main>
       </div>
