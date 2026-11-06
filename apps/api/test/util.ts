@@ -4,9 +4,12 @@ import type { AddressInfo } from 'node:net';
 import request from 'supertest';
 import { Pool } from 'pg';
 import { crearApp } from '../src/main';
+import { VERSION_LEGAL } from '../src/legal/legal';
 import { KyrosIdService } from '../src/kyros-id/kyros-id.service';
 
 export const CLIENT = 'gestro-web';
+/** Aceptación de términos que exige el alta (registro y unión por código). */
+export const LEGAL = { aceptaTerminos: true as const, versionLegal: VERSION_LEGAL };
 
 /** App real + emisor de Kyros ID simulado (claves efímeras) + conexión de dueño para preparar datos. */
 export async function levantar() {
@@ -39,7 +42,7 @@ export async function levantar() {
   async function nuevoRestaurante(nombre = 'Casa Andina') {
     const sub = randomUUID();
     const canje = await api().post('/api/v1/auth/kyros-id/sesion').send({ accessToken: firmar({ sub }) });
-    const reg = await api().post('/api/v1/auth/kyros-id/registro').send({ registroToken: canje.body.registroToken, nombre: 'Rosa Quispe', correo: `${randomUUID()}@t.bo`, restaurante: nombre, razonSocial: `${nombre} SRL` });
+    const reg = await api().post('/api/v1/auth/kyros-id/registro').send({ ...LEGAL, registroToken: canje.body.registroToken, nombre: 'Rosa Quispe', correo: `${randomUUID()}@t.bo`, restaurante: nombre, razonSocial: `${nombre} SRL` });
     return { token: reg.body.accessToken as string, rid: reg.body.sucursales[0].id as string, userId: reg.body.usuario.id as string, sub };
   }
 
@@ -57,7 +60,7 @@ export async function levantar() {
   /** Une a una persona invitada con su código y devuelve su sesión. */
   async function entrarConCodigo(codigo: string) {
     const canje = await api().post('/api/v1/auth/kyros-id/sesion').send({ accessToken: firmar() });
-    const r = await api().post('/api/v1/auth/kyros-id/vincular').send({ registroToken: canje.body.registroToken, codigo });
+    const r = await api().post('/api/v1/auth/kyros-id/vincular').send({ ...LEGAL, registroToken: canje.body.registroToken, codigo });
     return { token: r.body.accessToken as string, userId: r.body.usuario?.id as string, status: r.status };
   }
 

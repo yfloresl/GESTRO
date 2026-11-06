@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useVersionLegal } from './Legal';
 import { clases, Marca, TarjetaCentrada } from '../componentes/Marca';
 import { api, useSesion } from '../lib/sesion';
 
@@ -17,6 +18,8 @@ export function Registro() {
   const [modo, setModo] = useState<'registro' | 'codigo'>(estado?.puedeRegistrarse ? 'registro' : 'codigo');
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [acepta, setAcepta] = useState(false);   // la casilla nunca viene marcada
+  const legal = useVersionLegal();
   if (!estado) return <Navigate to="/" replace />;
 
   const enviar = (accion: () => Promise<Parameters<typeof ingresar>[0]>) => async (e: FormEvent) => {
@@ -36,7 +39,7 @@ export function Registro() {
       {modo === 'registro' ? (
         <form className="flex flex-col gap-space-md" onSubmit={(e) => {
           const f = new FormData(e.currentTarget);
-          return enviar(() => api.kyrosIdRegistrar({ registroToken: estado.registroToken, nombre: campo(f, 'nombre'), correo: campo(f, 'correo'), restaurante: campo(f, 'restaurante'), razonSocial: campo(f, 'razonSocial'), nit: campo(f, 'nit') || undefined }))(e);
+          return enviar(() => api.kyrosIdRegistrar({ registroToken: estado.registroToken, nombre: campo(f, 'nombre'), correo: campo(f, 'correo'), restaurante: campo(f, 'restaurante'), razonSocial: campo(f, 'razonSocial'), nit: campo(f, 'nit') || undefined, aceptaTerminos: true, versionLegal: legal.data!.version }))(e);
         }}>
           <div>
             <h1 className="font-headline-md text-headline-md text-primary">Completa tu registro</h1>
@@ -48,12 +51,16 @@ export function Registro() {
               <input name={k} required={k !== 'nit'} type={k === 'correo' ? 'email' : 'text'} autoComplete={ac} className={clases.input} />
             </label>
           ))}
+          <label className="flex items-start gap-space-sm min-h-12">
+            <input type="checkbox" required checked={acepta} onChange={(e) => setAcepta(e.target.checked)} className="w-6 h-6 mt-0.5 shrink-0" />
+            <span className="font-body-sm text-body-sm">He leído y acepto los <Link to="/terminos" target="_blank" className="text-primary underline">Términos y condiciones</Link>, la <Link to="/privacidad" target="_blank" className="text-primary underline">Política de privacidad</Link> y las <Link to="/politicas" target="_blank" className="text-primary underline">Políticas de uso</Link>.</span>
+          </label>
           {error && <p role="alert" className="text-error font-body-sm text-body-sm">{error}</p>}
-          <button className={clases.primario} disabled={enviando}>{enviando ? 'Creando…' : 'Abrir mi restaurante'}</button>
+          <button className={clases.primario} disabled={enviando || !acepta || !legal.data}>{enviando ? 'Creando…' : 'Abrir mi restaurante'}</button>
           <button type="button" className="text-primary font-body-sm text-body-sm underline self-center" onClick={() => setModo('codigo')}>Tengo un código de invitación</button>
         </form>
       ) : (
-        <form className="flex flex-col gap-space-md" onSubmit={(e) => { const f = new FormData(e.currentTarget); return enviar(() => api.kyrosIdVincular({ registroToken: estado.registroToken, codigo: campo(f, 'codigo') }))(e); }}>
+        <form className="flex flex-col gap-space-md" onSubmit={(e) => { const f = new FormData(e.currentTarget); return enviar(() => api.kyrosIdVincular({ registroToken: estado.registroToken, codigo: campo(f, 'codigo'), aceptaTerminos: true, versionLegal: legal.data!.version }))(e); }}>
           <div>
             <h1 className="font-headline-md text-headline-md text-primary">Código de invitación</h1>
             <p className="font-body-md text-body-md text-on-surface-variant mt-space-xs">Tu administrador te dio un código de un solo uso. Pégalo aquí para unir tu Kyros ID a tu usuario.</p>
@@ -62,8 +69,12 @@ export function Registro() {
             <span className={clases.etiqueta}>Código</span>
             <input name="codigo" required autoComplete="off" className={`${clases.input} font-label-lg`} />
           </label>
+          <label className="flex items-start gap-space-sm min-h-12">
+            <input type="checkbox" required checked={acepta} onChange={(e) => setAcepta(e.target.checked)} className="w-6 h-6 mt-0.5 shrink-0" />
+            <span className="font-body-sm text-body-sm">He leído y acepto los <Link to="/terminos" target="_blank" className="text-primary underline">Términos y condiciones</Link>, la <Link to="/privacidad" target="_blank" className="text-primary underline">Política de privacidad</Link> y las <Link to="/politicas" target="_blank" className="text-primary underline">Políticas de uso</Link>.</span>
+          </label>
           {error && <p role="alert" className="text-error font-body-sm text-body-sm">{error}</p>}
-          <button className={clases.primario} disabled={enviando}>{enviando ? 'Verificando…' : 'Unir mi cuenta'}</button>
+          <button className={clases.primario} disabled={enviando || !acepta || !legal.data}>{enviando ? 'Verificando…' : 'Unir mi cuenta'}</button>
           {estado.puedeRegistrarse && <button type="button" className="text-primary font-body-sm text-body-sm underline self-center" onClick={() => setModo('registro')}>Quiero abrir un restaurante nuevo</button>}
         </form>
       )}

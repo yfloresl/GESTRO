@@ -45,5 +45,7 @@ export type ResultadoCanje =
   | { estado: 'sesion'; sesion: SesionRespuesta }
   | { estado: 'sin_vinculo'; puedeRegistrarse: boolean; registroToken: string };
 
-export interface Registro { registroToken: string; nombre: string; correo: string; restaurante: string; razonSocial: string; nit?: string }
+/** Aceptación de Términos, Privacidad y Políticas: obligatoria en cada alta (el servidor la exige y guarda la evidencia). */
+export interface AceptacionLegal { aceptaTerminos: true; versionLegal: string }
+export interface Registro extends AceptacionLegal { registroToken: string; nombre: string; correo: string; restaurante: string; razonSocial: string; nit?: string }
 export interface SucursalVista { id: string; nombre: string; slug: string; modoDeCobro: string; pagadoHasta: string | null; estado: string }

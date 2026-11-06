@@ -1,4 +1,4 @@
-import type { CanjeKyrosId, KyrosIdPublico, Registro, ResultadoCanje, SesionRespuesta, SucursalVista } from '@gestro/contracts';
+import type { CanjeKyrosId, KyrosIdPublico, AceptacionLegal, Registro, ResultadoCanje, SesionRespuesta, SucursalVista } from '@gestro/contracts';
 
 /** Cliente tipado de la API. El token de acceso vive solo en memoria del navegador. */
 export class GestroClient {
@@ -45,7 +45,7 @@ export class GestroClient {
 
   kyrosIdConfig() { return this.pedir<KyrosIdPublico>('/auth/kyros-id/config'); }
   kyrosIdCanjear(d: CanjeKyrosId) { return this.pedir<ResultadoCanje>('/auth/kyros-id/sesion', { method: 'POST', body: JSON.stringify(d) }); }
-  kyrosIdVincular(d: { registroToken: string; codigo: string }) { return this.pedir<SesionRespuesta>('/auth/kyros-id/vincular', { method: 'POST', body: JSON.stringify(d) }); }
+  kyrosIdVincular(d: AceptacionLegal & { registroToken: string; codigo: string }) { return this.pedir<SesionRespuesta>('/auth/kyros-id/vincular', { method: 'POST', body: JSON.stringify(d) }); }
   kyrosIdRegistrar(d: Registro) { return this.pedir<SesionRespuesta>('/auth/kyros-id/registro', { method: 'POST', body: JSON.stringify(d) }); }
   sucursal(rid: string) { return this.pedir<SucursalVista>('/sucursal', { sucursal: rid }); }
   private refrescando: Promise<SesionRespuesta> | null = null;
