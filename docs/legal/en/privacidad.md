@@ -23,13 +23,11 @@ Only with providers needed to operate (hosting, Kyros ID identity, email/notific
 We only use what is **strictly necessary**: an `httpOnly` session cookie to keep you signed in and browser local storage for your theme preference and temporary screen data. **We use no advertising or third-party tracking cookies.** You can clear them in your browser; you will need to sign in again.
 
 ## 6. How long we keep it
-- Account and operational data: while the subscription is active and, after termination, until [TODO-VERIFY: period] so you can recover it.
-- Accounting and sales records: the period required by applicable rules. TODO-VERIFY.
-- Security audit: [TODO-VERIFY: period].
-- Backups: overwritten in rotating cycles.
+**We do not delete data.** When an account ends, or when someone asks for their data to be deleted, it is **disabled** (logical archiving): it stops being accessible and visible to the restaurant, its staff and other users, and is kept for audits, **with no defined deletion date**. Only an audit role can see disabled data, with a stated reason and traceability of every access. TODO-VERIFY with a lawyer: whether indefinite retention is compatible with Bolivian data protection rules and with accounting and tax obligations.
+- Backups: rotated in cycles; disabled data remains part of the database.
 
 ## 7. Your rights
-You may request **access**, **rectification**, **deletion** or **objection** regarding your data, and an exportable copy. If you are a diner, your request is handled by the restaurant and, if needed, with the Provider's help. To exercise them, write to the contact below; we will verify your identity. Some data cannot be deleted while a legal obligation requires keeping it. TODO-VERIFY: response times.
+You may request **access**, **rectification**, **disabling** (instead of deletion) or **objection** regarding your data, and an exportable copy. If you are a diner, your request is handled by the restaurant and, if needed, with the Provider's help. To exercise them, write to the contact below; we will verify your identity. Asking for your data to be "deleted" means it is disabled: it stops being shown or used, but is not erased (see §6). TODO-VERIFY: response times.
 
 ## 8. Security
 Encrypted secrets (AES-256-GCM), per-branch data isolation in the database, role-based access, audit of sensitive actions, private files validated by content and encrypted communications. No system is infallible; tell us if you spot a problem.

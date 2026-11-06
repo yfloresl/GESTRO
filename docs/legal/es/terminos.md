@@ -20,7 +20,7 @@ El acceso se hace con una cuenta Kyros ID. Cada persona es responsable de su cue
 Está prohibido: usar el Sistema para actividades ilícitas; intentar acceder a datos de otros restaurantes; eludir límites, permisos o medidas de seguridad; hacer pruebas de intrusión, ingeniería inversa o carga abusiva sin autorización escrita; subir contenido ilegal, ofensivo o que infrinja derechos de terceros; automatizar el acceso de forma que degrade el servicio; revender o sublicenciar el Sistema sin acuerdo.
 
 ## 5. Datos del restaurante
-Los datos que el restaurante carga (menú, ventas, inventario, personal, clientes) son **del restaurante**. Le otorga al Proveedor una licencia limitada para almacenarlos y procesarlos con el único fin de prestar el Sistema. El restaurante puede exportar o pedir el borrado de sus datos según la Política de Privacidad. El restaurante es responsable de contar con la base legítima para cargar datos de su personal y de sus comensales.
+Los datos que el restaurante carga (menú, ventas, inventario, personal, clientes) son **del restaurante**. Le otorga al Proveedor una licencia limitada para almacenarlos y procesarlos con el único fin de prestar el Sistema. El restaurante puede exportar sus datos y pedir la deshabilitación de su cuenta y de sus datos según la Política de Privacidad. **Ningún dato se borra:** se deshabilita (archivado lógico) y se conserva para auditoría. El restaurante es responsable de contar con la base legítima para cargar datos de su personal y de sus comensales.
 
 ## 6. Comensales y terceros
 Los comensales y terceros (quien escanea un QR, reserva una mesa o consulta el menú) **no pagan nada al Proveedor ni firman este contrato**; el restaurante es quien los atiende y quien decide qué datos pide. El Sistema les muestra siempre sus propios datos y pedidos.
@@ -32,7 +32,7 @@ Los planes y módulos vigentes se publican en la portada del Sistema. Los precio
 Se procura una disponibilidad razonable, sin garantizar servicio ininterrumpido. Pueden existir mantenimientos y fallas de terceros (hosting, internet, identidad). El Proveedor hace respaldos, pero el restaurante debe mantener sus propios registros críticos. El equipo de plataforma puede acceder en **modo soporte de solo lectura**, con registro de auditoría, para atender una solicitud.
 
 ## 9. Suspensión y terminación
-El Proveedor puede suspender cuentas por incumplimiento de estos términos, uso ilícito, riesgo de seguridad o falta de pago (modo solo lectura). El restaurante puede terminar cuando quiera; al terminar puede pedir una copia de sus datos y su borrado, sujeto a la retención legal aplicable.
+El Proveedor puede suspender cuentas por incumplimiento de estos términos, uso ilícito, riesgo de seguridad o falta de pago (modo solo lectura). El restaurante puede terminar cuando quiera; al terminar puede pedir una copia de sus datos y la deshabilitación de su cuenta y de sus datos. Deshabilitar significa que dejan de ser accesibles y visibles para el restaurante y su personal; no se eliminan y solo un rol de auditoría puede verlos, con motivo y trazabilidad.
 
 ## 10. Responsabilidad
 El Sistema se ofrece «tal cual». En la medida permitida por la ley, el Proveedor no responde por lucro cesante, pérdida de ventas, decisiones tomadas con reportes o sugerencias, ni por fallas fuera de su control. TODO-VERIFICAR: topes de responsabilidad válidos en Bolivia.

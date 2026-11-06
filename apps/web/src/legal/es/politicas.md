@@ -22,11 +22,11 @@ Si se activa el asistente, sus respuestas son orientativas, pueden contener erro
 ## 5. Archivos e imágenes
 Solo se aceptan imágenes JPG, PNG o WebP; se validan por su contenido, se guardan en espacio privado por sucursal y no son públicas salvo la foto de un plato en el menú público.
 
-## 6. Retención y borrado
-Ver la Política de privacidad §6 y §7. Al cancelar, puedes pedir exportar y borrar los datos del restaurante; los registros que la ley obligue a conservar se mantienen el plazo exigido (TODO-VERIFICAR).
+## 6. Retención y deshabilitación
+Ver la Política de privacidad §6 y §7. **Ningún dato se borra: se deshabilita.** Al cancelar, puedes pedir exportar los datos y deshabilitar la cuenta; lo deshabilitado deja de ser visible y accesible, se conserva para auditorías sin plazo de eliminación y solo lo ve un rol de auditoría, con motivo y trazabilidad (TODO-VERIFICAR).
 
 ## 7. Suscripción vencida
-El Sistema pasa a **solo lectura**: se puede consultar y pagar; no se registran operaciones nuevas ni se borran datos por ese motivo.
+El Sistema pasa a **solo lectura**: se puede consultar y pagar; no se registran operaciones nuevas y no se pierden datos por ese motivo.
 
 ## 8. Cuentas de demostración
 Las cuentas y datos de demostración son de solo lectura, no contienen datos reales y pueden reiniciarse en cualquier momento.

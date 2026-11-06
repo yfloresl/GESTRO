@@ -20,7 +20,7 @@ Access uses a Kyros ID account. Each person is responsible for their account. Th
 It is forbidden to: use the System for unlawful activity; try to access other restaurants' data; bypass limits, permissions or security measures; run intrusion tests, reverse engineering or abusive load without written authorization; upload illegal or offensive content or content infringing third-party rights; automate access in a way that degrades the service; resell or sublicense the System without an agreement.
 
 ## 5. Restaurant data
-The data the restaurant loads (menu, sales, inventory, staff, customers) **belongs to the restaurant**. It grants the Provider a limited license to store and process it solely to provide the System. The restaurant may export or request deletion of its data as described in the Privacy Policy. The restaurant is responsible for having a legitimate basis to load personal data of its staff and diners.
+The data the restaurant loads (menu, sales, inventory, staff, customers) **belongs to the restaurant**. It grants the Provider a limited license to store and process it solely to provide the System. The restaurant may export its data and request that its account and data be disabled as described in the Privacy Policy. **No data is deleted:** it is disabled (logical archiving) and kept for audit. The restaurant is responsible for having a legitimate basis to load personal data of its staff and diners.
 
 ## 6. Diners and third parties
 Diners and third parties (anyone scanning a QR, booking a table or viewing the menu) **never pay the Provider and do not sign this agreement**; the restaurant serves them and decides what data it asks for. The System always shows them their own data and orders.
@@ -32,7 +32,7 @@ Current plans and modules are published on the System's front page. Prices are i
 Reasonable availability is sought, without guaranteeing uninterrupted service. Maintenance and third-party failures (hosting, internet, identity) may occur. The Provider makes backups, but the restaurant should keep its own critical records. The platform team may enter **read-only support mode**, with an audit trail, to handle a request.
 
 ## 9. Suspension and termination
-The Provider may suspend accounts for breach of these terms, unlawful use, security risk or non-payment (read-only mode). The restaurant may terminate at any time; on termination it may ask for a copy and deletion of its data, subject to applicable legal retention.
+The Provider may suspend accounts for breach of these terms, unlawful use, security risk or non-payment (read-only mode). The restaurant may terminate at any time; on termination it may ask for a copy of its data and for its account and data to be disabled. Disabling means they stop being accessible and visible to the restaurant and its staff; they are not erased and only an audit role can see them, with a stated reason and traceability.
 
 ## 10. Liability
 The System is provided "as is". To the extent permitted by law, the Provider is not liable for lost profit, lost sales, decisions made from reports or suggestions, or failures beyond its control. TODO-VERIFY: liability caps valid in Bolivia.

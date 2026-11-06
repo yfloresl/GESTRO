@@ -23,13 +23,11 @@ Solo con proveedores necesarios para operar (hosting, identidad Kyros ID, correo
 Usamos solo lo **estrictamente necesario**: una cookie de sesión (`httpOnly`) para mantener tu ingreso y almacenamiento local del navegador para tu preferencia de tema y datos temporales de la pantalla. **No usamos cookies de publicidad ni de seguimiento de terceros.** Puedes borrarlas desde tu navegador; tendrás que volver a ingresar.
 
 ## 6. Cuánto tiempo los conservamos
-- Cuenta y datos operativos: mientras la suscripción esté activa y, tras terminar, hasta [TODO-VERIFICAR: plazo] para que puedas recuperarlos.
-- Registros contables y de ventas: el plazo que exija la normativa aplicable. TODO-VERIFICAR.
-- Auditoría de seguridad: [TODO-VERIFICAR: plazo].
-- Respaldos: se sobrescriben en ciclos rotativos.
+**No borramos datos.** Cuando una cuenta termina, o cuando alguien pide eliminar sus datos, se **deshabilitan** (archivado lógico): dejan de ser accesibles y visibles para el restaurante, su personal y los demás usuarios, y se conservan para auditorías, **sin plazo de eliminación definido**. Solo un rol de auditoría puede ver lo deshabilitado, con motivo y trazabilidad de cada consulta. TODO-VERIFICAR con abogado: compatibilidad de esta conservación indefinida con la normativa boliviana de protección de datos y con las obligaciones contables y tributarias.
+- Respaldos: se rotan en ciclos; los datos deshabilitados siguen formando parte de la base.
 
 ## 7. Tus derechos
-Puedes pedir **acceso**, **rectificación**, **borrado** u **oposición** sobre tus datos, y pedir una copia exportable. Si eres comensal, tu solicitud se atiende por el restaurante y, si hace falta, con ayuda del Proveedor. Para ejercerlos, escribe al canal indicado abajo; verificaremos tu identidad. Algunos datos no pueden borrarse mientras una obligación legal exija conservarlos. TODO-VERIFICAR: plazos de respuesta.
+Puedes pedir **acceso**, **rectificación**, **deshabilitación** (en lugar de borrado) u **oposición** sobre tus datos, y pedir una copia exportable. Si eres comensal, tu solicitud se atiende por el restaurante y, si hace falta, con ayuda del Proveedor. Para ejercerlos, escribe al canal indicado abajo; verificaremos tu identidad. Pedir que se «borren» tus datos significa que se deshabilitan: dejan de verse y de usarse, pero no se eliminan (ver §6). TODO-VERIFICAR: plazos de respuesta.
 
 ## 8. Seguridad
 Secretos cifrados (AES-256-GCM), aislamiento de datos por sucursal en la base, acceso con roles, auditoría de acciones sensibles, archivos privados validados por contenido y comunicaciones cifradas. Ningún sistema es infalible; avísanos si detectas un problema.

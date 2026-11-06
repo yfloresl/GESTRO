@@ -22,11 +22,11 @@ If the assistant is enabled, its answers are indicative, may contain errors and 
 ## 5. Files and images
 Only JPG, PNG or WebP images are accepted; they are validated by content, stored privately per branch and are not public except a dish photo on the public menu.
 
-## 6. Retention and deletion
-See Privacy Policy §6 and §7. On cancellation you may request export and deletion of the restaurant's data; records the law requires to keep are retained for the required period (TODO-VERIFY).
+## 6. Retention and disabling
+See Privacy Policy §6 and §7. **No data is deleted: it is disabled.** On cancellation you may request an export and for the account to be disabled; disabled data stops being visible and accessible, is kept for audits with no deletion date, and only an audit role can see it, with a stated reason and traceability (TODO-VERIFY).
 
 ## 7. Expired subscription
-The System becomes **read-only**: you can view and pay; no new operations are recorded and data is not deleted for that reason.
+The System becomes **read-only**: you can view and pay; no new operations are recorded and no data is lost for that reason.
 
 ## 8. Demonstration accounts
 Demo accounts and data are read-only, contain no real data and may be reset at any time.
