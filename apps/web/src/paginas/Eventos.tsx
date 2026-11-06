@@ -3,6 +3,7 @@ import { FormEvent, useState } from 'react';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 type Estado = 'cotizado' | 'confirmado' | 'en_curso' | 'cerrado' | 'cancelado';
 interface Evento { id: string; nombre: string; tipo: string; cliente: string | null; telefono: string | null; invitados: number; estado: Estado; precio: string | null; notas: string | null; fecha: string; horaInicio: string; horaFin: string; pagado: string; saldo: string | null; insumosDescontados: boolean }
@@ -31,7 +32,7 @@ export function Eventos() {
       <header className="flex flex-wrap items-end justify-between gap-space-sm"><div><h1 className="font-headline-lg text-headline-lg text-primary tracking-tight">Eventos &amp; Catering</h1><p className="font-body-md text-body-md text-on-surface-variant">Cotiza con el costo real de tus recetas, cobra anticipos y cierra el evento.</p></div>
         <button type="button" onClick={() => setNuevo(true)} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold flex items-center gap-space-xs"><span className="material-symbols-outlined" aria-hidden="true">add_circle</span>Nuevo evento</button></header>
       <div className="flex flex-wrap gap-space-xs">{[['', 'Todos'], ['cotizado', 'Cotizados'], ['confirmado', 'Confirmados'], ['en_curso', 'En curso'], ['cerrado', 'Cerrados']].map(([k, n]) => <button key={k} aria-pressed={estado === k} onClick={() => setEstado(k)} className={`h-12 px-space-md rounded-full font-label-md ${estado === k ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'}`}>{n}</button>)}</div>
-      {q.isLoading ? <p role="status">Cargando…</p> : (q.data ?? []).length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">No hay eventos. Crea el primero con «Nuevo evento».</p> : (
+      {q.isLoading ? <ListaEsqueleto /> : (q.data ?? []).length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">No hay eventos. Crea el primero con «Nuevo evento».</p> : (
         <ul className="grid grid-cols-1 gap-gutter md:grid-cols-2 xl:grid-cols-3">{q.data!.map((e) => (
           <li key={e.id}><button type="button" onClick={() => setAbierto(e.id)} className="w-full text-left bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-xs hover:border-primary">
             <div className="flex items-center justify-between gap-space-sm"><span className="font-headline-sm text-headline-sm truncate">{e.nombre}</span><span className={`px-2 py-0.5 rounded-full font-label-sm uppercase whitespace-nowrap ${ESTADO[e.estado].c}`}>{ESTADO[e.estado].t}</span></div>
@@ -91,7 +92,7 @@ function DetalleEvento({ id, cerrar, hecho }: { id: string; cerrar(): void; hech
     <div role="dialog" aria-modal="true" aria-label="Evento" className="fixed inset-0 z-[60] flex justify-end bg-inverse-surface/40" onClick={cerrar}>
       <div onClick={(ev) => ev.stopPropagation()} className="w-full max-w-2xl bg-surface h-full overflow-y-auto p-space-md flex flex-col gap-space-md">
         <div className="flex items-center justify-between"><h2 className="font-headline-md text-headline-md text-primary">{e?.nombre ?? 'Evento'}</h2><button type="button" aria-label="Cerrar" onClick={cerrar} className="w-12 h-12 rounded-lg hover:bg-surface-container"><span className="material-symbols-outlined" aria-hidden="true">close</span></button></div>
-        {!e || !c ? <p role="status">Cargando…</p> : <>
+        {!e || !c ? <ListaEsqueleto /> : <>
           <p className="flex flex-wrap items-center gap-space-sm"><span className={`px-2 py-0.5 rounded-full font-label-sm uppercase ${ESTADO[e.estado].c}`}>{ESTADO[e.estado].t}</span><span className="text-on-surface-variant">{TIPO[e.tipo]} · {e.fecha} · {e.horaInicio}–{e.horaFin} · {e.invitados} invitados</span></p>
           {(e.cliente || e.telefono) && <p>{e.cliente} {e.telefono && `· ${e.telefono}`}</p>}{e.notas && <p className="italic text-on-surface-variant whitespace-pre-line">{e.notas}</p>}
           {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}{msg && <p role="status" className="rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant p-space-sm">{msg}</p>}

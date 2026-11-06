@@ -3,6 +3,7 @@ import { FormEvent, useState } from 'react';
 import { ROLES } from '@gestro/contracts';
 import { clases } from '../componentes/Marca';
 import { api, ETIQUETA_ROL, mensajeDeError, useRolesActivos } from '../lib/sesion';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Persona { id: string; nombre: string; correo: string | null; telefono: string | null; activo: boolean; roles: string[]; vinculado: boolean }
 interface Codigo { id?: string; codigo: string; venceEl: string }
@@ -64,7 +65,7 @@ export function Personal() {
         <button disabled={crear.isPending} className={`${clases.primario} md:col-span-2`}>{crear.isPending ? 'Creando…' : 'Crear y generar código'}</button>
       </form>
 
-      {q.isLoading ? <p role="status">Cargando personal…</p> : (q.data ?? []).length === 0 ? (
+      {q.isLoading ? <ListaEsqueleto /> : (q.data ?? []).length === 0 ? (
         <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Todavía no agregaste a nadie. Tú, como dueño, ya tienes acceso completo.</p>
       ) : (
         <ul className="grid grid-cols-1 gap-gutter lg:grid-cols-2">

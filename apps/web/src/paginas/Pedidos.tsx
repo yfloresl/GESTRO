@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs, ETIQUETA_ESTADO, ETIQUETA_TIPO, minutosDesde, Pedido } from '../lib/tipos';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Mesa { id: string; numero: string; asientos: number; activa: boolean }
 interface Categoria { id: string; nombre: string }
@@ -31,7 +32,7 @@ export function Pedidos() {
       <div className="flex gap-space-xs" role="tablist" aria-label="Filtro">
         {([['abiertos', 'En curso'], ['hoy', 'Todos los de hoy']] as const).map(([k, n]) => <button key={k} role="tab" aria-selected={filtro === k} onClick={() => setFiltro(k)} className={`h-12 px-space-md rounded-lg font-semibold ${filtro === k ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}>{n}</button>)}
       </div>
-      {lista.isLoading ? <p role="status">Cargando pedidos…</p> : (lista.data ?? []).length === 0 ? (
+      {lista.isLoading ? <ListaEsqueleto /> : (lista.data ?? []).length === 0 ? (
         <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-xl text-center"><span className="material-symbols-outlined text-[40px] text-primary" aria-hidden="true">receipt_long</span><h2 className="font-headline-sm text-headline-sm mt-space-xs">No hay pedidos {filtro === 'abiertos' ? 'en curso' : 'hoy'}</h2><p className="text-on-surface-variant">Crea uno con «Nuevo pedido».</p></div>
       ) : (
         <ul className="grid grid-cols-1 gap-gutter md:grid-cols-2 xl:grid-cols-3">
@@ -114,7 +115,7 @@ function PedidoDetalle({ id, volver }: { id: string; volver(): void }) {
 
   const p = q.data;
   const visibles = useMemo(() => (platos.data ?? []).filter((x) => cat === 'todas' || x.categoriaId === cat), [platos.data, cat]);
-  if (!p) return <p role="status">Cargando pedido…</p>;
+  if (!p) return <ListaEsqueleto />;
   const cerrado = ['cobrado', 'anulado'].includes(p.estado);
   const vigentes = p.items.filter((i) => !i.anulado);
   const sinEnviar = vigentes.filter((i) => i.estado === 'borrador').length;

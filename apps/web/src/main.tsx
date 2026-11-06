@@ -1,38 +1,41 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactNode, StrictMode } from 'react';
+import { lazy, ReactNode, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Shell } from './componentes/Shell';
+import { Cargando } from './componentes/Marca';
 import { AvisosProvider } from './lib/avisos';
 import { SesionProvider } from './lib/sesion';
-import { Cliente } from './paginas/Cliente';
-import { Menu } from './paginas/Menu';
-import { Personal } from './paginas/Personal';
-import { Salon } from './paginas/Salon';
-import { Caja, ReciboPagina } from './paginas/Caja';
-import { Cocina } from './paginas/Cocina';
-import { Compras } from './paginas/Compras';
-import { Cobranzas } from './paginas/Cobranzas';
-import { Alertas } from './paginas/Alertas';
-import { Asistente } from './paginas/Asistente';
-import { Contabilidad } from './paginas/Contabilidad';
-import { Foda } from './paginas/Foda';
-import { Estadisticas } from './paginas/Estadisticas';
-import { Promociones } from './paginas/Promociones';
-import { Turnos } from './paginas/Turnos';
-import { Eventos } from './paginas/Eventos';
-import { ReservaWeb } from './paginas/ReservaWeb';
-import { Reservas } from './paginas/Reservas';
-import { Configuracion } from './paginas/Configuracion';
-import { Inventario } from './paginas/Inventario';
-import { Pedidos } from './paginas/Pedidos';
-import { PlanDelDia } from './paginas/PlanDelDia';
-import { Recetas } from './paginas/Recetas';
-import { Plataforma } from './paginas/Plataforma';
-import { Suscripcion } from './paginas/Suscripcion';
+const Cliente = lazy(() => import('./paginas/Cliente').then((m) => ({ default: m.Cliente })));
+const Menu = lazy(() => import('./paginas/Menu').then((m) => ({ default: m.Menu })));
+const Personal = lazy(() => import('./paginas/Personal').then((m) => ({ default: m.Personal })));
+const Salon = lazy(() => import('./paginas/Salon').then((m) => ({ default: m.Salon })));
+const Caja = lazy(() => import('./paginas/Caja').then((m) => ({ default: m.Caja })));
+const ReciboPagina = lazy(() => import('./paginas/Caja').then((m) => ({ default: m.ReciboPagina })));
+const Cocina = lazy(() => import('./paginas/Cocina').then((m) => ({ default: m.Cocina })));
+const Compras = lazy(() => import('./paginas/Compras').then((m) => ({ default: m.Compras })));
+const Cobranzas = lazy(() => import('./paginas/Cobranzas').then((m) => ({ default: m.Cobranzas })));
+const Alertas = lazy(() => import('./paginas/Alertas').then((m) => ({ default: m.Alertas })));
+const Asistente = lazy(() => import('./paginas/Asistente').then((m) => ({ default: m.Asistente })));
+const Contabilidad = lazy(() => import('./paginas/Contabilidad').then((m) => ({ default: m.Contabilidad })));
+const Foda = lazy(() => import('./paginas/Foda').then((m) => ({ default: m.Foda })));
+const Estadisticas = lazy(() => import('./paginas/Estadisticas').then((m) => ({ default: m.Estadisticas })));
+const Promociones = lazy(() => import('./paginas/Promociones').then((m) => ({ default: m.Promociones })));
+const Turnos = lazy(() => import('./paginas/Turnos').then((m) => ({ default: m.Turnos })));
+const Eventos = lazy(() => import('./paginas/Eventos').then((m) => ({ default: m.Eventos })));
+const ReservaWeb = lazy(() => import('./paginas/ReservaWeb').then((m) => ({ default: m.ReservaWeb })));
+const Reservas = lazy(() => import('./paginas/Reservas').then((m) => ({ default: m.Reservas })));
+const Configuracion = lazy(() => import('./paginas/Configuracion').then((m) => ({ default: m.Configuracion })));
+const Inventario = lazy(() => import('./paginas/Inventario').then((m) => ({ default: m.Inventario })));
+const Pedidos = lazy(() => import('./paginas/Pedidos').then((m) => ({ default: m.Pedidos })));
+const PlanDelDia = lazy(() => import('./paginas/PlanDelDia').then((m) => ({ default: m.PlanDelDia })));
+const Recetas = lazy(() => import('./paginas/Recetas').then((m) => ({ default: m.Recetas })));
+const Plataforma = lazy(() => import('./paginas/Plataforma').then((m) => ({ default: m.Plataforma })));
+const Suscripcion = lazy(() => import('./paginas/Suscripcion').then((m) => ({ default: m.Suscripcion })));
 import { Callback } from './paginas/Callback';
 import { Ingreso } from './paginas/Ingreso';
-import { EnConstruccion, Panel } from './paginas/Panel';
+const EnConstruccion = lazy(() => import('./paginas/Panel').then((m) => ({ default: m.EnConstruccion })));
+const Panel = lazy(() => import('./paginas/Panel').then((m) => ({ default: m.Panel })));
 import { Registro } from './paginas/Registro';
 import { useRolesActivos } from './lib/sesion';
 
@@ -63,6 +66,7 @@ createRoot(document.getElementById('raiz')!).render(
       <SesionProvider>
         <AvisosProvider>
         <BrowserRouter>
+          <Suspense fallback={<Cargando />}>
           <Routes>
             <Route path="/" element={<Ingreso />} />
             <Route path="/entrar" element={<Ingreso directo />} />
@@ -101,6 +105,7 @@ createRoot(document.getElementById('raiz')!).render(
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </Suspense>
         </BrowserRouter>
         </AvisosProvider>
       </SesionProvider>

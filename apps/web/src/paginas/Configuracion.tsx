@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Ajustes { pedidosPorQr: boolean; qrSinConfirmacion: boolean; modoDeCobro: 'recibo' | 'ninguno' | 'factura' }
 
@@ -25,7 +26,7 @@ export function Configuracion() {
     <div className="flex flex-col gap-space-lg max-w-2xl">
       <header><h1 className="font-headline-lg text-headline-lg text-primary tracking-tight">Configuración</h1><p className="font-body-md text-body-md text-on-surface-variant">Ajustes de esta sucursal.</p></header>
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
-      {!a ? <p role="status">Cargando…</p> : (
+      {!a ? <ListaEsqueleto /> : (
         <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md divide-y divide-outline-variant">
           <Interruptor activo={a.pedidosPorQr} cambiar={(v) => cambiar({ pedidosPorQr: v })} titulo="Pedidos por QR" ayuda="El cliente puede pedir platos desde su celular. Apagado, el QR solo muestra el menú y los botones de llamado." />
           <Interruptor activo={a.qrSinConfirmacion} deshabilitado={!a.pedidosPorQr} cambiar={(v) => cambiar({ qrSinConfirmacion: v })} titulo="Enviar a cocina sin confirmar" ayuda="Apagado (recomendado): el mesero confirma con un toque cada pedido del cliente. Encendido: entra directo a cocina." />

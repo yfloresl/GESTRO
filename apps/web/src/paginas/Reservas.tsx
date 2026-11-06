@@ -3,6 +3,7 @@ import { FormEvent, useState } from 'react';
 import { Dato, Ficha, Telefono } from '../componentes/Ficha';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Reserva { id: string; codigo: string; cliente: string; telefono: string | null; personas: number; estado: 'pendiente' | 'confirmada' | 'sentada' | 'cumplida' | 'no_show' | 'cancelada'; notas: string | null; origen: string; mesa: string | null; mesaId: string | null; hora: string; hasta: string }
 interface Mesa { id: string; numero: string; asientos: number; activa?: boolean }
@@ -43,7 +44,7 @@ export function Reservas() {
         <button type="button" aria-label="Día siguiente" onClick={() => setFecha(mover(fecha, 1))} className="w-12 h-12 rounded-lg bg-surface-container"><span className="material-symbols-outlined" aria-hidden="true">chevron_right</span></button>
         <button type="button" onClick={() => setFecha(hoy())} className="h-12 px-space-md rounded-lg border border-outline-variant font-semibold">Hoy</button></div>
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
-      {q.isLoading ? <p role="status">Cargando…</p> : lista.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">No hay reservas para este día.</p> : (
+      {q.isLoading ? <ListaEsqueleto /> : lista.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">No hay reservas para este día.</p> : (
         <ul className="grid grid-cols-1 gap-gutter md:grid-cols-2 xl:grid-cols-3">{lista.map((r) => {
           const viva = ['pendiente', 'confirmada', 'sentada'].includes(r.estado);
           return (

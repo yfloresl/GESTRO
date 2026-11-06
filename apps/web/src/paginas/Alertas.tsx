@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Alerta { id: string; tipo: string; severidad: 'info' | 'media' | 'alta'; mensaje: string; datos: Record<string, unknown> | null; creada: string; resuelta: string | null }
 
@@ -27,7 +28,7 @@ export function Alertas() {
         {esAdmin && <button type="button" onClick={() => accion(async () => { const r = await api.post<{ nuevas: number }>('/alertas/revisar', undefined, sucursalId); setMsg(r.nuevas ? `Se encontraron ${r.nuevas} alerta(s) nueva(s).` : 'Todo en orden: no hay alertas nuevas.'); })} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold flex items-center gap-space-xs"><span className="material-symbols-outlined" aria-hidden="true">refresh</span>Revisar ahora</button>}</header>
       <div className="flex gap-space-xs">{([['abiertas', 'Abiertas'], ['resueltas', 'Resueltas']] as const).map(([k, n]) => <button key={k} aria-pressed={estado === k} onClick={() => setEstado(k)} className={`h-12 px-space-md rounded-full font-label-md ${estado === k ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'}`}>{n}</button>)}</div>
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}{msg && <p role="status" className="rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant p-space-sm">{msg}</p>}
-      {q.isLoading ? <p role="status">Cargando…</p> : lista.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">{estado === 'abiertas' ? 'No hay alertas abiertas. Todo en orden.' : 'Todavía no hay alertas resueltas.'}</p> : (
+      {q.isLoading ? <ListaEsqueleto /> : lista.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">{estado === 'abiertas' ? 'No hay alertas abiertas. Todo en orden.' : 'Todavía no hay alertas resueltas.'}</p> : (
         <ul className="flex flex-col gap-space-sm">{lista.map((a) => {
           const tipo = TIPO[a.tipo] ?? { t: a.tipo, i: 'notifications' };
           const datos = Object.entries(a.datos ?? {}).filter(([k]) => !OCULTAS.has(k));

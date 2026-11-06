@@ -3,6 +3,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface FilaPlato { platoId: string; nombre: string; precio: string; tieneReceta: boolean; recetaId: string | null; version: number | null; costo: string | null; margen: string | null; bajoMinimo: boolean }
 interface Lista { margenMinimo: number; platos: FilaPlato[]; subRecetas: { recetaId: string; insumoId: string; nombre: string; version: number; rendimiento: string }[] }
@@ -38,7 +39,7 @@ export function Recetas() {
       <div className="flex flex-wrap gap-space-xs" role="tablist" aria-label="Filtro">
         {([['todos', `Todos (${lista?.platos.length ?? 0})`], ['sin', `Sin receta (${sinReceta})`], ['bajo', `Margen en riesgo (${bajos})`]] as const).map(([k, n]) => <button key={k} role="tab" aria-selected={filtro === k} onClick={() => setFiltro(k)} className={`h-12 px-space-md rounded-lg font-semibold ${filtro === k ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}>{n}</button>)}
       </div>
-      {q.isLoading ? <p role="status">Cargando…</p> : platos.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">{lista?.platos.length ? 'Ningún plato en este filtro.' : 'Primero carga tus platos en «Menú & Fotos».'}</p> : (
+      {q.isLoading ? <ListaEsqueleto /> : platos.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">{lista?.platos.length ? 'Ningún plato en este filtro.' : 'Primero carga tus platos en «Menú & Fotos».'}</p> : (
         <div className="overflow-x-auto bg-surface-container-lowest border border-outline-variant rounded-xl"><table className="min-w-[44rem] w-full text-body-sm"><caption className="sr-only">Costo y margen por plato</caption>
           <thead><tr className="text-left text-on-surface-variant font-label-sm uppercase"><th className="p-3">Plato</th><th className="p-3 text-right">Precio</th><th className="p-3 text-right">Costo</th><th className="p-3 text-right">Margen</th><th className="p-3">Receta</th><th className="p-3" /></tr></thead>
           <tbody>{platos.map((p) => (

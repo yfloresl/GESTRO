@@ -4,6 +4,7 @@ import { Dato, Ficha, Telefono } from '../componentes/Ficha';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Cuenta { id: string; cliente: string; telefono: string | null; monto: string; pagado: string; saldo: string; vence: string; dias: number; vencida: boolean }
 
@@ -24,7 +25,7 @@ export function Cobranzas() {
         <div className={`rounded-xl border p-space-md ${vencido > 0 ? 'bg-error-container text-on-error-container border-error-container' : 'bg-surface-container-lowest border-outline-variant'}`}><p className="font-label-sm uppercase">Vencido</p><p className="font-headline-sm text-headline-sm">{bs(vencido)}</p></div>
       </div>
       <label className="flex items-center gap-space-sm min-h-12"><input type="checkbox" className="w-6 h-6" checked={todas} onChange={(e) => setTodas(e.target.checked)} /><span>Incluir cuentas ya cobradas</span></label>
-      {q.isLoading ? <p role="status">Cargando…</p> : lista.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">No hay cuentas por cobrar. Nacen al cobrar un pedido con el método «Crédito».</p> : (
+      {q.isLoading ? <ListaEsqueleto /> : lista.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">No hay cuentas por cobrar. Nacen al cobrar un pedido con el método «Crédito».</p> : (
         <ul className="grid grid-cols-1 gap-gutter md:grid-cols-2">{lista.map((c) => {
           const cobrada = !(Number(c.saldo) > 0);
           return (

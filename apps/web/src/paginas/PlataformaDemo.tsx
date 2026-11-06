@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, mensajeDeError } from '../lib/sesion';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 const ETIQUETA: Record<string, string> = { owner: 'administrador', cajero: 'caja', mesero: 'mesero', cocina: 'cocina', almacen: 'almacén', cobranzas: 'cobranzas', contador: 'contador', area_manager: 'encargado de área' };
 interface Estado { cargada: boolean; sucursal?: { id: string; nombre: string; slug: string }; ultimoReinicio?: string | null; cuentas: { usuario: string; rol: string; vinculada: boolean }[] }
@@ -12,7 +13,7 @@ export function PlataformaDemo() {
   const accion = async (f: () => Promise<unknown>, ok: string) => { setError(null); setMsg(null); setOcupado(true); try { await f(); setMsg(ok); await qc.invalidateQueries({ queryKey: ['plataforma-demo'] }); } catch (e) { setError(mensajeDeError(e)); } finally { setOcupado(false); } };
   const [frase, setFrase] = useState('');
   const e = q.data;
-  if (!e) return <p role="status">Cargando…</p>;
+  if (!e) return <ListaEsqueleto />;
   return (
     <section className="flex flex-col gap-space-md">
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}{msg && <p role="status" className="rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant p-space-sm">{msg}</p>}

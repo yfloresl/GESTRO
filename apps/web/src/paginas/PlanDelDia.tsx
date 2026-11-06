@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Plan { fecha: string; platos: { platoId: string; nombre: string; porciones: number; tieneReceta: boolean }[]; insumos: { insumoId: string; insumo: string; unidad: string; requerido: string; stock: string; faltante: string; alcanza: boolean; porAlmacen: { almacen: string; cantidad: string }[] }[]; sinReceta: { platoId: string; nombre: string }[]; hayFaltantes: boolean; costoEstimado: string }
 interface Plato { id: string; nombre: string; disponible: boolean }
@@ -46,7 +47,7 @@ export function PlanDelDia() {
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
       <div className="grid grid-cols-1 gap-gutter xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <section aria-labelledby="platos" className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm h-fit"><h2 id="platos" className="font-headline-sm text-headline-sm">Platos y porciones</h2>
-          {platos.isLoading ? <p role="status">Cargando…</p> : (platos.data ?? []).length === 0 ? <p className="text-on-surface-variant">Carga tus platos en «Menú &amp; Fotos».</p> : (
+          {platos.isLoading ? <ListaEsqueleto /> : (platos.data ?? []).length === 0 ? <p className="text-on-surface-variant">Carga tus platos en «Menú &amp; Fotos».</p> : (
             <ul className="flex flex-col gap-space-xs">{platos.data!.map((x) => (
               <li key={x.id} className="flex items-center justify-between gap-space-sm"><span className={x.disponible ? '' : 'line-through text-on-surface-variant'}>{x.nombre}</span>
                 <input aria-label={`Porciones de ${x.nombre}`} inputMode="numeric" pattern="[0-9]*" placeholder="0" value={porciones[x.id] ?? ''} onChange={(e) => setPorciones((v) => ({ ...v, [x.id]: e.target.value.replace(/\D/g, '') }))} className="h-12 w-24 rounded-lg border border-outline-variant px-space-sm text-right font-label-lg" /></li>))}</ul>)}
@@ -54,7 +55,7 @@ export function PlanDelDia() {
         </section>
         <section aria-labelledby="insumos" className="flex flex-col gap-space-sm min-w-0"><h2 id="insumos" className="font-headline-sm text-headline-sm">Insumos necesarios</h2>
           {p && p.sinReceta.length > 0 && <p role="alert" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-sm">Sin receta (no se calculan sus insumos): {p.sinReceta.map((s) => s.nombre).join(', ')}. Complétalas en «Recetas &amp; Costeo».</p>}
-          {plan.isLoading ? <p role="status">Cargando…</p> : !p || p.insumos.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Indica porciones y calcula el plan para ver los insumos.</p> : (
+          {plan.isLoading ? <ListaEsqueleto /> : !p || p.insumos.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Indica porciones y calcula el plan para ver los insumos.</p> : (
             <>
               <div className={`rounded-xl p-space-md flex flex-wrap items-center justify-between gap-space-sm ${p.hayFaltantes ? 'bg-error-container/50' : 'bg-tertiary-fixed/60'}`}>
                 <p className="font-body-md font-semibold flex items-center gap-space-xs"><span className="material-symbols-outlined" aria-hidden="true">{p.hayFaltantes ? 'warning' : 'check_circle'}</span>{p.hayFaltantes ? `Faltan ${faltan.length} insumo(s) para cumplir el plan` : 'Hay stock suficiente para todo el plan'}</p>

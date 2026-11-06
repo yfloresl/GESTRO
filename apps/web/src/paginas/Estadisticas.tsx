@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { clases } from '../componentes/Marca';
 import { api, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
+import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Resumen { ingresos: string; pedidos: number; ticketPromedio: string; costo: string; costoAlimentosPct: string | null; merma: string; minutosPreparacion: string | null; utilidadBruta: string }
 interface ResumenRes { desde: string; hasta: string; dias: number; actual: Resumen; anterior: Resumen; variacion: { ingresosPct: string | null; pedidosPct: string | null; ticketPct: string | null }; serie: { fecha: string; ingresos: string; pedidos: number }[] }
@@ -75,7 +76,7 @@ function ResumenVista({ desde, hasta }: { desde: string; hasta: string }) {
   const { sucursalId } = useRolesActivos();
   const q = useQuery({ queryKey: ['est-resumen', sucursalId, desde, hasta], queryFn: () => api.get<ResumenRes>(`/estadisticas/resumen?desde=${desde}&hasta=${hasta}`, sucursalId!), enabled: !!sucursalId });
   const r = q.data;
-  if (!r) return <p role="status">Cargando…</p>;
+  if (!r) return <ListaEsqueleto />;
   const a = r.actual;
   return (
     <section className="flex flex-col gap-space-md">
@@ -100,7 +101,7 @@ function VentasVista({ desde, hasta }: { desde: string; hasta: string }) {
   return (
     <section className="flex flex-col gap-space-sm">
       <div className="flex flex-wrap gap-space-xs">{GRUPOS.map(([k, n]) => <button key={k} aria-pressed={grupo === k} onClick={() => setGrupo(k)} className={`h-12 px-space-md rounded-full font-label-md ${grupo === k ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'}`}>{n}</button>)}</div>
-      {!q.data ? <p role="status">Cargando…</p> : q.data.filas.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Sin ventas en este período.</p> : (
+      {!q.data ? <ListaEsqueleto /> : q.data.filas.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Sin ventas en este período.</p> : (
         <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md flex flex-col gap-space-sm"><p>Total <strong>{bs(q.data.total)}</strong></p>
           <Barras filas={q.data.filas.map((f) => ({ etiqueta: f.etiqueta, valor: Number(f.ventas), extra: `${Number(f.cantidad)} ${q.data!.unidad} · ${f.participacionPct}%` }))} /></div>)}
     </section>
@@ -111,7 +112,7 @@ function MenuVista({ desde, hasta }: { desde: string; hasta: string }) {
   const { sucursalId } = useRolesActivos();
   const q = useQuery({ queryKey: ['est-menu', sucursalId, desde, hasta], queryFn: () => api.get<MenuRes>(`/estadisticas/menu?desde=${desde}&hasta=${hasta}`, sucursalId!), enabled: !!sucursalId });
   const m = q.data;
-  if (!m) return <p role="status">Cargando…</p>;
+  if (!m) return <ListaEsqueleto />;
   if (!m.platos.length) return <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Sin ventas de platos en este período.</p>;
   return (
     <section className="flex flex-col gap-space-md">
@@ -128,7 +129,7 @@ function Proyeccion() {
   const q = useQuery({ queryKey: ['est-proy', sucursalId], queryFn: () => api.get<ProyRes>('/estadisticas/proyeccion?semanas=4', sucursalId!), enabled: !!sucursalId });
   const e = useQuery({ queryKey: ['est-esc', sucursalId, precio, demanda], queryFn: () => api.get<EscRes>(`/estadisticas/escenario?precio=${Number(precio) || 0}&demanda=${Number(demanda) || 0}`, sucursalId!), enabled: !!sucursalId && q.data?.suficiente === true });
   const p = q.data;
-  if (!p) return <p role="status">Cargando…</p>;
+  if (!p) return <ListaEsqueleto />;
   if (!p.suficiente) return <p role="status" className="rounded-xl bg-secondary-fixed text-on-secondary-fixed-variant p-space-md"><strong>Datos insuficientes.</strong> {p.motivo} Mientras tanto, mira las pestañas Resumen y Ventas.</p>;
   const CONF = { alta: 'Confianza alta', media: 'Confianza media', baja: 'Confianza baja: las semanas pasadas fueron muy dispares' };
   return (
@@ -152,7 +153,7 @@ function Proyeccion() {
 function Sucursales({ desde, hasta }: { desde: string; hasta: string }) {
   const { sucursalId } = useRolesActivos();
   const q = useQuery({ queryKey: ['est-comp', sucursalId, desde, hasta], queryFn: () => api.get<Comparacion>(`/estadisticas/comparacion?desde=${desde}&hasta=${hasta}`, sucursalId!), enabled: !!sucursalId });
-  if (!q.data) return <p role="status">Cargando…</p>;
+  if (!q.data) return <ListaEsqueleto />;
   return (
     <section className="flex flex-col gap-space-md">
       <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md"><h2 className="font-headline-sm text-headline-sm mb-space-xs">Ingresos por sucursal</h2><Barras filas={q.data.sucursales.map((s) => ({ etiqueta: s.nombre, valor: Number(s.ingresos) }))} /></div>
