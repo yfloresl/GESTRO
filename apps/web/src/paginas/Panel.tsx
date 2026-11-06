@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
+import { Indicadores } from '../componentes/Indicadores';
 import { GRUPOS } from '../componentes/Shell';
 import { api, useSesion } from '../lib/sesion';
 
@@ -31,12 +32,15 @@ export function Panel() {
       ) : q.isError ? (
         <div role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-md">No pudimos cargar la sucursal. Inténtalo otra vez.</div>
       ) : (
+        <>
+        <Indicadores />
         <div className="grid grid-cols-1 gap-gutter sm:grid-cols-2 xl:grid-cols-4">
           <Tarjeta etiqueta="Estado" valor={q.data!.estado === 'activo' ? 'Activa' : q.data!.estado} detalle="Suscripción de la sucursal" />
           <Tarjeta etiqueta="Habilitada hasta" valor={q.data!.pagadoHasta ?? '—'} detalle={dias === null ? 'Sin fecha' : dias >= 0 ? `Faltan ${dias} días` : 'Solo lectura'} alerta={dias !== null && dias < 0} />
           <Tarjeta etiqueta="Documento de cobro" valor={q.data!.modoDeCobro === 'recibo' ? 'Recibo' : q.data!.modoDeCobro === 'factura' ? 'Factura' : 'Solo contabilizar'} detalle="Define la caja" />
           <Tarjeta etiqueta="Módulos" valor={`${GRUPOS.flatMap((g) => g.items).length}`} detalle="Se activan por fases" />
         </div>
+        </>
       )}
     </div>
   );
