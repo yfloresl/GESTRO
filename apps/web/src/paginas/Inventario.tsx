@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useMemo, useState } from 'react';
+import { Dato, Ficha } from '../componentes/Ficha';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
@@ -50,6 +51,7 @@ export function Inventario() {
 }
 
 function Existencias({ lista, cargando, alertas }: { lista: Insumo[]; cargando: boolean; alertas?: Alertas }) {
+  const [fichaI, setFichaI] = useState<Insumo | null>(null); const [tope, setTope] = useState(50);   // las listas largas se muestran de 50 en 50
   const [f, setF] = useState<'todos' | 'agotado' | 'bajo' | 'optimo'>('todos'); const [b, setB] = useState('');
   const v = lista.filter((i) => i.activo && (f === 'todos' || i.estado === f) && i.nombre.toLowerCase().includes(b.toLowerCase()));
   return (
@@ -61,13 +63,19 @@ function Existencias({ lista, cargando, alertas }: { lista: Insumo[]; cargando: 
       {cargando ? <ListaEsqueleto /> : v.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">{lista.length ? 'Ningún insumo coincide.' : 'Todavía no hay insumos. Créalos en «Insumos y almacenes».'}</p> : (
         <div className="overflow-x-auto bg-surface-container-lowest border border-outline-variant rounded-xl"><table className="min-w-[44rem] w-full text-body-sm"><caption className="sr-only">Existencias por insumo</caption>
           <thead><tr className="text-left text-on-surface-variant font-label-sm uppercase"><th className="p-3">Insumo</th><th className="p-3 text-right">Stock</th><th className="p-3 text-right">Mínimo</th><th className="p-3 text-right">Costo prom.</th><th className="p-3 text-right">Valor</th><th className="p-3">Estado</th></tr></thead>
-          <tbody>{v.map((i) => { const pct = i.minimo > 0 ? Math.max(0, Math.min(100, (Number(i.stock) / i.minimo) * 100)) : 100; return (
-            <tr key={i.id} className={`border-t border-outline-variant ${i.estado === 'agotado' ? 'bg-error-container/20' : i.estado === 'bajo' ? 'bg-secondary-fixed/20' : ''}`}>
+          <tbody>{v.slice(0, tope).map((i) => { const pct = i.minimo > 0 ? Math.max(0, Math.min(100, (Number(i.stock) / i.minimo) * 100)) : 100; return (
+            <tr key={i.id} tabIndex={0} role="button" aria-label={`Ver detalle de ${i.nombre}`} onClick={() => setFichaI(i)} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setFichaI(i)} className={`border-t border-outline-variant cursor-pointer hover:bg-surface-container-low transition-colors ${i.estado === 'agotado' ? 'bg-error-container/20' : i.estado === 'bajo' ? 'bg-secondary-fixed/20' : ''}`}>
               <td className="p-3"><p className="font-semibold">{i.nombre}</p><p className="text-on-surface-variant">{i.categoria ?? 'Sin categoría'}{alertas?.porVencer.some((x) => x.insumoId === i.id) ? ' · lote por vencer' : ''}</p></td>
               <td className="p-3 text-right font-label-lg">{Number(i.stock)} {i.unidad}<div className="h-1.5 mt-1 rounded bg-surface-container-high overflow-hidden" aria-hidden="true"><div className={`h-full ${i.estado === 'optimo' ? 'bg-tertiary-container' : i.estado === 'bajo' ? 'bg-secondary-container' : 'bg-error'}`} style={{ width: `${pct}%` }} /></div></td>
               <td className="p-3 text-right font-label-md text-on-surface-variant">{i.minimo} {i.unidad}</td><td className="p-3 text-right font-label-md">{bs(i.costoPromedio)}</td><td className="p-3 text-right font-label-md">{bs(i.valor)}</td>
-              <td className="p-3"><span className={`px-2 py-0.5 rounded-full font-label-sm uppercase whitespace-nowrap ${ESTADO[i.estado].c}`}>{ESTADO[i.estado].t}</span></td></tr>); })}</tbody></table></div>
+              <td className="p-3"><span className={`px-2 py-0.5 rounded-full font-label-sm uppercase whitespace-nowrap ${ESTADO[i.estado].c}`}>{ESTADO[i.estado].t}</span></td></tr>); })}</tbody></table>
+          {v.length > tope && <div className="p-space-sm text-center border-t border-outline-variant"><button type="button" onClick={() => setTope((n) => n + 50)} className={`${clases.secundario} sm:w-auto sm:px-space-lg`}>Mostrar más ({v.length - tope} restantes)</button></div>}</div>
       )}
+      {fichaI && (() => { const e = ESTADO[fichaI.estado]; return (
+        <Ficha titulo={fichaI.nombre} subtitulo={fichaI.categoria ?? 'Sin categoría'} cerrar={() => setFichaI(null)}>
+          <div><Dato etiqueta="Estado" valor={<span className={`px-2 py-0.5 rounded-full font-label-sm uppercase ${e.c}`}>{e.t}</span>} /><Dato etiqueta="Stock" valor={`${Number(fichaI.stock)} ${fichaI.unidad}`} /><Dato etiqueta="Mínimo" valor={`${fichaI.minimo} ${fichaI.unidad}`} />
+            <Dato etiqueta="Costo promedio" valor={bs(fichaI.costoPromedio)} /><Dato etiqueta="Valor en bodega" valor={bs(fichaI.valor)} />{alertas?.porVencer.some((x) => x.insumoId === fichaI.id) && <Dato etiqueta="Vencimiento" valor="Hay un lote por vencer" />}</div>
+        </Ficha>); })()}
     </section>
   );
 }

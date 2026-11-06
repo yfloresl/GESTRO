@@ -89,7 +89,7 @@ export function Salon() {
             {visibles.map((m) => {
               const abiertas = porMesa.get(m.id) ?? [];
               const llamado = abiertas.find((s) => s.tipo !== 'cuenta'); const cuenta = abiertas.find((s) => s.tipo === 'cuenta');
-              const fondo = llamado ? 'bg-error-container border-error' : cuenta ? 'bg-secondary-fixed border-secondary-container' : 'bg-surface-container-lowest border-outline-variant';
+              const fondo = llamado ? 'bg-error-container border-error' : cuenta ? 'bg-secondary-fixed border-secondary-container text-on-secondary-fixed' : 'bg-surface-container-lowest border-outline-variant';
               const cuadro = llamado ? 'bg-error text-on-error' : cuenta ? 'bg-secondary-container text-on-secondary-container' : 'bg-primary-container text-on-primary';
               const pedido = pedidoDe.get(m.id);
               return (
@@ -97,7 +97,7 @@ export function Salon() {
                   <button type="button" onClick={() => setFichaMesa(m.id)} aria-label={`Ver detalle de la mesa ${m.numero}`} className="text-left flex flex-col gap-space-xs">
                   <div className="flex items-center gap-space-sm">
                     <span className={`w-12 h-12 rounded-lg flex items-center justify-center font-label-lg text-label-lg ${cuadro}`}>{m.numero.padStart(2, '0')}</span>
-                    <div className="min-w-0"><p className="font-body-md font-semibold truncate">Mesa {m.numero}</p><p className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1"><span className="material-symbols-outlined text-[16px]" aria-hidden="true">group</span>{m.asientos} pers</p></div>
+                    <div className="min-w-0"><p className="font-body-md font-semibold truncate">Mesa {m.numero}</p><p className={`font-body-sm text-body-sm flex items-center gap-1 ${cuenta && !llamado ? 'opacity-80' : 'text-on-surface-variant'}`}><span className="material-symbols-outlined text-[16px]" aria-hidden="true">group</span>{m.asientos} pers</p></div>
                   </div>
                   <p className="font-label-sm text-label-sm uppercase font-semibold">{llamado ? `Llamado · ${hace(llamado.creada)}` : cuenta ? `Cuenta · ${hace(cuenta.creada)}` : pedido ? 'Ocupada' : 'Libre'}</p>
                   </button>
