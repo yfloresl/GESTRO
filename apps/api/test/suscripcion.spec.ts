@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { SuscripcionService } from '../src/suscripcion/suscripcion.service';
-import { levantar } from './util';
+import { levantar, LEGAL } from './util';
 
 let t: Awaited<ReturnType<typeof levantar>>;
 beforeAll(async () => { t = await levantar(); });
@@ -199,7 +199,7 @@ describe('Tarjeta del Portal Kyros (portal/summary y portal/account)', () => {
     const a = await e.dueno.post('/personal', { nombre: 'Carlos Mesero', correo: `${randomUUID()}@t.bo`, roles: ['mesero'] });
     const subM = randomUUID();
     const canje = await t.api().post('/api/v1/auth/kyros-id/sesion').send({ accessToken: t.firmar({ sub: subM }) });
-    await t.api().post('/api/v1/auth/kyros-id/vincular').send({ registroToken: canje.body.registroToken, codigo: a.body.codigo });
+    await t.api().post('/api/v1/auth/kyros-id/vincular').send({ ...LEGAL, registroToken: canje.body.registroToken, codigo: a.body.codigo });
     const m = await pedir('account', portal(subM));
     expect(m.body.rol).toBe('Mesero'); expect(m.body.suscripciones).toEqual([]);
   });
