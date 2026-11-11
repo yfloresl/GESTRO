@@ -49,11 +49,11 @@ export class SesionService {
   }
 
   /** `central`: la sesión nació de un claim kyros_pa vigente; el privilegio es del claim, nunca de la fila (no se persiste). */
-  private async respuesta(userId: string, central = false): Promise<SesionRespuesta> {
+  private async respuesta(userId: string, central = false, aat = Math.floor(Date.now() / 1000)): Promise<SesionRespuesta> {
     const { usuario, sucursales } = await this.contexto(userId);
     const plat = usuario.isPlatformAdmin || central;
     const accessToken = await this.jwt.signAsync(
-      { plat, rids: sucursales.map((s) => s.id), roles: Object.fromEntries(sucursales.map((s) => [s.id, s.roles])) },
+      { plat, aat, rids: sucursales.map((s) => s.id), roles: Object.fromEntries(sucursales.map((s) => [s.id, s.roles])) },
       { secret: this.secretos.firma('acceso'), algorithm: 'HS256', audience: 'staff', subject: usuario.id, expiresIn: VIDA_ACCESO },
     );
     return { accessToken, usuario: { id: usuario.id, nombre: usuario.fullName, esPlataforma: plat }, sucursales };
@@ -111,7 +111,8 @@ export class SesionService {
       familyId: fila.familyId, kyrosSub: fila.kyrosSub, ip: ip || null, centralHasta: fila.centralHasta,
     });
     this.poner(res, nuevo, vence);
-    return this.respuesta(fila.userId, !!fila.centralHasta);
+    const inicio = (await this.bd.execute(sql`SELECT extract(epoch FROM min(issued_at))::bigint AS t FROM refresh_tokens WHERE family_id = ${fila.familyId}::uuid`)).rows[0] as { t: string | number } | undefined;
+    return this.respuesta(fila.userId, !!fila.centralHasta, inicio ? Number(inicio.t) : undefined);
   }
 
   async salir(token: string | undefined, res: Response): Promise<void> {

@@ -33,7 +33,7 @@ export class JwtAuthGuard implements CanActivate {
       const p = await this.jwt.verifyAsync<Actor & { aud: string }>(token, {
         secret: this.secretos.firma('acceso'), algorithms: ['HS256'], audience: 'staff',
       });
-      req.actor = { sub: p.sub, plat: !!p.plat, rids: p.rids ?? [], roles: p.roles ?? {} };
+      req.actor = { sub: p.sub, plat: !!p.plat, aat: p.aat, rids: p.rids ?? [], roles: p.roles ?? {} };
       return true;
     } catch {
       throw new UnauthorizedException('Sesión vencida');
