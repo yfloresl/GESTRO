@@ -18,6 +18,8 @@ export const Consolidated = () => SetMetadata(CONSOLIDADO_KEY, true);
 export interface Actor {
   sub: string;
   plat: boolean;
+  /** Momento (segundos epoch) en que la persona confirmó su identidad con Kyros ID; se conserva al renovar la sesión. */
+  aat?: number;
   rids: string[];
   roles: Record<string, Rol[]>;
 }
