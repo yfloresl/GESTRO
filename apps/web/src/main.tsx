@@ -37,6 +37,7 @@ import { Ingreso } from './paginas/Ingreso';
 const EnConstruccion = lazy(() => import('./paginas/Panel').then((m) => ({ default: m.EnConstruccion })));
 const Panel = lazy(() => import('./paginas/Panel').then((m) => ({ default: m.Panel })));
 import { Registro } from './paginas/Registro';
+import { PaginaLegal } from './paginas/Legal';
 import { useRolesActivos } from './lib/sesion';
 
 /** Cada persona cae en lo suyo: cocina en su tablero, mesero en el salón, cajero en la caja. */
@@ -72,6 +73,9 @@ createRoot(document.getElementById('raiz')!).render(
             <Route path="/entrar" element={<Ingreso directo />} />
             <Route path="/callback" element={<Callback />} />
             <Route path="/registro" element={<Registro />} />
+            <Route path="/terminos" element={<PaginaLegal doc="terminos" />} />
+            <Route path="/privacidad" element={<PaginaLegal doc="privacidad" />} />
+            <Route path="/politicas" element={<PaginaLegal doc="politicas" />} />
             <Route path="/m/:qr" element={<Cliente />} />
             <Route path="/r/:slug" element={<ReservaWeb />} />
             <Route path="/cocina" element={<Cocina />} />

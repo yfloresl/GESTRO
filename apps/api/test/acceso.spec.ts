@@ -7,6 +7,7 @@ import { Pool } from 'pg';
 import { crearApp } from '../src/main';
 import { ConfiguracionService } from '../src/configuracion/configuracion.service';
 import { KyrosIdService } from '../src/kyros-id/kyros-id.service';
+import { LEGAL } from './util';
 
 // ---- Emisor de Kyros ID simulado, con claves efímeras ----
 const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
@@ -33,7 +34,7 @@ const registro = (correo: string) => ({ nombre: 'Rosa Quispe', correo, restauran
 async function entrarNuevo(sub = randomUUID(), correo = `${randomUUID()}@t.bo`) {
   const agente = request.agent(app.getHttpServer());
   const canje = await agente.post('/api/v1/auth/kyros-id/sesion').send({ accessToken: firmar({ sub }) });
-  const reg = await agente.post('/api/v1/auth/kyros-id/registro').send({ registroToken: canje.body.registroToken, ...registro(correo) });
+  const reg = await agente.post('/api/v1/auth/kyros-id/registro').send({ ...LEGAL, registroToken: canje.body.registroToken, ...registro(correo) });
   return { agente, sub, canje, reg };
 }
 
@@ -96,7 +97,7 @@ describe('Registro y vínculo', () => {
     const viejo = Math.floor(Date.now() / 1000) - 3600;
     const canje = await api().post('/api/v1/auth/kyros-id/sesion').send({ accessToken: firmar({ auth_time: viejo }) });
     expect(canje.body.puedeRegistrarse).toBe(false);
-    const r = await api().post('/api/v1/auth/kyros-id/registro').send({ registroToken: canje.body.registroToken, ...registro('viejo@t.bo') });
+    const r = await api().post('/api/v1/auth/kyros-id/registro').send({ ...LEGAL, registroToken: canje.body.registroToken, ...registro('viejo@t.bo') });
     expect(r.status).toBe(403);
   });
 
@@ -113,12 +114,12 @@ describe('Registro y vínculo', () => {
     const sub = randomUUID();
     const c = await api().post('/api/v1/auth/kyros-id/sesion').send({ accessToken: firmar({ sub, email: correo, email_verified: true }) });
     expect(c.body.estado).toBe('sin_vinculo');
-    const mal = await api().post('/api/v1/auth/kyros-id/vincular').send({ registroToken: c.body.registroToken, codigo: 'x'.repeat(40) });
+    const mal = await api().post('/api/v1/auth/kyros-id/vincular').send({ ...LEGAL, registroToken: c.body.registroToken, codigo: 'x'.repeat(40) });
     expect(mal.status).toBe(400);
-    const bien = await api().post('/api/v1/auth/kyros-id/vincular').send({ registroToken: c.body.registroToken, codigo });
+    const bien = await api().post('/api/v1/auth/kyros-id/vincular').send({ ...LEGAL, registroToken: c.body.registroToken, codigo });
     expect(bien.status).toBe(200);
     expect(bien.body.sucursales[0].roles).toEqual(['mesero']);
-    const repetido = await api().post('/api/v1/auth/kyros-id/vincular').send({ registroToken: c.body.registroToken, codigo });
+    const repetido = await api().post('/api/v1/auth/kyros-id/vincular').send({ ...LEGAL, registroToken: c.body.registroToken, codigo });
     expect(repetido.status).toBe(400);
   });
 
