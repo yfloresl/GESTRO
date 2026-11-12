@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { Cargando, clases, Marca, TarjetaCentrada } from '../componentes/Marca';
+import { PieLegal } from '../componentes/ModalLegal';
 import { destinoSeguro, iniciarIngreso } from '../lib/kyrosid';
 import { api, useSesion } from '../lib/sesion';
 
@@ -68,6 +69,7 @@ export function Ingreso({ directo = false }: { directo?: boolean }) {
       )}
       {error && <p role="alert" className="text-error font-body-sm text-body-sm">{error}</p>}
       <PlanesYPrecios />
+      <PieLegal />
     </TarjetaCentrada>
   );
 }

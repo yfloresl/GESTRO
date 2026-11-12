@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto';
-import { Body, Controller, Get, HttpCode, Inject, Injectable, Post, Req, UnprocessableEntityException } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Inject, Injectable, NotFoundException, Param, Post, Query, Req, UnprocessableEntityException } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import type { Request } from 'express';
 import { z } from 'zod';
 import { Actor, ActorActual, ipDe, Publico } from '../comun/acceso';
 import { BD, Bd } from '../database/database.module';
 import { esSubDeDemostracion } from '../demo/constantes';
+import { TEXTOS_LEGALES } from './textos.generated';
 
 /** Versión vigente de Términos, Privacidad y Políticas. Debe coincidir con la de los textos en docs/legal y apps/web/src/legal (lo verifica una prueba). */
 export const VERSION_LEGAL = '2026-11-06';
@@ -28,6 +29,11 @@ export async function registrarAceptacion(tx: Pick<Bd, 'execute'>, userId: strin
   await tx.execute(sql`INSERT INTO legal_acceptances (user_id, kyros_sub, version, documents, origin, ip_hash, ua_hash)
     VALUES (${userId}::uuid, ${sub}, ${VERSION_LEGAL}, ${`{${DOCUMENTOS_LEGALES.join(',')}}`}::text[], ${origen}, ${huella(ip)}, ${huella(ua)}) ON CONFLICT (user_id, version) DO NOTHING`);
 }
+
+const TITULOS: Record<string, Record<string, string>> = {
+  es: { terminos: 'Términos y condiciones', privacidad: 'Política de privacidad', politicas: 'Políticas de uso' },
+  en: { terminos: 'Terms and Conditions', privacidad: 'Privacy Policy', politicas: 'Usage Policies' },
+};
 
 const Aceptar = z.object({ acepto: z.literal(true), version: z.string().min(4).max(40) }).strict();
 
@@ -63,6 +69,14 @@ export class LegalController {
 
   /** Versión vigente (pública: la usa el registro y las páginas /terminos, /privacidad, /politicas). */
   @Publico() @Get('public/legal') version() { return { version: VERSION_LEGAL, documentos: DOCUMENTOS_LEGALES }; }
+
+  /** Texto vigente de un documento, SIN sesión: lo lee quien aún no está registrado y los enlaces permanentes (tiendas, Google, Meta). */
+  @Publico() @Get('public/legal/:doc/vigente')
+  vigente(@Param('doc') doc: string, @Query('idioma') idioma?: string) {
+    const i = idioma === 'en' ? 'en' : 'es';
+    if (!(DOCUMENTOS_LEGALES as readonly string[]).includes(doc)) throw new NotFoundException('Documento no encontrado.');
+    return { documento: doc, titulo: TITULOS[i][doc], version: VERSION_LEGAL, idioma: i, markdown: TEXTOS_LEGALES[`${i}/${doc}`] };
+  }
 
   @Get('legal/estado') estado(@ActorActual() a: Actor) { return this.s.estado(a.sub); }
 

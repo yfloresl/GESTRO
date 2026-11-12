@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Shell } from './componentes/Shell';
 import { Cargando } from './componentes/Marca';
+import { LegalProvider } from './componentes/ModalLegal';
 import { AvisosProvider } from './lib/avisos';
 import { SesionProvider } from './lib/sesion';
 const Cliente = lazy(() => import('./paginas/Cliente').then((m) => ({ default: m.Cliente })));
@@ -67,6 +68,7 @@ createRoot(document.getElementById('raiz')!).render(
       <SesionProvider>
         <AvisosProvider>
         <BrowserRouter>
+          <LegalProvider>
           <Suspense fallback={<Cargando />}>
           <Routes>
             <Route path="/" element={<Ingreso />} />
@@ -74,6 +76,9 @@ createRoot(document.getElementById('raiz')!).render(
             <Route path="/callback" element={<Callback />} />
             <Route path="/registro" element={<Registro />} />
             <Route path="/terminos" element={<PaginaLegal doc="terminos" />} />
+            <Route path="/legal/terminos" element={<PaginaLegal doc="terminos" />} />
+            <Route path="/legal/privacidad" element={<PaginaLegal doc="privacidad" />} />
+            <Route path="/legal/politicas" element={<PaginaLegal doc="politicas" />} />
             <Route path="/privacidad" element={<PaginaLegal doc="privacidad" />} />
             <Route path="/politicas" element={<PaginaLegal doc="politicas" />} />
             <Route path="/m/:qr" element={<Cliente />} />
@@ -110,6 +115,7 @@ createRoot(document.getElementById('raiz')!).render(
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           </Suspense>
+          </LegalProvider>
         </BrowserRouter>
         </AvisosProvider>
       </SesionProvider>
