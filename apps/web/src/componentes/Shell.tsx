@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { NavLink, Navigate, Outlet } from 'react-router-dom';
+import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Cargando, Marca } from './Marca';
 import { api, ETIQUETA_ROL, useSesion } from '../lib/sesion';
@@ -48,7 +48,7 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
 ];
 
 /** Cada módulo solo a los roles que lo usan (el servidor vuelve a validar). El Panel del Dueño es solo del dueño y administrador. */
-function visible(it: Item, roles: string[], plataforma: boolean) {
+export function visible(it: Item, roles: string[], plataforma: boolean) {
   if (it.ruta === 'panel') return roles.some((r) => r === 'owner' || r === 'admin');   // la información del dueño es solo del dueño
   if (it.ruta === 'plataforma') return plataforma;
   // El equipo de plataforma sin sucursal propia solo ve su consola.
@@ -67,6 +67,7 @@ export function Shell() {
   const cuenta = useRef<HTMLDivElement>(null);
   const { nuevas } = useAvisos();
   const legal = useLegal();
+  const { pathname } = useLocation();
   const cfg = useQuery({ queryKey: ['kyros-id-config'], queryFn: () => api.kyrosIdConfig(), staleTime: Infinity });
   const activa = sesion?.sucursales.find((s) => s.id === sucursalId);
   const admin = !!activa?.roles.some((r) => r === 'owner' || r === 'admin');
@@ -86,6 +87,11 @@ export function Shell() {
   const sucursal = sesion.sucursales.find((s) => s.id === sucursalId) ?? null;
   const rolesActivos = sucursal?.roles ?? [];
   const rol = sucursal ? sucursal.roles.map((r) => ETIQUETA_ROL[r] ?? r).join(' / ') : sesion.usuario.esPlataforma ? 'Plataforma Kyros-Tech' : 'Sin sucursal';
+
+  // Sin permiso no se muestra la pantalla (ni se disparan llamadas que el servidor va a rechazar).
+  const segmento = pathname.split('/')[2] ?? '';
+  const itemDeRuta = GRUPOS.flatMap((g) => g.items).find((i) => i.ruta === segmento);
+  const sinAcceso = !!itemDeRuta && !visible(itemDeRuta, rolesActivos, sesion.usuario.esPlataforma);
 
   const cerrar = async () => { await salir(); if (cfg.data) cerrarKyrosId(cfg.data); };
 
@@ -172,7 +178,13 @@ export function Shell() {
           )}
           <BannerMuestra />
           <AceptarLegal />
-          <div className="pt-space-lg"><Outlet /></div>
+          <div className="pt-space-lg">{sinAcceso ? (
+            <div role="alert" className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-xl flex flex-col items-center text-center gap-space-sm">
+              <span className="material-symbols-outlined text-[40px] text-primary" aria-hidden="true">lock</span>
+              <h1 className="font-headline-sm text-headline-sm">No tienes acceso a esta sección</h1>
+              <p className="text-on-surface-variant max-w-md">Tu rol no incluye {itemDeRuta?.texto}. Si lo necesitas, pídelo a quien administra el restaurante.</p>
+              <Link to="/app" className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold flex items-center">Ir a mi inicio</Link>
+            </div>) : <Outlet />}</div>
         </main>
       </div>
     </>
