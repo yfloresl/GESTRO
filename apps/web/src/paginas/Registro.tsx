@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { EnlaceLegal, PieLegal } from '../componentes/ModalLegal';
 import { useVersionLegal } from './Legal';
 import { clases, Marca, TarjetaCentrada } from '../componentes/Marca';
 import { api, useSesion } from '../lib/sesion';
@@ -53,7 +54,7 @@ export function Registro() {
           ))}
           <label className="flex items-start gap-space-sm min-h-12">
             <input type="checkbox" required checked={acepta} onChange={(e) => setAcepta(e.target.checked)} className="w-6 h-6 mt-0.5 shrink-0" />
-            <span className="font-body-sm text-body-sm">He leído y acepto los <Link to="/terminos" target="_blank" className="text-primary underline">Términos y condiciones</Link>, la <Link to="/privacidad" target="_blank" className="text-primary underline">Política de privacidad</Link> y las <Link to="/politicas" target="_blank" className="text-primary underline">Políticas de uso</Link>.</span>
+            <span className="font-body-sm text-body-sm">He leído y acepto los <EnlaceLegal doc="terminos">Términos y condiciones</EnlaceLegal>, la <EnlaceLegal doc="privacidad">Política de privacidad</EnlaceLegal> y las <EnlaceLegal doc="politicas">Políticas de uso</EnlaceLegal> (versión {legal.data?.version ?? "…"}).</span>
           </label>
           {error && <p role="alert" className="text-error font-body-sm text-body-sm">{error}</p>}
           <button className={clases.primario} disabled={enviando || !acepta || !legal.data}>{enviando ? 'Creando…' : 'Abrir mi restaurante'}</button>
@@ -71,13 +72,14 @@ export function Registro() {
           </label>
           <label className="flex items-start gap-space-sm min-h-12">
             <input type="checkbox" required checked={acepta} onChange={(e) => setAcepta(e.target.checked)} className="w-6 h-6 mt-0.5 shrink-0" />
-            <span className="font-body-sm text-body-sm">He leído y acepto los <Link to="/terminos" target="_blank" className="text-primary underline">Términos y condiciones</Link>, la <Link to="/privacidad" target="_blank" className="text-primary underline">Política de privacidad</Link> y las <Link to="/politicas" target="_blank" className="text-primary underline">Políticas de uso</Link>.</span>
+            <span className="font-body-sm text-body-sm">He leído y acepto los <EnlaceLegal doc="terminos">Términos y condiciones</EnlaceLegal>, la <EnlaceLegal doc="privacidad">Política de privacidad</EnlaceLegal> y las <EnlaceLegal doc="politicas">Políticas de uso</EnlaceLegal> (versión {legal.data?.version ?? "…"}).</span>
           </label>
           {error && <p role="alert" className="text-error font-body-sm text-body-sm">{error}</p>}
           <button className={clases.primario} disabled={enviando || !acepta || !legal.data}>{enviando ? 'Verificando…' : 'Unir mi cuenta'}</button>
           {estado.puedeRegistrarse && <button type="button" className="text-primary font-body-sm text-body-sm underline self-center" onClick={() => setModo('registro')}>Quiero abrir un restaurante nuevo</button>}
         </form>
       )}
+      <PieLegal />
     </TarjetaCentrada>
   );
 }

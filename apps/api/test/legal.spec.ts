@@ -73,3 +73,17 @@ describe('Textos legales', () => {
     }
   });
 });
+
+describe('Lectura pública de los documentos', () => {
+  it('GET /public/legal/:doc/vigente sirve título, versión y texto SIN sesión, en es y en; un documento inexistente da 404', async () => {
+    for (const idioma of ['es', 'en']) for (const d of DOCUMENTOS_LEGALES) {
+      const r = await t.api().get(`/api/v1/public/legal/${d}/vigente`).query({ idioma });
+      expect(r.status, `${idioma}/${d}`).toBe(200);
+      expect(r.body).toMatchObject({ documento: d, version: VERSION_LEGAL, idioma });
+      expect(r.body.titulo.length).toBeGreaterThan(5);
+      expect(r.body.markdown.replace(/\r\n/g, '\n')).toBe(readFileSync(join(raiz, 'docs/legal', idioma, `${d}.md`), 'utf8').replace(/\r\n/g, '\n'));
+    }
+    expect((await t.api().get('/api/v1/public/legal/secretos/vigente')).status).toBe(404);
+    expect((await t.api().get('/api/v1/public/legal/terminos/vigente')).body.idioma).toBe('es');   // por defecto español
+  });
+});

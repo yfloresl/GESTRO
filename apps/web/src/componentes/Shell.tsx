@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { BannerMuestra } from './BannerMuestra';
 import { SelectorTema } from './SelectorTema';
 import { AceptarLegal } from './AceptarLegal';
+import { useLegal } from './ModalLegal';
 
 /** Navegación del diseño (5.1). Los módulos de fases siguientes abren un estado vacío hasta construirse. */
 type Item = { ruta: string; icono: string; texto: string; roles?: string[]; externa?: string };
@@ -65,6 +66,7 @@ export function Shell() {
   const [rielAbierto, setRielAbierto] = useState(false);
   const cuenta = useRef<HTMLDivElement>(null);
   const { nuevas } = useAvisos();
+  const legal = useLegal();
   const cfg = useQuery({ queryKey: ['kyros-id-config'], queryFn: () => api.kyrosIdConfig(), staleTime: Infinity });
   const activa = sesion?.sucursales.find((s) => s.id === sucursalId);
   const admin = !!activa?.roles.some((r) => r === 'owner' || r === 'admin');
@@ -151,6 +153,8 @@ export function Shell() {
               <div role="menu" className="absolute right-0 top-14 w-64 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.08)] p-space-xs flex flex-col">
                 <a role="menuitem" href={CUENTA_KYROS} target="_blank" rel="noopener noreferrer" className="h-12 px-space-sm rounded-lg flex items-center gap-space-sm hover:bg-surface-container"><span className="material-symbols-outlined text-[20px]" aria-hidden="true">shield_person</span>Seguridad de mi cuenta</a>
                 <a role="menuitem" href={PORTAL_KYROS} target="_blank" rel="noopener noreferrer" className="h-12 px-space-sm rounded-lg flex items-center gap-space-sm hover:bg-surface-container"><span className="material-symbols-outlined text-[20px]" aria-hidden="true">apps</span>Portal Kyros</a>
+                <button role="menuitem" type="button" onClick={() => { setMenuAbierto(false); legal.abrir('terminos'); }} className="h-12 px-space-sm rounded-lg flex items-center gap-space-sm hover:bg-surface-container text-left"><span className="material-symbols-outlined text-[20px]" aria-hidden="true">gavel</span>Términos</button>
+                <button role="menuitem" type="button" onClick={() => { setMenuAbierto(false); legal.abrir('privacidad'); }} className="h-12 px-space-sm rounded-lg flex items-center gap-space-sm hover:bg-surface-container text-left"><span className="material-symbols-outlined text-[20px]" aria-hidden="true">shield</span>Privacidad</button>
                 <button role="menuitem" type="button" onClick={cerrar} className="h-12 px-space-sm rounded-lg flex items-center gap-space-sm hover:bg-surface-container text-left"><span className="material-symbols-outlined text-[20px]" aria-hidden="true">logout</span>Cerrar sesión</button>
                 <p className="px-space-sm pb-space-xs pt-space-xs font-body-sm text-body-sm text-on-surface-variant">Cerrar sesión cierra tu cuenta Kyros en todos los sistemas.</p>
               </div>

@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { api, mensajeDeError, useSesion } from '../lib/sesion';
 import { clases } from './Marca';
+import { EnlaceLegal } from './ModalLegal';
 
 /** Si cambió la versión de los Términos o la Privacidad, se pide aceptar de nuevo antes de seguir. Las cuentas de demostración y de plataforma están exentas (el servidor lo decide). */
 export function AceptarLegal() {
@@ -21,9 +21,13 @@ export function AceptarLegal() {
       <div className="w-full max-w-md bg-surface rounded-xl p-space-lg flex flex-col gap-space-md">
         <h2 className="font-headline-md text-headline-md text-primary">Actualizamos nuestros términos</h2>
         <p className="text-on-surface-variant">Para seguir usando GESTRO necesitamos que revises y aceptes la versión vigente ({q.data.version}).</p>
+        <ul className="flex flex-col gap-space-xs border border-outline-variant rounded-lg divide-y divide-outline-variant">
+          {([['terminos', 'Términos y condiciones'], ['privacidad', 'Política de privacidad'], ['politicas', 'Políticas de uso']] as const).map(([d, t]) => (
+            <li key={d} className="flex items-center justify-between gap-space-sm p-space-sm"><span className="font-body-sm">{t} · v{q.data!.version}</span><EnlaceLegal doc={d} className="h-12 px-space-sm text-primary underline font-semibold">Leer</EnlaceLegal></li>))}
+        </ul>
         <label className="flex items-start gap-space-sm min-h-12">
           <input type="checkbox" checked={acepta} onChange={(e) => setAcepta(e.target.checked)} className="w-6 h-6 mt-0.5 shrink-0" />
-          <span className="font-body-sm text-body-sm">He leído y acepto los <Link to="/terminos" target="_blank" className="text-primary underline">Términos y condiciones</Link>, la <Link to="/privacidad" target="_blank" className="text-primary underline">Política de privacidad</Link> y las <Link to="/politicas" target="_blank" className="text-primary underline">Políticas de uso</Link>.</span>
+          <span className="font-body-sm text-body-sm">He leído y acepto los Términos y condiciones, la Política de privacidad y las Políticas de uso.</span>
         </label>
         {error && <p role="alert" className="text-error font-body-sm">{error}</p>}
         <button type="button" disabled={!acepta || enviando} onClick={aceptar} className={clases.primario}>{enviando ? 'Guardando…' : 'Aceptar y continuar'}</button>

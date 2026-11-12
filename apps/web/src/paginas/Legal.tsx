@@ -4,11 +4,13 @@ import { Link } from 'react-router-dom';
 import { Marca } from '../componentes/Marca';
 
 export type DocLegal = 'terminos' | 'privacidad' | 'politicas';
-type Idioma = 'es' | 'en';
+export type IdiomaLegal = 'es' | 'en';
+type Idioma = IdiomaLegal;
 
 // Los textos viven en docs/legal (fuente) y se copian a src/legal con scripts/sync-legal.mjs.
 const TEXTOS = import.meta.glob('../legal/*/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const texto = (idioma: Idioma, doc: DocLegal) => TEXTOS[`../legal/${idioma}/${doc}.md`] ?? '';
+export const TEXTOS_LOCALES = texto;   // respaldo del popup si la API pública no responde
 
 export const TITULOS: Record<Idioma, Record<DocLegal, string>> = {
   es: { terminos: 'Términos y condiciones', privacidad: 'Política de privacidad', politicas: 'Políticas de uso' },
@@ -23,7 +25,7 @@ export function useVersionLegal() {
 const negritas = (t: string): ReactNode[] => t.split(/(\*\*[^*]+\*\*)/g).map((p, i) => (p.startsWith('**') ? <strong key={i}>{p.slice(2, -2)}</strong> : <Fragment key={i}>{p.replace(/`([^`]+)`/g, '$1')}</Fragment>));
 
 /** Renderizador mínimo de Markdown (títulos, citas, listas, párrafos y negritas) para no sumar dependencias. */
-function Markdown({ md }: { md: string }) {
+export function Markdown({ md }: { md: string }) {
   const bloques: ReactNode[] = []; let lista: string[] = [];
   const cerrarLista = () => { if (lista.length) { bloques.push(<ul key={`u${bloques.length}`} className="list-disc pl-space-lg flex flex-col gap-space-xs">{lista.map((x, i) => <li key={i}>{negritas(x)}</li>)}</ul>); lista = []; } };
   for (const l of md.replace(/\r\n/g, '\n').split('\n')) {
@@ -47,7 +49,7 @@ export function PaginaLegal({ doc }: { doc: DocLegal }) {
       <article className="w-full max-w-3xl flex flex-col gap-space-md">
         <header className="flex flex-wrap items-center justify-between gap-space-sm"><Link to="/" aria-label="Ir al inicio"><Marca /></Link>
           <div role="group" aria-label="Idioma" className="flex gap-space-xs">{(['es', 'en'] as const).map((i) => <button key={i} type="button" aria-pressed={idioma === i} onClick={() => setIdioma(i)} className={`h-12 px-space-md rounded-lg font-semibold ${idioma === i ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}>{i === 'es' ? 'Español' : 'English'}</button>)}</div></header>
-        <nav aria-label="Documentos" className="flex flex-wrap gap-space-md font-body-sm">{(['terminos', 'privacidad', 'politicas'] as const).map((d) => <Link key={d} to={`/${d}`} aria-current={d === doc ? 'page' : undefined} className={d === doc ? 'font-semibold text-primary' : 'text-primary underline'}>{TITULOS[idioma][d]}</Link>)}</nav>
+        <nav aria-label="Documentos" className="flex flex-wrap gap-space-md font-body-sm">{(['terminos', 'privacidad', 'politicas'] as const).map((d) => <Link key={d} to={`/legal/${d}`} aria-current={d === doc ? 'page' : undefined} className={d === doc ? 'font-semibold text-primary' : 'text-primary underline'}>{TITULOS[idioma][d]}</Link>)}</nav>
         <Markdown md={texto(idioma, doc)} />
       </article>
     </main>
