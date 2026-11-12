@@ -35,6 +35,7 @@ const Plataforma = lazy(() => import('./paginas/Plataforma').then((m) => ({ defa
 const Suscripcion = lazy(() => import('./paginas/Suscripcion').then((m) => ({ default: m.Suscripcion })));
 import { Callback } from './paginas/Callback';
 import { Ingreso } from './paginas/Ingreso';
+import { Portada } from './paginas/Portada';
 const EnConstruccion = lazy(() => import('./paginas/Panel').then((m) => ({ default: m.EnConstruccion })));
 const Panel = lazy(() => import('./paginas/Panel').then((m) => ({ default: m.Panel })));
 import { Registro } from './paginas/Registro';
@@ -71,7 +72,8 @@ createRoot(document.getElementById('raiz')!).render(
           <LegalProvider>
           <Suspense fallback={<Cargando />}>
           <Routes>
-            <Route path="/" element={<Ingreso />} />
+            <Route path="/" element={<Portada />} />
+            <Route path="/ingresar" element={<Ingreso />} />
             <Route path="/entrar" element={<Ingreso directo />} />
             <Route path="/callback" element={<Callback />} />
             <Route path="/registro" element={<Registro />} />
