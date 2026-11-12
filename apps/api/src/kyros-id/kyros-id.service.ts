@@ -15,6 +15,9 @@ import { SecretosService } from '../secretos/secretos.service';
 import { claimPlataformaValido, ClavesDelEmisor, EmisorNoDisponible, Reclamos, TokenInvalido, urlDeClaves, validarAvisoDeCierre, validarToken } from './validador';
 
 /** Lo que se guarda (cifrado) en app_config. Nada de esto es secreto, pero va igual que el resto. */
+/** Client público PKCE de la app Android (redirect exacto com.kyros.gestro://callback). */
+export const CLIENT_MOVIL = 'gestro-mobile';
+
 export interface KyrosIdGuardado { activo: boolean; emisor: string; clientId: string; audiencia: string; portalClientId?: string; portalAudiencia?: string; plataformaSso?: boolean; plataformaMax?: number }
 
 export const EMISOR_POR_DEFECTO = 'https://auth.kyros-tech.com/realms/kyros';
@@ -109,7 +112,13 @@ export class KyrosIdService {
     if (!a.activo) throw new HttpException('Kyros ID no está activado.', 503);
     let r: Reclamos;
     try {
-      r = await validarToken(accessToken, { emisor: a.emisor, clientId: a.clientId, audiencia: a.audiencia }, this.clavesDe(a.emisor));
+      try {
+        r = await validarToken(accessToken, { emisor: a.emisor, clientId: a.clientId, audiencia: a.audiencia }, this.clavesDe(a.emisor));
+      } catch (e) {
+        // Lista cerrada de clients: además de la web, SOLO la app Android (`gestro-mobile`, azp = aud). Cualquier otro client se rechaza.
+        if (!(e instanceof TokenInvalido)) throw e;
+        r = await validarToken(accessToken, { emisor: a.emisor, clientId: CLIENT_MOVIL, audiencia: CLIENT_MOVIL }, this.clavesDe(a.emisor));
+      }
     } catch (e) {
       if (e instanceof EmisorNoDisponible) throw new HttpException('Kyros ID no responde. Inténtalo en un momento.', 503);
       if (e instanceof TokenInvalido) throw new UnauthorizedException('No pudimos verificar tu ingreso.');
@@ -117,7 +126,7 @@ export class KyrosIdService {
     }
     await this.usarJti(r);
 
-    const central = a.plataformaSso === true && claimPlataformaValido(r);   // apagado = el claim se ignora por completo
+    const central = a.plataformaSso === true && r.azp === a.clientId && claimPlataformaValido(r);   // el SuperAdmin central solo entra por la web, nunca por la app móvil   // apagado = el claim se ignora por completo
     const [vinculo] = await this.bd.select().from(kyrosLinks).where(and(eq(kyrosLinks.issuer, a.emisor), eq(kyrosLinks.sub, r.sub)));
     if (!vinculo && esSubDeDemostracion(r.sub)) throw new UnauthorizedException('No pudimos verificar tu ingreso.');   // las cuentas Prueba_Kyros solo valen con la demostración cargada
     if (vinculo) {

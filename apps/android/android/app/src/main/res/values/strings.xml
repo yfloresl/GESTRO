@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GESTRO</string>
+    <string name="title_activity_main">GESTRO</string>
+    <string name="package_name">com.kyros.gestro</string>
+    <string name="custom_url_scheme">com.kyros.gestro</string>
+</resources>

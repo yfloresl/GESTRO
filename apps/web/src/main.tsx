@@ -59,7 +59,10 @@ function Inicio() {
   if (roles.includes('cobranzas')) return <Navigate to="cobranzas" replace />;
   return <Navigate to="salon" replace />;
 }
+import { registrarRetornoNativo } from './lib/nativo';
 import './estilos.css';
+
+registrarRetornoNativo();   // inerte fuera de la app Android
 
 const cliente = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
 

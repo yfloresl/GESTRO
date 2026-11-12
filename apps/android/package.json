@@ -1,0 +1,19 @@
+{
+  "name": "@gestro/android",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Envoltorio nativo Android (Capacitor) de apps/web. Sin scripts build/typecheck/test: no participa del pipeline de turbo.",
+  "scripts": {
+    "android:sync": "cap sync android",
+    "android:build": "node scripts/build-apk.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/app": "^6.0.2",
+    "@capacitor/browser": "^6.0.5",
+    "@capacitor/core": "^6.2.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.1"
+  }
+}
