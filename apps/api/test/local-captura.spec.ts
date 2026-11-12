@@ -3,7 +3,7 @@
 import { createConnection, createServer } from 'node:net';
 import { existsSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { SUB_PRUEBA_KYROS, SUB_PRUEBA_KYROS_ASISTENTE, SUB_PRUEBA_KYROS_COCINA, SUB_PRUEBA_KYROS_MESERO } from '../src/demo/constantes';
+import { SUB_PRUEBA_KYROS, SUB_PRUEBA_KYROS_ALMACEN, SUB_PRUEBA_KYROS_ASISTENTE, SUB_PRUEBA_KYROS_AREA, SUB_PRUEBA_KYROS_COBRANZAS, SUB_PRUEBA_KYROS_COCINA, SUB_PRUEBA_KYROS_CONTADOR, SUB_PRUEBA_KYROS_MESERO } from '../src/demo/constantes';
 import { levantar } from './util';
 
 describe.skipIf(!process.env.CAPTURA)('arnés local', () => {
@@ -13,7 +13,7 @@ describe.skipIf(!process.env.CAPTURA)('arnés local', () => {
     const destino = Number(new URL(t.url).port);
     createServer((c) => { const s = createConnection(destino, '127.0.0.1'); c.pipe(s); s.pipe(c); c.on('error', () => s.destroy()); s.on('error', () => c.destroy()); }).listen(4000, '127.0.0.1');
     const tokens: Record<string, string[]> = {};
-    for (const [n, sub] of Object.entries({ dueno: SUB_PRUEBA_KYROS, caja: SUB_PRUEBA_KYROS_ASISTENTE, cocina: SUB_PRUEBA_KYROS_COCINA, mesero: SUB_PRUEBA_KYROS_MESERO })) tokens[n] = Array.from({ length: 25 }, () => t.firmar({ sub, exp: Math.floor(Date.now() / 1000) + 7200 }));
+    for (const [n, sub] of Object.entries({ dueno: SUB_PRUEBA_KYROS, caja: SUB_PRUEBA_KYROS_ASISTENTE, cocina: SUB_PRUEBA_KYROS_COCINA, mesero: SUB_PRUEBA_KYROS_MESERO, almacen: SUB_PRUEBA_KYROS_ALMACEN, cobranzas: SUB_PRUEBA_KYROS_COBRANZAS, contador: SUB_PRUEBA_KYROS_CONTADOR, area: SUB_PRUEBA_KYROS_AREA })) tokens[n] = Array.from({ length: 25 }, () => t.firmar({ sub, exp: Math.floor(Date.now() / 1000) + 7200 }));
     writeFileSync('../../.local/tokens.json', JSON.stringify(tokens));
     writeFileSync('../../.local/listo', 'ok');
     while (!existsSync('../../.local/parar')) await new Promise((r) => setTimeout(r, 3000));

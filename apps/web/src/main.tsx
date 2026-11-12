@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { lazy, ReactNode, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { Shell } from './componentes/Shell';
+import { GRUPOS, Shell, visible } from './componentes/Shell';
 import { Cargando } from './componentes/Marca';
 import { LegalProvider } from './componentes/ModalLegal';
 import { AvisosProvider } from './lib/avisos';
@@ -57,7 +57,10 @@ function Inicio() {
   if (roles.includes('cajero')) return <Navigate to="caja" replace />;
   if (roles.includes('almacen')) return <Navigate to="inventario" replace />;
   if (roles.includes('cobranzas')) return <Navigate to="cobranzas" replace />;
-  return <Navigate to="salon" replace />;
+  if (roles.includes('mesero') || roles.includes('area_manager')) return <Navigate to="salon" replace />;
+  // Cualquier otro rol (p. ej. contador) cae en la primera sección que su menú le muestra, nunca en una sin acceso.
+  const primero = GRUPOS.flatMap((g) => g.items).find((i) => visible(i, roles, false));
+  return <Navigate to={primero?.ruta ?? 'turnos'} replace />;
 }
 import { registrarRetornoNativo } from './lib/nativo';
 import './estilos.css';
