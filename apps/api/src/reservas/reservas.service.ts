@@ -142,9 +142,9 @@ export class ReservasService {
   /* ---------------- público (sin sesión) ---------------- */
 
   private async sucursal(slug: string) {
-    const [r] = await this.bd.select({ id: restaurants.id, estado: restaurants.status, demo: restaurants.isDemo }).from(restaurants).where(eq(restaurants.slug, slug));
+    const [r] = await this.bd.select({ id: restaurants.id, estado: restaurants.status, demo: restaurants.isDemo, escribe: restaurants.demoWritable }).from(restaurants).where(eq(restaurants.slug, slug));
     if (!r || r.estado !== 'activo') throw new NotFoundException('Restaurante no encontrado.');
-    return { restaurantId: r.id, restaurantIds: [], ...(r.demo ? { demo: true } : {}) } as Tenant & { demo?: boolean };
+    return { restaurantId: r.id, restaurantIds: [], ...(r.demo && !r.escribe ? { demo: true } : {}) } as Tenant & { demo?: boolean };
   }
 
   async publica(slug: string) {

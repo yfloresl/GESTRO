@@ -8,7 +8,7 @@ export function BannerMuestra() {
   const { sesion, sucursalId, soporte, salirSoporte } = useSesion();
   const nav = useNavigate();
   const qc = useQueryClient(); const [ocupado, setOcupado] = useState(false); const [error, setError] = useState<string | null>(null); const [ok, setOk] = useState(false);
-  const info = useQuery({ queryKey: ['sucursal-info', sucursalId], queryFn: () => api.get<{ demo?: boolean }>('/sucursal', sucursalId!), enabled: !!sucursalId, staleTime: 5 * 60_000 });
+  const info = useQuery({ queryKey: ['sucursal-info', sucursalId], queryFn: () => api.get<{ demo?: boolean; demoEscritura?: boolean }>('/sucursal', sucursalId!), enabled: !!sucursalId, staleTime: 5 * 60_000 });
   if (soporte && sucursalId === soporte.id) {
     return (
       <div role="status" className="mt-space-md rounded-xl bg-secondary-fixed text-on-secondary-fixed-variant p-space-md flex flex-wrap items-center justify-between gap-space-sm">
@@ -26,7 +26,7 @@ export function BannerMuestra() {
   };
   return (
     <div role="status" className="mt-space-md rounded-xl bg-tertiary-fixed text-on-tertiary-fixed-variant p-space-md flex flex-wrap items-center justify-between gap-space-sm">
-      <p className="font-body-md font-semibold flex items-center gap-space-xs"><span className="material-symbols-outlined" aria-hidden="true">visibility</span>Estás recorriendo un restaurante de muestra: puedes mirar todo, pero no modificar nada.</p>
+      <p className="font-body-md font-semibold flex items-center gap-space-xs"><span className="material-symbols-outlined" aria-hidden="true">visibility</span>{info.data.demoEscritura ? 'Restaurante de pruebas (modo QA): puedes crear, editar y anular dentro de este espacio; no hay pagos ni envíos reales.' : 'Estás recorriendo un restaurante de muestra: puedes mirar todo, pero no modificar nada.'}</p>
       {esDueno && <button type="button" disabled={ocupado} onClick={restablecer} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold disabled:opacity-60">{ocupado ? 'Restableciendo…' : 'Restablecer mis datos de muestra'}</button>}
       {ok && <p className="w-full font-body-sm">Listo: los datos de muestra volvieron a su estado inicial.</p>}
       {error && <p role="alert" className="w-full font-body-sm text-error">{error}</p>}

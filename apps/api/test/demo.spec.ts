@@ -85,8 +85,8 @@ describe('Cuentas de demostración Prueba_Kyros', { timeout: 120_000 }, () => {
 });
 
 describe('Solo lectura', { timeout: 120_000 }, () => {
-  it('se puede mirar todo pero cualquier escritura devuelve 403; también las entradas públicas (QR y reservas)', async () => {
-    const d = await cargar(); const a = await sesionDe(SUB_PRUEBA_KYROS); const c = await sesionDe(SUB_PRUEBA_KYROS_ASISTENTE);
+  it('con el modo QA apagado se puede mirar todo pero cualquier escritura devuelve 403; también las entradas públicas (QR y reservas)', async () => {
+    const d = await cargar(); expect((await plat.patch('/plataforma/demo/modo-qa', { activo: false })).status).toBe(200); const a = await sesionDe(SUB_PRUEBA_KYROS); const c = await sesionDe(SUB_PRUEBA_KYROS_ASISTENTE);
     for (const ruta of ['/menu/platos', '/mesas', '/inventario/insumos'.replace('inventario/', ''), '/estadisticas/resumen', '/alertas', '/eventos', '/promociones']) expect((await a.api.get(ruta)).status).toBe(200);
     expect((await a.api.post('/menu/platos', { nombre: 'Plato nuevo', precio: 10 })).status).toBe(403);
     expect((await a.api.post('/pedidos', { tipo: 'mostrador' })).status).toBe(403);
@@ -157,6 +157,35 @@ describe('Restablecer mis datos de muestra', { timeout: 120_000 }, () => {
     expect(Number((await t.owner.query(`SELECT count(*)::int AS n FROM menu_items WHERE restaurant_id = $1 AND name = 'Plato intruso'`, [d.sucursal.id])).rows[0].n)).toBe(0);
     expect((await entrar(SUB_PRUEBA_KYROS_MESERO)).status).toBe(200);
     expect(Number((await t.owner.query(`SELECT count(*)::int n FROM audit_log WHERE restaurant_id = $1 AND action = 'demo.restablecida_por_plataforma'`, [d.sucursal.id])).rows[0].n)).toBe(2);
+  });
+});
+
+describe('Modo QA con escritura (por defecto ON)', { timeout: 120_000 }, () => {
+  it('las cuentas demo ejecutan las acciones de su rol, sin pagos ni plataforma; el interruptor es solo de plataforma, auditado y reversible; restablecer vuelve al inicio', async () => {
+    const d = await cargar(); const a = await sesionDe(SUB_PRUEBA_KYROS); const c = await sesionDe(SUB_PRUEBA_KYROS_ASISTENTE);
+    expect((await plat.get('/plataforma/demo')).body.modoQa).toBe(true);                                // por defecto ON
+    expect((await a.api.get('/sucursal')).body).toMatchObject({ demo: true, demoEscritura: true });
+    expect((await a.api.post('/menu/platos', { nombre: 'Plato QA', precio: 25 })).status).toBe(201);   // crear
+    expect(await cuenta('menu_items', d.sucursal.id)).toBe(16);
+    expect((await c.api.post('/caja/abrir', { montoInicial: 100 })).status).not.toBe(403);               // la caja ejecuta lo suyo
+    expect((await a.api.post('/suscripcion/pagos', {})).status).toBe(403);                              // sin pagos
+    expect((await a.api.get('/plataforma/demo')).status).toBe(403);                                     // sin acciones de plataforma
+    expect((await a.api.patch('/plataforma/demo/modo-qa', { activo: false })).status).toBe(403);        // el interruptor no es del dueño demo
+    const qr = (await t.owner.query('SELECT qr_token FROM restaurant_tables WHERE restaurant_id = $1 LIMIT 1', [d.sucursal.id])).rows[0].qr_token as string;
+    const ses = await t.api().post('/api/v1/qr/sesion').send({ qrToken: qr });
+    if (ses.status === 200) expect((await t.api().post('/api/v1/qr/solicitudes').set('Authorization', `Bearer ${ses.body.token}`).send({ tipo: 'atencion' })).status).not.toBe(403);
+    // otro restaurante intacto (aislamiento): el plato de QA no existe fuera de la demo
+    const otra = await t.nuevoRestaurante(); expect(((await t.con(otra.token, otra.rid).get('/menu/platos')).body as { nombre: string }[]).some((x) => x.nombre === 'Plato QA')).toBe(false);
+    // apagar: vuelve a solo lectura, validado y auditado
+    expect((await plat.patch('/plataforma/demo/modo-qa', { activo: 'no' })).status).toBe(400);
+    expect((await plat.patch('/plataforma/demo/modo-qa', { activo: false })).status).toBe(200);
+    expect((await a.api.post('/menu/platos', { nombre: 'Otro', precio: 5 })).status).toBe(403);
+    expect((await plat.get('/plataforma/demo')).body.modoQa).toBe(false);
+    expect((await plat.patch('/plataforma/demo/modo-qa', { activo: true })).status).toBe(200);
+    expect(Number((await t.owner.query(`SELECT count(*)::int n FROM audit_log WHERE restaurant_id = $1 AND action = 'demo.modo_qa_cambiado'`, [d.sucursal.id])).rows[0].n)).toBe(2);
+    // restablecer devuelve los datos al estado inicial
+    expect((await plat.post('/plataforma/demo/restablecer', { frase: 'RESTABLECER DEMO' })).status).toBe(200);
+    expect(await cuenta('menu_items', d.sucursal.id)).toBe(15);
   });
 });
 

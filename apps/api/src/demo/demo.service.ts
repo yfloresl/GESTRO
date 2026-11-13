@@ -10,6 +10,7 @@ import { cargarDatosDemo } from './datos-demo';
 import { vaciarSucursal } from './limpiar';
 
 export const FRASE_RESTABLECER = 'RESTABLECER DEMO';
+export const ModoQa = z.object({ activo: z.boolean() }).strict();
 export const RestablecerDemo = z.object({ frase: z.literal(FRASE_RESTABLECER) }).strict();
 export const CargarDemo = z.object({ dias: z.number().int().min(7).max(90).default(60) }).strict();
 /** Al reiniciar se conserva la estructura (sucursal, personas, roles y vínculos), el registro de auditoría y el uso de IA (para no saltarse el tope diario). */
@@ -54,11 +55,19 @@ export class DemoService {
       VALUES ($1, 12, $2, $2, 'demo/sin-comprobante', 'Banco Unión', 'PAGO-0001', 'validado', now() - interval '20 days', (now() - interval '20 days')::date, (now() - interval '20 days')::date, (now() + interval '345 days')::date, 'Pago anual')`, [rid, monto]);
   }
 
+  /** Interruptor «Cuentas demo: modo QA con escritura». Solo plataforma; queda auditado. */
+  async fijarModoQa(por: string, activo: boolean) {
+    const r = (await this.bd.execute(sql`UPDATE restaurants SET demo_writable = ${activo} WHERE is_demo RETURNING id`)).rows[0] as { id: string } | undefined;
+    if (!r) throw new NotFoundException('No hay demostración cargada.');
+    await this.bd.execute(sql`INSERT INTO audit_log (restaurant_id, user_id, action, entity, entity_id, after) VALUES (${r.id}::uuid, ${por}::uuid, 'demo.modo_qa_cambiado', 'restaurant', ${r.id}, ${JSON.stringify({ activo })}::jsonb)`);
+    return { ok: true, modoQa: activo };
+  }
+
   async estado() {
-    const r = (await this.bd.execute(sql`SELECT id, name, slug, demo_reset_at FROM restaurants WHERE is_demo`)).rows[0] as { id: string; name: string; slug: string; demo_reset_at: Date | null } | undefined;
+    const r = (await this.bd.execute(sql`SELECT id, name, slug, demo_reset_at, demo_writable FROM restaurants WHERE is_demo`)).rows[0] as { id: string; name: string; slug: string; demo_reset_at: Date | null; demo_writable: boolean } | undefined;
     if (!r) return { cargada: false as const, cuentas: CUENTAS_DEMO.map((c) => ({ usuario: c.usuario, rol: c.rol, vinculada: false })) };
     const vinc = (await this.bd.execute(sql`SELECT l.sub FROM kyros_links l JOIN user_roles ur ON ur.user_id = l.user_id WHERE ur.restaurant_id = ${r.id}`)).rows as { sub: string }[];
-    return { cargada: true as const, sucursal: { id: r.id, nombre: r.name, slug: r.slug }, ultimoReinicio: r.demo_reset_at ? new Date(r.demo_reset_at).toISOString() : null,
+    return { cargada: true as const, modoQa: r.demo_writable, sucursal: { id: r.id, nombre: r.name, slug: r.slug }, ultimoReinicio: r.demo_reset_at ? new Date(r.demo_reset_at).toISOString() : null,
       cuentas: CUENTAS_DEMO.map((c) => ({ usuario: c.usuario, rol: c.rol, vinculada: vinc.some((v) => v.sub === c.sub) })) };
   }
 

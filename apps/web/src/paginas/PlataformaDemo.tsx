@@ -4,7 +4,7 @@ import { api, mensajeDeError } from '../lib/sesion';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 const ETIQUETA: Record<string, string> = { owner: 'administrador', cajero: 'caja', mesero: 'mesero', cocina: 'cocina', almacen: 'almacén', cobranzas: 'cobranzas', contador: 'contador', area_manager: 'encargado de área' };
-interface Estado { cargada: boolean; sucursal?: { id: string; nombre: string; slug: string }; ultimoReinicio?: string | null; cuentas: { usuario: string; rol: string; vinculada: boolean }[] }
+interface Estado { cargada: boolean; modoQa?: boolean; sucursal?: { id: string; nombre: string; slug: string }; ultimoReinicio?: string | null; cuentas: { usuario: string; rol: string; vinculada: boolean }[] }
 
 /** Consola de plataforma: la sucursal de muestra de las cuentas Prueba_Kyros (se pre-vinculan por su sub fijo de Kyros ID). */
 export function PlataformaDemo() {
@@ -21,6 +21,12 @@ export function PlataformaDemo() {
         <h2 className="font-headline-sm text-headline-sm">Restaurante de muestra (cuentas Prueba_Kyros)</h2>
         <p className="text-on-surface-variant">Una sola sucursal («Casa Andina») con menú, recetas, inventario, 60 días de ventas, contabilidad, una promoción y un evento. Es de solo lectura: quien entra con las cuentas Prueba_Kyros puede mirar todo y, si es el administrador, restablecer sus datos de muestra (máximo una vez cada 5 minutos). Mientras no esté cargada, esas cuentas no pueden entrar.</p>
         <p>Estado: <strong>{e.cargada ? `cargada (${e.sucursal?.nombre})` : 'no cargada'}</strong>{e.ultimoReinicio ? ` · último reinicio ${new Date(e.ultimoReinicio).toLocaleString('es-BO')}` : ''}</p>
+        {e.cargada && (
+          <label className="flex items-start gap-space-sm min-h-12 rounded-lg border border-outline-variant p-space-sm">
+            <input type="checkbox" role="switch" className="w-6 h-6 mt-0.5 shrink-0" checked={!!e.modoQa} disabled={ocupado}
+              onChange={(ev) => void accion(() => api.patch('/plataforma/demo/modo-qa', { activo: ev.target.checked }), ev.target.checked ? 'Modo QA con escritura ACTIVADO: las cuentas demo ejecutan las acciones de su rol.' : 'Modo QA apagado: las cuentas demo vuelven a solo lectura.')} />
+            <span><strong>Cuentas demo: modo QA con escritura</strong><br /><span className="font-body-sm text-on-surface-variant">Activado (por defecto): las cuentas demo crean, editan y anulan dentro de su propio espacio (sin pagos de suscripción, sin acciones de plataforma). Apagado: solo lectura. Cada cambio queda auditado; «Restablecer» devuelve los datos a su estado inicial.</span></span>
+          </label>)}
         <ul className="flex flex-col gap-1">{e.cuentas.map((c) => <li key={c.usuario} className="flex justify-between rounded-lg bg-surface-container p-space-sm"><span>{c.usuario} <span className="text-on-surface-variant">({ETIQUETA[c.rol] ?? c.rol})</span></span><span className={c.vinculada ? 'text-tertiary font-semibold' : 'text-on-surface-variant'}>{c.vinculada ? 'vinculada' : 'sin vincular'}</span></li>)}</ul>
         <div className="flex flex-wrap gap-space-xs">
           {!e.cargada && <button type="button" disabled={ocupado} onClick={() => accion(() => api.post('/plataforma/demo', {}), 'Restaurante de muestra cargado: las cuentas Prueba_Kyros ya pueden entrar.')} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold disabled:opacity-60">{ocupado ? 'Cargando… (unos segundos)' : 'Cargar restaurante de muestra'}</button>}
