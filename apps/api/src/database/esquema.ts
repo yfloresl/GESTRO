@@ -21,6 +21,7 @@ export const restaurants = pgTable('restaurants', {
   minMarginPct: numeric('min_margin_pct', { precision: 5, scale: 2 }).notNull().default('60'),
   paidUntil: text('paid_until'),
   planId: uuid('plan_id'),
+  demoWritable: boolean('demo_writable').notNull().default(true),
   status: text('status').notNull().default('activo'),
   isDemo: boolean('is_demo').notNull().default(false),
 });

@@ -85,7 +85,10 @@ Las cuentas de demostración existen solo con la demostración cargada (la carga
 | `prueba_kyros_gestro_area` | Encargado de área | Mesas y salón |
 | `prueba_kyros_tutor` | — | Siempre rechazado (no es de GESTRO) |
 
-La sucursal de demostración se llama «Casa Andina» y es de **solo lectura**: se puede recorrer todo; cualquier escritura devuelve «Esta cuenta es solo de lectura». Botón **«Restablecer mis datos de muestra»** (solo dueño, máximo cada 5 min) recarga los datos. Para probar escrituras hay que **registrar un restaurante propio** (§4).
+La sucursal de demostración se llama «Casa Andina». **Modo QA con escritura (ON por defecto):** las cuentas demo ejecutan **todas las acciones de su rol** (crear, editar, anular, cobrar, etc.) sobre su propio espacio. Siguen bloqueados: pagos de suscripción, acciones de plataforma, y no hay pagos, correos, WhatsApp, SIN ni push reales. Aislamiento intacto: no tocan otros restaurantes.
+- **Interruptor** (solo SuperAdmin, `/app/plataforma` → pestaña «Restaurante de muestra» → «Cuentas demo: modo QA con escritura»): OFF vuelve a solo lectura (cualquier escritura devuelve «Esta cuenta es solo de lectura»). Cada cambio queda auditado (`demo.modo_qa_cambiado`). API: `PATCH /plataforma/demo/modo-qa {activo}`.
+- **Restablecer datos demo:** botón «Restablecer mis datos de muestra» (dueño demo, máx. cada 5 min) o «Restablecer cuentas demo» (plataforma, escribiendo `RESTABLECER DEMO`): vuelve todo al estado inicial.
+- Un banner indica el modo («Restaurante de pruebas (modo QA)…» o «de muestra… solo lectura»).
 
 ## 6. Mapa de pantallas y menú por rol
 Menú lateral (✓ = visible):
@@ -119,7 +122,7 @@ Menú lateral (✓ = visible):
 Reglas: una ruta no permitida muestra «No tienes acceso a esta sección» (el servidor además responde 403). Cabecera: selector de sucursal, selector claro/oscuro, menú de usuario (Mi cuenta Kyros, Portal, Términos, Privacidad, Cerrar sesión). Cerrar sesión cierra también la cuenta Kyros ID.
 
 ## 7. Funciones: pasos, datos de ejemplo y reglas
-**Importante:** en la demo todo es de solo lectura; para escribir usa un restaurante propio.
+**Importante:** con el modo QA ON las cuentas demo pueden escribir dentro de «Casa Andina» (sin pagos de suscripción); con OFF son de solo lectura. También puedes registrar un restaurante propio (§4).
 
 ### 7.1 Menú & Fotos
 - Crear categoría («Platos de fondo») y plato: nombre, precio > 0 (máx. 2 decimales), descripción, categoría, disponible sí/no; foto JPG/PNG/WebP (se valida por contenido; SVG rechazado).
@@ -208,7 +211,7 @@ Reglas: una ruta no permitida muestra «No tienes acceso a esta sección» (el s
 - Dinero: 2 decimales máximo; textos largos se rechazan por límite.
 
 ## 11. Límites conocidos
-- La demo es de solo lectura: el QA de escrituras requiere un restaurante propio.
+- La demo escribe solo mientras el modo QA esté ON; al cerrar el QA, plataforma lo apaga y restablece los datos.
 - Los textos legales son borradores sin revisión de abogado.
 - El APK es debug (certificado de depuración); la sesión de Kyros ID vive en el navegador del sistema y «Cerrar sesión» en la app no la cierra allí.
 - Sin facturación fiscal, sin pagos en línea, sin envío de correos/WhatsApp.

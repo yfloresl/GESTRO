@@ -131,9 +131,11 @@ export class DemoSoloLecturaGuard implements CanActivate {
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method) || !req.tenant) return true;
     if (req.soporte) throw new ForbiddenException('Modo de soporte: solo lectura. El equipo de plataforma puede mirar la sucursal, no modificarla.');   // antes de cualquier excepción
     if (this.reflector.get<boolean>(PERMITE_EN_DEMO, ctx.getHandler()) === true) return true;
-    const [r] = await this.bd.select({ demo: restaurants.isDemo }).from(restaurants).where(eq(restaurants.id, req.tenant.restaurantId));
-    if (r?.demo) throw new ForbiddenException('Esta cuenta es solo de lectura: puedes recorrer todo, pero no modificar los datos de muestra.');
-    return true;
+    const [r] = await this.bd.select({ demo: restaurants.isDemo, escribe: restaurants.demoWritable }).from(restaurants).where(eq(restaurants.id, req.tenant.restaurantId));
+    if (!r?.demo) return true;
+    // Modo QA: las cuentas demo ejecutan las acciones de su rol sobre su propio espacio. Sin pagos de suscripción (ni reales ni simulados).
+    if (r.escribe && !/\/suscripcion\/pagos/.test(req.originalUrl ?? req.url)) return true;
+    throw new ForbiddenException('Esta cuenta es solo de lectura: puedes recorrer todo, pero no modificar los datos de muestra.');
   }
 }
 

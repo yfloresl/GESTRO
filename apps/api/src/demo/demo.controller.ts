@@ -1,9 +1,9 @@
-import { Body, Controller, Delete, Get, HttpCode, Inject, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Inject, Patch, Post } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Actor, ActorActual, TenantActual } from '../comun/acceso';
 import { DeSucursal, PermiteEnDemo, SoloPlataforma } from '../comun/guards';
 import type { Tenant } from '../database/database.module';
-import { CargarDemo, DemoService, RestablecerDemo } from './demo.service';
+import { CargarDemo, DemoService, ModoQa, RestablecerDemo } from './demo.service';
 
 /** Consola de plataforma: cargar y quitar la sucursal de demostración de las cuentas Prueba_Kyros. */
 @Controller('plataforma/demo')
@@ -15,6 +15,8 @@ export class PlataformaDemoController {
   @Post() @HttpCode(200) cargar(@ActorActual() a: Actor, @Body() b: unknown) { return this.d.cargar(a.sub, CargarDemo.parse(b ?? {})); }
   /** Exige escribir la frase exacta; devuelve la demostración a su estado de creación y queda en la auditoría. */
   @Post('restablecer') @HttpCode(200) restablecer(@ActorActual() a: Actor, @Body() b: unknown) { RestablecerDemo.parse(b); return this.d.restablecerPorPlataforma(a.sub); }
+  /** «Cuentas demo: modo QA con escritura» ON/OFF (por defecto ON). */
+  @Patch('modo-qa') @HttpCode(200) modoQa(@ActorActual() a: Actor, @Body() b: unknown) { return this.d.fijarModoQa(a.sub, ModoQa.parse(b).activo); }
   @Delete() quitar(@ActorActual() a: Actor) { return this.d.quitar(a.sub); }
 }
 
