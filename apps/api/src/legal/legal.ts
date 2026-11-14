@@ -1,15 +1,17 @@
 import { createHash } from 'node:crypto';
+import { CanActivate, ExecutionContext, HttpException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { Body, Controller, Get, HttpCode, Inject, Injectable, NotFoundException, Param, Post, Query, Req, UnprocessableEntityException } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import type { Request } from 'express';
 import { z } from 'zod';
-import { Actor, ActorActual, ipDe, Publico } from '../comun/acceso';
+import { Actor, ActorActual, ipDe, Publico, PUBLICO, type PeticionAutenticada } from '../comun/acceso';
 import { BD, Bd } from '../database/database.module';
 import { esSubDeDemostracion } from '../demo/constantes';
 import { TEXTOS_LEGALES } from './textos.generated';
 
 /** Versión vigente de Términos, Privacidad y Políticas. Debe coincidir con la de los textos en docs/legal y apps/web/src/legal (lo verifica una prueba). */
-export const VERSION_LEGAL = '2026-11-06';
+export const VERSION_LEGAL = '2026-11-14.1';
 export const DOCUMENTOS_LEGALES = ['terminos', 'privacidad', 'politicas'] as const;
 
 /** Los campos que se exigen en cada alta (registro de restaurante o unión por código de invitación). */
@@ -83,5 +85,27 @@ export class LegalController {
   @Post('legal/aceptar') @HttpCode(200)
   aceptar(@ActorActual() a: Actor, @Body() b: unknown, @Req() req: Request) {
     return this.s.aceptar(a.sub, Aceptar.parse(b), ipDe(req), req.headers['user-agent']);
+  }
+}
+
+/**
+ * Reaceptación también en la API (no solo en la pantalla): quien no aceptó la versión vigente no puede ESCRIBIR (POST/PUT/PATCH/DELETE)
+ * hasta aceptarla. Quedan libres la lectura, /legal, /auth, /public y /portal. Las cuentas exentas (plataforma, demostración) no se bloquean.
+ * Solo se recuerda el resultado positivo (por usuario y versión): la aceptación nunca se retira.
+ */
+@Injectable()
+export class LegalGuard implements CanActivate {
+  private readonly aceptadas = new Set<string>();
+  constructor(@Inject(Reflector) private readonly reflector: Reflector, @Inject(LegalService) private readonly legal: LegalService) {}
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
+    if (this.reflector.getAllAndOverride<boolean>(PUBLICO, [ctx.getHandler(), ctx.getClass()])) return true;
+    const req = ctx.switchToHttp().getRequest<PeticionAutenticada>();
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method) || !req.actor) return true;
+    if (/\/(legal|auth|public|portal)(\/|\?|$)/.test(req.originalUrl ?? req.url ?? '')) return true;
+    const clave = `${req.actor.sub}:${VERSION_LEGAL}`;
+    if (this.aceptadas.has(clave)) return true;
+    const e = await this.legal.estado(req.actor.sub);
+    if (e.aceptada) { this.aceptadas.add(clave); return true; }
+    throw new HttpException({ code: 'LEGAL_REQUIRED', message: 'Debes aceptar los Términos y la Política de privacidad vigentes para continuar.', version: VERSION_LEGAL }, 403);
   }
 }

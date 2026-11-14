@@ -41,7 +41,7 @@ export function Markdown({ md }: { md: string }) {
   return <div className="flex flex-col gap-space-sm font-body-md text-body-md text-on-surface">{bloques}</div>;
 }
 
-/** Páginas públicas /terminos, /privacidad y /politicas (borradores versionados, en español e inglés). */
+/** Páginas públicas /terminos, /privacidad y /politicas (textos versionados, en español e inglés). */
 export function PaginaLegal({ doc }: { doc: DocLegal }) {
   const [idioma, setIdioma] = useState<Idioma>(() => (typeof navigator !== 'undefined' && navigator.language?.startsWith('en') ? 'en' : 'es'));
   return (

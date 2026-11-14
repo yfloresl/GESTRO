@@ -63,11 +63,24 @@ describe('Aceptación de términos', () => {
   });
 });
 
+describe('Reaceptación también en la API', () => {
+  it('sin aceptar la versión vigente no se escribe (403 LEGAL_REQUIRED), se puede leer y aceptar, y luego se escribe', async () => {
+    const d = await t.nuevoRestaurante(); const dueno = t.con(d.token, d.rid);
+    await t.owner.query(`DELETE FROM legal_acceptances WHERE user_id = (SELECT user_id FROM user_roles WHERE restaurant_id = $1 LIMIT 1)`, [d.rid]);
+    expect((await dueno.get('/menu/categorias')).status).toBe(200);
+    const bloqueada = await dueno.post('/menu/categorias', { nombre: 'Entradas' });
+    expect(bloqueada.status).toBe(403); expect(bloqueada.body.code).toBe('LEGAL_REQUIRED');
+    expect((await dueno.post('/legal/aceptar', { acepto: true, version: VERSION_LEGAL })).status).toBeLessThan(300);
+    expect((await dueno.post('/menu/categorias', { nombre: 'Entradas' })).status).toBe(201);
+  });
+});
+
 describe('Textos legales', () => {
-  it('existen en es y en, están marcados como borrador, declaran la versión vigente y la copia de la web no se desfasa', () => {
+  it('existen en es y en, son definitivos (sin leyendas de borrador), declaran la versión vigente y la copia de la web no se desfasa', () => {
     for (const idioma of ['es', 'en']) for (const d of DOCUMENTOS_LEGALES) {
       const fuente = readFileSync(join(raiz, 'docs/legal', idioma, `${d}.md`), 'utf8'); const copia = readFileSync(join(raiz, 'apps/web/src/legal', idioma, `${d}.md`), 'utf8');
-      expect(fuente, `${idioma}/${d}`).toMatch(/BORRADOR|DRAFT/); expect(fuente).toMatch(/TODO-VERIFY|TODO-VERIFICAR/); expect(fuente).toContain(VERSION_LEGAL);
+      expect(fuente, `${idioma}/${d}`).not.toMatch(/BORRADOR|DRAFT|TODO-VERIF|POR DEFINIR/); expect(fuente).toContain(VERSION_LEGAL);
+      expect(fuente).toContain('Kyros-Tech S.R.L.'); expect(fuente).toContain('administracion@kyros-tech.com'); expect(fuente).not.toMatch(/NIT de Kyros|alojad|hosted outside|fuera de Bolivia/i);
       expect(copia.replace(/\r\n/g, '\n'), `copia ${idioma}/${d}`).toBe(fuente.replace(/\r\n/g, '\n'));
       expect(fuente).not.toMatch(/cumplimos con la ley|cumple con la normativa/i);
     }
