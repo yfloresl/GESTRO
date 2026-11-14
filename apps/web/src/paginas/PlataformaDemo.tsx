@@ -1,3 +1,4 @@
+import { confirmar } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, mensajeDeError } from '../lib/sesion';
@@ -6,7 +7,7 @@ import { ListaEsqueleto } from '../componentes/Esqueleto';
 const ETIQUETA: Record<string, string> = { owner: 'administrador', cajero: 'caja', mesero: 'mesero', cocina: 'cocina', almacen: 'almacén', cobranzas: 'cobranzas', contador: 'contador', area_manager: 'encargado de área' };
 interface Estado { cargada: boolean; modoQa?: boolean; sucursal?: { id: string; nombre: string; slug: string }; ultimoReinicio?: string | null; cuentas: { usuario: string; rol: string; vinculada: boolean }[] }
 
-/** Consola de plataforma: la sucursal de muestra de las cuentas Prueba_Kyros (se pre-vinculan por su sub fijo de Kyros ID). */
+/** Consola de plataforma: la sucursal de muestra de las cuentas de prueba (se pre-vinculan por su sub fijo de Kyros ID). */
 export function PlataformaDemo() {
   const qc = useQueryClient(); const [error, setError] = useState<string | null>(null); const [msg, setMsg] = useState<string | null>(null); const [ocupado, setOcupado] = useState(false);
   const q = useQuery({ queryKey: ['plataforma-demo'], queryFn: () => api.get<Estado>('/plataforma/demo') });
@@ -18,8 +19,8 @@ export function PlataformaDemo() {
     <section className="flex flex-col gap-space-md">
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}{msg && <p role="status" className="rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant p-space-sm">{msg}</p>}
       <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm">
-        <h2 className="font-headline-sm text-headline-sm">Restaurante de muestra (cuentas Prueba_Kyros)</h2>
-        <p className="text-on-surface-variant">Una sola sucursal («Casa Andina») con menú, recetas, inventario, 60 días de ventas, contabilidad, una promoción y un evento. Es de solo lectura: quien entra con las cuentas Prueba_Kyros puede mirar todo y, si es el administrador, restablecer sus datos de muestra (máximo una vez cada 5 minutos). Mientras no esté cargada, esas cuentas no pueden entrar.</p>
+        <h2 className="font-headline-sm text-headline-sm">Restaurante de muestra (cuentas de prueba)</h2>
+        <p className="text-on-surface-variant">Una sola sucursal («Casa Andina») con menú, recetas, inventario, 60 días de ventas, contabilidad, una promoción y un evento. Quien entra con las cuentas de prueba puede mirar todo y, con el interruptor «modo QA con escritura» de abajo encendido, también crear, editar y anular dentro de su propio espacio (apagado, solo lectura). El administrador puede restablecer sus datos de muestra (máximo una vez cada 5 minutos). Mientras no esté cargada, esas cuentas no pueden entrar.</p>
         <p>Estado: <strong>{e.cargada ? `cargada (${e.sucursal?.nombre})` : 'no cargada'}</strong>{e.ultimoReinicio ? ` · último reinicio ${new Date(e.ultimoReinicio).toLocaleString('es-BO')}` : ''}</p>
         {e.cargada && (
           <label className="flex items-start gap-space-sm min-h-12 rounded-lg border border-outline-variant p-space-sm">
@@ -29,7 +30,7 @@ export function PlataformaDemo() {
           </label>)}
         <ul className="flex flex-col gap-1">{e.cuentas.map((c) => <li key={c.usuario} className="flex justify-between rounded-lg bg-surface-container p-space-sm"><span>{c.usuario} <span className="text-on-surface-variant">({ETIQUETA[c.rol] ?? c.rol})</span></span><span className={c.vinculada ? 'text-tertiary font-semibold' : 'text-on-surface-variant'}>{c.vinculada ? 'vinculada' : 'sin vincular'}</span></li>)}</ul>
         <div className="flex flex-wrap gap-space-xs">
-          {!e.cargada && <button type="button" disabled={ocupado} onClick={() => accion(() => api.post('/plataforma/demo', {}), 'Restaurante de muestra cargado: las cuentas Prueba_Kyros ya pueden entrar.')} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold disabled:opacity-60">{ocupado ? 'Cargando… (unos segundos)' : 'Cargar restaurante de muestra'}</button>}
+          {!e.cargada && <button type="button" disabled={ocupado} onClick={() => accion(() => api.post('/plataforma/demo', {}), 'Restaurante de muestra cargado: las cuentas de prueba ya pueden entrar.')} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold disabled:opacity-60">{ocupado ? 'Cargando… (unos segundos)' : 'Cargar restaurante de muestra'}</button>}
           {e.cargada && (
             <div className="w-full flex flex-col gap-space-xs border border-outline-variant rounded-lg p-space-sm">
               <label htmlFor="frase-restablecer" className="font-body-sm text-on-surface-variant">Restablecer cuentas demo: vuelve todo a su estado de creación (datos, cuentas y suscripción de muestra). Escribe <strong>RESTABLECER DEMO</strong> para confirmar.</label>
@@ -39,7 +40,7 @@ export function PlataformaDemo() {
               </div>
             </div>
           )}
-          {e.cargada && <button type="button" disabled={ocupado} onClick={() => { if (confirm('Se quitará el restaurante de muestra con todos sus datos y las cuentas Prueba_Kyros dejarán de entrar. ¿Continuar?')) void accion(() => api.del('/plataforma/demo'), 'Restaurante de muestra quitado.'); }} className="h-12 px-space-md rounded-lg border border-error text-error font-semibold disabled:opacity-60">Quitar restaurante de muestra</button>}
+          {e.cargada && <button type="button" disabled={ocupado} onClick={async () => { if (await confirmar({ titulo: 'Quitar restaurante de muestra', mensaje: 'Se quitará el restaurante de muestra con todos sus datos y las cuentas de prueba dejarán de entrar. ¿Continuar?', aceptar: 'Quitar', peligro: true })) void accion(() => api.del('/plataforma/demo'), 'Restaurante de muestra quitado.'); }} className="h-12 px-space-md rounded-lg border border-error text-error font-semibold disabled:opacity-60">Quitar restaurante de muestra</button>}
         </div>
       </div>
     </section>

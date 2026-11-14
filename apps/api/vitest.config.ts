@@ -6,6 +6,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['test/**/*.spec.ts'],
+    exclude: ['test/**/*.puro.spec.ts', 'node_modules/**'],
     globalSetup: ['./test/preparar.ts'],
     // Las pruebas usan su propia base y sus propias carpetas: nunca tocan los datos de desarrollo.
     env: {

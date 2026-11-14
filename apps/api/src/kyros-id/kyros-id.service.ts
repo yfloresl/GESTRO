@@ -1,3 +1,4 @@
+import { hoyBoliviaMas } from '../comun/tiempo';
 import { esSubDeDemostracion } from '../demo/constantes';
 import { AceptacionSchema, exigirAceptacion, registrarAceptacion } from '../legal/legal';
 import { BadRequestException, ConflictException, ForbiddenException, HttpException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
@@ -237,7 +238,7 @@ export class KyrosIdService {
     exigirAceptacion(d);
     const reg = await this.leerRegistro(d.registroToken);
     if (!reg.reciente) throw new ForbiddenException('Para registrar un restaurante, crea tu cuenta con «Crear mi cuenta».');
-    const hasta = new Date(Date.now() + DIAS_DE_PRUEBA * 86_400_000).toISOString().slice(0, 10);
+    const hasta = hoyBoliviaMas(DIAS_DE_PRUEBA);
     const userId = await this.bd.transaction(async (tx) => {
       const [cuenta] = await tx.insert(accounts).values({ legalName: d.razonSocial, nit: d.nit ?? null, ownerEmail: d.correo }).returning({ id: accounts.id });
       const [rest] = await tx.insert(restaurants).values({

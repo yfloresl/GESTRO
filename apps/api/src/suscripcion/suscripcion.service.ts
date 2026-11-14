@@ -5,6 +5,7 @@ import { auditar, esDuplicado } from '../comun/auditoria';
 import { DIAS_DE_GRACIA } from '../comun/guards';
 import { BD, Bd, Tenant, TenantDb } from '../database/database.module';
 import { alcanceDe, MODULOS, type Modulo } from './paquetes';
+import { diasEntre, prorrateoCambioPlan, renovar, sumarDias } from './periodos';
 import { auditLog, plans, platformSettings, restaurants, saasPromotions, subscriptionPayments } from '../database/esquema';
 import { StorageService } from '../storage/storage.service';
 import { EventosGateway, salas } from '../tiempo-real/eventos.gateway';
@@ -184,10 +185,12 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
       if (p.status !== 'pendiente') throw new ConflictException('Este pago ya fue revisado.');
       if (!p.voucher_url) throw new BadRequestException('El restaurante todavía no subió la foto del comprobante.');
       const meses = p.months_paid + p.gift_months;
-      const inicio = (await tx.execute(sql`SELECT GREATEST(${HOY}, COALESCE(paid_until + 1, ${HOY}))::text AS desde FROM restaurants WHERE id = ${p.restaurant_id} FOR UPDATE`)).rows[0] as { desde: string };
-      const u = await tx.execute(sql`UPDATE restaurants SET paid_until = ((${inicio.desde}::date + make_interval(months => ${meses}))::date - 1),
-          status = CASE WHEN status = 'suspendido' THEN 'activo' ELSE status END WHERE id = ${p.restaurant_id} RETURNING paid_until::text AS hasta`);
-      const f = { hasta: (u.rows[0] as { hasta: string }).hasta, desde: inicio.desde };
+      const cur = (await tx.execute(sql`SELECT paid_until::text AS hasta, billing_anchor_day AS ancla, ${HOY}::text AS hoy FROM restaurants WHERE id = ${p.restaurant_id} FOR UPDATE`)).rows[0] as { hasta: string | null; ancla: number | null; hoy: string };
+      // GS-C04: período con día ancla; renovar antes de vencer suma al vigente, después de vencida empieza hoy.
+      const ren = renovar({ hoy: cur.hoy, hasta: cur.hasta, ancla: cur.ancla, meses });
+      await tx.execute(sql`UPDATE restaurants SET paid_until = ${ren.hasta}::date, billing_anchor_day = ${ren.ancla},
+          status = CASE WHEN status = 'suspendido' THEN 'activo' ELSE status END WHERE id = ${p.restaurant_id}`);
+      const f = { hasta: ren.hasta, desde: ren.desde };
       await tx.update(subscriptionPayments).set({ status: 'validado', validatedBy: userId, validatedAt: sql`now()` as unknown as Date, periodFrom: f.desde, periodTo: f.hasta }).where(eq(subscriptionPayments.id, id));
       await tx.insert(auditLog).values({ restaurantId: p.restaurant_id, userId, action: 'suscripcion.pago_aprobado', entity: 'subscription_payment', entityId: id, after: { desde: f.desde, hasta: f.hasta, meses } });
       return { restaurantId: p.restaurant_id, desde: f.desde, hasta: f.hasta, meses };
@@ -257,13 +260,28 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
 
   /** Ajuste manual de plataforma (plan, fecha, suspensión): siempre con motivo y auditado. */
   async ajustarSucursal(userId: string, id: string, d: z.infer<typeof AjusteSucursal>) {
-    const cambios = { ...(d.planId !== undefined && { planId: d.planId }), ...(d.habilitadaHasta !== undefined && { paidUntil: d.habilitadaHasta }), ...(d.estado !== undefined && { status: d.estado }) };
+    const cambios: Record<string, unknown> = { ...(d.planId !== undefined && { planId: d.planId }), ...(d.habilitadaHasta !== undefined && { paidUntil: d.habilitadaHasta, billingAnchorDay: null }), ...(d.estado !== undefined && { status: d.estado }) };
     if (!Object.keys(cambios).length) throw new BadRequestException('Nada que cambiar.');
     return this.bd.transaction(async (tx) => {
-      const r = await tx.update(restaurants).set(cambios).where(eq(restaurants.id, id)).returning({ id: restaurants.id });
-      if (!r.length) throw new NotFoundException('Sucursal no encontrada.');
-      await tx.insert(auditLog).values({ restaurantId: id, userId, action: 'plataforma.sucursal_ajustada', entity: 'restaurant', entityId: id, after: d });
-      return { ok: true };
+      const [a] = (await tx.execute(sql`SELECT r.plan_id, r.paid_until::text AS hasta, ${HOY}::text AS hoy, po.monthly_price_bob::text AS viejo FROM restaurants r LEFT JOIN plans po ON po.id = r.plan_id WHERE r.id = ${id} FOR UPDATE OF r`)).rows as { plan_id: string | null; hasta: string | null; hoy: string; viejo: string | null }[];
+      if (!a) throw new NotFoundException('Sucursal no encontrada.');
+      let prorrateo: { diasRestantes: number; diasNuevos: number; creditoCent: string } | null = null;
+      // GS-C04: cambio de plan con días pagados por delante y sin fecha manual: el valor pagado se conserva (días del plan nuevo + crédito).
+      if (d.planId && d.planId !== a.plan_id && d.habilitadaHasta === undefined && a.viejo && a.hasta && diasEntre(a.hoy, a.hasta) >= 0) {
+        const nuevo = ((await tx.execute(sql`SELECT monthly_price_bob::text AS precio FROM plans WHERE id = ${d.planId}`)).rows[0] as { precio: string } | undefined)?.precio;
+        if (!nuevo) throw new NotFoundException('Plan no encontrado.');
+        const centavos = (x: string) => { const [e, f = ''] = x.split('.'); return BigInt(e) * 100n + BigInt((f + '00').slice(0, 2)); };
+        if (centavos(nuevo) > 0n) {
+          const diasRestantes = diasEntre(a.hoy, a.hasta) + 1; // cuenta hoy
+          const pr = prorrateoCambioPlan({ diasRestantes, precioViejoCent: centavos(a.viejo), precioNuevoCent: centavos(nuevo) });
+          if (pr.diasNuevos < 1) throw new ConflictException('El crédito pendiente no alcanza para un día del plan nuevo; define la fecha a mano con su motivo.');
+          cambios.paidUntil = sumarDias(a.hoy, pr.diasNuevos - 1); cambios.billingAnchorDay = null;
+          prorrateo = { diasRestantes, diasNuevos: pr.diasNuevos, creditoCent: pr.creditoCent.toString() };
+        }
+      }
+      await tx.update(restaurants).set(cambios).where(eq(restaurants.id, id));
+      await tx.insert(auditLog).values({ restaurantId: id, userId, action: 'plataforma.sucursal_ajustada', entity: 'restaurant', entityId: id, after: { ...d, ...(prorrateo && { prorrateo, habilitadaHastaCalculada: cambios.paidUntil }) } });
+      return { ok: true, ...(prorrateo && { prorrateo, habilitadaHasta: cambios.paidUntil }) };
     });
   }
 
