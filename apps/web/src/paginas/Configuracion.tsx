@@ -2,8 +2,50 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
+import { clases } from '../componentes/Marca';
+import { deCentavos, leerPorcentaje, pctTxt, topeEnCentavos } from '../lib/cobro';
 
-interface Ajustes { pedidosPorQr: boolean; qrSinConfirmacion: boolean; modoDeCobro: 'recibo' | 'ninguno' | 'factura' }
+interface Ajustes {
+  pedidosPorQr: boolean; qrSinConfirmacion: boolean; modoDeCobro: 'recibo' | 'ninguno' | 'factura'; descuentoMaxPct: number; propinaMaxPct: number;
+  ultimoCambioTopes: { cuando: string; por: string | null; motivo: string | null; antes: { descuentoMaxPct: number; propinaMaxPct: number } | null } | null;
+}
+
+/** Topes del cobro (GST-010): lo máximo que un cajero puede descontar o dejar de propina. Solo dueño/administrador. */
+function TopesDeCobro({ a, guardar }: { a: Ajustes; guardar(c: { descuentoMaxPct: number; propinaMaxPct: number; motivoCambioTopes?: string }): Promise<boolean> }) {
+  const [d, setD] = useState(pctTxt(a.descuentoMaxPct)); const [p, setP] = useState(pctTxt(a.propinaMaxPct)); const [motivo, setMotivo] = useState('');
+  const [ok, setOk] = useState(false); const [ocupado, setOcupado] = useState(false);
+  const dn = leerPorcentaje(d); const pn = leerPorcentaje(p);
+  const invalido = dn === null || pn === null;
+  const sube = !invalido && (dn > a.descuentoMaxPct || pn > a.propinaMaxPct);
+  const cambia = !invalido && (dn !== a.descuentoMaxPct || pn !== a.propinaMaxPct);
+  const ejDesc = dn === null ? null : topeEnCentavos(10000, dn);
+  const ejProp = pn === null ? null : topeEnCentavos(10000, pn);
+  const enviar = async () => {
+    if (invalido || !cambia) return;
+    setOcupado(true); setOk(false);
+    const r = await guardar({ descuentoMaxPct: dn, propinaMaxPct: pn, ...(motivo.trim() ? { motivoCambioTopes: motivo.trim() } : {}) });
+    setOcupado(false); if (r) { setOk(true); setMotivo(''); }
+  };
+  const u = a.ultimoCambioTopes;
+  return (
+    <div className="py-space-sm flex flex-col gap-space-sm">
+      <div>
+        <p className="font-body-md font-semibold">Límites al cobrar: descuento y propina</p>
+        <p className="font-body-sm text-body-sm text-on-surface-variant">Sirven para que nadie regale de más por error. <strong>Descuento:</strong> lo máximo que se puede rebajar de un pedido, como porcentaje de lo consumido. <strong>Propina:</strong> lo máximo que se puede anotar de propina, como porcentaje de lo que paga el cliente. Si pones 0, esa opción queda bloqueada. El cambio vale desde el siguiente cobro, en todas las cajas.</p>
+      </div>
+      <div className="grid grid-cols-2 gap-space-sm">
+        <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Descuento máximo (%)</span><input value={d} onChange={(e) => { setD(e.target.value); setOk(false); }} inputMode="decimal" aria-invalid={dn === null} className={clases.input} /></label>
+        <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Propina máxima (%)</span><input value={p} onChange={(e) => { setP(e.target.value); setOk(false); }} inputMode="decimal" aria-invalid={pn === null} className={clases.input} /></label>
+      </div>
+      {invalido ? <p role="alert" className="text-error font-body-sm">Escribe un número entre 0 y 100, con hasta 2 decimales (por ejemplo 30 o 12,5).</p>
+        : <p className="font-body-sm text-on-surface-variant" aria-live="polite">Ejemplo con un pedido de Bs 100,00: se podrá descontar hasta Bs {deCentavos(ejDesc!)}; con un total de Bs 100,00 la propina podrá llegar a Bs {deCentavos(ejProp!)}.</p>}
+      {sube && <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Motivo para subir el límite (obligatorio)</span><input value={motivo} onChange={(e) => setMotivo(e.target.value)} maxLength={200} placeholder="Ej.: promoción de aniversario" className={clases.input} /><span className="font-body-sm text-on-surface-variant">Quedará guardado con tu nombre, la fecha y los valores anterior y nuevo.</span></label>}
+      <button type="button" disabled={ocupado || !cambia || (sube && motivo.trim().length < 3)} onClick={enviar} className={clases.primario}>{ocupado ? 'Guardando…' : 'Guardar límites'}</button>
+      {ok && <p role="status" className="text-primary font-body-sm">Listo: los nuevos límites ya valen para el próximo cobro.</p>}
+      <p className="font-body-sm text-on-surface-variant">{u ? `Último cambio: ${new Date(u.cuando).toLocaleString('es-BO', { timeZone: 'America/La_Paz' })} por ${u.por ?? 'un usuario'}${u.antes ? ` (antes ${pctTxt(u.antes.descuentoMaxPct)} % y ${pctTxt(u.antes.propinaMaxPct)} %)` : ''}${u.motivo ? ` · motivo: ${u.motivo}` : ''}.` : 'Todavía no se han cambiado: valen los límites de fábrica (30 % y 30 %).'}</p>
+    </div>
+  );
+}
 
 function Interruptor({ activo, cambiar, titulo, ayuda, deshabilitado }: { activo: boolean; cambiar(v: boolean): void; titulo: string; ayuda: string; deshabilitado?: boolean }) {
   return (
@@ -20,7 +62,11 @@ export function Configuracion() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['ajustes', sucursalId], queryFn: () => api.get<Ajustes>('/sucursal/ajustes', sucursalId!), enabled: !!sucursalId });
   const [error, setError] = useState<string | null>(null);
-  const cambiar = async (c: Partial<Ajustes>) => { setError(null); try { await api.patch('/sucursal/ajustes', c, sucursalId!); await qc.invalidateQueries({ queryKey: ['ajustes', sucursalId] }); } catch (e) { setError(mensajeDeError(e)); } };
+  const cambiar = async (c: Partial<Pick<Ajustes, 'pedidosPorQr' | 'qrSinConfirmacion' | 'modoDeCobro' | 'descuentoMaxPct' | 'propinaMaxPct'>> & { motivoCambioTopes?: string }): Promise<boolean> => {
+    setError(null);
+    try { await api.patch('/sucursal/ajustes', c, sucursalId!); await qc.invalidateQueries({ queryKey: ['ajustes', sucursalId] }); await qc.invalidateQueries({ queryKey: ['cobro-topes', sucursalId] }); return true; }
+    catch (e) { setError(mensajeDeError(e)); return false; }
+  };
   const a = q.data;
   return (
     <div className="flex flex-col gap-space-lg max-w-2xl">
@@ -37,6 +83,7 @@ export function Configuracion() {
               {([['recibo', 'Recibos'], ['ninguno', 'Solo contabilizar']] as const).map(([k, n]) => <button key={k} type="button" role="radio" aria-checked={a.modoDeCobro === k} onClick={() => cambiar({ modoDeCobro: k })} className={`h-12 rounded-lg font-semibold ${a.modoDeCobro === k ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}>{n}</button>)}
             </div>
           </div>
+          <TopesDeCobro key={`${a.descuentoMaxPct}-${a.propinaMaxPct}`} a={a} guardar={cambiar} />
         </section>
       )}
     </div>

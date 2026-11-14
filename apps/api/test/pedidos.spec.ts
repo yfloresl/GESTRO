@@ -323,6 +323,48 @@ describe('Caja, cobro y recibos', () => {
     expect(cierre.body).toMatchObject({ efectivoEsperado: '255.00', diferencia: '0.00' });
   });
 
+  it('GST-010: los topes de descuento y propina se configuran por restaurante, con validación, motivo al subir, auditoría y efecto inmediato en el cobro', async () => {
+    const e = await escenario();
+    await e.cajero.api.post('/caja/abrir', { montoInicial: 0 });
+    // por defecto 30 / 30; lo lee quien cobra, no un mesero; solo dueño/administrador cambian
+    expect((await e.cajero.api.get('/cobro/topes')).body).toEqual({ descuentoMaxPct: 30, propinaMaxPct: 30 });
+    expect((await e.mesero.api.get('/cobro/topes')).status).toBe(403);
+    expect((await e.cajero.api.patch('/sucursal/ajustes', { descuentoMaxPct: 10 })).status).toBe(403);
+    // validación en el servidor
+    for (const malo of [101, -1, 12.345, '20', null]) expect((await e.dueno.patch('/sucursal/ajustes', { descuentoMaxPct: malo })).status).toBe(400);
+    expect((await e.dueno.patch('/sucursal/ajustes', { propinaMaxPct: 100.01 })).status).toBe(400);
+    // subir exige motivo; sin motivo no cambia nada
+    expect((await e.dueno.patch('/sucursal/ajustes', { descuentoMaxPct: 50 })).status).toBe(400);
+    expect((await e.dueno.patch('/sucursal/ajustes', { descuentoMaxPct: 50, motivoCambioTopes: 'a' })).status).toBe(400);
+    expect((await e.cajero.api.get('/cobro/topes')).body.descuentoMaxPct).toBe(30);
+    const id1 = await pedidoListoParaCobrar(e);                                                      // 163,00
+    expect((await e.cajero.api.post(`/pedidos/${id1}/cobrar`, { metodo: 'tarjeta', descuento: 48.91, motivoDescuento: 'Cortesía' })).status).toBe(400);
+    expect((await e.dueno.patch('/sucursal/ajustes', { descuentoMaxPct: 50, motivoCambioTopes: 'Promoción de aniversario' })).status).toBe(200);
+    // efecto inmediato: 50 % de 163,00 = 81,50; 81,51 se rechaza
+    expect((await e.cajero.api.get('/cobro/topes')).body).toEqual({ descuentoMaxPct: 50, propinaMaxPct: 30 });
+    expect((await e.cajero.api.post(`/pedidos/${id1}/cobrar`, { metodo: 'tarjeta', descuento: 81.51, motivoDescuento: 'Cortesía' })).status).toBe(400);
+    const ok = await e.cajero.api.post(`/pedidos/${id1}/cobrar`, { metodo: 'tarjeta', descuento: 81.5, motivoDescuento: 'Cortesía' });
+    expect(ok.status).toBe(200); expect(ok.body).toMatchObject({ descuento: '81.50', monto: '81.50' });
+    // bajar no pide motivo; con decimales: 12,5 % de 163,00 = 20,375 → 20,37 (se redondea hacia abajo)
+    expect((await e.dueno.patch('/sucursal/ajustes', { descuentoMaxPct: 12.5, propinaMaxPct: 0 })).status).toBe(200);
+    const id2 = await pedidoListoParaCobrar(e);
+    expect((await e.cajero.api.post(`/pedidos/${id2}/cobrar`, { metodo: 'tarjeta', descuento: 20.38, motivoDescuento: 'Cortesía' })).status).toBe(400);
+    expect((await e.cajero.api.post(`/pedidos/${id2}/cobrar`, { metodo: 'tarjeta', propina: 0.01 })).status).toBe(400);
+    const ok2 = await e.cajero.api.post(`/pedidos/${id2}/cobrar`, { metodo: 'tarjeta', descuento: 20.37, motivoDescuento: 'Cortesía' });
+    expect(ok2.status).toBe(200); expect(ok2.body).toMatchObject({ descuento: '20.37', monto: '142.63' });
+    // rastro: cada cambio guarda quién, antes, después y motivo
+    const rastro = (await t.owner.query(`SELECT user_id, before, after FROM audit_log WHERE restaurant_id = $1 AND action = 'sucursal.topes_cobro' ORDER BY id`, [e.d.rid])).rows;
+    expect(rastro).toHaveLength(2);
+    expect(rastro[0]).toMatchObject({ before: { descuentoMaxPct: 30, propinaMaxPct: 30 }, after: { descuentoMaxPct: 50, propinaMaxPct: 30, motivo: 'Promoción de aniversario' } });
+    expect(rastro[1]).toMatchObject({ before: { descuentoMaxPct: 50, propinaMaxPct: 30 }, after: { descuentoMaxPct: 12.5, propinaMaxPct: 0, motivo: null } });
+    expect(rastro[0].user_id).toBeTruthy();
+    const aj = (await e.dueno.get('/sucursal/ajustes')).body;
+    expect(aj).toMatchObject({ descuentoMaxPct: 12.5, propinaMaxPct: 0, ultimoCambioTopes: { antes: { descuentoMaxPct: 50, propinaMaxPct: 30 } } });
+    // otro restaurante no se ve afectado
+    const otro = await t.nuevoRestaurante();
+    expect((await t.con(otro.token, otro.rid).get('/sucursal/ajustes')).body).toMatchObject({ descuentoMaxPct: 30, propinaMaxPct: 30, ultimoCambioTopes: null });
+  });
+
   it('GST-005: cambiar la cantidad de un plato sin enviar recalcula el total; uno ya enviado no se puede cambiar', async () => {
     const e = await escenario();
     const p = await pedidoDeMesa(e);

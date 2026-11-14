@@ -78,6 +78,8 @@ export class CajaController {
   @Get('pedidos/:id/recibo') @DeSucursal(...CAJA, 'mesero')
   reciboDePedido(@TenantActual() t: Tenant, @Param('id', ParseUUIDPipe) id: string) { return this.c.reciboDePedido(t, id); }
 
+  @Get('cobro/topes') @DeSucursal(...CAJA)
+  topes(@TenantActual() t: Tenant) { return this.c.topesDeCobro(t); }
   @Get('sucursal/ajustes') @DeSucursal('owner', 'admin')
   ajustes(@TenantActual() t: Tenant) { return this.c.ajustes(t); }
   @Patch('sucursal/ajustes') @DeSucursal('owner', 'admin')

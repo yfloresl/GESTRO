@@ -2,8 +2,22 @@
  * GST-004: cálculo del cobro en CENTAVOS enteros (sin flotantes). Es el mismo que hace el servidor (api/src/pedidos/cobro-calculo.ts):
  * la pantalla solo anticipa lo que el servidor va a validar, el servidor manda.
  */
-export const DESCUENTO_MAX_PCT = 30;
-export const PROPINA_MAX_PCT = 30;
+export const TOPE_POR_DEFECTO_PCT = 30;
+/** Topes del restaurante en % (GST-010). El servidor es quien manda: aquí solo se anticipa su respuesta. */
+export interface Topes { descuentoPct: number; propinaPct: number }
+export const TOPES_POR_DEFECTO: Topes = { descuentoPct: TOPE_POR_DEFECTO_PCT, propinaPct: TOPE_POR_DEFECTO_PCT };
+/** 30 → "30"; 12.5 → "12,5". */
+export const pctTxt = (p: number) => String(Math.round(p * 100) / 100).replace('.', ',');
+/** "12", "12,5", "12.50" → 12.5; null si no es un porcentaje de 0 a 100 con hasta 2 decimales. */
+export function leerPorcentaje(v: string): number | null {
+  const t = v.trim().replace(',', '.');
+  if (!/^\d{1,3}(\.\d{1,2})?$/.test(t)) return null;
+  const n = Number(t);
+  return n >= 0 && n <= 100 ? n : null;
+}
+
+/** Tope en centavos: floor(centavos × pct / 100), con el porcentaje en centésimas (enteros, sin flotantes). */
+export const topeEnCentavos = (centavos: number, pct: number) => Math.floor((centavos * Math.round(pct * 100)) / 10000);
 
 /** "12", "12,5", "12.50" → 1250. null si no es un monto con a lo más 2 decimales. Vacío = 0. */
 export function aCentavos(v: string): number | null {
@@ -15,20 +29,21 @@ export function aCentavos(v: string): number | null {
 }
 export const deCentavos = (c: number) => `${Math.floor(c / 100)}.${String(c % 100).padStart(2, '0')}`;
 
-export interface EntradaCobro { subtotal: number; descuento: string; motivo: string; propina: string; metodo: string; recibido: string }
+export interface EntradaCobro { subtotal: number; descuento: string; motivo: string; propina: string; metodo: string; recibido: string; topes?: Topes }
 export interface ResultadoCobro { descuento: number; total: number; propina: number; aCobrar: number; recibido: number | null; vuelto: number | null; error: string | null }
 
 export function calcularCobro(e: EntradaCobro): ResultadoCobro {
+  const topes = e.topes ?? TOPES_POR_DEFECTO;
   const vacio = { descuento: 0, total: e.subtotal, propina: 0, aCobrar: e.subtotal, recibido: null, vuelto: null };
   const d = aCentavos(e.descuento); const pr = aCentavos(e.propina);
   if (d === null) return { ...vacio, error: 'El descuento debe ser un monto válido (máximo 2 decimales).' };
   if (pr === null) return { ...vacio, error: 'La propina debe ser un monto válido (máximo 2 decimales).' };
   if (d > 0 && e.motivo.trim().length < 3) return { ...vacio, descuento: d, total: Math.max(0, e.subtotal - d), error: 'Escribe el motivo del descuento (mínimo 3 letras).' };
-  const topeD = Math.floor((e.subtotal * DESCUENTO_MAX_PCT) / 100);
-  if (d > topeD) return { ...vacio, descuento: d, error: `El descuento no puede pasar del ${DESCUENTO_MAX_PCT} % (Bs ${deCentavos(topeD)}).` };
+  const topeD = topeEnCentavos(e.subtotal, topes.descuentoPct);
+  if (d > topeD) return { ...vacio, descuento: d, error: `El descuento no puede pasar del ${pctTxt(topes.descuentoPct)} % (Bs ${deCentavos(topeD)}).` };
   const total = e.subtotal - d;
-  const topeP = Math.floor((total * PROPINA_MAX_PCT) / 100);
-  if (pr > topeP) return { ...vacio, descuento: d, total, propina: pr, aCobrar: total + pr, error: `La propina no puede pasar del ${PROPINA_MAX_PCT} % (Bs ${deCentavos(topeP)}).` };
+  const topeP = topeEnCentavos(total, topes.propinaPct);
+  if (pr > topeP) return { ...vacio, descuento: d, total, propina: pr, aCobrar: total + pr, error: `La propina no puede pasar del ${pctTxt(topes.propinaPct)} % (Bs ${deCentavos(topeP)}).` };
   if (pr > 0 && e.metodo === 'credito') return { ...vacio, descuento: d, total, aCobrar: total, error: 'Una venta a crédito no lleva propina.' };
   const aCobrar = total + pr;
   let recibido: number | null = null; let vuelto: number | null = null;

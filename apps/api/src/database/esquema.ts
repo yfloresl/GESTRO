@@ -19,6 +19,8 @@ export const restaurants = pgTable('restaurants', {
   qrOrderingEnabled: boolean('qr_ordering_enabled').notNull().default(true),
   qrAutoSend: boolean('qr_auto_send').notNull().default(false),
   minMarginPct: numeric('min_margin_pct', { precision: 5, scale: 2 }).notNull().default('60'),
+  discountMaxPct: numeric('discount_max_pct', { precision: 5, scale: 2 }).notNull().default('30'),
+  tipMaxPct: numeric('tip_max_pct', { precision: 5, scale: 2 }).notNull().default('30'),
   paidUntil: text('paid_until'),
   billingAnchorDay: smallint('billing_anchor_day'),
   planId: uuid('plan_id'),

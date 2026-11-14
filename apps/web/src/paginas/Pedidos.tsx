@@ -5,7 +5,7 @@ import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs, ETIQUETA_ESTADO, ETIQUETA_TIPO, minutosDesde, haceCuanto, Pedido } from '../lib/tipos';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
-import { calcularCobro, deCentavos, aCentavos } from '../lib/cobro';
+import { calcularCobro, deCentavos, aCentavos, pctTxt, TOPES_POR_DEFECTO, type Topes } from '../lib/cobro';
 
 interface Mesa { id: string; numero: string; asientos: number; activa: boolean }
 interface Categoria { id: string; nombre: string }
@@ -265,12 +265,14 @@ function Cobrar({ pedido, cerrar, cobrado }: { pedido: Pedido; cerrar(): void; c
   const { sucursalId } = useRolesActivos();
   const caja = useQuery({ queryKey: ['caja', sucursalId], queryFn: () => api.get<{ activa: boolean }>('/caja/actual', sucursalId!), enabled: !!sucursalId });
   const aj = useQuery({ queryKey: ['ajustes', sucursalId], queryFn: () => api.get<{ modoDeCobro: string }>('/sucursal/ajustes', sucursalId!).catch(() => ({ modoDeCobro: 'recibo' })), enabled: !!sucursalId });
+  const tp = useQuery({ queryKey: ['cobro-topes', sucursalId], queryFn: () => api.get<{ descuentoMaxPct: number; propinaMaxPct: number }>('/cobro/topes', sucursalId!), enabled: !!sucursalId, staleTime: 0, refetchOnMount: 'always' });
+  const topes: Topes = tp.data ? { descuentoPct: tp.data.descuentoMaxPct, propinaPct: tp.data.propinaMaxPct } : TOPES_POR_DEFECTO;
   const [metodo, setMetodo] = useState<(typeof METODOS)[number][0]>('efectivo');
   const [doc, setDoc] = useState<'recibo' | 'ninguno'>('recibo'); const [cliente, setCliente] = useState(''); const [telefono, setTelefono] = useState(''); const [dias, setDias] = useState('30');
   const [error, setError] = useState<string | null>(null); const [ocupado, setOcupado] = useState(false);
   const [descuento, setDescuento] = useState(''); const [motivoDesc, setMotivoDesc] = useState(''); const [propina, setPropina] = useState(''); const [recibido, setRecibido] = useState('');
   const subtotal = aCentavos(String(pedido.total)) ?? 0;
-  const calc = calcularCobro({ subtotal, descuento, motivo: motivoDesc, propina, metodo, recibido });
+  const calc = calcularCobro({ subtotal, descuento, motivo: motivoDesc, propina, metodo, recibido, topes });
   const soloContabilizar = aj.data?.modoDeCobro === 'ninguno';
   const cobrar = async () => {
     setError(null);
@@ -303,11 +305,11 @@ function Cobrar({ pedido, cerrar, cobrado }: { pedido: Pedido; cerrar(): void; c
           <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Descuento (Bs)</span><input value={descuento} onChange={(e) => setDescuento(e.target.value)} inputMode="decimal" placeholder="0,00" className={clases.input} /></label>
           <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Motivo</span><input value={motivoDesc} onChange={(e) => setMotivoDesc(e.target.value)} maxLength={200} className={clases.input} /></label>
         </div>
-        <p className="font-body-sm text-on-surface-variant mt-space-xs">Máximo 30 % del pedido. Queda registrado con tu nombre.</p>
+        <p className="font-body-sm text-on-surface-variant mt-space-xs">{topes.descuentoPct === 0 ? 'En este restaurante no se permiten descuentos al cobrar.' : `Máximo ${pctTxt(topes.descuentoPct)} % del pedido (lo define el dueño en Configuración). Queda registrado con tu nombre.`}</p>
       </details>
       <fieldset className="flex flex-col gap-space-xs"><legend className={clases.etiqueta}>Propina (opcional)</legend>
         <div className="flex flex-wrap gap-space-xs items-center">
-          {[0, 5, 10].map((pct) => <button key={pct} type="button" onClick={() => setPropina(pct === 0 ? '' : deCentavos(Math.round((calc.total * pct) / 100)))} className="h-11 px-space-sm rounded-full border border-outline-variant font-label-md">{pct === 0 ? 'Sin propina' : `${pct} %`}</button>)}
+          {[0, 5, 10].filter((pct) => pct <= topes.propinaPct).map((pct) => <button key={pct} type="button" onClick={() => setPropina(pct === 0 ? '' : deCentavos(Math.round((calc.total * pct) / 100)))} className="h-11 px-space-sm rounded-full border border-outline-variant font-label-md">{pct === 0 ? 'Sin propina' : `${pct} %`}</button>)}
           <input aria-label="Propina en bolivianos" value={propina} onChange={(e) => setPropina(e.target.value)} inputMode="decimal" placeholder="0,00" disabled={metodo === 'credito'} className={`${clases.input} w-32`} />
         </div>
       </fieldset>

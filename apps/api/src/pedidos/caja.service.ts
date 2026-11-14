@@ -10,6 +10,7 @@ import { PedidosService } from './pedidos.service';
 import { calcularCobro, CobroInvalido } from './cobro-calculo';
 
 const Monto = z.number().min(0).max(10_000_000).refine((n) => Math.round(n * 100) / 100 === n, 'Máximo 2 decimales');
+const Pct = z.number({ invalid_type_error: 'Escribe un porcentaje entre 0 y 100.' }).min(0, 'El tope no puede ser menor que 0 %.').max(100, 'El tope no puede pasar de 100 %.').refine((n) => Math.round(n * 100) / 100 === n, 'Máximo 2 decimales (por ejemplo 12,5).');
 export const AbrirCaja = z.object({ montoInicial: Monto }).strict();
 export const CerrarCaja = z.object({ montoContado: Monto }).strict();
 export const Cobro = z.object({
@@ -23,6 +24,8 @@ export const Cobro = z.object({
 export const AjustesSucursal = z.object({
   pedidosPorQr: z.boolean().optional(), qrSinConfirmacion: z.boolean().optional(), modoDeCobro: z.enum(['recibo', 'ninguno']).optional(),
   margenMinimo: z.number().min(0).max(100).refine((n) => Math.round(n * 100) / 100 === n, 'Máximo 2 decimales').optional(),
+  /** GST-010: topes del cobro, en % (0 a 100, hasta 2 decimales). Subirlos exige un motivo y deja rastro en la auditoría. */
+  descuentoMaxPct: Pct.optional(), propinaMaxPct: Pct.optional(), motivoCambioTopes: z.string().trim().min(3, 'Escribe el motivo (mínimo 3 letras).').max(200).optional(),
 }).strict();
 
 @Injectable()
@@ -91,7 +94,7 @@ export class CajaService {
     const r = await this.db.run(t, async (tx) => {
       const caja = await this.abierta(tx, t, userId);
       if (!caja) throw new ConflictException('Abre tu caja antes de cobrar.');
-      const [rest] = await tx.select({ modo: restaurants.billingMode }).from(restaurants).where(eq(restaurants.id, t.restaurantId));
+      const [rest] = await tx.select({ modo: restaurants.billingMode, dMax: restaurants.discountMaxPct, pMax: restaurants.tipMaxPct }).from(restaurants).where(eq(restaurants.id, t.restaurantId));
       if (d.documento === 'factura') throw new UnprocessableEntityException('La factura electrónica del SIN todavía no está disponible. Emite un recibo o solo contabiliza.');
       if (rest?.modo === 'ninguno' && d.documento !== 'ninguno') throw new UnprocessableEntityException('Esta sucursal solo contabiliza: no emite recibos.');
       const bloqueo = await tx.execute(sql`SELECT id, status, total::text AS total, customer_name FROM orders WHERE id = ${id} AND restaurant_id = ${t.restaurantId} FOR UPDATE`);
@@ -103,7 +106,7 @@ export class CajaService {
       const sub = (await tx.execute(sql`SELECT subtotal::text AS s FROM orders WHERE id = ${id}`)).rows[0] as { s: string };
       if (!(Number(sub.s) > 0)) throw new BadRequestException('El pedido no tiene platos para cobrar.');
       let calc: ReturnType<typeof calcularCobro>;
-      try { calc = calcularCobro({ subtotal: sub.s, descuento: d.descuento, motivoDescuento: d.motivoDescuento, propina: d.propina, metodo: d.metodo, efectivoRecibido: d.efectivoRecibido }); }
+      try { calc = calcularCobro({ subtotal: sub.s, descuento: d.descuento, motivoDescuento: d.motivoDescuento, propina: d.propina, metodo: d.metodo, efectivoRecibido: d.efectivoRecibido, topes: { descuentoPct: rest.dMax, propinaPct: rest.pMax } }); }
       catch (e) { if (e instanceof CobroInvalido) throw new BadRequestException(e.message); throw e; }
       o.total = calc.total;
       if (Number(calc.descuento) > 0) await tx.execute(sql`UPDATE orders SET discount = ${calc.descuento}::numeric, total = ${calc.total}::numeric, discount_reason = ${d.motivoDescuento!.trim()} WHERE id = ${id}`);
@@ -172,17 +175,41 @@ export class CajaService {
 
   ajustes(t: Tenant) {
     return this.db.run(t, async (tx) => {
-      const [r] = await tx.select({ qr: restaurants.qrOrderingEnabled, auto: restaurants.qrAutoSend, modo: restaurants.billingMode, margen: restaurants.minMarginPct }).from(restaurants).where(eq(restaurants.id, t.restaurantId));
-      return { pedidosPorQr: r.qr, qrSinConfirmacion: r.auto, modoDeCobro: r.modo, margenMinimo: Number(r.margen) };
+      const [r] = await tx.select({ qr: restaurants.qrOrderingEnabled, auto: restaurants.qrAutoSend, modo: restaurants.billingMode, margen: restaurants.minMarginPct, dMax: restaurants.discountMaxPct, pMax: restaurants.tipMaxPct }).from(restaurants).where(eq(restaurants.id, t.restaurantId));
+      const u = await tx.execute(sql`SELECT a.created_at, u.full_name, a.before, a.after FROM audit_log a LEFT JOIN users u ON u.id = a.user_id WHERE a.restaurant_id = ${t.restaurantId} AND a.action = 'sucursal.topes_cobro' ORDER BY a.id DESC LIMIT 1`);
+      const f = u.rows[0] as { created_at: Date; full_name: string | null; before: { descuentoMaxPct: number; propinaMaxPct: number } | null; after: { motivo?: string } | null } | undefined;
+      return { pedidosPorQr: r.qr, qrSinConfirmacion: r.auto, modoDeCobro: r.modo, margenMinimo: Number(r.margen), descuentoMaxPct: Number(r.dMax), propinaMaxPct: Number(r.pMax),
+        ultimoCambioTopes: f ? { cuando: f.created_at, por: f.full_name, motivo: f.after?.motivo ?? null, antes: f.before } : null };
     });
   }
 
-  cambiarAjustes(t: Tenant, userId: string, d: z.infer<typeof AjustesSucursal>) {
+  /** Topes vigentes para la pantalla de cobro (los lee cualquiera que pueda cobrar; el servidor los vuelve a aplicar al cobrar). */
+  topesDeCobro(t: Tenant) {
     return this.db.run(t, async (tx) => {
-      const cambios = { ...(d.pedidosPorQr !== undefined && { qrOrderingEnabled: d.pedidosPorQr }), ...(d.qrSinConfirmacion !== undefined && { qrAutoSend: d.qrSinConfirmacion }), ...(d.modoDeCobro !== undefined && { billingMode: d.modoDeCobro }), ...(d.margenMinimo !== undefined && { minMarginPct: d.margenMinimo.toFixed(2) }) };
+      const [r] = await tx.select({ dMax: restaurants.discountMaxPct, pMax: restaurants.tipMaxPct }).from(restaurants).where(eq(restaurants.id, t.restaurantId));
+      return { descuentoMaxPct: Number(r.dMax), propinaMaxPct: Number(r.pMax) };
+    });
+  }
+
+  cambiarAjustes(t: Tenant, userId: string, d0: z.infer<typeof AjustesSucursal>) {
+    return this.db.run(t, async (tx) => {
+      const { motivoCambioTopes, ...d } = d0;
+      const cambiaTopes = d.descuentoMaxPct !== undefined || d.propinaMaxPct !== undefined;
+      let antesTopes: { descuentoMaxPct: number; propinaMaxPct: number } | null = null;
+      if (cambiaTopes) {
+        const [a] = await tx.select({ dMax: restaurants.discountMaxPct, pMax: restaurants.tipMaxPct }).from(restaurants).where(eq(restaurants.id, t.restaurantId)).for('update');
+        antesTopes = { descuentoMaxPct: Number(a.dMax), propinaMaxPct: Number(a.pMax) };
+        const sube = (d.descuentoMaxPct ?? antesTopes.descuentoMaxPct) > antesTopes.descuentoMaxPct || (d.propinaMaxPct ?? antesTopes.propinaMaxPct) > antesTopes.propinaMaxPct;
+        if (sube && !motivoCambioTopes) throw new BadRequestException('Para subir un tope escribe el motivo: queda registrado con tu nombre.');
+      }
+      const cambios = { ...(d.descuentoMaxPct !== undefined && { discountMaxPct: d.descuentoMaxPct.toFixed(2) }), ...(d.propinaMaxPct !== undefined && { tipMaxPct: d.propinaMaxPct.toFixed(2) }), ...(d.pedidosPorQr !== undefined && { qrOrderingEnabled: d.pedidosPorQr }), ...(d.qrSinConfirmacion !== undefined && { qrAutoSend: d.qrSinConfirmacion }), ...(d.modoDeCobro !== undefined && { billingMode: d.modoDeCobro }), ...(d.margenMinimo !== undefined && { minMarginPct: d.margenMinimo.toFixed(2) }) };
       if (!Object.keys(cambios).length) throw new BadRequestException('Nada que cambiar.');
       await tx.update(restaurants).set(cambios).where(eq(restaurants.id, t.restaurantId));
       await auditar(tx, t.restaurantId, userId, 'sucursal.ajustes', 'restaurant', t.restaurantId, d);
+      if (cambiaTopes) {
+        const despues = { descuentoMaxPct: d.descuentoMaxPct ?? antesTopes!.descuentoMaxPct, propinaMaxPct: d.propinaMaxPct ?? antesTopes!.propinaMaxPct, motivo: motivoCambioTopes ?? null };
+        await tx.execute(sql`INSERT INTO audit_log (restaurant_id, user_id, action, entity, entity_id, before, after) VALUES (${t.restaurantId}, ${userId}::uuid, 'sucursal.topes_cobro', 'restaurant', ${t.restaurantId}, ${JSON.stringify(antesTopes)}::jsonb, ${JSON.stringify(despues)}::jsonb)`);
+      }
       return { ok: true };
     });
   }

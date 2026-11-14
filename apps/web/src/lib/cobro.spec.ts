@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aCentavos, calcularCobro, deCentavos } from './cobro';
+import { aCentavos, calcularCobro, deCentavos, leerPorcentaje, pctTxt, topeEnCentavos } from './cobro';
 
 const base = { subtotal: 21800, descuento: '', motivo: '', propina: '', metodo: 'efectivo', recibido: '' };
 describe('cobro en centavos (GST-004)', () => {
@@ -27,5 +27,28 @@ describe('cobro en centavos (GST-004)', () => {
     expect(calcularCobro({ ...base, propina: '65,40' }).error).toBeNull();
     expect(calcularCobro({ ...base, propina: '65,41' }).error).toMatch(/30 %/);
     expect(calcularCobro({ ...base, metodo: 'credito', propina: '5' }).error).toMatch(/crédito/);
+  });
+  it('GST-010: topes configurables, 20000 casos contra BigInt', () => {
+    let seed = 4242; const rnd = (n: number) => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed % n; };
+    const pcts = [0, 0.01, 5, 12.5, 29.99, 30, 33.33, 99.99, 100];
+    for (let i = 0; i < 20000; i++) {
+      const dp = pcts[rnd(pcts.length)]; const pp = pcts[rnd(pcts.length)]; const sub = 1 + rnd(5_000_000);
+      const tD = Number((BigInt(sub) * BigInt(Math.round(dp * 100))) / 10000n);
+      expect(topeEnCentavos(sub, dp)).toBe(tD);
+      const d = rnd(tD + 1); const total = sub - d; if (total <= 0) continue;
+      const tP = Number((BigInt(total) * BigInt(Math.round(pp * 100))) / 10000n); const p = rnd(tP + 1);
+      const r = calcularCobro({ subtotal: sub, descuento: deCentavos(d), motivo: 'motivo', propina: deCentavos(p), metodo: 'tarjeta', recibido: '', topes: { descuentoPct: dp, propinaPct: pp } });
+      expect(r).toMatchObject({ total, aCobrar: total + p, error: null });
+      if (tD + 1 <= sub) expect(calcularCobro({ subtotal: sub, descuento: deCentavos(tD + 1), motivo: 'motivo', propina: '', metodo: 'tarjeta', recibido: '', topes: { descuentoPct: dp, propinaPct: pp } }).error).toMatch(/descuento/i);
+    }
+  });
+  it('GST-010: mensajes con el tope configurado y lector de porcentajes', () => {
+    const t = { descuentoPct: 12.5, propinaPct: 0 };
+    expect(calcularCobro({ ...base, descuento: '27,26', motivo: 'Cortesía', topes: t }).error).toMatch(/12,5 %/);
+    expect(calcularCobro({ ...base, descuento: '27,25', motivo: 'Cortesía', topes: t }).error).toBeNull();
+    expect(calcularCobro({ ...base, propina: '0,01', topes: t }).error).toMatch(/0 %/);
+    expect(['30', '12,5', '12.50', '0', '100', '100,00', ' 7 '].map(leerPorcentaje)).toEqual([30, 12.5, 12.5, 0, 100, 100, 7]);
+    expect(['100,01', '101', '-1', '12,345', 'abc', '', '1e2'].map(leerPorcentaje)).toEqual([null, null, null, null, null, null, null]);
+    expect(pctTxt(30)).toBe('30'); expect(pctTxt(12.5)).toBe('12,5');
   });
 });
