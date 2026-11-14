@@ -3,7 +3,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
-import { bs, ETIQUETA_ESTADO, ETIQUETA_TIPO, minutosDesde, Pedido } from '../lib/tipos';
+import { bs, ETIQUETA_ESTADO, ETIQUETA_TIPO, minutosDesde, haceCuanto, Pedido } from '../lib/tipos';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Mesa { id: string; numero: string; asientos: number; activa: boolean }
@@ -41,7 +41,7 @@ export function Pedidos() {
             return (
               <li key={p.id}><button type="button" onClick={() => setAbierto(p.id)} className={`w-full text-left bg-surface-container-lowest border-2 rounded-xl p-space-md flex flex-col gap-space-xs ${pendientes ? 'border-secondary-container' : 'border-outline-variant'} hover:border-primary`}>
                 <div className="flex items-center justify-between"><span className="font-headline-sm text-headline-sm text-primary">{p.tipo === 'mesa' ? `Mesa ${p.mesa}` : `${ETIQUETA_TIPO[p.tipo]} #${p.ticket}`}</span><Chip estado={p.estado} /></div>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">{p.items.filter((i) => !i.anulado).length} platos · hace {minutosDesde(p.abierto)} min{p.mesero ? ` · ${p.mesero}` : ''}{p.cliente ? ` · ${p.cliente}` : ''}</p>
+                <p className="font-body-sm text-body-sm text-on-surface-variant">{p.items.filter((i) => !i.anulado).length} platos · {haceCuanto(minutosDesde(p.abierto))}{p.mesero ? ` · ${p.mesero}` : ''}{p.cliente ? ` · ${p.cliente}` : ''}</p>
                 {pendientes > 0 && <p className="font-body-sm font-semibold text-on-secondary-fixed-variant flex items-center gap-1"><span className="material-symbols-outlined text-[18px]" aria-hidden="true">qr_code_2</span>{pendientes} por confirmar (pedido del cliente)</p>}
                 <p className="font-label-lg text-label-lg text-primary mt-space-xs">{bs(p.total)}</p>
               </button></li>

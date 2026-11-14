@@ -6,7 +6,7 @@ import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs, CajaEstado, Recibo } from '../lib/tipos';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
 
-const METODO: Record<string, string> = { efectivo: 'Efectivo', qr: 'QR', tarjeta: 'Tarjeta', transferencia: 'Transferencia', credito: 'Crédito' };
+const METODO: Record<string, string> = { efectivo: 'Efectivo', qr: 'QR', tarjeta: 'Tarjeta', transferencia: 'Transferencia', credito: 'Crédito', cuentas_por_cobrar: 'Cobros de cuentas por cobrar (efectivo)' };
 const num = (v: FormDataEntryValue | null) => Number(String(v ?? '').replace(',', '.'));
 
 /** Caja: apertura, cobros del turno por método y cierre con arqueo (el cobro se hace desde el pedido). */
@@ -46,7 +46,7 @@ export function Caja() {
       ) : (
         <>
           <section className="grid grid-cols-1 gap-gutter sm:grid-cols-2">
-            <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md"><p className={clases.etiqueta}>Efectivo esperado</p><p className="font-headline-lg text-headline-lg text-primary font-label-lg">{bs(c.efectivoEsperado!)}</p><p className="font-body-sm text-on-surface-variant">Apertura {bs(c.montoInicial!)} + cobros en efectivo</p></div>
+            <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md"><p className={clases.etiqueta}>Efectivo esperado</p><p className="font-headline-lg text-headline-lg text-primary font-label-lg">{bs(c.efectivoEsperado!)}</p><p className="font-body-sm text-on-surface-variant">Apertura {bs(c.montoInicial!)} + cobros en efectivo (ventas y cuentas por cobrar)</p></div>
             <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md"><p className={clases.etiqueta}>Cobros del turno</p>
               {(c.cobros ?? []).length === 0 ? <p className="text-on-surface-variant">Sin cobros todavía.</p> : <ul className="mt-space-xs flex flex-col gap-1">{c.cobros!.map((x) => <li key={x.metodo} className="flex justify-between"><span>{METODO[x.metodo] ?? x.metodo} <span className="text-on-surface-variant">({x.cantidad})</span></span><span className="font-label-lg">{bs(x.total)}</span></li>)}</ul>}
             </div>

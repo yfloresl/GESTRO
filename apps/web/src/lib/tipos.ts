@@ -24,3 +24,9 @@ export const ETIQUETA_ESTADO: Record<string, string> = {
 };
 /** Minutos transcurridos desde una fecha ISO. */
 export const minutosDesde = (iso: string | null) => (iso ? Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000)) : 0);
+/** Antigüedad legible: «hace 5 min», «hace 3 h 20 min», «hace 2 días». Evita cifras como «18970 min». */
+export const haceCuanto = (min: number): string => {
+  if (min < 60) return `hace ${min} min`;
+  if (min < 24 * 60) { const h = Math.floor(min / 60); const m = min % 60; return `hace ${h} h${m ? ` ${m} min` : ''}`; }
+  const d = Math.floor(min / (24 * 60)); return `hace ${d} ${d === 1 ? 'día' : 'días'}`;
+};

@@ -33,6 +33,9 @@ export class CobranzasService {
       const monto = d.monto !== undefined ? d.monto.toFixed(2) : c.saldo;
       if (Number(monto) > Number(c.saldo)) throw new BadRequestException(`El cobro supera el saldo (Bs ${c.saldo}).`);
       const r = (await tx.execute(sql`UPDATE payables_receivables SET paid = paid + ${monto}::numeric, paid_by = ${por}::uuid, paid_at = CASE WHEN paid + ${monto}::numeric >= amount THEN now() ELSE paid_at END WHERE id = ${id} RETURNING (amount - paid)::text AS saldo`)).rows[0] as { saldo: string };
+      // El efectivo cobrado entra a la caja abierta del cajero (si tiene una); así el arqueo de cierre cuadra.
+      const caja = d.via === 'caja' ? (await tx.execute(sql`SELECT id FROM cash_sessions WHERE restaurant_id = ${t.restaurantId} AND cashier_id = ${por}::uuid AND closed_at IS NULL LIMIT 1`)).rows[0] as { id: string } | undefined : undefined;
+      await tx.execute(sql`INSERT INTO receivable_collections (restaurant_id, receivable_id, cash_session_id, amount, via, collected_by) VALUES (${t.restaurantId}, ${id}::uuid, ${caja?.id ?? null}::uuid, ${monto}::numeric, ${d.via}, ${por}::uuid)`);
       await this.conta.cobroDeCuenta(tx, t, por, monto, d.via);
       await auditar(tx, t.restaurantId, por, 'cobranzas.cobro', 'receivable', id, { monto, via: d.via, saldo: r.saldo });
       return { ok: true, saldo: r.saldo };

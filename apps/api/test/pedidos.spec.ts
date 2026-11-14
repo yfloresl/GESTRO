@@ -280,6 +280,22 @@ describe('Caja, cobro y recibos', () => {
     expect((await e.cajero.api.post('/caja/cerrar', { montoContado: 0 })).status).toBe(409);
   });
 
+  it('GST-001: el efectivo cobrado a un cliente de crédito entra al arqueo de la caja abierta; lo cobrado por banco no', async () => {
+    const e = await escenario();
+    await e.cajero.api.post('/caja/abrir', { montoInicial: 100 });
+    const id = await pedidoListoParaCobrar(e);                                                    // 163,00
+    expect((await e.cajero.api.post(`/pedidos/${id}/cobrar`, { metodo: 'credito', documento: 'recibo', nombreCliente: 'QA Cliente Crédito', diasCredito: 15 })).status).toBe(200);
+    expect((await e.cajero.api.get('/caja/actual')).body.efectivoEsperado).toBe('100.00');       // la venta a crédito no es efectivo
+    const cuenta = (await e.cajero.api.get('/por-cobrar')).body[0];
+    expect((await e.cajero.api.post(`/por-cobrar/${cuenta.id}/cobrar`, { monto: 30.25 })).status).toBe(200);                  // efectivo
+    expect((await e.cajero.api.post(`/por-cobrar/${cuenta.id}/cobrar`, { monto: 10, via: 'bancos' })).status).toBe(200);     // banco: no es efectivo
+    const caja = (await e.cajero.api.get('/caja/actual')).body;
+    expect(caja.efectivoEsperado).toBe('130.25');
+    expect(caja.cobros).toContainEqual({ metodo: 'cuentas_por_cobrar', total: '30.25', cantidad: 1 });
+    const cierre = await e.cajero.api.post('/caja/cerrar', { montoContado: 130.25 });
+    expect(cierre.body).toMatchObject({ efectivoEsperado: '130.25', diferencia: '0.00' });
+  });
+
   it('el RLS aísla pagos y recibos entre sucursales', async () => {
     const a = await escenario(); const b = await escenario();
     await a.cajero.api.post('/caja/abrir', { montoInicial: 0 });

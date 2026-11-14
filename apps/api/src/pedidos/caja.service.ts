@@ -37,13 +37,17 @@ export class CajaService {
     return c ?? null;
   }
 
-  /** Cobros no anulados de una caja, por método. El efectivo esperado es la apertura más lo cobrado en efectivo. */
+  /** Cobros no anulados de una caja, por método. El efectivo esperado es la apertura más lo cobrado en efectivo (ventas y cuentas por cobrar). */
   private async resumen(tx: Bd, c: typeof cashSessions.$inferSelect) {
     const r = await tx.execute(sql`SELECT method, COALESCE(SUM(amount), 0)::text AS total, count(*)::int AS n FROM sales_payments WHERE cash_session_id = ${c.id} AND voided_at IS NULL GROUP BY method`);
     const filas = r.rows as { method: string; total: string; n: number }[];
     const efectivo = filas.find((f) => f.method === 'efectivo')?.total ?? '0';
-    const esp = await tx.execute(sql`SELECT (${c.openingAmount}::numeric + ${efectivo}::numeric)::text AS esperado`);
-    return { activa: true as const, id: c.id, desde: c.openedAt.toISOString(), montoInicial: c.openingAmount, cobros: filas.map((f) => ({ metodo: f.method, total: f.total, cantidad: f.n })), efectivoEsperado: (esp.rows[0] as { esperado: string }).esperado };
+    // Efectivo cobrado a clientes de crédito (cuentas por cobrar) durante este turno: también entra a la caja física.
+    const cc = (await tx.execute(sql`SELECT COALESCE(SUM(amount), 0)::text AS total, count(*)::int AS n FROM receivable_collections WHERE cash_session_id = ${c.id} AND via = 'caja'`)).rows[0] as { total: string; n: number };
+    const esp = await tx.execute(sql`SELECT (${c.openingAmount}::numeric + ${efectivo}::numeric + ${cc.total}::numeric)::text AS esperado`);
+    const cobros = filas.map((f) => ({ metodo: f.method, total: f.total, cantidad: f.n }));
+    if (cc.n > 0) cobros.push({ metodo: 'cuentas_por_cobrar', total: cc.total, cantidad: cc.n });
+    return { activa: true as const, id: c.id, desde: c.openedAt.toISOString(), montoInicial: c.openingAmount, cobros, efectivoEsperado: (esp.rows[0] as { esperado: string }).esperado };
   }
 
   actual(t: Tenant, userId: string) {
