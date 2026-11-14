@@ -4,6 +4,15 @@ import { Cargando, clases, Marca, TarjetaCentrada } from '../componentes/Marca';
 import { completarIngreso, iniciarIngreso } from '../lib/kyrosid';
 import { api, useSesion } from '../lib/sesion';
 
+/** Texto para quien no pudo entrar. Antes un rechazo 401 mostraba «HTTP 401» (GST-R01): no dice qué pasó ni qué hacer. */
+export function mensajeDeIngreso(estado: number | undefined, mensaje: string | undefined): string {
+  if (estado === 403) return 'Tu cuenta está desactivada. Habla con el administrador de tu restaurante.';
+  if (estado === 503) return 'Kyros ID no responde. Inténtalo en un momento.';
+  if (estado === 401) return 'Esta cuenta no puede entrar a GESTRO. Si es la primera vez, vuelve al inicio y elige «Crear mi cuenta» (o pide una invitación al administrador de tu restaurante); si es una cuenta de prueba, usa una cuenta con acceso.';
+  if (estado === 429) return 'Hiciste demasiados intentos. Espera un minuto y vuelve a intentarlo.';
+  return mensaje && !/^HTTP \d+$/.test(mensaje) ? mensaje : 'No pudimos completar el ingreso. Vuelve a intentarlo.';
+}
+
 /** Vuelta de Kyros ID: canjea el código, entrega el token de acceso a la API y abre la sesión de GESTRO. */
 export function Callback() {
   const nav = useNavigate();
@@ -31,7 +40,7 @@ export function Callback() {
           setError('No pudimos confirmar tu identidad como administrador de plataforma. Vuelve a intentarlo.'); return;
         }
         const estado = (e as { status?: number }).status;
-        setError(estado === 403 ? 'Tu cuenta está desactivada. Habla con el administrador de tu restaurante.' : estado === 503 ? 'Kyros ID no responde. Inténtalo en un momento.' : (e as Error).message || 'No pudimos completar el ingreso.');
+        setError(mensajeDeIngreso(estado, (e as Error).message));
       }
     })();
   }, [ingresar, nav]);
