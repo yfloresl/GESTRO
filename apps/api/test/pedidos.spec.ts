@@ -296,6 +296,57 @@ describe('Caja, cobro y recibos', () => {
     expect(cierre.body).toMatchObject({ efectivoEsperado: '130.25', diferencia: '0.00' });
   });
 
+  it('GST-004/005: cantidad +/-, descuento con motivo y tope, propina, efectivo recibido y vuelto; la propina entra al cajón y al asiento como pasivo', async () => {
+    const e = await escenario();
+    await e.cajero.api.post('/caja/abrir', { montoInicial: 100 });
+    const id = await pedidoListoParaCobrar(e);                                                      // 163,00
+    const total = Number((await e.cajero.api.get(`/pedidos/${id}`)).body.total);
+    expect(total).toBe(163);
+    // sin motivo, sobre el tope (30 % = 48,90), efectivo corto: 400
+    expect((await e.cajero.api.post(`/pedidos/${id}/cobrar`, { metodo: 'efectivo', descuento: 10 })).status).toBe(400);
+    expect((await e.cajero.api.post(`/pedidos/${id}/cobrar`, { metodo: 'efectivo', descuento: 48.91, motivoDescuento: 'Cortesía' })).status).toBe(400);
+    expect((await e.cajero.api.post(`/pedidos/${id}/cobrar`, { metodo: 'efectivo', descuento: 13, motivoDescuento: 'Cortesía', propina: 5, efectivoRecibido: 154.99 })).status).toBe(400);
+    // 163 − 13 = 150 + propina 5 = 155; recibe 200 → vuelto 45
+    const ok = await e.cajero.api.post(`/pedidos/${id}/cobrar`, { metodo: 'efectivo', documento: 'recibo', descuento: 13, motivoDescuento: 'Cortesía', propina: 5, efectivoRecibido: 200 });
+    expect(ok.status).toBe(200);
+    expect(ok.body).toMatchObject({ monto: '150.00', descuento: '13.00', propina: '5.00', aCobrar: '155.00', recibido: '200.00', vuelto: '45.00' });
+    const caja = (await e.cajero.api.get('/caja/actual')).body;
+    expect(caja.efectivoEsperado).toBe('255.00');                                                   // 100 + 150 + 5 de propina
+    expect(caja.propinas).toBe('5.00');
+    const rec = (await e.cajero.api.get(`/pedidos/${id}/recibo`)).body.id;
+    expect((await e.cajero.api.get(`/recibos/${rec}`)).body).toMatchObject({ monto: '150.00', propina: '5.00', descuento: '13.00', recibido: '200.00', vuelto: '45.00' });
+    const asiento = await t.owner.query(`SELECT a.system_key, l.debit::text AS d, l.credit::text AS c FROM journal_lines l JOIN chart_of_accounts a ON a.id = l.account_id JOIN journal_entries j ON j.id = l.entry_id WHERE j.restaurant_id = $1 AND j.source = 'venta'`, [e.d.rid]);
+    expect(asiento.rows).toContainEqual({ system_key: 'caja', d: '155.00', c: '0.00' });
+    expect(asiento.rows).toContainEqual({ system_key: 'ventas', d: '0.00', c: '150.00' });
+    expect(asiento.rows).toContainEqual({ system_key: 'propinas', d: '0.00', c: '5.00' });
+    const cierre = await e.cajero.api.post('/caja/cerrar', { montoContado: 255 });
+    expect(cierre.body).toMatchObject({ efectivoEsperado: '255.00', diferencia: '0.00' });
+  });
+
+  it('GST-005: cambiar la cantidad de un plato sin enviar recalcula el total; uno ya enviado no se puede cambiar', async () => {
+    const e = await escenario();
+    const p = await pedidoDeMesa(e);
+    const v = await e.mesero.api.post(`/pedidos/${p.id}/items`, { items: [{ platoId: e.pique, cantidad: 1 }] });
+    const item = v.body.items[0].id as string;
+    const m = await e.mesero.api.patch(`/items/${item}/cantidad`, { cantidad: 3 });
+    expect(m.status).toBe(200); expect(m.body.total).toBe('196.50');                                // 3 × 65,50
+    expect((await e.mesero.api.patch(`/items/${item}/cantidad`, { cantidad: 0 })).status).toBe(400);
+    await e.mesero.api.post(`/pedidos/${p.id}/enviar`);
+    expect((await e.mesero.api.patch(`/items/${item}/cantidad`, { cantidad: 2 })).status).toBe(409);
+  });
+
+  it('«nada se borra»: al quitar un plato sin enviar y al borrar un plato del menú queda la copia en archived_records', async () => {
+    const e = await escenario();
+    const p = await pedidoDeMesa(e);
+    const item = (await e.mesero.api.post(`/pedidos/${p.id}/items`, { items: [{ platoId: e.sopa, cantidad: 2 }] })).body.items[0].id as string;
+    expect((await e.mesero.api.del(`/items/${item}`)).status).toBeLessThan(300);
+    const nuevo = (await e.dueno.post('/menu/platos', { nombre: 'Plato a borrar', precio: 10 })).body.id as string;
+    expect((await e.dueno.del(`/menu/platos/${nuevo}`)).status).toBeLessThan(300);
+    const r = await t.owner.query(`SELECT entity, snapshot->>'name' AS nombre, deleted_by FROM archived_records WHERE restaurant_id = $1 ORDER BY entity`, [e.d.rid]);
+    expect(r.rows.map((x: { entity: string }) => x.entity)).toEqual(['menu_items', 'order_items']);
+    expect(r.rows[0].nombre).toBe('Plato a borrar'); expect(r.rows[0].deleted_by).toBeTruthy();
+  });
+
   it('el RLS aísla pagos y recibos entre sucursales', async () => {
     const a = await escenario(); const b = await escenario();
     await a.cajero.api.post('/caja/abrir', { montoInicial: 0 });

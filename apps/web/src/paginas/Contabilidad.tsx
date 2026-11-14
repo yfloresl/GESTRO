@@ -1,3 +1,4 @@
+import { confirmar, pedirTexto } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
 import { clases } from '../componentes/Marca';
@@ -17,7 +18,7 @@ type Pestana = 'resumen' | 'asientos' | 'cuentas' | 'reportes' | 'periodos';
 const ORIGEN: Record<string, string> = { manual: 'Manual', venta: 'Venta', costo_consumo: 'Costo de ventas', compra: 'Compra', compra_directa: 'Compra al contado', pago_proveedor: 'Pago a proveedor', cobro_cuenta: 'Cobro de cuenta', evento_pago: 'Cobro de evento', evento_cierre: 'Evento realizado', costo_evento: 'Costo de evento', merma: 'Merma', ajuste_inventario: 'Ajuste de inventario' };
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const num = (v: FormDataEntryValue | string | null) => Number(String(v ?? '').replace(',', '.'));
-const hoy = () => new Date().toISOString().slice(0, 10);
+const hoy = () => new Date(Date.now() - 4 * 3_600_000).toISOString().slice(0, 10); // hora de Bolivia (UTC-4), no UTC
 const primeroDelMes = () => `${hoy().slice(0, 8)}01`;
 const refrescarTodo = (qc: ReturnType<typeof useQueryClient>) => qc.invalidateQueries({ queryKey: ['conta'] });
 
@@ -106,7 +107,7 @@ function DetalleAsiento({ id, cerrar, hecho }: { id: string; cerrar(): void; hec
   const lista = useQuery({ queryKey: ['conta', 'asientos', sucursalId, ''], queryFn: () => api.get<Fila[]>('/contabilidad/asientos', sucursalId!), enabled: !!sucursalId });
   const a = q.data; const fila = lista.data?.find((x) => x.id === id);
   const accion = async (f: () => Promise<unknown>, cierra = true) => { setError(null); try { await f(); hecho(); if (cierra) cerrar(); } catch (e) { setError(mensajeDeError(e)); } };
-  const contrarrestar = () => { const motivo = prompt('Motivo de la anulación (opcional)') ?? undefined; if (motivo === null) return; void accion(() => api.post(`/contabilidad/asientos/${id}/contrarrestar`, motivo ? { motivo } : {}, sucursalId!)); };
+  const contrarrestar = async () => { const motivo = await pedirTexto({ titulo: 'Anular asiento', mensaje: 'Se registrará un asiento que lo contrarresta.', etiqueta: 'Motivo de la anulación (opcional)', obligatorio: false, aceptar: 'Anular' }); if (motivo === null) return; void accion(() => api.post(`/contabilidad/asientos/${id}/contrarrestar`, motivo ? { motivo } : {}, sucursalId!)); };
   return (
     <div role="dialog" aria-modal="true" aria-label="Asiento" className="fixed inset-0 z-[60] flex justify-end bg-inverse-surface/40" onClick={cerrar}>
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-xl bg-surface h-full overflow-y-auto p-space-md flex flex-col gap-space-md">
@@ -229,7 +230,7 @@ function Periodos() {
       <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-wrap items-end gap-space-sm"><h2 className="font-headline-sm text-headline-sm w-full">Cerrar un período</h2>
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Mes</span><select value={mes} onChange={(e) => setMes(Number(e.target.value))} className={clases.input}>{MESES.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}</select></label>
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Año</span><input type="number" value={anio} min={2000} max={2100} onChange={(e) => setAnio(Number(e.target.value))} className={clases.input} /></label>
-        <button type="button" onClick={() => { if (confirm(`¿Cerrar ${MESES[mes - 1]} de ${anio}? No se podrán registrar asientos en ese mes.`)) void accion(() => api.post('/contabilidad/periodos/cerrar', { anio, mes }, sucursalId!)); }} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold">Cerrar período</button></div>
+        <button type="button" onClick={async () => { if (await confirmar({ titulo: 'Cerrar período', mensaje: `¿Cerrar ${MESES[mes - 1]} de ${anio}? No se podrán registrar asientos en ese mes.`, aceptar: 'Cerrar período' })) void accion(() => api.post('/contabilidad/periodos/cerrar', { anio, mes }, sucursalId!)); }} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold">Cerrar período</button></div>
       <ul className="flex flex-col gap-space-xs">{(q.data ?? []).map((p) => <li key={`${p.anio}-${p.mes}`} className="flex items-center justify-between gap-space-sm rounded-xl bg-surface-container-lowest border border-outline-variant p-space-sm px-space-md"><span className="font-semibold capitalize">{MESES[p.mes - 1]} {p.anio} <span className="font-body-sm font-normal text-on-surface-variant">· {p.asientos} asiento(s) · {p.cerrado ? 'cerrado' : 'abierto'}</span></span>
         {p.cerrado && esDueno && <button type="button" onClick={() => accion(() => api.post('/contabilidad/periodos/reabrir', { anio: p.anio, mes: p.mes }, sucursalId!))} className="h-12 px-space-sm rounded-lg border border-outline-variant font-label-md">Reabrir</button>}</li>)}</ul>
       {(esAdmin || tasas.data) && tasas.data && <form onSubmit={guardarTasas} className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md grid grid-cols-2 gap-space-sm items-end" key={`${tasas.data.iva}-${tasas.data.it}`}><h2 className="font-headline-sm text-headline-sm col-span-2">Tasas de impuestos (parámetros de la sucursal)</h2>

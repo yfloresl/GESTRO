@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Inject, Injectable, NotFoundExc
 import { randomUUID } from 'node:crypto';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { auditar, esDuplicado } from '../comun/auditoria';
+import { archivar, auditar, esDuplicado } from '../comun/auditoria';
 import { Bd, Tenant, TenantDb } from '../database/database.module';
 import { ContabilidadService } from '../contabilidad/contabilidad.service';
 import { ingredients, warehouses } from '../database/esquema';
@@ -108,6 +108,7 @@ export class InventarioService {
     return this.db.run(t, async (tx) => {
       const uso = await tx.execute(sql`SELECT (EXISTS (SELECT 1 FROM stock_movements WHERE ingredient_id = ${id}) OR EXISTS (SELECT 1 FROM recipe_lines WHERE ingredient_id = ${id})) AS usado`);
       if ((uso.rows[0] as { usado: boolean }).usado) throw new ConflictException('Este insumo ya tiene historial o está en una receta: desactívalo en vez de borrarlo.');
+      await archivar(tx, t.restaurantId, por, 'ingredients', id);
       const r = await tx.delete(ingredients).where(and(eq(ingredients.id, id), eq(ingredients.restaurantId, t.restaurantId))).returning({ id: ingredients.id });
       if (!r.length) throw new NotFoundException('Insumo no encontrado.');
       await auditar(tx, t.restaurantId, por, 'inventario.insumo_borrado', 'ingredient', id);

@@ -1,3 +1,4 @@
+import { confirmar as confirmarAccion } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
@@ -38,7 +39,7 @@ export function PlataformaIntegraciones() {
           <p className="font-body-sm text-on-surface-variant">{s.nombre}. {s.uso}</p>
           <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Pegar el valor (solo escritura)</span><input name="valor" type="password" autoComplete="off" required minLength={16} maxLength={512} className={clases.input} /></label>
           <div className="flex flex-wrap gap-space-sm"><button disabled={ocupado} className={`${clases.primario} sm:w-auto sm:px-space-lg`}>{s.estado === 'configurada' ? 'Reemplazar' : 'Guardar'}</button>
-            {s.estado === 'configurada' && <button type="button" disabled={ocupado} onClick={() => confirm(`¿Deshabilitar ${s.clave}? Las llamadas que la usen dejarán de funcionar.`) && void accion(() => api.del(`/plataforma/secretos/${s.clave}`), 'Deshabilitado.')} className={`${clases.secundario} sm:w-auto sm:px-space-lg`}>Deshabilitar</button>}</div>
+            {s.estado === 'configurada' && <button type="button" disabled={ocupado} onClick={async () => (await confirmarAccion({ titulo: 'Deshabilitar', mensaje: `¿Deshabilitar ${s.clave}? Las llamadas que la usen dejarán de funcionar.`, aceptar: 'Deshabilitar', peligro: true })) && void accion(() => api.del(`/plataforma/secretos/${s.clave}`), 'Deshabilitado.')} className={`${clases.secundario} sm:w-auto sm:px-space-lg`}>Deshabilitar</button>}</div>
         </form>))}
     </section>
   );

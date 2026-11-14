@@ -2,7 +2,7 @@ import { PromocionesService } from '../promociones/promociones.service';
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { auditar } from '../comun/auditoria';
+import { archivar, auditar } from '../comun/auditoria';
 import { BD, Bd, Tenant, TenantDb } from '../database/database.module';
 import { menuCategories, menuItems, restaurants } from '../database/esquema';
 import { StorageService } from '../storage/storage.service';
@@ -63,6 +63,7 @@ export class MenuService {
     return this.db.run(t, async (tx) => {
       const en = await tx.select({ id: menuItems.id }).from(menuItems).where(and(eq(menuItems.categoryId, id), eq(menuItems.restaurantId, t.restaurantId))).limit(1);
       if (en.length) throw new BadRequestException('La categoría tiene platos: muévelos o bórralos primero.');
+      await archivar(tx, t.restaurantId, por, 'menu_categories', id);
       await tx.delete(menuCategories).where(and(eq(menuCategories.id, id), eq(menuCategories.restaurantId, t.restaurantId)));
       await auditar(tx, t.restaurantId, por, 'menu.categoria_borrada', 'menu_category', id);
       return { ok: true };
@@ -117,6 +118,7 @@ export class MenuService {
     return this.db.run(t, async (tx) => {
       const usado = await tx.execute(sql`SELECT 1 FROM order_items WHERE menu_item_id = ${id} LIMIT 1`);
       if (usado.rows.length) throw new ConflictException('Este plato ya tiene pedidos: márcalo como agotado en vez de borrarlo.');
+      await archivar(tx, t.restaurantId, por, 'menu_items', id);
       const [i] = await tx.delete(menuItems).where(and(eq(menuItems.id, id), eq(menuItems.restaurantId, t.restaurantId))).returning({ foto: menuItems.photoKey });
       if (!i) throw new NotFoundException('Plato no encontrado.');
       if (i.foto) await this.storage.borrar(i.foto);

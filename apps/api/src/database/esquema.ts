@@ -20,6 +20,7 @@ export const restaurants = pgTable('restaurants', {
   qrAutoSend: boolean('qr_auto_send').notNull().default(false),
   minMarginPct: numeric('min_margin_pct', { precision: 5, scale: 2 }).notNull().default('60'),
   paidUntil: text('paid_until'),
+  billingAnchorDay: smallint('billing_anchor_day'),
   planId: uuid('plan_id'),
   demoWritable: boolean('demo_writable').notNull().default(true),
   status: text('status').notNull().default('activo'),
@@ -189,6 +190,7 @@ export const orders = pgTable('orders', {
   customerComment: text('customer_comment'),
   subtotal: numeric('subtotal', { precision: 12, scale: 2 }).notNull().default('0'),
   discount: numeric('discount', { precision: 12, scale: 2 }).notNull().default('0'),
+  discountReason: text('discount_reason'),
   total: numeric('total', { precision: 12, scale: 2 }).notNull().default('0'),
   openedAt: timestamp('opened_at', { withTimezone: true }).notNull().defaultNow(),
   sentAt: timestamp('sent_at', { withTimezone: true }),
@@ -248,6 +250,10 @@ export const salesPayments = pgTable('sales_payments', {
   voidedAt: timestamp('voided_at', { withTimezone: true }),
   voidedBy: uuid('voided_by'),
   voidReason: text('void_reason'),
+  tipAmount: numeric('tip_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+  discountAmount: numeric('discount_amount', { precision: 12, scale: 2 }).notNull().default('0'),
+  cashReceived: numeric('cash_received', { precision: 12, scale: 2 }),
+  changeGiven: numeric('change_given', { precision: 12, scale: 2 }),
 });
 
 export const receipts = pgTable('receipts', {

@@ -1,3 +1,4 @@
+import { confirmar } from './Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -20,7 +21,7 @@ export function BannerMuestra() {
   if (!info.data?.demo) return null;
   const esDueno = !!sesion?.sucursales.find((s) => s.id === sucursalId)?.roles.includes('owner');
   const restablecer = async () => {
-    if (!confirm('Se borrarán los datos de muestra y se cargarán de nuevo. ¿Continuar?')) return;
+    if (!(await confirmar({ titulo: 'Restablecer datos de muestra', mensaje: 'Se borrarán los datos de muestra y se cargarán de nuevo. ¿Continuar?', aceptar: 'Restablecer', peligro: true }))) return;
     setError(null); setOk(false); setOcupado(true);
     try { await api.post('/demo/restablecer', undefined, sucursalId!); setOk(true); await qc.invalidateQueries(); } catch (e) { setError(mensajeDeError(e)); } finally { setOcupado(false); }
   };

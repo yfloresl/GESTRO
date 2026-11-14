@@ -5,6 +5,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { GRUPOS, Shell, visible } from './componentes/Shell';
 import { Cargando } from './componentes/Marca';
 import { LegalProvider } from './componentes/ModalLegal';
+import { DialogosProvider } from './componentes/Dialogos';
 import { AvisosProvider } from './lib/avisos';
 import { SesionProvider } from './lib/sesion';
 const Cliente = lazy(() => import('./paginas/Cliente').then((m) => ({ default: m.Cliente })));
@@ -76,6 +77,7 @@ createRoot(document.getElementById('raiz')!).render(
         <AvisosProvider>
         <BrowserRouter>
           <LegalProvider>
+            <DialogosProvider />
           <Suspense fallback={<Cargando />}>
           <Routes>
             <Route path="/" element={<Portada />} />

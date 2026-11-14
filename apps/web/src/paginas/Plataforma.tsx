@@ -1,3 +1,4 @@
+import { confirmar, pedirTexto } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
@@ -47,7 +48,7 @@ function Pagos() {
   const [error, setError] = useState<string | null>(null);
   const [rechazando, setRechazando] = useState<string | null>(null); const [motivo, setMotivo] = useState('');
   const refrescar = () => qc.invalidateQueries({ queryKey: ['plat-pagos'] });
-  const aprobar = async (id: string) => { setError(null); if (!confirm('¿Aprobar este pago? Se habilitará la sucursal por los meses indicados.')) return; try { await api.post(`/plataforma/pagos/${id}/aprobar`); await refrescar(); } catch (e) { setError(mensajeDeError(e)); } };
+  const aprobar = async (id: string) => { setError(null); if (!(await confirmar({ titulo: 'Aprobar pago', mensaje: '¿Aprobar este pago? Se habilitará la sucursal por los meses indicados.', aceptar: 'Aprobar' }))) return; try { await api.post(`/plataforma/pagos/${id}/aprobar`); await refrescar(); } catch (e) { setError(mensajeDeError(e)); } };
   const rechazar = async (id: string) => { setError(null); try { await api.post(`/plataforma/pagos/${id}/rechazar`, { motivo }); setRechazando(null); setMotivo(''); await refrescar(); } catch (e) { setError(mensajeDeError(e)); } };
   return (
     <section className="flex flex-col gap-space-sm">
@@ -82,7 +83,7 @@ function Sucursales() {
   const planes = useQuery({ queryKey: ['plat-planes'], queryFn: () => api.get<PlanP[]>('/plataforma/planes') });
   const [error, setError] = useState<string | null>(null);
   const ajustar = async (id: string, cambios: object, pregunta: string) => {
-    const motivo = prompt(`${pregunta}\nEscribe el motivo (queda registrado):`); if (!motivo || motivo.trim().length < 3) return;
+    const motivo = await pedirTexto({ titulo: pregunta, mensaje: 'Queda registrado con tu nombre.', etiqueta: 'Motivo', minimo: 3 }); if (!motivo || motivo.trim().length < 3) return;
     setError(null); try { await api.patch(`/plataforma/sucursales/${id}`, { ...cambios, motivo: motivo.trim() }); await qc.invalidateQueries({ queryKey: ['plat-sucursales'] }); } catch (e) { setError(mensajeDeError(e)); }
   };
   const color: Record<string, string> = { activa: 'text-tertiary', por_vencer: 'text-secondary', gracia: 'text-secondary', vencida: 'text-error' };

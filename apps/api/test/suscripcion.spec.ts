@@ -147,6 +147,17 @@ describe('Pago de la suscripción (voucher manual)', () => {
     expect(n.rows.map((r) => r.kind)).toEqual(['d0', 'd1', 'd5']);
   });
 
+  it('GS-C04 cambio de plan con días pagados: el valor se conserva (prorrateo) y queda auditado', async () => {
+    const e = await escenario(); // plan «B» de Bs 200,00
+    const caro = (await e.kyros.post('/plataforma/planes', { codigo: `P${randomUUID().slice(0, 6)}`, nombre: 'Plan C', precioMensual: 400 })).body.id as string;
+    await t.owner.query(`UPDATE restaurants SET paid_until = (now() AT TIME ZONE 'America/La_Paz')::date + 19 WHERE id = $1`, [e.d.rid]); // 20 días contando hoy
+    const r = await e.kyros.patch(`/plataforma/sucursales/${e.d.rid}`, { planId: caro, motivo: 'subida de plan' });
+    expect(r.status).toBe(200);
+    expect(r.body.prorrateo).toMatchObject({ diasRestantes: 20, diasNuevos: 10, creditoCent: '0' }); // 20×200 = 10×400
+    const hasta = (await t.owner.query(`SELECT paid_until::text AS h, ((now() AT TIME ZONE 'America/La_Paz')::date + 9)::text AS e FROM restaurants WHERE id = $1`, [e.d.rid])).rows[0];
+    expect(hasta.h).toBe(hasta.e);
+  });
+
   it('ajuste manual de plataforma: exige motivo y queda auditado', async () => {
     const e = await escenario();
     expect((await e.kyros.patch(`/plataforma/sucursales/${e.d.rid}`, { estado: 'suspendido' })).status).toBe(400);

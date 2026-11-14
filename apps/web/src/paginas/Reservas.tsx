@@ -1,3 +1,4 @@
+import { confirmar } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
 import { Dato, Ficha, Telefono } from '../componentes/Ficha';
@@ -15,6 +16,12 @@ const ESTADO: Record<Reserva['estado'], { t: string; c: string }> = {
   no_show: { t: 'No llegó', c: 'bg-error-container text-on-error-container' }, cancelada: { t: 'Cancelada', c: 'bg-surface-container text-on-surface-variant' },
 };
 const hoy = () => new Date(Date.now() - 4 * 3_600_000).toISOString().slice(0, 10);
+/** GST-008: hora por defecto = la próxima media hora libre de hoy (hora de Bolivia); otro día, mediodía. */
+const horaPorDefecto = (fecha: string) => {
+  if (fecha !== hoy()) return '13:00';
+  const b = new Date(Date.now() - 4 * 3_600_000 + 30 * 60_000); const m = b.getUTCMinutes() < 30 ? 30 : 0; const h = b.getUTCHours() + (b.getUTCMinutes() < 30 ? 0 : 1);
+  return h >= 24 ? '13:00' : `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
 const mover = (f: string, d: number) => new Date(Date.parse(`${f}T12:00:00Z`) + d * 86_400_000).toISOString().slice(0, 10);
 const num = (v: FormDataEntryValue | null) => Number(String(v ?? '').replace(',', '.'));
 
@@ -29,7 +36,7 @@ export function Reservas() {
   const refrescar = () => { void qc.invalidateQueries({ queryKey: ['reservas'] }); };
   const accion = async (r: Reserva, a: string, mesaId?: string) => {
     setError(null);
-    if (a === 'cancelar' && !confirm(`¿Cancelar la reserva de ${r.cliente}?`)) return;
+    if (a === 'cancelar' && !(await confirmar({ titulo: 'Cancelar reserva', mensaje: `¿Cancelar la reserva de ${r.cliente}?`, aceptar: 'Cancelar reserva', cancelar: 'Volver', peligro: true }))) return;
     try { await api.post(`/reservas/${r.id}/estado`, { accion: a, ...(mesaId ? { mesaId } : {}) }, sucursalId); refrescar(); } catch (e) { setError(mensajeDeError(e)); }
   };
   const cambiarMesa = async (r: Reserva, mesaId: string) => { setError(null); try { await api.patch(`/reservas/${r.id}/mesa`, { mesaId: mesaId || null }, sucursalId); refrescar(); } catch (e) { setError(mensajeDeError(e)); } };
@@ -90,7 +97,7 @@ function NuevaReserva({ fecha, cerrar, hecho }: { fecha: string; cerrar(): void;
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Teléfono</span><input name="telefono" inputMode="tel" minLength={6} className={clases.input} /></label>
         <div className="grid grid-cols-3 gap-space-sm">
           <label className="flex flex-col gap-space-xs col-span-3 sm:col-span-1"><span className={clases.etiqueta}>Fecha</span><input name="fecha" type="date" required defaultValue={fecha} className={clases.input} /></label>
-          <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Hora</span><input name="hora" type="time" step={900} required defaultValue="13:00" className={clases.input} /></label>
+          <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Hora</span><input name="hora" type="time" step={900} required defaultValue={horaPorDefecto(fecha)} className={clases.input} /></label>
           <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Personas</span><input name="personas" type="number" min={1} max={100} required defaultValue={2} className={clases.input} /></label></div>
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Mesa (opcional: si no, se asigna sola)</span><select name="mesa" className={clases.input}><option value="">Asignar automáticamente</option>{(mesas.data ?? []).filter((m) => m.activa !== false).map((m) => <option key={m.id} value={m.id}>Mesa {m.numero} ({m.asientos} asientos)</option>)}</select></label>
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Notas (opcional)</span><input name="notas" maxLength={300} className={clases.input} /></label>

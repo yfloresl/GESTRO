@@ -1,3 +1,4 @@
+import { confirmar } from '../componentes/Dialogos';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
 import { clases } from '../componentes/Marca';
@@ -149,7 +150,7 @@ function FichaPlato({ plato, categorias, cerrar, guardado }: { plato: Plato | nu
     } catch (err) { setError(mensajeDeError(err, 'No pudimos guardar el plato.')); } finally { setTrabajando(false); }
   };
   const borrar = async () => {
-    if (!plato || !confirm(`¿Borrar «${plato.nombre}»? Esta acción no se puede deshacer.`)) return;
+    if (!plato || !(await confirmar({ titulo: 'Borrar plato', mensaje: `¿Borrar «${plato.nombre}»? Esta acción no se puede deshacer.`, aceptar: 'Borrar', peligro: true }))) return;
     try { await api.del(`/menu/platos/${plato.id}`, undefined, sucursalId!); guardado(); } catch (err) { setError(mensajeDeError(err)); }
   };
 

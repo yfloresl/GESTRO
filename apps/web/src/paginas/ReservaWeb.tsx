@@ -1,3 +1,4 @@
+import { confirmar } from '../componentes/Dialogos';
 import { useQuery } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -32,7 +33,7 @@ export function ReservaWeb() {
     catch (err) { setError(mensajeDeError(err)); void disp.refetch(); } finally { setOcupado(false); }
   };
   const cancelar = async () => {
-    if (!hecha || !confirm('¿Cancelar tu reserva?')) return;
+    if (!hecha || !(await confirmar({ titulo: 'Cancelar tu reserva', mensaje: '¿Cancelar tu reserva?', aceptar: 'Cancelar reserva', cancelar: 'Volver', peligro: true }))) return;
     try { await api.post(`/public/${slug}/reservas/cancelar`, { codigo: hecha.codigo }); setCancelada(true); } catch (err) { setError(mensajeDeError(err)); }
   };
 

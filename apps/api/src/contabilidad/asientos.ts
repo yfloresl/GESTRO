@@ -9,7 +9,7 @@ Decimal.set({ precision: 28, rounding: Decimal.ROUND_HALF_UP });
 
 export type ClaveCuenta =
   | 'caja' | 'bancos' | 'cxc' | 'inventarios' | 'credito_fiscal' | 'proveedores' | 'debito_fiscal' | 'it_por_pagar'
-  | 'anticipos' | 'capital' | 'resultados_acumulados' | 'ventas' | 'costo_ventas' | 'mermas' | 'ajustes_inventario' | 'gastos_generales';
+  | 'anticipos' | 'propinas' | 'capital' | 'resultados_acumulados' | 'ventas' | 'costo_ventas' | 'mermas' | 'ajustes_inventario' | 'gastos_generales';
 export interface LineaAsiento { cuenta: ClaveCuenta; debe: string; haber: string }
 export interface Asiento { glosa: string; lineas: LineaAsiento[] }
 
@@ -37,13 +37,17 @@ export type MetodoCobro = 'efectivo' | 'qr' | 'tarjeta' | 'transferencia' | 'cre
 const cuentaDeCobro = (m: MetodoCobro): ClaveCuenta => (m === 'efectivo' ? 'caja' : m === 'credito' ? 'cxc' : 'bancos');
 
 /** Venta cobrada. Con factura separa el débito fiscal del IVA; con recibo o sin documento, todo es venta. */
-export function ventaCobrada(p: { total: Decimal.Value; metodo: MetodoCobro; documento: 'factura' | 'recibo' | 'ninguno'; ivaPct: Decimal.Value }): Asiento {
+export function ventaCobrada(p: { total: Decimal.Value; metodo: MetodoCobro; documento: 'factura' | 'recibo' | 'ninguno'; ivaPct: Decimal.Value; propina?: Decimal.Value }): Asiento {
   const total = positivo(p.total, 'El total de la venta');
+  // La propina no es ingreso del restaurante: entra al cobro y queda como pasivo (propinas por entregar al personal). Sin IVA ni IT.
+  const propina = d2(p.propina ?? 0);
+  const conPropina = propina.gt(0) ? [haber('propinas', propina)] : [];
+  const cobro = total.plus(propina);
   if (p.documento === 'factura') {
     const iva = ivaIncluido(total, p.ivaPct);
-    return hecho('Venta con factura', [debe(cuentaDeCobro(p.metodo), total), haber('ventas', total.minus(iva)), ...(iva.gt(0) ? [haber('debito_fiscal', iva)] : [])]);
+    return hecho('Venta con factura', [debe(cuentaDeCobro(p.metodo), cobro), haber('ventas', total.minus(iva)), ...(iva.gt(0) ? [haber('debito_fiscal', iva)] : []), ...conPropina]);
   }
-  return hecho(p.documento === 'recibo' ? 'Venta con recibo' : 'Venta sin documento', [debe(cuentaDeCobro(p.metodo), total), haber('ventas', total)]);
+  return hecho(p.documento === 'recibo' ? 'Venta con recibo' : 'Venta sin documento', [debe(cuentaDeCobro(p.metodo), cobro), haber('ventas', total), ...conPropina]);
 }
 
 /** Costo de lo vendido: sale del inventario lo que se consumió al enviar a cocina, valorizado al costo promedio. */
@@ -118,7 +122,7 @@ export const PLAN_DE_CUENTAS: CuentaPlantilla[] = [
   { code: '1.1.05', name: 'Crédito fiscal IVA', type: 'activo', parent: '1.1', key: 'credito_fiscal' },
   { code: '2', name: 'PASIVO', type: 'pasivo', groups: true }, { code: '2.1', name: 'Pasivo corriente', type: 'pasivo', parent: '2', groups: true },
   { code: '2.1.01', name: 'Proveedores por pagar', type: 'pasivo', parent: '2.1', key: 'proveedores' }, { code: '2.1.02', name: 'Débito fiscal IVA', type: 'pasivo', parent: '2.1', key: 'debito_fiscal' },
-  { code: '2.1.03', name: 'IT por pagar', type: 'pasivo', parent: '2.1', key: 'it_por_pagar' }, { code: '2.1.04', name: 'Anticipos de clientes', type: 'pasivo', parent: '2.1', key: 'anticipos' },
+  { code: '2.1.03', name: 'IT por pagar', type: 'pasivo', parent: '2.1', key: 'it_por_pagar' }, { code: '2.1.04', name: 'Anticipos de clientes', type: 'pasivo', parent: '2.1', key: 'anticipos' }, { code: '2.1.05', name: 'Propinas por entregar', type: 'pasivo', parent: '2.1', key: 'propinas' },
   { code: '3', name: 'PATRIMONIO', type: 'patrimonio', groups: true }, { code: '3.1', name: 'Capital y resultados', type: 'patrimonio', parent: '3', groups: true },
   { code: '3.1.01', name: 'Capital', type: 'patrimonio', parent: '3.1', key: 'capital' }, { code: '3.1.02', name: 'Resultados acumulados', type: 'patrimonio', parent: '3.1', key: 'resultados_acumulados' },
   { code: '4', name: 'INGRESOS', type: 'ingreso', groups: true }, { code: '4.1', name: 'Ingresos por ventas', type: 'ingreso', parent: '4', groups: true },

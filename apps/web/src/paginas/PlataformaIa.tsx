@@ -1,3 +1,4 @@
+import { confirmar } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
 import { clases } from '../componentes/Marca';
@@ -32,7 +33,7 @@ export function PlataformaIa() {
         <form onSubmit={clave} className="flex flex-col gap-space-xs sm:flex-row"><input name="clave" type="password" autoComplete="off" required minLength={20} placeholder={e.configurada ? 'Pega una clave nueva para reemplazarla' : 'sk-ant-…'} aria-label="Clave de la API de Anthropic" className={clases.input} /><button disabled={ocupado} className="h-[52px] px-space-md rounded-lg bg-primary text-on-primary font-semibold whitespace-nowrap">Guardar clave</button></form>
         <div className="flex flex-wrap gap-space-xs">
           <button type="button" disabled={ocupado || !e.configurada} onClick={() => accion(async () => { const r = await api.post<{ modelo: string }>('/plataforma/ia/probar'); setMsg(`La clave funciona (respondió ${r.modelo}).`); }, '')} className="h-12 px-space-md rounded-lg border border-outline-variant font-semibold disabled:opacity-50">Probar conexión</button>
-          <button type="button" disabled={ocupado || !e.configurada} onClick={() => { if (confirm('¿Quitar la clave de IA? El asistente dejará de funcionar.')) void accion(() => api.del('/plataforma/ia/clave'), 'Clave eliminada.'); }} className="h-12 px-space-md rounded-lg border border-error text-error font-semibold disabled:opacity-50">Quitar clave</button>
+          <button type="button" disabled={ocupado || !e.configurada} onClick={async () => { if (await confirmar({ titulo: 'Quitar la clave de IA', mensaje: '¿Quitar la clave de IA? El asistente dejará de funcionar.', aceptar: 'Quitar clave', peligro: true })) void accion(() => api.del('/plataforma/ia/clave'), 'Clave eliminada.'); }} className="h-12 px-space-md rounded-lg border border-error text-error font-semibold disabled:opacity-50">Quitar clave</button>
           <button type="button" disabled={ocupado} onClick={() => accion(() => api.put('/plataforma/ia', { activa: !e.activa }), e.activa ? 'IA apagada para todas las sucursales.' : 'IA encendida.')} className="h-12 px-space-md rounded-lg border border-outline-variant font-semibold">{e.activa ? 'Apagar la IA' : 'Encender la IA'}</button></div>
       </div>
       <div className="grid grid-cols-2 gap-gutter md:grid-cols-4">

@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Inject, Inj
 import { sql } from 'drizzle-orm';
 import Decimal from 'decimal.js';
 import { z } from 'zod';
-import { auditar, esDuplicado } from '../comun/auditoria';
+import { archivar, auditar, esDuplicado } from '../comun/auditoria';
 import { Bd, Tenant, TenantDb } from '../database/database.module';
 
 const Fecha = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha AAAA-MM-DD').refine((s) => !Number.isNaN(Date.parse(s)), 'Fecha inválida');
@@ -49,6 +49,7 @@ export class TurnosService {
     return this.db.run(t, async (tx) => {
       const uso = (await tx.execute(sql`SELECT (SELECT count(*) FROM staff_members WHERE function_id = ${id}) + (SELECT count(*) FROM shifts WHERE function_id = ${id}) AS n`)).rows[0] as { n: string };
       if (Number(uso.n) > 0) throw new ConflictException('Hay personas o turnos con esta función: quítala de ellos primero.');
+      await archivar(tx, t.restaurantId, por, 'staff_functions', id);
       const r = await tx.execute(sql`DELETE FROM staff_functions WHERE id = ${id} AND restaurant_id = ${t.restaurantId} RETURNING id`);
       if (!r.rows.length) throw new NotFoundException('Función no encontrada.');
       await auditar(tx, t.restaurantId, por, 'turnos.funcion_borrada', 'staff_function', id);
@@ -149,6 +150,7 @@ export class TurnosService {
       const s = (await tx.execute(sql`SELECT check_in FROM shifts WHERE id = ${id} AND restaurant_id = ${t.restaurantId} FOR UPDATE`)).rows[0] as { check_in: Date | null } | undefined;
       if (!s) throw new NotFoundException('Turno no encontrado.');
       if (s.check_in) throw new ConflictException('El turno ya tiene asistencia registrada: no se borra.');
+      await archivar(tx, t.restaurantId, por, 'shifts', id);
       await tx.execute(sql`DELETE FROM shifts WHERE id = ${id}`);
       await auditar(tx, t.restaurantId, por, 'turnos.borrado', 'shift', id);
       return { ok: true };

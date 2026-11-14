@@ -1,3 +1,4 @@
+import { confirmar } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
 import { clases } from '../componentes/Marca';
@@ -44,7 +45,7 @@ export function Promociones() {
             {esAdmin && <div className="flex flex-wrap gap-space-xs pt-space-xs">
               <button type="button" onClick={() => setEditando(p)} className="h-12 px-space-md rounded-lg border border-outline-variant font-semibold">Editar</button>
               <button type="button" onClick={() => accion(() => api.post(`/promociones/${p.id}/activa`, { activa: !p.activa }, sucursalId))} className="h-12 px-space-md rounded-lg border border-outline-variant font-semibold">{p.activa ? 'Desactivar' : 'Activar'}</button>
-              <button type="button" onClick={() => { if (confirm(`¿Borrar «${p.nombre}»? Si ya tiene ventas, se te pedirá desactivarla.`)) void accion(() => api.del(`/promociones/${p.id}`, undefined, sucursalId)); }} className="h-12 px-space-md rounded-lg border border-error text-error font-semibold">Borrar</button></div>}
+              <button type="button" onClick={async () => { if (await confirmar({ titulo: 'Borrar promoción', mensaje: `¿Borrar «${p.nombre}»? Si ya tiene ventas, se te pedirá desactivarla.`, aceptar: 'Borrar', peligro: true })) void accion(() => api.del(`/promociones/${p.id}`, undefined, sucursalId)); }} className="h-12 px-space-md rounded-lg border border-error text-error font-semibold">Borrar</button></div>}
           </li>))}</ul>)}
       {esAdmin && uso.data && uso.data.promociones.length > 0 && (
         <div className="overflow-x-auto bg-surface-container-lowest border border-outline-variant rounded-xl"><table className="w-full text-body-sm"><caption className="text-left p-3 font-headline-sm text-headline-sm">Efecto en las ventas (últimos 30 días)</caption>

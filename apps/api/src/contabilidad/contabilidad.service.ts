@@ -1,9 +1,10 @@
+import { hoyBolivia } from '../comun/tiempo';
 import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import Decimal from 'decimal.js';
 import { z } from 'zod';
-import { auditar, esDuplicado } from '../comun/auditoria';
+import { archivar, auditar, esDuplicado } from '../comun/auditoria';
 import { Bd, Tenant, TenantDb } from '../database/database.module';
 import {
   Asiento, ClaveCuenta, PLAN_DE_CUENTAS, cierreDeEvento, cobroDeCuenta, pagoDeEvento, TipoCuenta, ajusteDeInventario, compraAlContado, compraRecibida, costoDeVentas, merma, MetodoCobro,
@@ -58,7 +59,12 @@ export class ContabilidadService {
   }
 
   private async cuentaDe(tx: Bd, t: Tenant, clave: ClaveCuenta): Promise<string> {
-    const r = (await tx.execute(sql`SELECT id FROM chart_of_accounts WHERE restaurant_id = ${t.restaurantId} AND system_key = ${clave} AND active`)).rows[0] as { id: string } | undefined;
+    let r = (await tx.execute(sql`SELECT id FROM chart_of_accounts WHERE restaurant_id = ${t.restaurantId} AND system_key = ${clave} AND active`)).rows[0] as { id: string } | undefined;
+    if (!r && clave === 'propinas') { // sucursales con plan anterior a GST-004: se agrega la cuenta del sistema bajo «Pasivo corriente»
+      r = (await tx.execute(sql`INSERT INTO chart_of_accounts (restaurant_id, code, name, type, parent_id, accepts_entries, system_key)
+        SELECT ${t.restaurantId}, '2.1.05', 'Propinas por entregar', 'pasivo'::account_type, (SELECT id FROM chart_of_accounts WHERE restaurant_id = ${t.restaurantId} AND code = '2.1'), true, 'propinas'
+        WHERE NOT EXISTS (SELECT 1 FROM chart_of_accounts WHERE restaurant_id = ${t.restaurantId} AND code = '2.1.05') RETURNING id`)).rows[0] as { id: string } | undefined;
+    }
     if (!r) throw new ConflictException(`Falta la cuenta del sistema «${clave}» en el plan de cuentas.`);
     return r.id;
   }
@@ -205,8 +211,8 @@ export class ContabilidadService {
     return { iva: r.iva, it: r.it };
   }
 
-  async ventaCobrada(tx: Bd, t: Tenant, por: string, p: { pagoId: string; total: string; metodo: MetodoCobro; documento: 'factura' | 'recibo' | 'ninguno' }) {
-    await this.registrar(tx, t, por, ventaCobrada({ total: p.total, metodo: p.metodo, documento: p.documento, ivaPct: p.documento === 'factura' ? (await this.tasas(tx, t)).iva : 0 }), { source: 'venta', sourceId: p.pagoId });
+  async ventaCobrada(tx: Bd, t: Tenant, por: string, p: { pagoId: string; total: string; metodo: MetodoCobro; documento: 'factura' | 'recibo' | 'ninguno'; propina?: string }) {
+    await this.registrar(tx, t, por, ventaCobrada({ total: p.total, metodo: p.metodo, documento: p.documento, propina: p.propina, ivaPct: p.documento === 'factura' ? (await this.tasas(tx, t)).iva : 0 }), { source: 'venta', sourceId: p.pagoId });
   }
   ventaAnulada(tx: Bd, t: Tenant, por: string, pagoId: string, motivo: string) { return this.contrarrestarOrigen(tx, t, por, 'venta', pagoId, motivo); }
 
@@ -311,6 +317,7 @@ export class ContabilidadService {
   borrarBorrador(t: Tenant, por: string, id: string) {
     return this.db.run(t, async (tx) => {
       await this.borrador(tx, t, id);
+      await archivar(tx, t.restaurantId, por, 'journal_entries', id);
       await tx.execute(sql`DELETE FROM journal_entries WHERE id = ${id}`);
       await auditar(tx, t.restaurantId, por, 'contabilidad.borrador_borrado', 'journal_entry', id);
       return { ok: true };
@@ -386,7 +393,7 @@ export class ContabilidadService {
     });
   }
 
-  private rango(r: z.infer<typeof Rango>) { return { desde: r.desde, hasta: r.hasta ?? new Date().toISOString().slice(0, 10) }; }
+  private rango(r: z.infer<typeof Rango>) { return { desde: r.desde, hasta: r.hasta ?? hoyBolivia() }; }
 
   comprobacion(t: Tenant, r: z.infer<typeof Rango>) {
     return this.db.run(t, async (tx) => {

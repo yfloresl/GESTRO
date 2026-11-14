@@ -2,7 +2,7 @@ import { PromocionesService } from '../promociones/promociones.service';
 import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { and, asc, desc, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { auditar } from '../comun/auditoria';
+import { archivar, auditar } from '../comun/auditoria';
 import { Bd, Tenant, TenantDb } from '../database/database.module';
 import { menuItems, orderItems, orders, restaurants, restaurantTables, staffMembers } from '../database/esquema';
 import { ConsumoService } from '../recetas/consumo.service';
@@ -28,6 +28,7 @@ export const ItemNuevo = z.object({
   nota: z.string().trim().max(200).optional(), modificadores: z.array(z.string().trim().min(1).max(40)).max(8).optional(), tiempo: z.number().int().min(1).max(3).optional(),
 }).strict();
 export const AgregarItems = z.object({ items: z.array(ItemNuevo).min(1).max(30) }).strict();
+export const CambioCantidad = z.object({ cantidad: z.number().int().min(1).max(99) }).strict();
 export const Motivo = z.object({ motivo: z.string().trim().min(3).max(200) }).strict();
 export const MoverMesa = z.object({ mesaId: z.string().uuid() }).strict();
 export const EstadoCocina = z.object({ estado: z.enum(['en_preparacion', 'listo']) }).strict();
@@ -156,9 +157,24 @@ export class PedidosService {
       const [i] = await tx.select().from(orderItems).where(and(eq(orderItems.id, itemId), eq(orderItems.restaurantId, t.restaurantId)));
       if (!i) throw new NotFoundException('Ítem no encontrado.');
       if (i.status !== 'borrador') throw new ConflictException('Ese plato ya se envió a cocina: anúlalo con un motivo.');
+      await archivar(tx, t.restaurantId, userId, 'order_items', itemId);
       await tx.delete(orderItems).where(eq(orderItems.id, itemId));
       await this.recalcular(tx, i.orderId);
       await auditar(tx, t.restaurantId, userId, 'pedido.item_quitado', 'order_item', itemId);
+      return this.vista(tx, t.restaurantId, i.orderId);
+    });
+  }
+
+  /** GST-005: cambia la cantidad de un plato que todavía no se envió a cocina (el stock se descuenta al enviar, así que no hay nada que revertir). */
+  cambiarCantidad(t: Tenant, userId: string, itemId: string, cantidad: number) {
+    return this.db.run(t, async (tx) => {
+      const [i] = await tx.select().from(orderItems).where(and(eq(orderItems.id, itemId), eq(orderItems.restaurantId, t.restaurantId)));
+      if (!i) throw new NotFoundException('Ítem no encontrado.');
+      if (i.status !== 'borrador' || i.voidedAt) throw new ConflictException('Ese plato ya se envió a cocina: anúlalo con un motivo y agrégalo de nuevo.');
+      await this.abierto(tx, t, i.orderId);
+      await tx.update(orderItems).set({ qty: String(cantidad) }).where(eq(orderItems.id, itemId));
+      await this.recalcular(tx, i.orderId);
+      await auditar(tx, t.restaurantId, userId, 'pedido.item_cantidad', 'order_item', itemId, { antes: Number(i.qty), despues: cantidad });
       return this.vista(tx, t.restaurantId, i.orderId);
     });
   }

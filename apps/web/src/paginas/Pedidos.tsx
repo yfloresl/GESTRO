@@ -5,6 +5,7 @@ import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs, ETIQUETA_ESTADO, ETIQUETA_TIPO, minutosDesde, haceCuanto, Pedido } from '../lib/tipos';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
+import { calcularCobro, deCentavos, aCentavos } from '../lib/cobro';
 
 interface Mesa { id: string; numero: string; asientos: number; activa: boolean }
 interface Categoria { id: string; nombre: string }
@@ -120,7 +121,12 @@ function PedidoDetalle({ id, volver }: { id: string; volver(): void }) {
   const vigentes = p.items.filter((i) => !i.anulado);
   const sinEnviar = vigentes.filter((i) => i.estado === 'borrador').length;
   const titulo = p.tipo === 'mesa' ? `Mesa ${p.mesa}` : `${ETIQUETA_TIPO[p.tipo]} #${p.ticket}`;
-  const agregar = (plato: Plato, extra?: { nota?: string; modificadores?: string[]; tiempo?: number }) => accion.mutate(() => api.post(`/pedidos/${id}/items`, { items: [{ platoId: plato.id, cantidad: 1, ...extra }] }, sucursalId!));
+  const agregar = (plato: Plato, extra?: { nota?: string; modificadores?: string[]; tiempo?: number }) => {
+    // GST-005: un toque simple sobre un plato ya pedido (sin enviar, sin notas) suma una unidad a esa línea en vez de crear otra «1×».
+    const linea = !extra ? p.items.find((i) => i.platoId === plato.id && !i.anulado && i.estado === 'borrador' && !i.porConfirmar && !i.nota && i.modificadores.length === 0) : undefined;
+    if (linea && Number(linea.cantidad) < 99) return accion.mutate(() => api.patch(`/items/${linea.id}/cantidad`, { cantidad: Number(linea.cantidad) + 1 }, sucursalId!));
+    return accion.mutate(() => api.post(`/pedidos/${id}/items`, { items: [{ platoId: plato.id, cantidad: 1, ...extra }] }, sucursalId!));
+  };
 
   return (
     <div className="flex flex-col gap-space-md">
@@ -166,7 +172,14 @@ function PedidoDetalle({ id, volver }: { id: string; volver(): void }) {
                   <div className="flex items-center gap-space-xs flex-wrap">
                     {i.anulado ? <span className="font-label-sm text-label-sm text-error uppercase">Anulado · {i.motivoAnulacion}</span> : <Chip estado={i.porConfirmar ? 'por_confirmar' : i.estado} />}
                     {i.desdeQr && !i.anulado && <span className="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-0.5"><span className="material-symbols-outlined text-[14px]" aria-hidden="true">qr_code_2</span>cliente</span>}
-                    {!cerrado && !i.anulado && i.estado === 'borrador' && !i.porConfirmar && <button type="button" onClick={() => accion.mutate(() => api.del(`/items/${i.id}`, undefined, sucursalId!))} className="ml-auto h-9 px-2 text-error font-label-md">Quitar</button>}
+                    {!cerrado && !i.anulado && i.estado === 'borrador' && !i.porConfirmar && (
+                      <div className="ml-auto flex items-center gap-1">
+                        <button type="button" aria-label={`Quitar una unidad de ${i.nombre}`} disabled={Number(i.cantidad) <= 1 || accion.isPending} onClick={() => accion.mutate(() => api.patch(`/items/${i.id}/cantidad`, { cantidad: Number(i.cantidad) - 1 }, sucursalId!))} className="w-11 h-11 rounded-lg border border-outline-variant font-label-lg disabled:opacity-40">−</button>
+                        <span aria-live="polite" className="min-w-8 text-center font-label-lg">{Number(i.cantidad)}</span>
+                        <button type="button" aria-label={`Agregar una unidad de ${i.nombre}`} disabled={Number(i.cantidad) >= 99 || accion.isPending} onClick={() => accion.mutate(() => api.patch(`/items/${i.id}/cantidad`, { cantidad: Number(i.cantidad) + 1 }, sucursalId!))} className="w-11 h-11 rounded-lg border border-outline-variant font-label-lg disabled:opacity-40">+</button>
+                        <button type="button" onClick={() => accion.mutate(() => api.del(`/items/${i.id}`, undefined, sucursalId!))} className="h-11 px-2 text-error font-label-md">Quitar</button>
+                      </div>
+                    )}
                     {!cerrado && !i.anulado && i.estado !== 'borrador' && puedeAnular && <button type="button" onClick={() => setAnular(i.id)} className="ml-auto h-9 px-2 text-error font-label-md">Anular</button>}
                   </div>
                 </li>
@@ -255,18 +268,22 @@ function Cobrar({ pedido, cerrar, cobrado }: { pedido: Pedido; cerrar(): void; c
   const [metodo, setMetodo] = useState<(typeof METODOS)[number][0]>('efectivo');
   const [doc, setDoc] = useState<'recibo' | 'ninguno'>('recibo'); const [cliente, setCliente] = useState(''); const [telefono, setTelefono] = useState(''); const [dias, setDias] = useState('30');
   const [error, setError] = useState<string | null>(null); const [ocupado, setOcupado] = useState(false);
+  const [descuento, setDescuento] = useState(''); const [motivoDesc, setMotivoDesc] = useState(''); const [propina, setPropina] = useState(''); const [recibido, setRecibido] = useState('');
+  const subtotal = aCentavos(String(pedido.total)) ?? 0;
+  const calc = calcularCobro({ subtotal, descuento, motivo: motivoDesc, propina, metodo, recibido });
   const soloContabilizar = aj.data?.modoDeCobro === 'ninguno';
   const cobrar = async () => {
     setError(null);
+    if (calc.error) { setError(calc.error); return; }
     if (metodo === 'credito' && !cliente.trim()) { setError('Escribe el nombre del cliente: la venta a crédito queda como cuenta por cobrar.'); return; }
     setOcupado(true);
     try {
-      const r = await api.post<{ recibo: number | null }>(`/pedidos/${pedido.id}/cobrar`, { metodo, documento: soloContabilizar ? 'ninguno' : doc, nombreCliente: cliente.trim() || undefined, ...(metodo === 'credito' ? { telefonoCliente: telefono.trim() || undefined, diasCredito: Math.max(0, Math.min(365, Math.round(Number(dias) || 0))) } : {}) }, sucursalId!);
+      const r = await api.post<{ recibo: number | null }>(`/pedidos/${pedido.id}/cobrar`, { metodo, documento: soloContabilizar ? 'ninguno' : doc, nombreCliente: cliente.trim() || undefined, ...(calc.descuento > 0 ? { descuento: Number(deCentavos(calc.descuento)), motivoDescuento: motivoDesc.trim() } : {}), ...(calc.propina > 0 ? { propina: Number(deCentavos(calc.propina)) } : {}), ...(metodo === 'efectivo' && calc.recibido !== null ? { efectivoRecibido: Number(deCentavos(calc.recibido)) } : {}), ...(metodo === 'credito' ? { telefonoCliente: telefono.trim() || undefined, diasCredito: Math.max(0, Math.min(365, Math.round(Number(dias) || 0))) } : {}) }, sucursalId!);
       cobrado(); if (r.recibo) { /* el recibo queda disponible desde el pedido */ }
     } catch (e) { setError(mensajeDeError(e)); setOcupado(false); }
   };
   return (
-    <Hoja titulo={`Cobrar ${bs(pedido.total)}`} cerrar={cerrar}>
+    <Hoja titulo={`Cobrar ${bs(deCentavos(calc.aCobrar))}`} cerrar={cerrar}>
       {caja.data && !caja.data.activa && <p role="alert" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-sm">Abre tu caja antes de cobrar. <Link to="/app/caja" className="underline font-semibold">Ir a Caja</Link></p>}
       <fieldset className="flex flex-col gap-space-xs"><legend className={clases.etiqueta}>Método de pago</legend>
         <div className="grid grid-cols-2 gap-space-xs">{METODOS.map(([k, n, ic]) => <button key={k} type="button" role="radio" aria-checked={metodo === k} onClick={() => setMetodo(k)} className={`h-14 rounded-lg font-semibold flex items-center justify-center gap-space-xs ${metodo === k ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}><span className="material-symbols-outlined" aria-hidden="true">{ic}</span>{n}</button>)}</div>
@@ -280,6 +297,29 @@ function Cobrar({ pedido, cerrar, cobrado }: { pedido: Pedido; cerrar(): void; c
       </fieldset>
       <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>{metodo === 'credito' ? 'Nombre del cliente (obligatorio)' : 'Nombre en el recibo (opcional)'}</span><input value={cliente} onChange={(e) => setCliente(e.target.value)} required={metodo === 'credito'} className={clases.input} /></label>
       {metodo === 'credito' && <div className="grid grid-cols-2 gap-space-sm"><label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Teléfono (opcional)</span><input value={telefono} onChange={(e) => setTelefono(e.target.value)} inputMode="tel" className={clases.input} /></label><label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Plazo (días)</span><input value={dias} onChange={(e) => setDias(e.target.value)} inputMode="numeric" className={clases.input} /></label></div>}
+      <details className="rounded-lg border border-outline-variant p-space-sm" open={calc.descuento > 0}>
+        <summary className="cursor-pointer font-label-lg">Descuento (opcional, con motivo)</summary>
+        <div className="grid grid-cols-2 gap-space-sm mt-space-sm">
+          <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Descuento (Bs)</span><input value={descuento} onChange={(e) => setDescuento(e.target.value)} inputMode="decimal" placeholder="0,00" className={clases.input} /></label>
+          <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Motivo</span><input value={motivoDesc} onChange={(e) => setMotivoDesc(e.target.value)} maxLength={200} className={clases.input} /></label>
+        </div>
+        <p className="font-body-sm text-on-surface-variant mt-space-xs">Máximo 30 % del pedido. Queda registrado con tu nombre.</p>
+      </details>
+      <fieldset className="flex flex-col gap-space-xs"><legend className={clases.etiqueta}>Propina (opcional)</legend>
+        <div className="flex flex-wrap gap-space-xs items-center">
+          {[0, 5, 10].map((pct) => <button key={pct} type="button" onClick={() => setPropina(pct === 0 ? '' : deCentavos(Math.round((calc.total * pct) / 100)))} className="h-11 px-space-sm rounded-full border border-outline-variant font-label-md">{pct === 0 ? 'Sin propina' : `${pct} %`}</button>)}
+          <input aria-label="Propina en bolivianos" value={propina} onChange={(e) => setPropina(e.target.value)} inputMode="decimal" placeholder="0,00" disabled={metodo === 'credito'} className={`${clases.input} w-32`} />
+        </div>
+      </fieldset>
+      {metodo === 'efectivo' && <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Efectivo recibido (Bs)</span><input value={recibido} onChange={(e) => setRecibido(e.target.value)} inputMode="decimal" placeholder={deCentavos(calc.aCobrar)} className={clases.input} /></label>}
+      <dl className="rounded-lg bg-surface-container p-space-sm grid grid-cols-[1fr_auto] gap-x-space-md gap-y-1" aria-live="polite">
+        <dt>Subtotal</dt><dd className="text-right">{bs(deCentavos(subtotal))}</dd>
+        {calc.descuento > 0 && <><dt>Descuento</dt><dd className="text-right">− {bs(deCentavos(calc.descuento))}</dd></>}
+        <dt>Total del pedido</dt><dd className="text-right">{bs(deCentavos(calc.total))}</dd>
+        {calc.propina > 0 && <><dt>Propina</dt><dd className="text-right">{bs(deCentavos(calc.propina))}</dd></>}
+        <dt className="font-semibold">A cobrar</dt><dd className="text-right font-semibold">{bs(deCentavos(calc.aCobrar))}</dd>
+        {metodo === 'efectivo' && calc.vuelto !== null && <><dt className="font-semibold text-primary">Vuelto</dt><dd className="text-right font-semibold text-primary">{bs(deCentavos(calc.vuelto))}</dd></>}
+      </dl>
       {error && <p role="alert" className="text-error">{error}</p>}
       <div className="grid grid-cols-2 gap-space-sm"><button type="button" onClick={cerrar} className="h-14 rounded-lg border border-outline-variant font-semibold">Cancelar</button><button type="button" disabled={ocupado || caja.data?.activa === false} onClick={cobrar} className={clases.primario}>{ocupado ? 'Cobrando…' : 'Confirmar cobro'}</button></div>
     </Hoja>

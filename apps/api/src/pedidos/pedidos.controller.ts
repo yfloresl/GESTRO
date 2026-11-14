@@ -4,7 +4,7 @@ import { Actor, ActorActual, TenantActual } from '../comun/acceso';
 import { DeSucursal } from '../comun/guards';
 import type { Tenant } from '../database/database.module';
 import { AbrirCaja, AjustesSucursal, CajaService, CerrarCaja, Cobro } from './caja.service';
-import { AgregarItems, EstadoCocina, MoverMesa, Motivo, NuevoPedido, PedidosService } from './pedidos.service';
+import { AgregarItems, CambioCantidad, EstadoCocina, MoverMesa, Motivo, NuevoPedido, PedidosService } from './pedidos.service';
 
 const SALON = ['owner', 'admin', 'mesero', 'cajero', 'area_manager'] as const;
 const CAJA = ['cajero', 'owner', 'admin'] as const;
@@ -30,6 +30,9 @@ export class PedidosController {
 
   @Delete('items/:id') @DeSucursal(...SALON)
   quitar(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string) { return this.p.quitar(t, a.sub, id); }
+
+  @Patch('items/:id/cantidad') @DeSucursal(...SALON)
+  cantidad(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string, @Body() b: unknown) { return this.p.cambiarCantidad(t, a.sub, id, CambioCantidad.parse(b).cantidad); }
 
   @Post('pedidos/:id/enviar') @HttpCode(200) @DeSucursal(...SALON)
   enviar(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string) { return this.p.enviar(t, a.sub, id); }

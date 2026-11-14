@@ -1,3 +1,4 @@
+import { confirmar } from '../componentes/Dialogos';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import QRCode from 'qrcode';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
@@ -181,7 +182,7 @@ function Configurar({ areas, mesas, refrescar }: { areas: Area[]; mesas: Mesa[];
               <td className="p-2 font-semibold">Mesa {m.numero} <span className="font-normal text-on-surface-variant">· {m.asientos} pers</span></td>
               <td className="p-2">{areas.find((a) => a.id === m.areaId)?.nombre ?? '—'}</td>
               <td className="p-2"><select aria-label={`Mesero de la mesa ${m.numero}`} value={m.meseroId ?? ''} onChange={(e) => e.target.value && accion(() => api.put('/asignaciones', { mesaId: m.id, meseroId: e.target.value }, sucursalId!))} className="h-12 rounded-lg border border-outline-variant bg-surface-container-lowest px-space-sm"><option value="">Sin asignar</option>{meseros.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}</select></td>
-              <td className="p-2"><button type="button" onClick={() => confirm(`Regenerar el QR de la mesa ${m.numero} invalida el anterior (el impreso dejará de servir). ¿Continuar?`) && accion(() => api.post(`/mesas/${m.id}/qr/regenerar`, undefined, sucursalId!))} className="h-12 px-space-sm rounded-lg border border-outline-variant text-primary">Regenerar</button></td>
+              <td className="p-2"><button type="button" onClick={async () => (await confirmar({ titulo: 'Regenerar QR', mensaje: `Regenerar el QR de la mesa ${m.numero} invalida el anterior (el impreso dejará de servir). ¿Continuar?`, aceptar: 'Regenerar', peligro: true })) && accion(() => api.post(`/mesas/${m.id}/qr/regenerar`, undefined, sucursalId!))} className="h-12 px-space-sm rounded-lg border border-outline-variant text-primary">Regenerar</button></td>
             </tr>))}</tbody>
         </table></div>
         {mesas.length > 0 && <button type="button" onClick={() => setVerQr(true)} className={`${clases.primario} sm:w-auto sm:px-space-lg self-start`}><span className="material-symbols-outlined" aria-hidden="true">print</span>Imprimir los QR de las mesas</button>}

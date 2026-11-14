@@ -1,3 +1,4 @@
+import { confirmar } from '../componentes/Dialogos';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { SesionRespuesta } from '@gestro/contracts';
 import { GestroClient } from '@gestro/sdk';
@@ -58,6 +59,23 @@ export function SesionProvider({ children }: { children: ReactNode }) {
     await api.salir().catch(() => undefined);
     api.setToken(null); setSesion(null); setEstado('anonimo');
   }, []);
+
+  // Cierre por inactividad: aviso a los 25 min y cierre local a los 30 min (sin forzar prompt=login en el siguiente ingreso).
+  // La pantalla de cocina (/cocina) queda fuera: es un tablero que se deja encendido sin tocarlo.
+  useEffect(() => {
+    if (estado !== 'activa') return;
+    let ultimo = Date.now(); let avisado = false;
+    const marcar = () => { ultimo = Date.now(); avisado = false; };
+    const eventos = ['pointerdown', 'keydown', 'scroll', 'touchstart'] as const;
+    eventos.forEach((e) => window.addEventListener(e, marcar, { passive: true }));
+    const reloj = window.setInterval(() => {
+      if (window.location.pathname.startsWith('/cocina')) { marcar(); return; }
+      const inactivo = Date.now() - ultimo;
+      if (inactivo >= 30 * 60_000) { void salir(); }
+      else if (inactivo >= 25 * 60_000 && !avisado) { avisado = true; void confirmar({ titulo: '¿Sigues ahí?', mensaje: 'Por seguridad, tu sesión se cerrará en 5 minutos si no haces nada.', aceptar: 'Seguir conectado', cancelar: 'Cerrar sesión' }).then((seguir) => { if (seguir) marcar(); else void salir(); }); }
+    }, 30_000);
+    return () => { eventos.forEach((e) => window.removeEventListener(e, marcar)); window.clearInterval(reloj); };
+  }, [estado, salir]);
 
   // En modo soporte, la sucursal ajena se suma a la lista como si el equipo de plataforma fuera su dueño (el servidor igual le impide escribir).
   const sesionEfectiva = useMemo<SesionRespuesta | null>(() => {

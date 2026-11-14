@@ -7,6 +7,7 @@ import { accounts, cashSessions, orders, receipts, restaurants, salesPayments } 
 import { EventosGateway, salas } from '../tiempo-real/eventos.gateway';
 import { ContabilidadService } from '../contabilidad/contabilidad.service';
 import { PedidosService } from './pedidos.service';
+import { calcularCobro, CobroInvalido } from './cobro-calculo';
 
 const Monto = z.number().min(0).max(10_000_000).refine((n) => Math.round(n * 100) / 100 === n, 'Máximo 2 decimales');
 export const AbrirCaja = z.object({ montoInicial: Monto }).strict();
@@ -17,6 +18,7 @@ export const Cobro = z.object({
   nombreCliente: z.string().trim().max(120).optional(),
   telefonoCliente: z.string().trim().max(30).optional(),
   diasCredito: z.number().int().min(0).max(365).default(30),
+  descuento: Monto.default(0), motivoDescuento: z.string().trim().max(200).optional(), propina: Monto.default(0), efectivoRecibido: Monto.optional(),
 }).strict();
 export const AjustesSucursal = z.object({
   pedidosPorQr: z.boolean().optional(), qrSinConfirmacion: z.boolean().optional(), modoDeCobro: z.enum(['recibo', 'ninguno']).optional(),
@@ -39,15 +41,18 @@ export class CajaService {
 
   /** Cobros no anulados de una caja, por método. El efectivo esperado es la apertura más lo cobrado en efectivo (ventas y cuentas por cobrar). */
   private async resumen(tx: Bd, c: typeof cashSessions.$inferSelect) {
-    const r = await tx.execute(sql`SELECT method, COALESCE(SUM(amount), 0)::text AS total, count(*)::int AS n FROM sales_payments WHERE cash_session_id = ${c.id} AND voided_at IS NULL GROUP BY method`);
-    const filas = r.rows as { method: string; total: string; n: number }[];
-    const efectivo = filas.find((f) => f.method === 'efectivo')?.total ?? '0';
+    const r = await tx.execute(sql`SELECT method, COALESCE(SUM(amount), 0)::text AS total, COALESCE(SUM(tip_amount), 0)::text AS propina, count(*)::int AS n FROM sales_payments WHERE cash_session_id = ${c.id} AND voided_at IS NULL GROUP BY method`);
+    const filas = r.rows as { method: string; total: string; propina: string; n: number }[];
+    // La propina cobrada en efectivo también queda en el cajón (el vuelto ya está descontado: solo se suma lo que realmente se cobró).
+    const fe = filas.find((f) => f.method === 'efectivo');
+    const efectivo = (await tx.execute(sql`SELECT (${fe?.total ?? '0'}::numeric + ${fe?.propina ?? '0'}::numeric)::text AS v`)).rows[0] as { v: string };
+    const propinas = (await tx.execute(sql`SELECT COALESCE(SUM(tip_amount), 0)::text AS v FROM sales_payments WHERE cash_session_id = ${c.id} AND voided_at IS NULL`)).rows[0] as { v: string };
     // Efectivo cobrado a clientes de crédito (cuentas por cobrar) durante este turno: también entra a la caja física.
     const cc = (await tx.execute(sql`SELECT COALESCE(SUM(amount), 0)::text AS total, count(*)::int AS n FROM receivable_collections WHERE cash_session_id = ${c.id} AND via = 'caja'`)).rows[0] as { total: string; n: number };
-    const esp = await tx.execute(sql`SELECT (${c.openingAmount}::numeric + ${efectivo}::numeric + ${cc.total}::numeric)::text AS esperado`);
+    const esp = await tx.execute(sql`SELECT (${c.openingAmount}::numeric + ${efectivo.v}::numeric + ${cc.total}::numeric)::text AS esperado`);
     const cobros = filas.map((f) => ({ metodo: f.method, total: f.total, cantidad: f.n }));
     if (cc.n > 0) cobros.push({ metodo: 'cuentas_por_cobrar', total: cc.total, cantidad: cc.n });
-    return { activa: true as const, id: c.id, desde: c.openedAt.toISOString(), montoInicial: c.openingAmount, cobros, efectivoEsperado: (esp.rows[0] as { esperado: string }).esperado };
+    return { activa: true as const, id: c.id, desde: c.openedAt.toISOString(), montoInicial: c.openingAmount, cobros, propinas: propinas.v, propinasEnEfectivo: fe?.propina ?? '0.00', efectivoEsperado: (esp.rows[0] as { esperado: string }).esperado };
   }
 
   actual(t: Tenant, userId: string) {
@@ -95,10 +100,16 @@ export class CajaService {
       if (['cobrado', 'anulado'].includes(o.status)) throw new ConflictException('Este pedido ya está cerrado.');
       const sinEnviar = await tx.execute(sql`SELECT count(*)::int AS n FROM order_items WHERE order_id = ${id} AND voided_at IS NULL AND status = 'borrador'`);
       if ((sinEnviar.rows[0] as { n: number }).n > 0) throw new ConflictException('Hay platos sin enviar o sin confirmar. Envíalos o quítalos antes de cobrar.');
-      if (!(Number(o.total) > 0)) throw new BadRequestException('El pedido no tiene platos para cobrar.');
+      const sub = (await tx.execute(sql`SELECT subtotal::text AS s FROM orders WHERE id = ${id}`)).rows[0] as { s: string };
+      if (!(Number(sub.s) > 0)) throw new BadRequestException('El pedido no tiene platos para cobrar.');
+      let calc: ReturnType<typeof calcularCobro>;
+      try { calc = calcularCobro({ subtotal: sub.s, descuento: d.descuento, motivoDescuento: d.motivoDescuento, propina: d.propina, metodo: d.metodo, efectivoRecibido: d.efectivoRecibido }); }
+      catch (e) { if (e instanceof CobroInvalido) throw new BadRequestException(e.message); throw e; }
+      o.total = calc.total;
+      if (Number(calc.descuento) > 0) await tx.execute(sql`UPDATE orders SET discount = ${calc.descuento}::numeric, total = ${calc.total}::numeric, discount_reason = ${d.motivoDescuento!.trim()} WHERE id = ${id}`);
       const cliente = d.nombreCliente ?? o.customer_name;
       if (d.metodo === 'credito' && !cliente) throw new BadRequestException('Una venta a crédito necesita el nombre del cliente.');
-      const [p] = await tx.insert(salesPayments).values({ restaurantId: t.restaurantId, orderId: id, cashSessionId: caja.id, method: d.metodo, amount: o.total, document: d.documento, customerName: d.nombreCliente ?? o.customer_name }).returning();
+      const [p] = await tx.insert(salesPayments).values({ restaurantId: t.restaurantId, orderId: id, cashSessionId: caja.id, method: d.metodo, amount: o.total, document: d.documento, customerName: d.nombreCliente ?? o.customer_name, tipAmount: calc.propina, discountAmount: calc.descuento, cashReceived: calc.recibido, changeGiven: calc.vuelto }).returning();
       let recibo: number | null = null;
       if (d.documento === 'recibo') {
         const n = await tx.execute(sql`INSERT INTO receipt_counters (restaurant_id, last_number) VALUES (${t.restaurantId}, 1) ON CONFLICT (restaurant_id) DO UPDATE SET last_number = receipt_counters.last_number + 1 RETURNING last_number`);
@@ -111,9 +122,9 @@ export class CajaService {
         await tx.execute(sql`INSERT INTO payables_receivables (restaurant_id, direction, counterparty, customer_phone, amount, due_on, sales_payment_id, document_number)
           VALUES (${t.restaurantId}, 'por_cobrar', ${cliente}, ${d.telefonoCliente ?? null}, ${o.total}::numeric, (now() AT TIME ZONE 'America/La_Paz')::date + ${d.diasCredito}::int, ${p.id}, ${recibo ? String(recibo) : null})`);
       }
-      await this.conta.ventaCobrada(tx, t, userId, { pagoId: p.id, total: o.total, metodo: d.metodo, documento: d.documento });
-      await auditar(tx, t.restaurantId, userId, 'venta.cobrada', 'sales_payment', p.id, { metodo: d.metodo, documento: d.documento, monto: o.total, recibo });
-      return { pagoId: p.id, monto: o.total, recibo, documento: d.documento };
+      await this.conta.ventaCobrada(tx, t, userId, { pagoId: p.id, total: o.total, metodo: d.metodo, documento: d.documento, propina: calc.propina });
+      await auditar(tx, t.restaurantId, userId, 'venta.cobrada', 'sales_payment', p.id, { metodo: d.metodo, documento: d.documento, monto: o.total, recibo, descuento: calc.descuento, motivoDescuento: d.motivoDescuento ?? null, propina: calc.propina, recibido: calc.recibido, vuelto: calc.vuelto });
+      return { pagoId: p.id, monto: o.total, recibo, documento: d.documento, descuento: calc.descuento, propina: calc.propina, aCobrar: calc.aCobrar, recibido: calc.recibido, vuelto: calc.vuelto };
     });
     this.eventos.emitir(salas.sucursal(t.restaurantId), 'pedido.cobrado', { id });
     return r;
@@ -146,6 +157,7 @@ export class CajaService {
       const pedido = r.orderId ? await this.pedidos.vista(tx, t.restaurantId, r.orderId) : null;
       return {
         id: r.id, numero: r.number, emitido: r.issuedAt.toISOString(), monto: r.amount, cliente: r.customerName, metodo: pago?.method ?? null, anulado: !!pago?.voidedAt, motivoAnulacion: pago?.voidReason ?? null,
+        descuento: pago?.discountAmount ?? '0.00', propina: pago?.tipAmount ?? '0.00', recibido: pago?.cashReceived ?? null, vuelto: pago?.changeGiven ?? null,
         restaurante: rest?.nombre ?? '', razonSocial: rest?.razon ?? '', nit: rest?.nit ?? null,
         mesa: pedido?.mesa ?? null, ticket: pedido?.ticket ?? null, items: (pedido?.items ?? []).filter((i) => !i.anulado && !i.porConfirmar).map((i) => ({ nombre: i.nombre, cantidad: i.cantidad, precio: i.precio })),
         leyenda: 'RECIBO — NO ES UNA FACTURA',

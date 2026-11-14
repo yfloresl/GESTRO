@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { auditar } from '../comun/auditoria';
+import { archivar, auditar } from '../comun/auditoria';
 import { uuidArray } from '../comun/sql';
 import { Bd, Tenant, TenantDb } from '../database/database.module';
 import { Momento, Promo, Resultado, enHorario, mejorPrecio } from './motor';
@@ -117,6 +117,7 @@ export class PromocionesService {
     return this.db.run(t, async (tx) => {
       const uso = (await tx.execute(sql`SELECT count(*)::int AS n FROM order_items WHERE promotion_id = ${id}`)).rows[0] as { n: number };
       if (uso.n > 0) throw new BadRequestException('Esta promoción ya tiene ventas: desactívala para conservar el historial.');
+      await archivar(tx, t.restaurantId, por, 'promotions', id);
       const r = await tx.execute(sql`DELETE FROM promotions WHERE id = ${id} AND restaurant_id = ${t.restaurantId} RETURNING id`);
       if (!r.rows.length) throw new NotFoundException('Promoción no encontrada.');
       await auditar(tx, t.restaurantId, por, 'promociones.borrada', 'promotion', id);

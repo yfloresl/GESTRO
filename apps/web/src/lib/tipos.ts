@@ -11,7 +11,7 @@ export interface Ticket {
   id: string; tipo: Pedido['tipo']; mesa: string | null; ticket: number | null; mesero: string | null; cliente: string | null; recojo: string | null; comentario: string | null;
   enviado: string | null; estado: 'nuevo' | 'en_preparacion' | 'listo'; items: ItemPedido[];
 }
-export interface CajaEstado { activa: boolean; id?: string; desde?: string; montoInicial?: string; cobros?: { metodo: string; total: string; cantidad: number }[]; efectivoEsperado?: string }
+export interface CajaEstado { activa: boolean; id?: string; desde?: string; montoInicial?: string; cobros?: { metodo: string; total: string; cantidad: number }[]; propinas?: string; propinasEnEfectivo?: string; efectivoEsperado?: string }
 export interface Recibo {
   id: string; numero: number; emitido: string; monto: string; cliente: string | null; metodo: string | null; anulado: boolean; motivoAnulacion: string | null;
   restaurante: string; razonSocial: string; nit: string | null; mesa: string | null; ticket: number | null; items: { nombre: string; cantidad: string; precio: string }[]; leyenda: string;

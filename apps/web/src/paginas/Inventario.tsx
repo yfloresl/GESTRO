@@ -1,3 +1,4 @@
+import { confirmar, pedirTexto } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useMemo, useState } from 'react';
 import { Dato, Ficha } from '../componentes/Ficha';
@@ -141,7 +142,7 @@ function Conteo({ insumos, almacenes, hecho }: { insumos: Insumo[]; almacenes: A
     e.preventDefault(); setError(null);
     const lineas = Object.entries(vals).filter(([, v]) => v.trim() !== '').map(([insumoId, v]) => ({ insumoId, contado: num(v) }));
     if (!lineas.length) { setError('Escribe lo contado en al menos un insumo.'); return; }
-    if (!confirm('Se ajustará el stock a lo contado. ¿Continuar?')) return;
+    if (!(await confirmar({ titulo: 'Ajustar el stock', mensaje: 'Se ajustará el stock a lo contado. ¿Continuar?', aceptar: 'Ajustar' }))) return;
     try { setRes(await api.post('/stock/conteos', { almacenId: alm, motivo: String(new FormData(e.currentTarget).get('motivo') ?? '').trim() || undefined, lineas }, sucursalId!)); setVals({}); hecho(); } catch (err) { setError(mensajeDeError(err)); }
   };
   return (
@@ -179,7 +180,7 @@ function Catalogo({ insumos, almacenes, hecho }: { insumos: Insumo[]; almacenes:
           <label className="flex items-center gap-space-xs h-12"><input type="checkbox" name="perecedero" className="w-5 h-5" />Perecedero</label>
           <button className={`${clases.primario} col-span-2`}>Crear insumo</button></form>
         <form onSubmit={nuevoAlmacen} className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm"><h2 className="font-headline-sm text-headline-sm">Almacenes</h2>
-          <ul className="flex flex-col gap-1">{almacenes.map((a) => <li key={a.id} className="flex items-center justify-between gap-space-xs"><span>{a.nombre}</span><button type="button" onClick={() => { const n = prompt('Nuevo nombre del almacén', a.nombre); if (n && n.trim() && n.trim() !== a.nombre) void accion(() => api.patch(`/almacenes/${a.id}`, { nombre: n.trim() }, sucursalId!)); }} className="h-10 px-2 text-primary font-label-md">Renombrar</button></li>)}{almacenes.length === 0 && <li className="text-on-surface-variant">Aún no hay almacenes.</li>}</ul>
+          <ul className="flex flex-col gap-1">{almacenes.map((a) => <li key={a.id} className="flex items-center justify-between gap-space-xs"><span>{a.nombre}</span><button type="button" onClick={async () => { const n = await pedirTexto({ titulo: 'Renombrar almacén', etiqueta: 'Nuevo nombre del almacén', valor: a.nombre, maximo: 60 }); if (n && n.trim() && n.trim() !== a.nombre) void accion(() => api.patch(`/almacenes/${a.id}`, { nombre: n.trim() }, sucursalId!)); }} className="h-10 px-2 text-primary font-label-md">Renombrar</button></li>)}{almacenes.length === 0 && <li className="text-on-surface-variant">Aún no hay almacenes.</li>}</ul>
           <input name="nombre" required maxLength={60} placeholder="Cocina, Bodega seca, Cámara fría…" aria-label="Nombre del almacén" className={clases.input} /><button className={clases.secundario}>Agregar almacén</button></form>
       </div>
       <ul className="grid grid-cols-1 gap-space-xs lg:grid-cols-2">{insumos.map((i) => (
@@ -188,7 +189,7 @@ function Catalogo({ insumos, almacenes, hecho }: { insumos: Insumo[]; almacenes:
           <div className="flex flex-wrap gap-space-xs shrink-0 justify-end">
             <select aria-label={`Proveedor preferido de ${i.nombre}`} value={i.proveedorPreferidoId ?? ''} onChange={(e) => accion(() => api.patch(`/insumos/${i.id}`, cuerpo(i, { proveedorPreferidoId: e.target.value || null }), sucursalId!))} className="h-12 max-w-[9rem] rounded-lg border border-outline-variant bg-surface-container-lowest px-space-sm"><option value="">Sin proveedor</option>{(proveedores.data ?? []).filter((p) => p.activo).map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}</select>
             <select aria-label={`Almacén de consumo de ${i.nombre}`} value={i.almacenConsumoId ?? ''} onChange={(e) => accion(() => api.patch(`/insumos/${i.id}`, cuerpo(i, { almacenConsumoId: e.target.value || null }), sucursalId!))} className="h-12 max-w-[9rem] rounded-lg border border-outline-variant bg-surface-container-lowest px-space-sm"><option value="">Almacén auto</option>{almacenes.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}</select>
-            <button type="button" onClick={() => { const m = prompt(`Stock mínimo de ${i.nombre} (${i.unidad})`, String(i.minimo)); if (m !== null && !Number.isNaN(Number(m))) void accion(() => api.patch(`/insumos/${i.id}`, { nombre: i.nombre, unidad: i.unidad, minimo: Number(m), categoria: i.categoria, perecedero: i.perecedero, metodoCosto: i.metodoCosto, activo: i.activo }, sucursalId!)); }} className="h-12 px-space-sm rounded-lg border border-outline-variant text-primary">Mínimo</button>
+            <button type="button" onClick={async () => { const m = await pedirTexto({ titulo: `Stock mínimo de ${i.nombre}`, etiqueta: `Cantidad mínima (${i.unidad})`, valor: String(i.minimo), teclado: 'decimal', maximo: 14 }); if (m !== null && !Number.isNaN(Number(m.replace(',', '.')))) void accion(() => api.patch(`/insumos/${i.id}`, { nombre: i.nombre, unidad: i.unidad, minimo: Number(m.replace(',', '.')), categoria: i.categoria, perecedero: i.perecedero, metodoCosto: i.metodoCosto, activo: i.activo }, sucursalId!)); }} className="h-12 px-space-sm rounded-lg border border-outline-variant text-primary">Mínimo</button>
             <button type="button" onClick={() => accion(() => api.patch(`/insumos/${i.id}`, { nombre: i.nombre, unidad: i.unidad, minimo: i.minimo, categoria: i.categoria, perecedero: i.perecedero, metodoCosto: i.metodoCosto, activo: !i.activo }, sucursalId!))} className="h-12 px-space-sm rounded-lg border border-outline-variant text-on-surface-variant">{i.activo ? 'Desactivar' : 'Activar'}</button>
           </div></li>))}</ul>
     </section>

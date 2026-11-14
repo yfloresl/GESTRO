@@ -1,3 +1,4 @@
+import { confirmar, pedirTexto } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
 import { clases } from '../componentes/Marca';
@@ -81,9 +82,9 @@ function DetalleEvento({ id, cerrar, hecho }: { id: string; cerrar(): void; hech
   const accion = async (f: () => Promise<unknown>, ok?: string) => { setError(null); setMsg(null); try { await f(); if (ok) setMsg(ok); hecho(); } catch (err) { setError(mensajeDeError(err)); } };
   const cobrar = (ev: FormEvent<HTMLFormElement>) => { ev.preventDefault(); const f = new FormData(ev.currentTarget); const form = ev.currentTarget; void accion(async () => { await api.post(`/eventos/${id}/cobros`, { monto: num(f.get('monto')), via: String(f.get('via')) }, sucursalId!); form.reset(); }, 'Cobro registrado.'); };
   const guardarMenu = () => accion(async () => { await api.put(`/eventos/${id}/menu`, { platos: (menu ?? []).filter((m) => m.platoId && num(m.porciones) > 0).map((m) => ({ platoId: m.platoId, porciones: Math.round(num(m.porciones)) })) }, sucursalId!); setMenu(null); }, 'Menú guardado.');
-  const cancelar = () => {
-    const motivo = prompt('Motivo de la cancelación'); if (!motivo) return;
-    const devolver = Number(e?.pagado) > 0 ? confirm(`Hay ${bs(e!.pagado)} cobrados. ¿Se devuelven al cliente?`) : false;
+  const cancelar = async () => {
+    const motivo = await pedirTexto({ titulo: 'Cancelar el evento', etiqueta: 'Motivo de la cancelación', minimo: 3, aceptar: 'Cancelar evento' }); if (!motivo) return;
+    const devolver = Number(e?.pagado) > 0 ? await confirmar({ titulo: 'Devolución', mensaje: `Hay ${bs(e!.pagado)} cobrados. ¿Se devuelven al cliente?`, aceptar: 'Devolver', cancelar: 'No cancelar' }) : false;
     if (Number(e?.pagado) > 0 && !devolver) return;
     void accion(() => api.post(`/eventos/${id}/cancelar`, { motivo, devolver }, sucursalId!), 'Evento cancelado.');
   };
@@ -128,8 +129,8 @@ function DetalleEvento({ id, cerrar, hecho }: { id: string; cerrar(): void; hech
           <section className="grid grid-cols-2 gap-space-sm">
             {vivo && esAdmin && <button type="button" onClick={() => setEditando(true)} className="h-14 rounded-lg border border-outline-variant font-semibold">Editar datos</button>}
             {e.estado === 'cotizado' && esAdmin && <button type="button" onClick={() => accion(() => api.post(`/eventos/${id}/estado`, { accion: 'confirmar' }, sucursalId!), 'Evento confirmado.')} className={clases.primario}>Confirmar</button>}
-            {e.estado === 'confirmado' && puedeIniciar && <button type="button" onClick={() => { if (confirm('Al iniciar se descuentan del inventario los insumos del menú. ¿Iniciar el evento?')) void accion(() => api.post(`/eventos/${id}/estado`, { accion: 'iniciar' }, sucursalId!), 'Evento iniciado: insumos descontados.'); }} className={clases.primario}>Iniciar evento</button>}
-            {e.estado === 'en_curso' && esAdmin && <button type="button" onClick={() => { if (confirm(`Cerrar el evento. ${Number(e.saldo) > 0 ? `Quedarán ${bs(e.saldo ?? 0)} por cobrar al cliente.` : 'Está cobrado por completo.'}`)) void accion(() => api.post(`/eventos/${id}/cerrar`, {}, sucursalId!), 'Evento cerrado.'); }} className={`${clases.primario} col-span-2`}>Cerrar evento</button>}
+            {e.estado === 'confirmado' && puedeIniciar && <button type="button" onClick={async () => { if (await confirmar({ titulo: 'Iniciar evento', mensaje: 'Al iniciar se descuentan del inventario los insumos del menú. ¿Iniciar el evento?', aceptar: 'Iniciar' })) void accion(() => api.post(`/eventos/${id}/estado`, { accion: 'iniciar' }, sucursalId!), 'Evento iniciado: insumos descontados.'); }} className={clases.primario}>Iniciar evento</button>}
+            {e.estado === 'en_curso' && esAdmin && <button type="button" onClick={async () => { if (await confirmar({ titulo: 'Cerrar evento', mensaje: `${Number(e.saldo) > 0 ? `Quedarán ${bs(e.saldo ?? 0)} por cobrar al cliente.` : 'Está cobrado por completo.'}`, aceptar: 'Cerrar evento' })) void accion(() => api.post(`/eventos/${id}/cerrar`, {}, sucursalId!), 'Evento cerrado.'); }} className={`${clases.primario} col-span-2`}>Cerrar evento</button>}
             {vivo && esAdmin && <button type="button" onClick={cancelar} className="h-14 rounded-lg border border-error text-error font-semibold col-span-2">Cancelar evento</button>}
           </section>
           {editando && <FormEvento evento={e} cerrar={() => setEditando(false)} hecho={() => { setEditando(false); hecho(); }} />}

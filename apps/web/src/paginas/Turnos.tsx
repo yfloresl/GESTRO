@@ -1,3 +1,4 @@
+import { confirmar } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
 import { clases } from '../componentes/Marca';
@@ -126,7 +127,7 @@ function DetalleTurno({ t, programa, cerrar, hecho }: { t: Turno; programa: bool
           {!t.entrada && <button type="button" onClick={() => accion(() => api.post(`/turnos/${t.id}/entrada`, undefined, sucursalId!))} className={clases.primario}>Registrar entrada</button>}
           {t.entrada && !t.salida && <button type="button" onClick={() => accion(() => api.post(`/turnos/${t.id}/salida`, undefined, sucursalId!))} className={clases.primario}>Registrar salida</button>}
           {!t.entrada && <div className="grid grid-cols-2 gap-space-sm"><button type="button" onClick={() => setEditando(true)} className="h-14 rounded-lg border border-outline-variant font-semibold">Editar</button>
-            <button type="button" onClick={() => { if (confirm('¿Borrar este turno?')) void accion(() => api.del(`/turnos/${t.id}`, undefined, sucursalId!)); }} className="h-14 rounded-lg border border-error text-error font-semibold">Borrar</button></div>}</div>}
+            <button type="button" onClick={async () => { if (await confirmar({ titulo: 'Borrar turno', mensaje: '¿Borrar este turno?', aceptar: 'Borrar', peligro: true })) void accion(() => api.del(`/turnos/${t.id}`, undefined, sucursalId!)); }} className="h-14 rounded-lg border border-error text-error font-semibold">Borrar</button></div>}</div>}
       </div>
     </div>
   );

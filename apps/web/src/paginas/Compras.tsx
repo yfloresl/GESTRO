@@ -1,3 +1,4 @@
+import { confirmar, pedirTexto } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
 import { clases } from '../componentes/Marca';
@@ -165,7 +166,7 @@ function SugerenciasVista({ hecho }: { hecho(): void }) {
 function PorPagarVista({ hecho }: { hecho(): void }) {
   const { sucursalId, esAdmin, roles } = useRolesActivos(); const puede = esAdmin || roles.includes('contador'); const [error, setError] = useState<string | null>(null);
   const q = useQuery({ queryKey: ['por-pagar', sucursalId], queryFn: () => api.get<PorPagar[]>('/por-pagar', sucursalId!), enabled: !!sucursalId });
-  const pagar = async (c: PorPagar) => { const v = prompt(`Monto a pagar a ${c.proveedor} (saldo Bs ${c.saldo})`, c.saldo); if (v === null) return; const banco = confirm('¿Se paga por banco o transferencia? Aceptar = bancos, Cancelar = efectivo de caja'); setError(null); try { await api.post(`/por-pagar/${c.id}/pagar`, { monto: Number(v.replace(',', '.')), metodo: banco ? 'bancos' : 'caja' }, sucursalId!); hecho(); } catch (e) { setError(mensajeDeError(e)); } };
+  const pagar = async (c: PorPagar) => { const v = await pedirTexto({ titulo: `Pagar a ${c.proveedor}`, mensaje: `Saldo pendiente: Bs ${c.saldo}`, etiqueta: 'Monto a pagar (Bs)', valor: c.saldo, aceptar: 'Continuar', teclado: 'decimal', maximo: 14 }); if (v === null) return; const banco = await confirmar({ titulo: 'Forma de pago', mensaje: '¿Se paga por banco o transferencia, o con efectivo de la caja?', aceptar: 'Banco / transferencia', cancelar: 'Efectivo de caja' }); setError(null); try { await api.post(`/por-pagar/${c.id}/pagar`, { monto: Number(v.replace(',', '.')), metodo: banco ? 'bancos' : 'caja' }, sucursalId!); hecho(); } catch (e) { setError(mensajeDeError(e)); } };
   const total = (q.data ?? []).reduce((t, c) => t + Number(c.saldo), 0);
   return (
     <section className="flex flex-col gap-space-sm">{error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}

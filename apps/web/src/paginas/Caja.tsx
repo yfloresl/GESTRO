@@ -1,3 +1,4 @@
+import { confirmar } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -6,7 +7,7 @@ import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs, CajaEstado, Recibo } from '../lib/tipos';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
 
-const METODO: Record<string, string> = { efectivo: 'Efectivo', qr: 'QR', tarjeta: 'Tarjeta', transferencia: 'Transferencia', credito: 'Crédito', cuentas_por_cobrar: 'Cobros de cuentas por cobrar (efectivo)' };
+const METODO: Record<string, string> = { efectivo: 'Efectivo', qr: 'QR', tarjeta: 'Tarjeta', transferencia: 'Transferencia', credito: 'Crédito', cuentas_por_cobrar: 'Cobros de cuentas (efectivo)' };
 const num = (v: FormDataEntryValue | null) => Number(String(v ?? '').replace(',', '.'));
 
 /** Caja: apertura, cobros del turno por método y cierre con arqueo (el cobro se hace desde el pedido). */
@@ -15,13 +16,14 @@ export function Caja() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['caja', sucursalId], queryFn: () => api.get<CajaEstado>('/caja/actual', sucursalId!), enabled: !!sucursalId, refetchInterval: 30_000 });
   const [error, setError] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [cierre, setCierre] = useState<{ esperado: string; contado: string; diferencia: string } | null>(null);
   const refrescar = () => qc.invalidateQueries({ queryKey: ['caja', sucursalId] });
 
-  const abrir = async (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); setError(null); const f = new FormData(e.currentTarget); try { await api.post('/caja/abrir', { montoInicial: num(f.get('monto')) }, sucursalId!); setCierre(null); await refrescar(); } catch (err) { setError(mensajeDeError(err)); } };
+  const abrir = async (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); setError(null); const f = new FormData(e.currentTarget); try { await api.post('/caja/abrir', { montoInicial: num(f.get('monto')) }, sucursalId!); setCierre(null); setAviso('Caja abierta. Ya puedes cobrar.'); await refrescar(); } catch (err) { setError(mensajeDeError(err)); } };
   const cerrar = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault(); setError(null); const f = new FormData(e.currentTarget);
-    if (!confirm('¿Cerrar la caja? Ya no podrás cobrar hasta abrir una nueva.')) return;
+    if (!(await confirmar({ titulo: 'Cerrar la caja', mensaje: 'Ya no podrás cobrar hasta abrir una nueva. ¿Cerrar la caja?', aceptar: 'Cerrar caja' }))) return;
     try { const r = await api.post<{ efectivoEsperado: string; montoContado: string; diferencia: string }>('/caja/cerrar', { montoContado: num(f.get('contado')) }, sucursalId!); setCierre({ esperado: r.efectivoEsperado, contado: r.montoContado, diferencia: r.diferencia }); await refrescar(); } catch (err) { setError(mensajeDeError(err)); }
   };
 
@@ -30,6 +32,7 @@ export function Caja() {
     <div className="flex flex-col gap-space-lg max-w-3xl">
       <header><h1 className="font-headline-lg text-headline-lg text-primary tracking-tight">Caja</h1><p className="font-body-md text-body-md text-on-surface-variant">Abre tu caja para cobrar y ciérrala con arqueo al terminar el turno.</p></header>
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
+      {aviso && !error && <p role="status" className="rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant p-space-sm">{aviso}</p>}
       {cierre && (
         <section role="status" className={`rounded-xl border-2 p-space-md flex flex-col gap-1 ${Number(cierre.diferencia) === 0 ? 'border-tertiary bg-tertiary-fixed' : 'border-error bg-error-container'}`}>
           <h2 className="font-headline-sm text-headline-sm">Caja cerrada</h2>
@@ -40,7 +43,7 @@ export function Caja() {
       {q.isLoading ? <ListaEsqueleto /> : !c?.activa ? (
         <form onSubmit={abrir} className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm">
           <h2 className="font-headline-sm text-headline-sm">Abrir caja</h2>
-          <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Efectivo inicial (Bs)</span><input name="monto" required inputMode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" defaultValue="0" className={`${clases.input} font-label-lg`} /></label>
+          <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Efectivo inicial (Bs)</span><input name="monto" required inputMode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" title="Escribe un monto válido, por ejemplo 200,50 (sin signo y con a lo más 2 decimales)" defaultValue="0" className={`${clases.input} font-label-lg`} /></label>
           <button className={clases.primario}>Abrir caja</button>
         </form>
       ) : (
@@ -49,11 +52,12 @@ export function Caja() {
             <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md"><p className={clases.etiqueta}>Efectivo esperado</p><p className="font-headline-lg text-headline-lg text-primary font-label-lg">{bs(c.efectivoEsperado!)}</p><p className="font-body-sm text-on-surface-variant">Apertura {bs(c.montoInicial!)} + cobros en efectivo (ventas y cuentas por cobrar)</p></div>
             <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md"><p className={clases.etiqueta}>Cobros del turno</p>
               {(c.cobros ?? []).length === 0 ? <p className="text-on-surface-variant">Sin cobros todavía.</p> : <ul className="mt-space-xs flex flex-col gap-1">{c.cobros!.map((x) => <li key={x.metodo} className="flex justify-between"><span>{METODO[x.metodo] ?? x.metodo} <span className="text-on-surface-variant">({x.cantidad})</span></span><span className="font-label-lg">{bs(x.total)}</span></li>)}</ul>}
+              {Number(c.propinas ?? 0) > 0 && <p className="mt-space-xs font-body-sm text-on-surface-variant">Propinas cobradas: {bs(c.propinas!)} (se entregan al personal; {bs(c.propinasEnEfectivo ?? 0)} en efectivo están en el cajón y suman al efectivo esperado).</p>}
             </div>
           </section>
           <form onSubmit={cerrar} className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm">
             <h2 className="font-headline-sm text-headline-sm">Cerrar caja (arqueo)</h2>
-            <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Efectivo contado (Bs)</span><input name="contado" required inputMode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" className={`${clases.input} font-label-lg`} /></label>
+            <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Efectivo contado (Bs)</span><input name="contado" required inputMode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" title="Escribe un monto válido, por ejemplo 200,50 (sin signo y con a lo más 2 decimales)" className={`${clases.input} font-label-lg`} /></label>
             <button className="h-14 rounded-lg bg-error text-on-error font-semibold">Cerrar caja</button>
           </form>
         </>

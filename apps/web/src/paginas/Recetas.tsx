@@ -1,3 +1,4 @@
+import { pedirTexto } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useMemo, useState } from 'react';
 import { clases } from '../componentes/Marca';
@@ -29,7 +30,7 @@ export function Recetas() {
   const platos = (lista?.platos ?? []).filter((p) => filtro === 'todos' || (filtro === 'sin' ? !p.tieneReceta : p.bajoMinimo));
   const sinReceta = (lista?.platos ?? []).filter((p) => !p.tieneReceta).length;
   const bajos = (lista?.platos ?? []).filter((p) => p.bajoMinimo).length;
-  const cambiarMargen = async () => { const v = prompt('Margen mínimo aceptable (%)', String(lista?.margenMinimo ?? 60)); if (v === null || Number.isNaN(Number(v))) return; try { await api.patch('/sucursal/ajustes', { margenMinimo: Number(v) }, sucursalId!); refrescar(); } catch (e) { setError(mensajeDeError(e)); } };
+  const cambiarMargen = async () => { const v = await pedirTexto({ titulo: 'Margen mínimo', etiqueta: 'Margen mínimo aceptable (%)', valor: String(lista?.margenMinimo ?? 60), teclado: 'decimal', maximo: 6 }); if (v === null || Number.isNaN(Number(v.replace(',', '.')))) return; try { await api.patch('/sucursal/ajustes', { margenMinimo: Number(v.replace(',', '.')) }, sucursalId!); refrescar(); } catch (e) { setError(mensajeDeError(e)); } };
 
   return (
     <div className="flex flex-col gap-space-lg">
