@@ -71,3 +71,15 @@ Turnos, eventos; anulación de ventas y cancelar reserva (confirmación nativa);
 ## 10. Residuos (para el cierre del dueño)
 - Demo `prueba_kyros_asistente`: caja del día abierta y cerrada con diferencia (GST-001), 5 pedidos de demo cobrados (Mesas 1, 2, 3, 4, 6), cuenta por cobrar «QA Cliente Crédito Pérez» con saldo 49,75. Se limpia con «Restablecer mis datos de muestra».
 - Interruptores demo encendidos: ninguno.
+
+---
+
+# GESTRO 2.5 — prueba de RECHAZO con `prueba_kyros_tutor` (14/11/2026 ~15:35)
+
+Cuenta: `prueba_kyros_tutor` (sesión de Kyros ID abierta; no existe como usuario de GESTRO: "siempre rechazada"). Entré desde https://gestro.kyros-tech.com/ingresar → "Entrar con Kyros ID" (SSO sin formulario).
+- **Qué ve un neófito (antes):** tras la espera de "Verificando tu ingreso…" queda en `/callback` con el texto "HTTP 401" y el botón "Volver a intentar": no dice qué pasó ni qué hacer. Hallazgo **GST-R01 (Media, usabilidad)**.
+- **Sesión a medias:** ninguna. `localStorage` y `sessionStorage` vacíos tras el rechazo; no se guardó token. Las llamadas de la web: `GET /api/v1/auth/kyros-id/config` 200 → `POST /auth/refrescar` 401 → `POST /auth/kyros-id/sesion` 401 (el servidor rechaza porque el `sub` es una cuenta de demostración sin vínculo y la demo de GESTRO no la acepta: `kyros-id.service.ts`, `esSubDeDemostracion`; el texto del servidor es uniforme "No pudimos verificar tu ingreso." para no revelar nada).
+- **Bucles:** ninguno. "Volver a intentar" lleva a `/`; abrir `/app/caja` sin sesión redirige a `/` (portada) sin rebotar. Una sola ronda de reautenticación existe solo para el administrador de plataforma (`gestro.reauth`).
+- **Desde la API:** sin sesión, `GET /api/v1/pedidos`, `/caja/actual` y `/sucursal` → 401 "Sesión requerida"; `POST /auth/kyros-id/sesion` con un token de 1 carácter → 400 validación; con un `Bearer` inválido `POST /auth/refrescar` → 401. No hay acceso. (No se probó con el token real de la cuenta: prohibido manejar tokens.)
+- **Corrección (GST-R01, commit 7264a1c):** `Callback.tsx` muestra para 401: "Esta cuenta no puede entrar a GESTRO. Si es la primera vez, vuelve al inicio y elige «Crear mi cuenta» (o pide una invitación al administrador de tu restaurante); si es una cuenta de prueba, usa una cuenta con acceso."; 403 desactivada; 503 Kyros ID; 429 demasiados intentos; y nunca "HTTP nnn". Prueba `Callback.spec.ts` (3). Verificación en vivo: pendiente del despliegue (repetir el ingreso con `prueba_kyros_tutor` cuando GESTRO se haya redesplegado).
+- Nota: la cuenta rechazada deja el aviso en español solamente (el callback de GESTRO no está traducido; la portada y los legales sí).
