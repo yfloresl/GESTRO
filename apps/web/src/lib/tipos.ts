@@ -15,6 +15,7 @@ export interface CajaEstado { activa: boolean; id?: string; desde?: string; mont
 export interface Recibo {
   id: string; numero: number; emitido: string; monto: string; cliente: string | null; metodo: string | null; anulado: boolean; motivoAnulacion: string | null;
   restaurante: string; razonSocial: string; nit: string | null; mesa: string | null; ticket: number | null; items: { nombre: string; cantidad: string; precio: string }[]; leyenda: string;
+  descuento?: string; propina?: string; recibido?: string | null; vuelto?: string | null;
 }
 
 export const bs = (n: string | number) => `Bs ${Number(n).toFixed(2)}`;

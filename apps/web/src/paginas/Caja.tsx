@@ -87,7 +87,17 @@ export function ReciboPagina() {
         <p>{new Date(r.emitido).toLocaleString('es-BO', { timeZone: 'America/La_Paz' })}</p>
         <p>{r.mesa ? `Mesa ${r.mesa}` : r.ticket ? `Ticket #${r.ticket}` : ''}{r.cliente ? ` · ${r.cliente}` : ''}</p>
         <table className="w-full my-2 text-left"><tbody>{r.items.map((i, k) => <tr key={k}><td className="align-top">{Number(i.cantidad)}× {i.nombre}</td><td className="text-right align-top">{Number(Number(i.cantidad) * Number(i.precio)).toFixed(2)}</td></tr>)}</tbody></table>
-        <p className="flex justify-between border-t border-dashed border-black pt-1 font-semibold"><span>TOTAL Bs</span><span>{Number(r.monto).toFixed(2)}</span></p>
+        {Number(r.descuento ?? 0) > 0 && <>
+          <p className="flex justify-between border-t border-dashed border-black pt-1"><span>Subtotal</span><span>{(Math.round(Number(r.monto) * 100 + Number(r.descuento) * 100) / 100).toFixed(2)}</span></p>
+          <p className="flex justify-between"><span>Descuento</span><span>− {Number(r.descuento).toFixed(2)}</span></p>
+        </>}
+        <p className={`flex justify-between ${Number(r.descuento ?? 0) > 0 ? '' : 'border-t border-dashed border-black pt-1'} font-semibold`}><span>TOTAL Bs</span><span>{Number(r.monto).toFixed(2)}</span></p>
+        {Number(r.propina ?? 0) > 0 && <>
+          <p className="flex justify-between"><span>Propina</span><span>{Number(r.propina).toFixed(2)}</span></p>
+          <p className="flex justify-between font-semibold"><span>A PAGAR Bs</span><span>{(Math.round(Number(r.monto) * 100 + Number(r.propina) * 100) / 100).toFixed(2)}</span></p>
+        </>}
+        {r.recibido != null && <p className="flex justify-between"><span>Efectivo recibido</span><span>{Number(r.recibido).toFixed(2)}</span></p>}
+        {r.vuelto != null && Number(r.vuelto) > 0 && <p className="flex justify-between"><span>Vuelto</span><span>{Number(r.vuelto).toFixed(2)}</span></p>}
         <p>Pago: {r.metodo ? METODO[r.metodo] ?? r.metodo : '—'}</p>
         <p className="text-center mt-3">¡Gracias por su visita!</p>
       </article>
