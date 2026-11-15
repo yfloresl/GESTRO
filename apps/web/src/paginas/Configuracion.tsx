@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
 import { clases } from '../componentes/Marca';
+import { FacturacionConfig } from './FacturacionConfig';
 import { deCentavos, leerPorcentaje, pctTxt, topeEnCentavos } from '../lib/cobro';
 
 interface Ajustes {
@@ -78,7 +79,7 @@ export function Configuracion() {
           <Interruptor activo={a.qrSinConfirmacion} deshabilitado={!a.pedidosPorQr} cambiar={(v) => cambiar({ qrSinConfirmacion: v })} titulo="Enviar a cocina sin confirmar" ayuda="Apagado (recomendado): el mesero confirma con un toque cada pedido del cliente. Encendido: entra directo a cocina." />
           <div className="py-space-sm">
             <p className="font-body-md font-semibold">Documento al cobrar</p>
-            <p className="font-body-sm text-body-sm text-on-surface-variant mb-space-xs">La factura electrónica del SIN estará disponible cuando se conecte el Servicio Fiscal.</p>
+            <p className="font-body-sm text-body-sm text-on-surface-variant mb-space-xs">Recibo o solo contabilizar. La factura electrónica (en ambiente de pruebas) se configura más abajo, en «Facturación electrónica».</p>
             <div className="grid grid-cols-2 gap-space-xs" role="radiogroup" aria-label="Documento al cobrar">
               {([['recibo', 'Recibos'], ['ninguno', 'Solo contabilizar']] as const).map(([k, n]) => <button key={k} type="button" role="radio" aria-checked={a.modoDeCobro === k} onClick={() => cambiar({ modoDeCobro: k })} className={`h-12 rounded-lg font-semibold ${a.modoDeCobro === k ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}>{n}</button>)}
             </div>
@@ -86,6 +87,7 @@ export function Configuracion() {
           <TopesDeCobro key={`${a.descuentoMaxPct}-${a.propinaMaxPct}`} a={a} guardar={cambiar} />
         </section>
       )}
+      <FacturacionConfig />
     </div>
   );
 }

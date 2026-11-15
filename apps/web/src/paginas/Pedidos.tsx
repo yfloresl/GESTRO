@@ -5,6 +5,8 @@ import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs, ETIQUETA_ESTADO, ETIQUETA_TIPO, minutosDesde, haceCuanto, Pedido } from '../lib/tipos';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
+import { ComensalCampos, comensalVacio, cuerpoDeFactura, FacturaPanel, type DatosComensal } from './FacturaPanel';
+import { AvisoPruebas } from './FacturacionConfig';
 import { calcularCobro, deCentavos, aCentavos, pctTxt, TOPES_POR_DEFECTO, type Topes } from '../lib/cobro';
 
 interface Mesa { id: string; numero: string; asientos: number; activa: boolean }
@@ -193,7 +195,7 @@ function PedidoDetalle({ id, volver }: { id: string; volver(): void }) {
               {puedeCobrar && vigentes.length > 0 && <button type="button" disabled={sinEnviar > 0} onClick={() => setCobrar(true)} className="h-14 rounded-lg bg-secondary-container text-on-secondary-container font-semibold disabled:opacity-50 flex items-center justify-center gap-space-xs"><span className="material-symbols-outlined" aria-hidden="true">payments</span>Cobrar {bs(p.total)}</button>}
             </div>
           )}
-          {cerrado && p.estado === 'cobrado' && <ReciboEnlace pedidoId={id} />}
+          {cerrado && p.estado === 'cobrado' && <><ReciboEnlace pedidoId={id} /><FacturaPanel pedidoId={id} /></>}
         </aside>
       </div>
 
@@ -268,7 +270,9 @@ function Cobrar({ pedido, cerrar, cobrado }: { pedido: Pedido; cerrar(): void; c
   const tp = useQuery({ queryKey: ['cobro-topes', sucursalId], queryFn: () => api.get<{ descuentoMaxPct: number; propinaMaxPct: number }>('/cobro/topes', sucursalId!), enabled: !!sucursalId, staleTime: 0, refetchOnMount: 'always' });
   const topes: Topes = tp.data ? { descuentoPct: tp.data.descuentoMaxPct, propinaPct: tp.data.propinaMaxPct } : TOPES_POR_DEFECTO;
   const [metodo, setMetodo] = useState<(typeof METODOS)[number][0]>('efectivo');
-  const [doc, setDoc] = useState<'recibo' | 'ninguno'>('recibo'); const [cliente, setCliente] = useState(''); const [telefono, setTelefono] = useState(''); const [dias, setDias] = useState('30');
+  const fe = useQuery({ queryKey: ['fact-estado', sucursalId], queryFn: () => api.get<{ disponible: boolean; permiteConsumidorFinal: boolean; aviso: string | null }>('/facturacion/estado', sucursalId!).catch(() => ({ disponible: false, permiteConsumidorFinal: false, aviso: null })), enabled: !!sucursalId });
+  const [datos, setDatos] = useState<DatosComensal>(comensalVacio);
+  const [doc, setDoc] = useState<'recibo' | 'ninguno' | 'factura'>('recibo'); const [cliente, setCliente] = useState(''); const [telefono, setTelefono] = useState(''); const [dias, setDias] = useState('30');
   const [error, setError] = useState<string | null>(null); const [ocupado, setOcupado] = useState(false);
   const [descuento, setDescuento] = useState(''); const [motivoDesc, setMotivoDesc] = useState(''); const [propina, setPropina] = useState(''); const [recibido, setRecibido] = useState('');
   const subtotal = aCentavos(String(pedido.total)) ?? 0;
@@ -278,9 +282,11 @@ function Cobrar({ pedido, cerrar, cobrado }: { pedido: Pedido; cerrar(): void; c
     setError(null);
     if (calc.error) { setError(calc.error); return; }
     if (metodo === 'credito' && !cliente.trim()) { setError('Escribe el nombre del cliente: la venta a crédito queda como cuenta por cobrar.'); return; }
+    const fact = doc === 'factura' && !soloContabilizar ? cuerpoDeFactura(datos, metodo === 'tarjeta') : null;
+    if (fact?.error) { setError(fact.error); return; }
     setOcupado(true);
     try {
-      const r = await api.post<{ recibo: number | null }>(`/pedidos/${pedido.id}/cobrar`, { metodo, documento: soloContabilizar ? 'ninguno' : doc, nombreCliente: cliente.trim() || undefined, ...(calc.descuento > 0 ? { descuento: Number(deCentavos(calc.descuento)), motivoDescuento: motivoDesc.trim() } : {}), ...(calc.propina > 0 ? { propina: Number(deCentavos(calc.propina)) } : {}), ...(metodo === 'efectivo' && calc.recibido !== null ? { efectivoRecibido: Number(deCentavos(calc.recibido)) } : {}), ...(metodo === 'credito' ? { telefonoCliente: telefono.trim() || undefined, diasCredito: Math.max(0, Math.min(365, Math.round(Number(dias) || 0))) } : {}) }, sucursalId!);
+      const r = await api.post<{ recibo: number | null }>(`/pedidos/${pedido.id}/cobrar`, { metodo, documento: soloContabilizar ? 'ninguno' : doc, ...(fact?.cuerpo ? { factura: fact.cuerpo } : {}), nombreCliente: cliente.trim() || undefined, ...(calc.descuento > 0 ? { descuento: Number(deCentavos(calc.descuento)), motivoDescuento: motivoDesc.trim() } : {}), ...(calc.propina > 0 ? { propina: Number(deCentavos(calc.propina)) } : {}), ...(metodo === 'efectivo' && calc.recibido !== null ? { efectivoRecibido: Number(deCentavos(calc.recibido)) } : {}), ...(metodo === 'credito' ? { telefonoCliente: telefono.trim() || undefined, diasCredito: Math.max(0, Math.min(365, Math.round(Number(dias) || 0))) } : {}) }, sucursalId!);
       cobrado(); if (r.recibo) { /* el recibo queda disponible desde el pedido */ }
     } catch (e) { setError(mensajeDeError(e)); setOcupado(false); }
   };
@@ -295,7 +301,10 @@ function Cobrar({ pedido, cerrar, cobrado }: { pedido: Pedido; cerrar(): void; c
           {!soloContabilizar && <button type="button" role="radio" aria-checked={doc === 'recibo'} onClick={() => setDoc('recibo')} className={`h-12 rounded-lg font-semibold ${doc === 'recibo' ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}>Recibo</button>}
           <button type="button" role="radio" aria-checked={soloContabilizar || doc === 'ninguno'} onClick={() => setDoc('ninguno')} className={`h-12 rounded-lg font-semibold ${soloContabilizar || doc === 'ninguno' ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}>Solo contabilizar</button>
         </div>
-        <p className="font-body-sm text-on-surface-variant">La factura electrónica del SIN estará disponible cuando se conecte el Servicio Fiscal.</p>
+        {fe.data?.disponible && !soloContabilizar && <button type="button" role="radio" aria-checked={doc === 'factura'} onClick={() => setDoc('factura')} className={`h-12 rounded-lg font-semibold col-span-2 ${doc === 'factura' ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}>Factura electrónica (pruebas)</button>}
+        {doc === 'factura' && !soloContabilizar && fe.data?.disponible
+          ? <><AvisoPruebas texto={fe.data.aviso} /><ComensalCampos v={datos} cambiar={(p) => setDatos((d) => ({ ...d, ...p }))} permiteFinal={fe.data.permiteConsumidorFinal} conTarjeta={metodo === 'tarjeta'} /><p className="font-body-sm text-on-surface-variant">La propina no se factura. Si FacturaSIN no responde, la venta se cobra igual y la factura queda pendiente de emitir.</p></>
+          : <p className="font-body-sm text-on-surface-variant">{fe.data?.disponible ? 'También puedes emitir la factura después, desde el pedido cobrado.' : 'La factura electrónica la activa el dueño en Configuración.'}</p>}
       </fieldset>
       <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>{metodo === 'credito' ? 'Nombre del cliente (obligatorio)' : 'Nombre en el recibo (opcional)'}</span><input value={cliente} onChange={(e) => setCliente(e.target.value)} required={metodo === 'credito'} className={clases.input} /></label>
       {metodo === 'credito' && <div className="grid grid-cols-2 gap-space-sm"><label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Teléfono (opcional)</span><input value={telefono} onChange={(e) => setTelefono(e.target.value)} inputMode="tel" className={clases.input} /></label><label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Plazo (días)</span><input value={dias} onChange={(e) => setDias(e.target.value)} inputMode="numeric" className={clases.input} /></label></div>}

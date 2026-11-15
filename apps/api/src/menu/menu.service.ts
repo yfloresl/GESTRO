@@ -21,6 +21,9 @@ export const Plato = z.object({
   alergenos: z.array(z.enum(ALERGENOS)).max(12).optional(),
   minutosPreparacion: z.number().int().min(0).max(600).nullable().optional(),
   disponible: z.boolean().optional(),
+  /** Facturación (FacturaSIN): código de producto SIN y unidad de medida propios del plato; vacío = los de la configuración. */
+  codigoSin: z.string().trim().regex(/^\d{3,10}$/, 'El código SIN son 3 a 10 dígitos.').nullable().optional(),
+  unidadSin: z.number().int().min(1).max(999).nullable().optional(),
 }).strict();
 export const PlatoParcial = Plato.partial();
 
@@ -34,7 +37,7 @@ export class MenuService {
   ) {}
 
   private vista(i: typeof menuItems.$inferSelect, promo?: { precio: string; promo: string | null }) {
-    return { id: i.id, categoriaId: i.categoryId, nombre: i.name, descripcion: i.description, precio: i.price, precioVigente: promo?.precio ?? i.price, promocion: promo?.promo ?? null, alergenos: i.allergens, minutosPreparacion: i.prepMinutes, disponible: i.available, tieneFoto: !!i.photoKey };
+    return { id: i.id, categoriaId: i.categoryId, nombre: i.name, descripcion: i.description, precio: i.price, precioVigente: promo?.precio ?? i.price, promocion: promo?.promo ?? null, alergenos: i.allergens, minutosPreparacion: i.prepMinutes, disponible: i.available, tieneFoto: !!i.photoKey, codigoSin: i.sinProductCode, unidadSin: i.sinUnitCode };
   }
 
   categorias(t: Tenant) {
@@ -89,7 +92,7 @@ export class MenuService {
       await this.categoriaValida(tx, t, d.categoriaId);
       const [i] = await tx.insert(menuItems).values({
         restaurantId: t.restaurantId, categoryId: d.categoriaId ?? null, name: d.nombre, description: d.descripcion ?? null, price: d.precio.toFixed(2),
-        allergens: d.alergenos ?? [], prepMinutes: d.minutosPreparacion ?? null, available: d.disponible ?? true,
+        allergens: d.alergenos ?? [], prepMinutes: d.minutosPreparacion ?? null, available: d.disponible ?? true, sinProductCode: d.codigoSin ?? null, sinUnitCode: d.unidadSin ?? null,
       }).returning();
       await auditar(tx, t.restaurantId, por, 'menu.plato_creado', 'menu_item', i.id, d);
       return this.vista(i);
@@ -103,7 +106,7 @@ export class MenuService {
         ...(d.categoriaId !== undefined && { categoryId: d.categoriaId }), ...(d.nombre !== undefined && { name: d.nombre }),
         ...(d.descripcion !== undefined && { description: d.descripcion }), ...(d.precio !== undefined && { price: d.precio.toFixed(2) }),
         ...(d.alergenos !== undefined && { allergens: d.alergenos }), ...(d.minutosPreparacion !== undefined && { prepMinutes: d.minutosPreparacion }),
-        ...(d.disponible !== undefined && { available: d.disponible }),
+        ...(d.disponible !== undefined && { available: d.disponible }), ...(d.codigoSin !== undefined && { sinProductCode: d.codigoSin }), ...(d.unidadSin !== undefined && { sinUnitCode: d.unidadSin }),
       };
       if (!Object.keys(cambios).length) throw new BadRequestException('Nada que cambiar.');
       const [i] = await tx.update(menuItems).set(cambios).where(and(eq(menuItems.id, id), eq(menuItems.restaurantId, t.restaurantId))).returning();

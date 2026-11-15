@@ -1,6 +1,6 @@
 # Términos y condiciones de GESTRO
 
-**Versión:** 2026-11-14.1 · **Titular y proveedor:** Kyros-Tech S.R.L. (el «Proveedor»), con domicilio en Santa Cruz de la Sierra, Bolivia · **Contacto:** administracion@kyros-tech.com · **Servicio:** GESTRO, sistema de gestión de restaurantes (el «Sistema»).
+**Versión:** 2026-11-15.1 · **Titular y proveedor:** Kyros-Tech S.R.L. (el «Proveedor»), con domicilio en Santa Cruz de la Sierra, Bolivia · **Contacto:** administracion@kyros-tech.com · **Servicio:** GESTRO, sistema de gestión de restaurantes (el «Sistema»).
 
 Al crear tu cuenta o seguir usando el Sistema aceptas estos Términos, la Política de privacidad y las Políticas de uso. Debes tener **18 años cumplidos** y capacidad legal para obligarte; si actúas en nombre de un restaurante, declaras que tienes autoridad para hacerlo.
 
@@ -8,7 +8,7 @@ Al crear tu cuenta o seguir usando el Sistema aceptas estos Términos, la Polít
 GESTRO es un servicio en línea (SaaS) para restaurantes: menú y fotos, salón y mesas con código QR, pedidos, cocina, caja, inventario y recetas, compras, reservas, cuentas por cobrar, personal y turnos, contabilidad básica y estadísticas. Los módulos disponibles dependen del plan contratado.
 
 ## 2. Lo que el Sistema NO hace
-- **No emite facturas electrónicas ni se conecta al SIN/SIAT.** El documento de cobro que emite es un recibo interno, rotulado «no es una factura». Las obligaciones tributarias (facturación, IVA, IT y demás) son del restaurante.
+- **No factura con validez fiscal todavía.** GESTRO puede pedir facturas electrónicas a **FacturaSIN** (otro sistema de Kyros-Tech) a nombre de tu restaurante, pero hoy esa conexión funciona **únicamente en ambiente de pruebas / simulación**: las facturas que se generan **no tienen validez fiscal**, y GESTRO no está autorizado por el SIN ni afirma estarlo. El recibo interno sigue rotulado «no es una factura». Las obligaciones tributarias (facturación, IVA, IT y demás) son del restaurante.
 - **No sustituye a un contador, abogado ni asesor tributario.** La contabilidad, los reportes y el asistente de inteligencia artificial son ayudas; el restaurante debe revisarlos antes de usarlos.
 - No garantiza resultados de negocio ni que las proyecciones o sugerencias se cumplan.
 - No procesa pagos de comensales: el cobro por QR, tarjeta o transferencia lo realiza el restaurante con sus propios medios y el Sistema solo lo registra.

@@ -164,6 +164,8 @@ export const menuItems = pgTable('menu_items', {
   prepMinutes: integer('prep_minutes'),
   available: boolean('available').notNull().default(true),
   sortOrder: integer('sort_order').notNull().default(0),
+  sinProductCode: text('sin_product_code'),
+  sinUnitCode: smallint('sin_unit_code'),
 });
 
 export const pushSubscriptions = pgTable('push_subscriptions', {

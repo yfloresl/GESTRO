@@ -11,7 +11,7 @@ import { esSubDeDemostracion } from '../demo/constantes';
 import { TEXTOS_LEGALES } from './textos.generated';
 
 /** Versión vigente de Términos, Privacidad y Políticas. Debe coincidir con la de los textos en docs/legal y apps/web/src/legal (lo verifica una prueba). */
-export const VERSION_LEGAL = '2026-11-14.1';
+export const VERSION_LEGAL = '2026-11-15.1';
 export const DOCUMENTOS_LEGALES = ['terminos', 'privacidad', 'politicas'] as const;
 
 /** Los campos que se exigen en cada alta (registro de restaurante o unión por código de invitación). */

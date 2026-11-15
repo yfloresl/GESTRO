@@ -214,7 +214,7 @@ describe('Caja, cobro y recibos', () => {
     expect((await e.cajero.api.post('/caja/abrir', { montoInicial: 50 })).status).toBe(409);
   });
 
-  it('cobra con recibo correlativo, rotulado como no fiscal; la factura se rechaza mientras no exista el servicio fiscal', async () => {
+  it('cobra con recibo correlativo, rotulado como no fiscal; la factura se rechaza si el restaurante aún no configuró la facturación', async () => {
     const e = await escenario();
     await e.cajero.api.post('/caja/abrir', { montoInicial: 100 });
     const id = await pedidoListoParaCobrar(e);

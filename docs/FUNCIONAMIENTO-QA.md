@@ -20,7 +20,7 @@ Quién lo usa:
 | Salón: áreas, mesas, meseros por mesa/área/todo el restaurante | Hecho | |
 | Pedidos (mesa, mostrador, llevar, delivery) y cocina (KDS) | Hecho | Delivery: tipo de pedido; no hay integración con apps de delivery |
 | Caja: apertura/cierre, cobros, recibos | Hecho | Recibo interno, no factura |
-| Facturación fiscal SIN/SIAT | Pendiente (fuera de alcance) | Servicio aparte |
+| Facturación fiscal SIN/SIAT | Flujo 2 vía FacturaSIN en ambiente de pruebas (sin validez fiscal); SIN real pendiente | Configuración → Facturación electrónica; Caja/Pedido → Facturar; `/app/facturas` |
 | Pagos en línea (tarjeta/pasarela) | No existe | El cobro se registra, no se procesa |
 | Inventario, recetas, costeo, plan del día | Hecho | |
 | Compras, proveedores, cuentas por pagar | Hecho | |

@@ -1,6 +1,6 @@
 # GESTRO Usage Policies
 
-**Version:** 2026-11-14.1 · They complement the Terms and the Privacy Policy of Kyros-Tech S.R.L. (Santa Cruz de la Sierra, Bolivia · administracion@kyros-tech.com).
+**Version:** 2026-11-15.1 · They complement the Terms and the Privacy Policy of Kyros-Tech S.R.L. (Santa Cruz de la Sierra, Bolivia · administracion@kyros-tech.com).
 
 ## 1. Acceptable use
 Use GESTRO only to run your restaurant. Do not upload unlawful, misleading or infringing content; do not ask diners for data you do not need; do not share your account; do not try to see other restaurants' data or bypass permissions. Breach may lead to limiting or suspending the account.
@@ -15,7 +15,7 @@ Use GESTRO only to run your restaurant. Do not upload unlawful, misleading or in
 The restaurant is responsible for what it charges. Discounts require a reason and have a cap; tips are not restaurant revenue and are recorded separately. Every cancellation keeps its reason, author and date.
 
 ## 4. Invoicing and taxes (SIN)
-GESTRO **does not issue electronic invoices and is not connected to the SIN/SIAT**. The internal receipt is not a tax invoice. Tax obligations belong to the restaurant.
+GESTRO **issues invoices through FacturaSIN in a test environment**: they are simulations **without tax validity** and are marked "Test environment / no tax validity" on screen and on the document. GESTRO does not connect directly to the SIN/SIAT and has no SIN authorization. The restaurant loads its tax data (NIT, legal name, economic activity, branch and point of sale) and, to invoice, asks the diner for their NIT, ID or passport and legal name (or invoices "no name" if the restaurant allows it). Tips are not invoiced. If FacturaSIN does not respond, the sale is still charged and the invoice stays pending until it is retried. The internal receipt is not a tax invoice. Tax obligations belong to the restaurant; before using invoicing with tax validity you will be notified and asked to accept a new version.
 
 ## 5. Artificial intelligence
 If the assistant is enabled, its answers are indicative, may contain errors and are not professional advice. Do not enter data you do not want shared with the model provider. Important actions require a person's confirmation.

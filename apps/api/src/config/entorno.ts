@@ -19,3 +19,18 @@ export const entorno = {
   /** Dirección pública del sistema, para armar enlaces. */
   urlPublica: e.URL_PUBLICA ?? 'http://localhost:5173',
 };
+
+/**
+ * Destinos de la facturación con FacturaSIN (Flujo 2). Son direcciones públicas, NO secretos: se leen en cada llamada para poder
+ * apuntar a un doble de pruebas. El secreto del client `gestro-service` NO viene de aquí: vive cifrado en app_config
+ * (consola de plataforma → Integraciones, clave KYROS_SERVICE_CLIENT_SECRET).
+ */
+export function destinosFacturasin() {
+  const x = process.env;
+  return {
+    api: x.FACTURASIN_URL ?? 'https://facturasin.kyros-tech.com/api',
+    emisor: x.KYROS_ID_EMISOR_SERVICIO ?? 'https://auth.kyros-tech.com/realms/kyros',
+    clientId: x.KYROS_ID_CLIENT_SERVICIO ?? 'gestro-service',
+    urlPublica: x.URL_PUBLICA ?? entorno.urlPublica,
+  };
+}

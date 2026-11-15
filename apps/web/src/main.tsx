@@ -27,6 +27,7 @@ const Turnos = lazy(() => import('./paginas/Turnos').then((m) => ({ default: m.T
 const Eventos = lazy(() => import('./paginas/Eventos').then((m) => ({ default: m.Eventos })));
 const ReservaWeb = lazy(() => import('./paginas/ReservaWeb').then((m) => ({ default: m.ReservaWeb })));
 const Reservas = lazy(() => import('./paginas/Reservas').then((m) => ({ default: m.Reservas })));
+const Facturas = lazy(() => import('./paginas/Facturas').then((m) => ({ default: m.Facturas })));
 const Configuracion = lazy(() => import('./paginas/Configuracion').then((m) => ({ default: m.Configuracion })));
 const Inventario = lazy(() => import('./paginas/Inventario').then((m) => ({ default: m.Inventario })));
 const Pedidos = lazy(() => import('./paginas/Pedidos').then((m) => ({ default: m.Pedidos })));
@@ -117,6 +118,7 @@ createRoot(document.getElementById('raiz')!).render(
               <Route path="plan-del-dia" element={<PlanDelDia />} />
               <Route path="caja" element={<Caja />} />
               <Route path="recibo/:id" element={<ReciboPagina />} />
+              <Route path="facturas" element={<Facturas />} />
               <Route path="configuracion" element={<Configuracion />} />
               <Route path="suscripcion" element={<Suscripcion />} />
               <Route path="plataforma" element={<Plataforma />} />

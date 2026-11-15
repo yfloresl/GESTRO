@@ -37,6 +37,7 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
     { ruta: 'suscripcion', icono: 'workspace_premium', texto: 'Suscripción', roles: ['owner', 'admin'] },
     { ruta: 'plataforma', icono: 'admin_panel_settings', texto: 'Plataforma Kyros', roles: [] },
     { ruta: 'promociones', icono: 'sell', texto: 'Promociones', roles: ['owner', 'admin', 'contador', 'area_manager', 'cajero'] },
+    { ruta: 'facturas', icono: 'receipt_long', texto: 'Facturas (pruebas)', roles: ['owner', 'admin', 'cajero'] },
     { ruta: 'cobranzas', icono: 'request_quote', texto: 'Cuentas por cobrar', roles: ['owner', 'admin', 'cobranzas', 'cajero', 'contador'] },
     { ruta: 'contabilidad', icono: 'account_balance_wallet', texto: 'Contabilidad & Libros', roles: ['owner', 'admin', 'contador'] },
     { ruta: 'foda', icono: 'grid_view', texto: 'Informe FODA', roles: ['owner', 'admin', 'contador'] },

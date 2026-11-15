@@ -6,7 +6,7 @@ import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Categoria { id: string; nombre: string; orden: number }
-interface Plato { id: string; categoriaId: string | null; nombre: string; descripcion: string | null; precio: string; alergenos: string[]; minutosPreparacion: number | null; disponible: boolean; tieneFoto: boolean }
+interface Plato { id: string; categoriaId: string | null; nombre: string; descripcion: string | null; precio: string; alergenos: string[]; minutosPreparacion: number | null; disponible: boolean; tieneFoto: boolean; codigoSin?: string | null; unidadSin?: number | null }
 const ALERGENOS: [string, string][] = [['gluten', 'Gluten'], ['lacteos', 'Lácteos'], ['huevo', 'Huevo'], ['pescado', 'Pescado'], ['mariscos', 'Mariscos'], ['mani', 'Maní'], ['frutos_secos', 'Frutos secos'], ['soya', 'Soya'], ['apio', 'Apio'], ['mostaza', 'Mostaza'], ['sesamo', 'Sésamo'], ['sulfitos', 'Sulfitos']];
 
 /** Reduce la foto en el navegador (máx. 1280 px, JPEG) antes de subirla: el servidor no procesa imágenes pesadas. */
@@ -142,6 +142,7 @@ function FichaPlato({ plato, categorias, cerrar, guardado }: { plato: Plato | nu
       nombre: String(f.get('nombre')).trim(), descripcion: String(f.get('descripcion')).trim() || null, categoriaId: String(f.get('categoria')) || null,
       precio: Number(String(f.get('precio')).replace(',', '.')), minutosPreparacion: f.get('minutos') ? Number(f.get('minutos')) : null, alergenos,
       disponible: f.get('disponible') === 'on',
+      codigoSin: String(f.get('codigoSin') ?? '').trim() || null, unidadSin: f.get('unidadSin') ? Number(f.get('unidadSin')) : null,
     };
     try {
       const r = plato ? await api.patch<Plato>(`/menu/platos/${plato.id}`, cuerpo, sucursalId!) : await api.post<Plato>('/menu/platos', cuerpo, sucursalId!);
@@ -170,6 +171,8 @@ function FichaPlato({ plato, categorias, cerrar, guardado }: { plato: Plato | nu
         <div className="grid grid-cols-2 gap-space-sm">
           <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Precio (Bs)</span><input name="precio" required inputMode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" defaultValue={plato?.precio} className={`${clases.input} font-label-lg`} /></label>
           <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Cocina (min)</span><input name="minutos" type="number" min={0} max={600} defaultValue={plato?.minutosPreparacion ?? ''} className={clases.input} /></label>
+          <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Código SIN (factura)</span><input name="codigoSin" inputMode="numeric" pattern="[0-9]{3,10}" title="3 a 10 dígitos; vacío usa el de Configuración" defaultValue={plato?.codigoSin ?? ''} className={clases.input} /></label>
+          <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Unidad SIN (factura)</span><input name="unidadSin" type="number" min={1} max={999} defaultValue={plato?.unidadSin ?? ''} className={clases.input} /></label>
         </div>
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Categoría</span>
           <select name="categoria" defaultValue={plato?.categoriaId ?? ''} className={clases.input}><option value="">Sin categoría</option>{categorias.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select>

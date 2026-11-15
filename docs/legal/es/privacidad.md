@@ -1,11 +1,11 @@
 # Política de privacidad de GESTRO
 
-**Versión:** 2026-11-14.1 · **Responsable del tratamiento:** Kyros-Tech S.R.L. (el «Proveedor»), Santa Cruz de la Sierra, Bolivia · **Contacto de privacidad:** administracion@kyros-tech.com
+**Versión:** 2026-11-15.1 · **Responsable del tratamiento:** Kyros-Tech S.R.L. (el «Proveedor»), Santa Cruz de la Sierra, Bolivia · **Contacto de privacidad:** administracion@kyros-tech.com
 
 ## 1. Qué datos tratamos
 - **Cuenta y personal:** nombre, correo de contacto, rol, sucursal y el identificador de Kyros ID (`sub`). No guardamos tu contraseña: la maneja Kyros ID.
 - **Restaurante:** razón social, NIT del restaurante (opcional, lo carga el propio restaurante), menú, precios, fotos, inventario, compras, ventas, caja, contabilidad y estadísticas.
-- **Comensales y terceros:** lo que el restaurante registre o ellos escriban: nombre y teléfono en una reserva, notas de un pedido, número de mesa, comprobantes que suban.
+- **Comensales y terceros:** lo que el restaurante registre o ellos escriban: nombre y teléfono en una reserva, notas de un pedido, número de mesa, comprobantes que suban. Si piden factura (hoy, en ambiente de pruebas): **NIT, CI o pasaporte, razón social o nombre y, si lo dan, correo**, junto con el detalle y el importe de su consumo.
 - **Técnicos:** registros de auditoría (quién hizo qué y cuándo), huellas (hash) de IP y navegador como evidencia de aceptación y datos mínimos de seguridad.
 
 ## 2. Para qué los usamos
@@ -15,7 +15,7 @@ Prestar el Sistema, mantener la seguridad, auditar acciones sensibles, atender s
 Los datos operativos son del restaurante (Términos §5). El Proveedor actúa como encargado que los procesa por cuenta del restaurante. El restaurante decide qué datos de comensales recoge y debe informarles. Cada restaurante solo ve sus datos: la base aplica aislamiento por sucursal.
 
 ## 4. Con quién se comparten
-Solo con proveedores necesarios para operar (infraestructura, identidad Kyros ID, notificaciones si se activan) y con autoridades cuando la ley lo exija. Las funciones de inteligencia artificial, si el restaurante las activa, envían solo el contexto necesario al proveedor del modelo.
+Solo con proveedores necesarios para operar (infraestructura, identidad Kyros ID, notificaciones si se activan) y con autoridades cuando la ley lo exija. Para emitir facturas, los datos fiscales del restaurante y de quien las pide (NIT o documento, razón social, correo opcional, detalle e importe) se envían a **FacturaSIN**, sistema de Kyros-Tech que las procesa por cuenta del restaurante; en esta etapa es un ambiente de pruebas sin validez fiscal y no se envían al SIN. Las funciones de inteligencia artificial, si el restaurante las activa, envían solo el contexto necesario al proveedor del modelo.
 
 ## 5. Cookies y almacenamiento local
 Usamos solo lo **estrictamente necesario**: una cookie de sesión (`httpOnly`) para mantener tu ingreso y almacenamiento local para tu preferencia de tema y datos temporales de la pantalla. **No usamos cookies de publicidad ni de seguimiento de terceros.** Puedes borrarlas desde tu navegador; tendrás que volver a ingresar.

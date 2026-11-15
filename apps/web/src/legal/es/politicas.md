@@ -1,6 +1,6 @@
 # Políticas de uso de GESTRO
 
-**Versión:** 2026-11-14.1 · Complementan los Términos y la Política de privacidad de Kyros-Tech S.R.L. (Santa Cruz de la Sierra, Bolivia · administracion@kyros-tech.com).
+**Versión:** 2026-11-15.1 · Complementan los Términos y la Política de privacidad de Kyros-Tech S.R.L. (Santa Cruz de la Sierra, Bolivia · administracion@kyros-tech.com).
 
 ## 1. Uso aceptable
 Usa GESTRO solo para gestionar tu restaurante. No subas contenido ilegal, engañoso o que infrinja derechos ajenos; no pidas a comensales datos que no necesites; no compartas tu cuenta; no intentes ver datos de otros restaurantes ni saltarte permisos. El incumplimiento puede llevar a limitar o suspender la cuenta.
@@ -15,7 +15,7 @@ Usa GESTRO solo para gestionar tu restaurante. No subas contenido ilegal, engañ
 El restaurante es responsable de lo que cobra. Los descuentos exigen motivo y tienen tope; las propinas no son ingreso del restaurante y se registran aparte. Toda anulación queda con motivo, autor y fecha.
 
 ## 4. Facturación e impuestos (SIN)
-GESTRO **no emite facturas electrónicas ni se conecta al SIN/SIAT**. El recibo interno no es una factura fiscal. Las obligaciones tributarias son del restaurante.
+GESTRO **emite facturas a través de FacturaSIN en ambiente de pruebas**: son simulaciones **sin validez fiscal** y se marcan «Ambiente de pruebas / sin validez fiscal» en pantalla y en el documento. GESTRO no se conecta directamente al SIN/SIAT ni cuenta con autorización del SIN. El restaurante carga sus datos fiscales (NIT, razón social, actividad económica, sucursal y punto de venta) y, para facturar, pide al comensal su NIT, CI o pasaporte y su razón social (o factura «sin nombre» si el restaurante lo permite). La propina no se factura. Si FacturaSIN no responde, la venta se cobra igual y la factura queda pendiente de emitir hasta que se reintente. El recibo interno no es una factura fiscal. Las obligaciones tributarias son del restaurante; antes de usar facturación con validez fiscal se avisará y se pedirá aceptar una nueva versión.
 
 ## 5. Inteligencia artificial
 Si se activa el asistente, sus respuestas son orientativas, pueden contener errores y no son asesoría profesional. No introduzcas datos que no quieras compartir con el proveedor del modelo. Las acciones importantes requieren confirmación de una persona.

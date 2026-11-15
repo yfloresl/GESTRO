@@ -1,6 +1,6 @@
 # GESTRO Terms and Conditions
 
-**Version:** 2026-11-14.1 · **Owner and provider:** Kyros-Tech S.R.L. (the "Provider"), domiciled in Santa Cruz de la Sierra, Bolivia · **Contact:** administracion@kyros-tech.com · **Service:** GESTRO, restaurant management system (the "System").
+**Version:** 2026-11-15.1 · **Owner and provider:** Kyros-Tech S.R.L. (the "Provider"), domiciled in Santa Cruz de la Sierra, Bolivia · **Contact:** administracion@kyros-tech.com · **Service:** GESTRO, restaurant management system (the "System").
 
 By creating your account or continuing to use the System you accept these Terms, the Privacy Policy and the Usage Policies. You must be **at least 18 years old** with legal capacity to enter into a contract; if you act on behalf of a restaurant, you declare that you have authority to do so.
 
@@ -8,7 +8,7 @@ By creating your account or continuing to use the System you accept these Terms,
 GESTRO is an online service (SaaS) for restaurants: menu and photos, floor plan and tables with QR codes, orders, kitchen, cash register, inventory and recipes, purchasing, reservations, accounts receivable, staff and shifts, basic accounting and statistics. Available modules depend on the contracted plan.
 
 ## 2. What the System does NOT do
-- **It does not issue electronic invoices and is not connected to the SIN/SIAT.** The payment document it issues is an internal receipt marked "not an invoice". Tax obligations (invoicing, VAT, transaction tax and others) belong to the restaurant.
+- **It does not issue legally valid invoices yet.** GESTRO can request electronic invoices from **FacturaSIN** (another Kyros-Tech system) in your restaurant's name, but today that connection works **only in a test / simulation environment**: the invoices it produces **have no tax validity**, and GESTRO is neither authorized by the SIN nor claims to be. The internal receipt remains marked "not an invoice". Tax obligations (invoicing, VAT, transaction tax and others) belong to the restaurant.
 - **It does not replace an accountant, lawyer or tax adviser.** Accounting, reports and the artificial-intelligence assistant are aids; the restaurant must review them before relying on them.
 - It does not guarantee business results or that projections or suggestions will come true.
 - It does not process diners' payments: QR, card or transfer payments are collected by the restaurant by its own means and the System only records them.

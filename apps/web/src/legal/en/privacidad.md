@@ -1,11 +1,11 @@
 # GESTRO Privacy Policy
 
-**Version:** 2026-11-14.1 · **Data controller:** Kyros-Tech S.R.L. (the "Provider"), Santa Cruz de la Sierra, Bolivia · **Privacy contact:** administracion@kyros-tech.com
+**Version:** 2026-11-15.1 · **Data controller:** Kyros-Tech S.R.L. (the "Provider"), Santa Cruz de la Sierra, Bolivia · **Privacy contact:** administracion@kyros-tech.com
 
 ## 1. What data we process
 - **Account and staff:** name, contact email, role, branch and the Kyros ID identifier (`sub`). We do not store your password: Kyros ID handles it.
 - **Restaurant:** legal name, the restaurant's tax ID (optional, entered by the restaurant itself), menu, prices, photos, inventory, purchases, sales, cash register, accounting and statistics.
-- **Diners and third parties:** whatever the restaurant records or they type: name and phone on a reservation, order notes, table number, uploaded receipts.
+- **Diners and third parties:** whatever the restaurant records or they type: name and phone on a reservation, order notes, table number, uploaded receipts. If they ask for an invoice (today, in a test environment): **NIT, ID or passport number, legal name or name and, if given, email**, together with the detail and amount of their consumption.
 - **Technical:** audit logs (who did what and when), hashes of IP and browser as evidence of acceptance, and minimal security data.
 
 ## 2. What we use it for
@@ -15,7 +15,7 @@ To provide the System, keep it secure, audit sensitive actions, give support, co
 Operational data belongs to the restaurant (Terms section 5). The Provider acts as a processor on the restaurant's behalf. The restaurant decides what diner data it collects and must inform them. Each restaurant sees only its own data: the database enforces isolation per branch.
 
 ## 4. Who it is shared with
-Only with providers needed to operate (infrastructure, Kyros ID identity, notifications if enabled) and with authorities when the law requires. Artificial-intelligence features, if the restaurant enables them, send only the necessary context to the model provider.
+Only with providers needed to operate (infrastructure, Kyros ID identity, notifications if enabled) and with authorities when the law requires. To issue invoices, the tax data of the restaurant and of the person requesting them (NIT or ID, legal name, optional email, detail and amount) is sent to **FacturaSIN**, a Kyros-Tech system that processes it on the restaurant's behalf; at this stage it is a test environment without tax validity and nothing is sent to the SIN. Artificial-intelligence features, if the restaurant enables them, send only the necessary context to the model provider.
 
 ## 5. Cookies and local storage
 We use only what is **strictly necessary**: a session cookie (`httpOnly`) to keep you signed in and local storage for your theme preference and temporary screen data. **We use no advertising or third-party tracking cookies.** You can clear them in your browser; you will have to sign in again.

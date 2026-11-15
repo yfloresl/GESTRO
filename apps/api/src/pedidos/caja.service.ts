@@ -8,6 +8,7 @@ import { EventosGateway, salas } from '../tiempo-real/eventos.gateway';
 import { ContabilidadService } from '../contabilidad/contabilidad.service';
 import { PedidosService } from './pedidos.service';
 import { calcularCobro, CobroInvalido } from './cobro-calculo';
+import { Facturar, FacturacionEmisorService } from '../facturacion-emisor/facturacion-emisor.service';
 
 const Monto = z.number().min(0).max(10_000_000).refine((n) => Math.round(n * 100) / 100 === n, 'Máximo 2 decimales');
 const Pct = z.number({ invalid_type_error: 'Escribe un porcentaje entre 0 y 100.' }).min(0, 'El tope no puede ser menor que 0 %.').max(100, 'El tope no puede pasar de 100 %.').refine((n) => Math.round(n * 100) / 100 === n, 'Máximo 2 decimales (por ejemplo 12,5).');
@@ -20,6 +21,8 @@ export const Cobro = z.object({
   telefonoCliente: z.string().trim().max(30).optional(),
   diasCredito: z.number().int().min(0).max(365).default(30),
   descuento: Monto.default(0), motivoDescuento: z.string().trim().max(200).optional(), propina: Monto.default(0), efectivoRecibido: Monto.optional(),
+  /** Con documento «factura»: datos del comensal (o consumidor final) para FacturaSIN. */
+  factura: Facturar.optional(),
 }).strict();
 export const AjustesSucursal = z.object({
   pedidosPorQr: z.boolean().optional(), qrSinConfirmacion: z.boolean().optional(), modoDeCobro: z.enum(['recibo', 'ninguno']).optional(),
@@ -35,6 +38,7 @@ export class CajaService {
     @Inject(PedidosService) private readonly pedidos: PedidosService,
     @Inject(EventosGateway) private readonly eventos: EventosGateway,
     @Inject(ContabilidadService) private readonly conta: ContabilidadService,
+    @Inject(FacturacionEmisorService) private readonly facturacion: FacturacionEmisorService,
   ) {}
 
   private async abierta(tx: Bd, t: Tenant, userId: string) {
@@ -88,14 +92,18 @@ export class CajaService {
 
   /**
    * Cobra el pedido completo. La suma sale de la base; el documento lo limita el modo de cobro de la sucursal.
-   * La factura SIN no existe todavía (Servicio Fiscal aparte): se rechaza con un mensaje claro.
+   * Con documento «factura» el cobro se registra primero y la factura se pide después a FacturaSIN: si FacturaSIN no responde, la venta queda cobrada
+   * y la factura «pendiente de emitir» se reintenta sola (la venta nunca se bloquea).
    */
   async cobrar(t: Tenant, userId: string, id: string, d: z.infer<typeof Cobro>) {
     const r = await this.db.run(t, async (tx) => {
       const caja = await this.abierta(tx, t, userId);
       if (!caja) throw new ConflictException('Abre tu caja antes de cobrar.');
       const [rest] = await tx.select({ modo: restaurants.billingMode, dMax: restaurants.discountMaxPct, pMax: restaurants.tipMaxPct }).from(restaurants).where(eq(restaurants.id, t.restaurantId));
-      if (d.documento === 'factura') throw new UnprocessableEntityException('La factura electrónica del SIN todavía no está disponible. Emite un recibo o solo contabiliza.');
+      if (d.documento === 'factura') {
+        const lista = await this.facturacion.exigirLista(tx, t);
+        this.facturacion.prepararComprador(d.factura ?? {}, lista.permiteConsumidorFinal);   // datos del comensal válidos ANTES de cobrar
+      }
       if (rest?.modo === 'ninguno' && d.documento !== 'ninguno') throw new UnprocessableEntityException('Esta sucursal solo contabiliza: no emite recibos.');
       const bloqueo = await tx.execute(sql`SELECT id, status, total::text AS total, customer_name FROM orders WHERE id = ${id} AND restaurant_id = ${t.restaurantId} FOR UPDATE`);
       const o = (bloqueo.rows as { id: string; status: string; total: string; customer_name: string | null }[])[0];
@@ -125,17 +133,27 @@ export class CajaService {
         await tx.execute(sql`INSERT INTO payables_receivables (restaurant_id, direction, counterparty, customer_phone, amount, due_on, sales_payment_id, document_number)
           VALUES (${t.restaurantId}, 'por_cobrar', ${cliente}, ${d.telefonoCliente ?? null}, ${o.total}::numeric, (now() AT TIME ZONE 'America/La_Paz')::date + ${d.diasCredito}::int, ${p.id}, ${recibo ? String(recibo) : null})`);
       }
-      await this.conta.ventaCobrada(tx, t, userId, { pagoId: p.id, total: o.total, metodo: d.metodo, documento: d.documento, propina: calc.propina });
+      // La factura es un documento fiscal paralelo (ambiente de pruebas): el asiento sigue como venta sin separar IVA hasta decidir GS-N02 (13 % vs 13/113).
+      await this.conta.ventaCobrada(tx, t, userId, { pagoId: p.id, total: o.total, metodo: d.metodo, documento: d.documento === 'factura' ? 'ninguno' : d.documento, propina: calc.propina });
       await auditar(tx, t.restaurantId, userId, 'venta.cobrada', 'sales_payment', p.id, { metodo: d.metodo, documento: d.documento, monto: o.total, recibo, descuento: calc.descuento, motivoDescuento: d.motivoDescuento ?? null, propina: calc.propina, recibido: calc.recibido, vuelto: calc.vuelto });
       return { pagoId: p.id, monto: o.total, recibo, documento: d.documento, descuento: calc.descuento, propina: calc.propina, aCobrar: calc.aCobrar, recibido: calc.recibido, vuelto: calc.vuelto };
     });
     this.eventos.emitir(salas.sucursal(t.restaurantId), 'pedido.cobrado', { id });
-    return r;
+    if (d.documento !== 'factura') return r;
+    // El cobro ya está hecho: un fallo de FacturaSIN nunca lo deshace. Se informa el estado de la factura.
+    try {
+      const fid = await this.facturacion.crearFactura(t, userId, id, d.factura ?? {});
+      return { ...r, factura: await this.facturacion.enviar(t, fid, 1) };
+    } catch (e) {
+      return { ...r, factura: null, facturaError: (e as Error).message ?? 'No se pudo preparar la factura; reintenta desde el pedido.' };
+    }
   }
 
   /** Una venta cobrada no se borra: se anula con motivo, queda quién y cuándo, y el pedido pasa a «anulado». */
   anularPago(t: Tenant, userId: string, id: string, motivo: string) {
     return this.db.run(t, async (tx) => {
+      const viva = await tx.execute(sql`SELECT 1 FROM fiscal_invoices WHERE payment_id = ${id}::uuid AND restaurant_id = ${t.restaurantId} AND status IN ('en_cola','pendiente','validada','observada','contingencia')`);
+      if (viva.rows.length) throw new ConflictException('Este cobro tiene una factura vigente: anula primero la factura (Pedido → Factura → Anular) y luego el cobro.');
       const [p] = await tx.update(salesPayments).set({ voidedAt: sql`now()` as unknown as Date, voidedBy: userId, voidReason: motivo }).where(and(eq(salesPayments.id, id), eq(salesPayments.restaurantId, t.restaurantId), isNull(salesPayments.voidedAt))).returning();
       if (!p) throw new NotFoundException('Pago no encontrado o ya anulado.');
       if (p.method === 'credito') {
