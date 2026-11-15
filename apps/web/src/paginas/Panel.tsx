@@ -11,8 +11,9 @@ export function Panel() {
   const { sesion, sucursalId } = useSesion();
   const q = useQuery({ queryKey: ['sucursal', sucursalId], queryFn: () => api.sucursal(sucursalId!), enabled: !!sucursalId });
   const nombre = sesion?.usuario.nombre.split(' ')[0] ?? '';
-  const vence = q.data?.pagadoHasta ? new Date(`${q.data.pagadoHasta}T12:00:00-04:00`) : null;
-  const dias = vence ? Math.ceil((vence.getTime() - Date.now()) / 86_400_000) : null;
+  // GS-N01: días por fecha de calendario de La Paz (igual que la pantalla Suscripción), no por reloj con redondeo hacia arriba.
+  const hoyLp = new Date(Date.now() - 4 * 3_600_000).toISOString().slice(0, 10);
+  const dias = q.data?.pagadoHasta ? Math.round((Date.parse(`${q.data.pagadoHasta}T00:00:00Z`) - Date.parse(`${hoyLp}T00:00:00Z`)) / 86_400_000) : null;
 
   return (
     <div className="flex flex-col gap-space-lg">

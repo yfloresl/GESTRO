@@ -28,7 +28,7 @@ export function Personal() {
   const alta = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault(); setError(null); const f = new FormData(e.currentTarget); const form = e.currentTarget;
     if (!roles.length) { setError('Elige al menos un rol.'); return; }
-    crear.mutate({ nombre: String(f.get('nombre')).trim(), correo: String(f.get('correo')).trim(), telefono: String(f.get('telefono')).trim() || undefined, roles }, { onSuccess: () => form.reset() });
+    crear.mutate({ nombre: String(f.get('nombre')).trim(), correo: String(f.get('correo')).trim(), telefono: String(f.get('telefono')).trim() || undefined, roles }, { onSuccess: () => { form.reset(); setRoles(['mesero']); /* GST-017: el rol no queda marcado de la persona anterior */ } });
   };
   const accion = async (f: () => Promise<unknown>) => { setError(null); try { await f(); await refrescar(); } catch (e) { setError(mensajeDeError(e)); } };
   const copiar = async () => { if (!codigo) return; try { await navigator.clipboard.writeText(codigo.codigo); setCopiado(true); setTimeout(() => setCopiado(false), 2000); } catch { /* el código queda a la vista para copiarlo a mano */ } };
