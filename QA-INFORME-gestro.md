@@ -157,3 +157,55 @@ Todo lo de esta sección está **implementado y probado en local (pruebas autom�
 **Qué comprobar en pantalla (con sesión):** `qa_gestro_dueno_1` → Configuración → «Límites al cobrar»: dejar 30 y 30, subir descuento a 50 sin motivo (el botón queda apagado), con motivo «Prueba de socios» guardar; ver «Último cambio». Con `qa_gestro_caja_1`: abrir caja, cobrar un pedido de Bs 163,00 con descuento 81,50 (acepta) y 81,51 (muestra «no puede pasar del 50 %»). Volver a 30/30 (bajar no pide motivo). Un cajero no ve Configuración.
 **Recorrido para socios:** el cambio y su motivo quedan en la auditoría del restaurante; no se borró nada.
 Interruptores: ninguno. Candado liberado; PostgreSQL local detenido (puerto 5441).
+
+
+## Barrido legal (14/11/2026, ubicación de servidores y marcas de borrador)
+LIMPIO: privacidad habla de proveedores necesarios (infraestructura, Kyros ID) sin ubicación. En vivo /api/v1/public/legal = 2026-11-14.1. Sin cambios. Decisión del dueño: ningún texto legal menciona país ni ubicación de servidores/proveedores ni afirma transferencias internacionales. Barrido por código (es/en/pt, API, semillas, generadores, estáticas) y verificación en vivo sin sesión. Reaceptación comprobada solo por código y por el cambio de versión servido (sin cuenta de prueba: no se pulsó Ingresar).
+
+
+---
+
+# FASE B con sesión: dueño `prueba_kyros` (14/11/2026 ~20:50–21:30, hora de Bolivia)
+
+Sesión: «Prueba Kyros / Dueño» en Casa Andina (verificado en cabecera), SSO sin formulario. Pestaña propia. No se pulsó «Restablecer cuentas demo» ni se borró nada.
+
+## Resultados verificados EN PANTALLA
+| Prueba | Resultado |
+| --- | --- |
+| Panel del Dueño | Ventas del día 692,00 = 218+80+176+140+78 (OK); ticket 138,40 = 692/5 (OK). Menú lateral: 23 entradas. |
+| **GST-010 topes** (Configuración) | 101 → «Escribe un número entre 0 y 100, con hasta 2 decimales». Subir a 50 muestra el ejemplo en vivo («descontar hasta Bs 50,00») y exige motivo; guardó y mostró «Último cambio: 14/11/2026, 8:53:18 p. m. por Prueba Kyros (antes 30 % y 30 %) · motivo: Prueba de socios QA». |
+| Efecto en el siguiente cobro | El cobro dice «Máximo 50 % del pedido (lo define el dueño en Configuración)». Pedido Bs 170,00: descuento 85,00 aceptado; **85,01 rechazado por el servidor: «El descuento no puede pasar del 50 % (Bs 85,00)»**. |
+| **GST-004 cobro** | Descuento 10 (motivo), propina 5, efectivo recibido 170: subtotal 170,00; total 160,00; a cobrar 165,00; **vuelto 5,00** (recálculo propio: 170−10=160; 160+5=165; 170−165=5). |
+| GST-005 | Un toque agrega el plato; **+** lo sube a 2× (156,00 = 2×78); − y Quitar presentes. Dos toques rápidos seguidos cuentan solo uno (anti-doble toque). |
+| GST-007 | Aviso verde «Caja abierta. Ya puedes cobrar.» |
+| GST-003 | Cerrar caja y Revocar código usan modal propio. |
+| Cierre de caja | Esperado 265,00 = 100,00 + 160,00 + propina en efectivo 5,00 (el vuelto no cuenta). Contado 265 → «La caja cuadra». |
+| Contabilidad | Ingresos 852,00 = 692+160 (la propina NO es ingreso). IT 3 % × 852,00 = 25,56 (rotulado referencial). Asiento N° 187: Caja 165,00 = Propinas por entregar 5,00 (2.1.05) + Ventas 160,00. Balance «Cuadra: Activo = Pasivo + Patrimonio». |
+| Inventario valorado | Suma de las 19 filas = 4.950,38 = tarjeta «Valor del inventario». |
+| Estadísticas / FODA | Costo de alimentos 8.627,36/34.998,00 = 24,65 %; ticket 34.998/397 = 88,16; FODA «+25,18 %» = (59.682−47.678)/47.678. Margen Pique macho 76,51 %. OK. |
+| Cuentas por cobrar | 1.947,75 = 1.988,00 − 30,25 − 10,00 (cobros hechos por QA). |
+| Suscripción | 12 meses × 689,04 = 8.268,48 (OK). |
+| Públicas | Menú público 200; slug inexistente 404; `/m/token-invalido` → «Este QR no está disponible. Pide ayuda a tu mesero.»; `/r/casa-andina-58abb4` carga; legales 2026-11-14.1. |
+
+## Hallazgos nuevos
+| ID | Sev. | Descripción | Estado |
+| --- | --- | --- | --- |
+| **GST-011** | **Media** | El recibo impreso NO mostraba descuento, propina, efectivo recibido ni vuelto (la sección C2 decía que sí): con descuento los renglones sumaban 170 y el total decía 160 sin explicación. | **Corregido** (`dc66531`) y **verificado en vivo** (`GST-011-recibo-con-descuento-propina-vuelto-despues.jpg`): 170,00 / −10,00 / 160,00 / 5,00 / 165,00 / 170,00 / 5,00. |
+| **GST-012** | Media | Invitación de personal: el código es de un solo uso, vence a 7 días, solo se guarda su huella y «Nuevo código» regenera, pero la tarjeta no decía si había código vigente o vencido y no se podía revocar sin desactivar a la persona. | **Corregido** (`1549016`): «Código de un solo uso vigente hasta el DD/MM», «vencido» o «sin código vigente», y botón **Revocar código** (modal + auditoría `personal.codigo_revocado`, `DELETE /personal/:id/codigo`). **Verificado en vivo** con «QA Invitado Mesero». |
+| GST-013 | Baja | Con el descuento sobre el tope, el resumen del cobro muestra «− Bs 85,01» pero el total sigue en 170,00 y el rechazo solo llega al confirmar; el aviso rojo se queda aunque se corrija el monto. | Propuesta. |
+| GST-014 | Baja | «Costo prom.» del inventario se muestra con 2 decimales y el valor usa más: 11 de 19 filas no cuadran al centavo a mano (Huevo 144 × 1,12 = 161,28 frente a 161,61). El total sí cuadra. | Propuesta (mostrar 4 decimales). |
+| GST-015 | Baja (demo) | Alertas de «Caída de ventas» cada día (ayer Bs 0,00) porque la demo termina el 31/10; «Ventas por hora» muestra una sola barra. | Propuesta (renovar el sembrado). |
+| GST-016 | Baja (demo) | Suscripción: «Habilitada hasta 2036-10-27» pero el pago aprobado dice «habilita hasta 2027-10-12». | Propuesta. |
+| GST-017 | Baja | Tras crear una persona el rol queda marcado; un 502 durante el despliegue solo dice «No pudimos completar la acción.» | Propuesta. |
+| GST-018 | Baja | Cada pantalla tarda 5 a 8 s en salir de «Cargando…» con varios ejecutores activos. | Observación. |
+
+## No verificado en pantalla en esta pasada (causa)
+- Reaceptación legal: `prueba_kyros` es cuenta demo exenta; solo por código y por la versión servida 2026-11-14.1. Pendiente con `qa_gestro_*`.
+- Cierre por inactividad (25/30 min): no se esperó; solo por código.
+- «Nada se borra»: no se borró nada (orden del dueño); solo código y pruebas.
+- Responsive: la ventana automatizada no cambió de ancho (innerWidth 1920). Inglés, tema, teclado, cocina, salón con QR de mesa real, eventos, plan del día, turnos, promociones, edición de recetas y merma: no recorridos a fondo.
+- Cambio de plan con prorrateo: requiere `qa_superadmin`.
+- Consola/red: un 502 durante el relevo de contenedor; sin otros errores.
+
+## Recorrido para socios y residuos
+Ver `QA-CUENTAS-CREADAS.md` → «GESTRO — recorrido para socios». Residuos para mostrar: tope de descuento 50 %; caja cerrada y cuadrada; pedido «QA Socio Dueño»; persona «QA Invitado Mesero». Interruptores demo: ninguno.
