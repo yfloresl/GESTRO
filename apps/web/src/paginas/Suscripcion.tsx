@@ -5,6 +5,7 @@ import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
 import { reducirImagen } from '../lib/imagen';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
+import { FacturasDeSuscripcion } from './FacturasDeSuscripcion';
 
 interface Pago { id: string; meses: number; mesesDeRegalo: number; monto: string; esperado: string | null; referencia: string | null; banco: string | null; estado: 'pendiente' | 'validado' | 'rechazado'; motivo: string | null; tieneVoucher: boolean; desde: string | null; hasta: string | null; creado: string }
 interface Mia { habilitadaHasta: string | null; diasRestantes: number | null; estado: 'activa' | 'por_vencer' | 'gracia' | 'vencida'; plan: string | null; precioMensual: string | null; diasDeGracia: number; cobro: { instrucciones: string | null; tieneQr: boolean }; pagos: Pago[] }
@@ -102,6 +103,7 @@ export function Suscripcion() {
                 </li>))}</ul>
             )}
           </section>
+          {sucursalId && <FacturasDeSuscripcion sucursalId={sucursalId} />}
         </>
       )}
     </div>

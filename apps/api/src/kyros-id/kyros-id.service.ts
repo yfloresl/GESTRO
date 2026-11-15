@@ -42,7 +42,7 @@ export const RegistroSchema = z.object({
   correo: z.string().trim().email().max(200),
   restaurante: z.string().trim().min(2).max(120),
   razonSocial: z.string().trim().min(2).max(160),
-  nit: z.string().trim().max(30).optional(),
+  nit: z.string().trim().max(30).transform((s) => s.replace(/[\s.-]/g, '')).refine((s) => s === '' || /^[1-9]\d{4,12}$/.test(s), 'El NIT debe tener de 5 a 13 dígitos, sin ceros a la izquierda.').optional(),
   ...AceptacionSchema,
 }).strict();
 
@@ -240,7 +240,7 @@ export class KyrosIdService {
     if (!reg.reciente) throw new ForbiddenException('Para registrar un restaurante, crea tu cuenta con «Crear mi cuenta».');
     const hasta = hoyBoliviaMas(DIAS_DE_PRUEBA);
     const userId = await this.bd.transaction(async (tx) => {
-      const [cuenta] = await tx.insert(accounts).values({ legalName: d.razonSocial, nit: d.nit ?? null, ownerEmail: d.correo }).returning({ id: accounts.id });
+      const [cuenta] = await tx.insert(accounts).values({ legalName: d.razonSocial, nit: d.nit || null, ownerEmail: d.correo }).returning({ id: accounts.id });
       const [rest] = await tx.insert(restaurants).values({
         accountId: cuenta.id, name: d.restaurante, slug: `${slugDe(d.restaurante)}-${this.secretos.tokenAleatorio().slice(0, 5).toLowerCase()}`, paidUntil: hasta,
       }).returning({ id: restaurants.id });

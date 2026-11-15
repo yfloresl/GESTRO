@@ -10,7 +10,7 @@ import { entorno } from './config/entorno';
 import { aplicarMigraciones } from './database/migraciones';
 
 export async function crearApp(): Promise<NestExpressApplication> {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: entorno.produccion ? ['error', 'warn', 'log'] : undefined });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true, logger: entorno.produccion ? ['error', 'warn', 'log'] : undefined });
   app.set('trust proxy', 1); // detrás del gateway: IP real para los límites de uso
   app.setGlobalPrefix('api/v1');
   app.use(cookieParser());

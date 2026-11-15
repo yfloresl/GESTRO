@@ -12,6 +12,7 @@ import { auditLog, plans, platformSettings, restaurants, saasPromotions, subscri
 import { StorageService } from '../storage/storage.service';
 import { EventosGateway, salas } from '../tiempo-real/eventos.gateway';
 import { PushService } from '../tiempo-real/push.service';
+import { FacturacionKyrosService } from '../facturacion-kyros/facturacion-kyros.service';
 
 export const MAX_IMAGEN = 3 * 1024 * 1024;
 const HOY = sql`(now() AT TIME ZONE 'America/La_Paz')::date`;
@@ -43,6 +44,7 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
     @Inject(EventosGateway) private readonly eventos: EventosGateway,
     @Inject(PushService) private readonly push: PushService,
     @Inject(TipoCambioService) private readonly tc: TipoCambioService,
+    @Inject(FacturacionKyrosService) private readonly facturacion: FacturacionKyrosService,
   ) {}
 
   /** TCO oficial del día (servicio de Kyros-Tech). Sin valor vigente no se cobra ni se cotiza en Bs un plan en USD: nunca se inventa. */
@@ -215,6 +217,8 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
       await tx.insert(auditLog).values({ restaurantId: p.restaurant_id, userId, action: 'suscripcion.pago_aprobado', entity: 'subscription_payment', entityId: id, after: { desde: f.desde, hasta: f.hasta, meses } });
       return { restaurantId: p.restaurant_id, desde: f.desde, hasta: f.hasta, meses };
     });
+    // Flujo 1 de facturación: ya validado y activado el pago, se pide la factura a FacturaSIN. Nunca bloquea ni falla la aprobación.
+    void this.facturacion.alValidarPago(id, userId);
     this.eventos.emitir(salas.sucursal(r.restaurantId), 'suscripcion.estado', { estado: 'aprobado', hasta: r.hasta });
     void this.avisarDuenos(r.restaurantId, { titulo: 'Pago aprobado', cuerpo: `Tu suscripción está habilitada hasta el ${r.hasta}.`, url: '/app/suscripcion' });
     return r;
