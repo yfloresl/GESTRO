@@ -382,3 +382,38 @@ Turnos: «No tienes turnos programados…»: **sin turno programado no hay botó
 
 ## 6. Recorrido para socios (cajera)
 Entrar como `qa_gestro_caja_1` («QA Caja Andino», Mesero/Cajero). Pedidos → «Todos los de hoy»: Mesa T1 cobrada con descuento 27,90, propina 6,51 y vuelto 28,39 (recibo N° 000004); «QA Mostrador Cajera» (QR, 49,70 + propina 2,49); Mesa 2 (tarjeta, 101,00, plato anulado «Cliente se arrepintió»). Cuentas por cobrar: «QA Cliente Crédito Mamani» cobrada (30,00 efectivo + 70,00 banco). Caja: dos cierres de hoy, faltante −1,61 y sobrante +0,50. Facturas (pruebas): vacío hasta que el dueño configure. No se borró nada.
+
+
+# FASE C3: mesero `qa_gestro_mesero_1` («QA Mesero Andino 2», solo Mesero) en «QA Restaurante Andino» (15/11/2026, hora de Bolivia)
+Sesión reciente por impersonación, sin tocar contraseñas ni cerrar Kyros ID. Verificado con texto de página y script (las capturas expiran por tiempo: sin capturas nuevas). GS-N05 ya confirmado por el coordinador (GESTRO conserva la sesión de la cajera tras cerrar Kyros ID): no repetido.
+
+## 1. Permisos
+- Menú (4 entradas): Pedidos, Mesas & Salón (QR), Reservas, Turnos & Asistencia. Sin Caja, Facturas, Cuentas por cobrar, Contabilidad, Personal, Inventario, etc.
+- URL directa `/app/caja`, `/contabilidad`, `/personal`, `/inventario`, `/menu`, `/compras`, `/plataforma`: «No tienes acceso a esta sección. Tu rol no incluye X. Si lo necesitas, pídelo a quien administra el restaurante» + «Ir a mi inicio». Verde.
+- No cobra ni factura: el pedido no muestra Cobrar ni Factura; no ve totales de caja. **No anula platos enviados** (`puedeAnular` = admin, cajero, jefe de área; en la API `items/:id/anular` exige `ANULA`): tras enviar a cocina solo puede pedir a la cajera. Decisión de diseño, no falla.
+## 2. Servicio (todo en vivo)
+| Prueba | Resultado |
+| --- | --- |
+| Mapa: 4 mesas (Mesa 1, 2, 3, T1), filtros Salón principal / Terraza; «Sin área» en Mesa 3 | OK (no se asignó área, no se probó filtrar por área) |
+| Pedido Mesa 3: Fricasé 52 (nota «Sin ají, con piñón y más cebolla en pluma — niño alérgico»), Jugo de tumbo 14, Pique macho 78 | total 144,00 = 52+14+78 OK; tildes, ñ y raya larga conservadas |
+| Modificar antes de enviar | + sube Jugo a 158,00; − vuelve a 144,00 OK |
+| Enviar a cocina | los 3 platos pasan a ENVIADO |
+| Mover de mesa 3 → 1 | OK; el comensal de la Mesa 1 por QR ve esos platos como «Recibido en cocina» |
+| QR público Mesa 1 como comensal sin cuenta | pide Mocochinchi 10: «Esperando al mesero»; en el pedido del mesero sale «POR CONFIRMAR · cliente»; al confirmar «Enviar a cocina (1)» total 154,00 = 144+10 OK |
+| «Llamar mesero» con texto «Faltan cubiertos y una servilleta, por favor» | llega **en tiempo real** (sin recargar) a Mesas & Salón; «Atendido» y el comensal ve el aviso al instante |
+| «Pedir la cuenta» | llega en tiempo real («Pide la cuenta», mesa en «CUENTA») |
+| Reserva «QA Reserva Ñandú» 16/11/2026 20:00 (4 pers., notas con tildes) | CONFIRMADA, 20:00–21:30, código A6Y-E5L; la mesa quedó «Sin mesa» aunque se dejó «Asignar automáticamente» (observación) |
+## 3. Hallazgos nuevos
+| ID | Sev. | Descripción | Estado |
+| --- | --- | --- | --- |
+| **GST-M01** | **Alta (seguridad alimentaria)** | Si la mesa ya tiene un pedido abierto, el comentario del comensal por QR («alérgico al maní, sin hielo») **se perdía en silencio**: ni mesero ni cocina lo veían (reproducido 2 veces; el código solo guardaba el comentario al crear el pedido, y ningún lugar de Pedidos lo muestra). | **Corregido** `03a8529` en main: el comentario viaja como nota de cada plato nuevo. **Verificado en vivo**: «Salteña · Alérgico al maní, sin picante — Ñandú · POR CONFIRMAR». |
+| GST-M02 | Baja | El comensal veía «Tu mesero ya fue atendido». | **Corregido** `03a8529`: «Tu llamado ya fue atendido». |
+| GST-M03 | Baja (diseño) | El mesero no puede anular un plato enviado por error ni ver el enlace/QR de una mesa (el detalle de mesa solo muestra asientos, estado y llamados). | Propuesta |
+| GST-M04 | Baja | Reserva con «Asignar automáticamente» queda «Sin mesa» hasta sentar. | Observación |
+## 4. No probado (causa)
+- Asistencia: sin turno programado no hay botón (el dueño lo programa); texto explicativo ya corregido (GST-C04).
+- Propinas: el mesero no ve ningún acumulado propio (no hay pantalla ni menú); no existe «propina del mesero» que recalcular. Observación para el dueño (decisión de negocio).
+- Facturación: el mesero no ve nada de facturas.
+- Cocina: no se abrió la pantalla de cocina (otra cuenta); el comensal ve «Recibido en cocina» y el estado pasa a ENVIADO. Áreas asignadas: no hay área asignada en el sembrado.
+## 5. Recorrido para socios (mesero)
+Entrar como `qa_gestro_mesero_1` («QA Mesero Andino 2»). Salón: Mesa 1 OCUPADA con el pedido de 166,00 (Fricasé con nota, Jugo, Pique macho, Mocochinchi y Salteña pedidos por QR con nota de alergia; todo ENVIADO), con una llamada y una petición de cuenta ya atendidas. Reservas → día siguiente (16/11): «QA Reserva Ñandú». No se cobró ni borró nada: el pedido queda abierto para que la cajera lo cobre.
