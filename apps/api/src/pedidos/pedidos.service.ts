@@ -323,7 +323,9 @@ export class PedidosService {
       const [o] = await tx.insert(orders).values({ restaurantId: rid, tableId: mesaId, waiterId: mesero?.id ?? null, channel: 'qr_mesa', orderType: 'mesa', createdBy: mesero?.user_id ?? null, status: 'borrador', customerComment: comentario ?? null }).returning({ id: orders.id });
       return { id: o.id, auto: r.auto };
     });
-    const p = await this.agregar(t, null, info.id, d, true, info.auto);
+    // GST-M01: si la mesa ya tenía un pedido abierto, el comentario del comensal (alergias, sin hielo...) se perdía. Ahora viaja como nota de cada plato nuevo, así llega al mesero y a cocina.
+    const conNota = comentario ? { items: d.items.map((i) => ({ ...i, nota: [i.nota, comentario].filter(Boolean).join(' · ').slice(0, 200) })) } : d;
+    const p = await this.agregar(t, null, info.id, conNota as typeof d, true, info.auto);
     if (!info.auto) {
       const dest = await this.db.run(t, (tx) => tx.select({ u: orders.createdBy }).from(orders).where(eq(orders.id, info.id)));
       const evento = { id: p.id, mesa: p.mesa, items: p.items.filter((i) => i.porConfirmar).length };

@@ -20,7 +20,7 @@ const AVANCE: Record<string, { texto: string; clase: string }> = {
 
 const ALERGENO: Record<string, string> = { gluten: 'Gluten', lacteos: 'Lácteos', huevo: 'Huevo', pescado: 'Pescado', mariscos: 'Mariscos', mani: 'Maní', frutos_secos: 'Frutos secos', soya: 'Soya', apio: 'Apio', mostaza: 'Mostaza', sesamo: 'Sésamo', sulfitos: 'Sulfitos' };
 const ACCION: Record<Tipo, { texto: string; icono: string; enviado: string; hecho: string }> = {
-  atencion: { texto: 'Llamar mesero', icono: 'notifications_active', enviado: 'Avisamos a tu mesero. En un momento te atienden.', hecho: 'Tu mesero ya fue atendido' },
+  atencion: { texto: 'Llamar mesero', icono: 'notifications_active', enviado: 'Avisamos a tu mesero. En un momento te atienden.', hecho: 'Tu llamado ya fue atendido' },
   cuenta: { texto: 'Pedir la cuenta', icono: 'receipt_long', enviado: 'Pedimos tu cuenta. Enseguida te la llevan.', hecho: 'Tu cuenta va en camino' },
   servicio: { texto: 'Pedir servicio', icono: 'room_service', enviado: 'Recibimos tu pedido de servicio.', hecho: 'Servicio atendido' },
 };
