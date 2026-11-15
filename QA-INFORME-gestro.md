@@ -331,3 +331,54 @@ Alcance: todo en **ambiente de pruebas / sin validez fiscal** (decisión del due
 2. Que FacturaSIN en producción tenga `SEMBRAR_SIMULADAS=1` (empresas simuladas, `gestro:demo-restaurante` ↔ NIT 1000000005) y `gestro-service` registrado (`/api/v1/admin/systems`).
 3. En pantalla: «Probar conexión» → «Conectar con FacturaSIN» (el webhook exige `URL_PUBLICA` https del compose: `https://gestro.kyros-tech.com`); cobrar con factura; PDF; anular; apagar y encender FacturaSIN para ver «Pendiente de emitir» y su reintento; revisar el aviso «sin validez fiscal» en pantalla y en el PDF.
 4. Aceptación de la versión legal 2026-11-15.1 al ingresar con una cuenta no exenta.
+
+---
+# FASE C2: cajera `qa_gestro_caja_1` («QA Caja Andino», Mesero + Cajero) en «QA Restaurante Andino» (15/11/2026, hora de Bolivia)
+Ingreso por impersonación, sin tocar contraseñas ni cerrar Kyros ID. La captura de pantalla del navegador no respondió (tiempo agotado): todo se verificó con texto de página y script; **sin capturas nuevas**.
+
+## 1. Permisos del rol
+- **Menú de la cajera (9 entradas):** Pedidos, Caja, Mesas & Salón (QR), Eventos & Catering, Reservas, Turnos & Asistencia, Promociones, Facturas (pruebas), Cuentas por cobrar. No ve Panel, Menú, Recetas, Inventario, Compras, Contabilidad, Estadísticas, Personal, Configuración, Suscripción ni Plataforma.
+- **URL directa (navegación en la SPA):** `/app/contabilidad`, `/personal`, `/compras`, `/inventario`, `/menu`, `/recetas`, `/estadisticas`, `/panel`, `/suscripcion`, `/configuracion`, `/plataforma` (bajo `/app`) → «No tienes acceso a esta sección. Tu rol no incluye X. Si lo necesitas, pídelo a quien administra el restaurante» (+ «Ir a mi inicio»). `/app/ajustes`, `/app/auditoria`, `/app/legal` → «Este módulo llega en una próxima fase» (rutas sin módulo). `/plataforma` (sin `/app`) → vuelve a Caja. Verde.
+- **API:** sin sesión todas dan 401 `{"code":"UNAUTHORIZED","message":"Sesión requerida"}` (`/personal`, `/sucursal/ajustes`, `/contabilidad/asientos`, `/plataforma/sucursales`, `/suscripcion`, `/caja/actual`, `/cobro/topes`). Con la sesión de la cajera **no** se probó la API (exige manejar el token: prohibido). Por código, `personal.controller.ts` exige `DeSucursal('owner','admin')` en crear, regenerar código y editar: la cajera no puede asignarse roles ni por pantalla (no hay acceso a Personal) ni por la API. Pendiente de prueba en vivo con token por parte del coordinador.
+
+## 2. Caja (cifras con recálculo independiente en centavos)
+Apertura 150,00. Topes vigentes en este restaurante: **descuento 30 %, propina 30 %** (el encargo decía 50 %/30 %; la pantalla y el servidor dicen 30 % y 30 %).
+| Caso | Esperado | Resultado |
+| --- | --- | --- |
+| Mesa T1 (93,00): descuento 46,51 | rechazo, tope 30 % = 27,90 | «El descuento no puede pasar del 30 % (Bs 27.90)» |
+| descuento 27,91 | rechazo | igual mensaje (un centavo sobre el tope) |
+| descuento 5,00 sin motivo (tarjeta) | rechazo | «Escribe el motivo del descuento (mínimo 3 letras)» |
+| descuento 27,90 + motivo, propina 10 % | total 65,10; propina 6,51; a cobrar 71,61 | idéntico |
+| propina 19,54 (tope 30 % × 65,10 = 19,53) | rechazo | «La propina no puede pasar del 30 % (Bs 19.53)» |
+| efectivo recibido 71,60 | «Faltan 0,01» | «Faltan Bs 0.01 para cubrir el cobro» |
+| efectivo recibido 100 | vuelto 28,39 | recibo N° 000004: 93,00 / −27,90 / 65,10 / 6,51 / 71,61 / 100,00 / 28,39 |
+| Mostrador «QA Mostrador Cajera»: Silpancho 45 + Jugo de tumbo 14 + Salteña 12 = 71,00; QR; descuento 21,30 (30 % exacto); propina 5 % | 49,70; 5 % = 2,485 → 2,49 (mitad hacia arriba); a cobrar 52,19 | idéntico |
+| Mesa 2: Pique macho 78 + Sopa 28 + Jugo 14 = 120; anular Jugo ya enviado (motivo «Cliente se arrepintió»; «Confirmar» apagado sin motivo) | 106,00; tarjeta con descuento 5,00 → 101,00 | idéntico |
+| Cuenta por cobrar Mamani (146,00; saldo 100,00): 100,01 / 0 / 30,00 efectivo / 70,00 banco | rechazo «supera el saldo (Bs 100.00)»; 0 → «Datos inválidos»; saldo 70,00; saldo 0,00 | idéntico |
+| Efectivo esperado | 150,00 + 71,61 + 30,00 = 251,61 | 251,61; «Propinas cobradas Bs 9,00 (6,51 en efectivo)» = 6,51 + 2,49 OK |
+| Cierre contando 250,00 | −1,61 faltante | «Diferencia Bs −1.61 (faltante)» |
+| Nueva caja 100,00 contada 100,50 | +0,50 sobrante | «Diferencia Bs 0.50 (sobrante)» |
+- **Anulación:** solo de platos enviados (motivo obligatorio, queda quién y por qué); baja el total del pedido antes del cobro, sin efecto en caja porque aún no se cobró. Un pedido ya COBRADO no ofrece «Anular» ni devolución: no hay anulación de venta cobrada desde la caja.
+- **Dividir cuenta:** no existe (GS-N08 confirmado). **Cobro en partes con varios métodos (efectivo + QR + tarjeta en el mismo pedido): no existe**; cada cobro es de un solo método y por el total. Se probó un método por pedido (efectivo, QR, tarjeta) y dos cobros de cuenta (efectivo y banco).
+
+## 3. Facturar (piloto)
+El dueño aún no configuró la facturación. En el cobro: «La factura electrónica la activa el dueño en Configuración» (solo Recibo / Solo contabilizar); en el pedido cobrado: «La facturación no está activada. El dueño la configura en Configuración.» más «Ambiente de pruebas / sin validez fiscal»; `/app/facturas`: lista vacía con el texto «Se emiten desde Caja («Factura electrónica»)…». **El cobro no se bloquea** (3 cobros hechos). No se pudo probar «pendiente de emitir» ni el aviso al fallar FacturaSIN (requiere configuración del dueño y el secreto de `gestro-service`). No se cargó ninguna credencial.
+
+## 4. Turnos, salón, reservas
+Turnos: «No tienes turnos programados…»: **sin turno programado no hay botón de entrada/salida** → asistencia NO probada (la programa el dueño). Salón: mapa de 4 mesas LIBRE, solo lectura, avisos push. Reservas, Eventos y Promociones: la cajera ve las pantallas, vacías.
+
+## 5. Hallazgos nuevos
+| ID | Sev. | Descripción | Estado |
+| --- | --- | --- | --- |
+| GST-C01 | Baja | En el cobro, con descuento y sin motivo, «Total del pedido» baja (101,00) pero «A cobrar» queda en 106,00 hasta escribir el motivo; el aviso de error previo no se borra al corregir (amplía GST-013). | Propuesta |
+| GST-C02 | Baja | Tras cerrar la caja seguía visible «Caja abierta. Ya puedes cobrar.» junto al resumen del cierre. | **Corregido** `163a09e` en main (despliegue y verificación en vivo pendientes) |
+| GST-C03 | Baja | El cierre con diferencia no pide ni guarda una explicación (faltante/sobrante sin motivo). | Propuesta |
+| GST-C04 | Baja | Turnos prometía «Marca tu entrada y salida» sin explicar que hace falta un turno programado. | **Corregido** `163a09e` |
+| GST-C05 | Baja | Cobro de cuenta con monto 0 responde «Datos inválidos» (genérico). | Propuesta |
+| GST-C06 | Baja | «Cobros del turno» no lista el cobro de cuenta por banco (Bs 70,00): solo el de efectivo. | Propuesta |
+| GST-C07 | Media (diseño) | No hay cobro dividido (varios métodos o personas) ni anulación de una venta cobrada. | Propuesta (GS-N08) |
+- GS-N05 y ERR_CONNECTION_CLOSED en `/callback` durante el despliegue (avisados por el coordinador): no reproducidos aquí.
+- No probado: reaceptación visual (la cajera ya había aceptado), factura real, asistencia, API con token, capturas.
+
+## 6. Recorrido para socios (cajera)
+Entrar como `qa_gestro_caja_1` («QA Caja Andino», Mesero/Cajero). Pedidos → «Todos los de hoy»: Mesa T1 cobrada con descuento 27,90, propina 6,51 y vuelto 28,39 (recibo N° 000004); «QA Mostrador Cajera» (QR, 49,70 + propina 2,49); Mesa 2 (tarjeta, 101,00, plato anulado «Cliente se arrepintió»). Cuentas por cobrar: «QA Cliente Crédito Mamani» cobrada (30,00 efectivo + 70,00 banco). Caja: dos cierres de hoy, faltante −1,61 y sobrante +0,50. Facturas (pruebas): vacío hasta que el dueño configure. No se borró nada.
