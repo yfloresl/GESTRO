@@ -209,3 +209,125 @@ Sesión: «Prueba Kyros / Dueño» en Casa Andina (verificado en cabecera), SSO 
 
 ## Recorrido para socios y residuos
 Ver `QA-CUENTAS-CREADAS.md` → «GESTRO — recorrido para socios». Residuos para mostrar: tope de descuento 50 %; caja cerrada y cuadrada; pedido «QA Socio Dueño»; persona «QA Invitado Mesero». Interruptores demo: ninguno.
+
+## Nota NODE_ENV (revisión transversal, 14/11/2026)
+Revisados Dockerfile, docker-compose y configuración de build. **Sin hallazgo.** `NODE_ENV=development` aparece solo dentro de `RUN ... install` (para instalar las devDependencies) y no pasa a la capa del build ni a la imagen final; el runtime fija `NODE_ENV=production`; `sourcemap: false`. Verificación en vivo con `curl` del JS principal: `https://gestro.kyros-tech.com` JS principal 346.605 bytes (gzip 129.757), 0 marcadores de desarrollo. No se cambió nada.
+
+
+
+## Nota: Tipo de cambio (auditoria transversal 14/11/2026)
+
+Hecho: desde el 29/06/2026 el BCB abandono el Bs 6,96 fijo; el TCO se publica a diario (14/11/2026: Bs 11,67; GET https://www.kyros-tech.com/api/v1/tipo-cambio).
+
+- Hallazgo CRITICO (calculo de dinero): la migracion 0020 sembro plans.monthly_price_bob a 6,96 (Esencial 174,00 / Profesional 341,04 / Cadena 689,04) y el cobro de suscripcion (calculo, crearPago, monto esperado, prorrateo de cambio de plan) usaba ese Bs, aunque los planes valen USD 20/35/60 (migracion 0021). Con TCO 11,67 lo correcto es Bs 233,40 / 408,45 / 700,20.
+- Cambio (commit 7961225, main): Bs = USD x TCO del dia con BigInt (mitad hacia arriba), precio-bs.ts; sin TCO vigente -> 503 TIPO_CAMBIO_NO_DISPONIBLE (nunca se inventa); un plan sin USD conserva su Bs manual; el pago guarda TCO, fecha y fuente (migracion aditiva 0029 + reversa). mia, calculo, planes (plataforma) y prorrateo de cambio de plan usan el mismo calculo.
+- Pruebas: test/precio-bs.puro.spec.ts (14 casos, recalculo independiente BigInt: 20/35/60 USD a 11,67 = 233,40/408,45/700,20; 15 x 11,675 = 175,13). tsc limpio. NO ejecutadas las pruebas de integracion con base (no hay Postgres local). Los datos de prueba QA no se tocaron.
+- Verificacion en vivo: el sitio responde 200 tras el despliegue; el calculo requiere sesion y no se probo en vivo (pendiente).
+
+---
+# FASE C: restaurante NUEVO «QA Restaurante Andino» con `qa_gestro_dueno_1` (15/11/2026, hora de Bolivia)
+
+Registro real (no demo), ingreso por impersonación. Todo con datos propios. Sin tocar contraseñas; no se cerró sesión de Kyros ID; nada se borró.
+
+## Registro (`/registro`), verificado en pantalla
+| Prueba | Resultado |
+| --- | --- |
+| Botón con casilla legal sin marcar / campos vacíos | «Abrir mi restaurante» deshabilitado, sin mensaje que diga por qué (GS-N03, bajo). |
+| Popups «Leer» (Términos, Privacidad) | Abren con ES/EN, versión 2026-11-14.1, titular Kyros-Tech S.R.L., 18 años; cuenta nueva: el registro cubre la aceptación. OK. |
+| Tildes/ñ («QA Dueño Peña Ñandú») | Guardado y mostrado bien en cabecera. |
+| **NIT con letras («ABC12345»)** | **Aceptado sin aviso** (GS-N04, media). |
+| Sin `maxLength` en ningún campo | No probado con textos de miles de caracteres; el límite depende del servidor (no verificado). |
+| Resultado | Dueño «QA Dueño Peña Ñandú», restaurante «QA Restaurante Andino», panel abierto; «Habilitada hasta 2026-11-30». |
+
+## Hallazgos nuevos (FASE C)
+| ID | Sev. | Descripción | Estado |
+| --- | --- | --- | --- |
+| GS-N01 | Baja/Media | **Días de prueba inconsistentes**: Panel decía «Faltan 16 días» y Suscripción «Faltan 15 días» para el mismo 2026-11-30. Causa: `Panel.tsx` calculaba `Math.ceil` contra el mediodía de La Paz (cambia con la hora). La fecha final es correcta: 15/11 + 15 días = 30/11, en hora de La Paz (la API usa `HOY` de La Paz). | **Corregido** `dc67c03` (fecha de calendario UTC-4); verificado en vivo tras el despliegue: Panel «Faltan 15 días» = Suscripción; Panel: ticket 500/3 = 166,67 y margen 67,8 % = (500−160,88)/500 OK |
+| GS-N02 | Media (no verificado) | **IVA incluido = importe×13/113** (compra con factura Bs 820,00 → crédito fiscal Bs 94,34). SIN (nota de prensa 19/02/2026, impuestos.gob.bo): hoy el IVA «está incorporado dentro del precio final» con tasa efectiva ≈14,94 % (13/87), es decir IVA = 13 % del precio facturado (factura de Bs 200 → Bs 26 según guía de restaurantes); el 13 % «efectivo real» sobre base neta es el proyecto de ley (Ley 1733, vigencia pendiente de reglamento: NO verificado). Con la regla vigente el crédito de Bs 820 sería **106,60**, no 94,34. No se cambió el código (pruebas y el régimen IVA Transparente del piloto dependen de esa decisión): **decisión del dueño/contador**. Solo afecta compras «con factura» (las ventas salen con Recibo). | Propuesta |
+| GS-N03 | Baja | Registro: botón deshabilitado sin explicación. | Propuesta |
+| GS-N04 | Media | El NIT acepta letras y cualquier largo. | Propuesta (validar formato) |
+| GS-N05 | Media | **La sesión de GESTRO sobrevive al cierre de Kyros ID** (hallazgo del coordinador): GESTRO guarda su propia sesión y no hay cierre por canal trasero (back-channel logout); es diseño, no solo un token vigente (8 h). No reproducido a propósito (no se cerró Kyros ID). «Cerrar sesión» sí cierra ambas. | Propuesta |
+| GS-N06 | Baja | «Agregar mesa» pulsado sin esperar la respuesta anterior pierde datos (el formulario se reinicia y el área vuelve a «Sin área»). | Observación |
+| GS-N07 | Media | **No se pueden editar los roles de una persona** (solo Desactivar / Nuevo código); el rol «Mesero» preseleccionado quedaba marcado tras crear (GST-017) y se crearon cuentas con roles de más. | GST-017 corregido `dc67c03`; edición de roles: propuesta |
+| GS-N08 | Media | **No hay «dividir cuenta»** (ni por ítems ni por personas) en el cobro. | Propuesta |
+| GS-N09 | Baja | El comentario del cliente por QR («Sin picante…») no se ve en la ficha del pedido del mesero (no se comprobó en Cocina). Tarjeta «4 platos» para 7 unidades y total 0,00 hasta confirmar. | Observación |
+| GS-N10 | Baja | «Entrada» de insumos genera «Compra al contado» que acredita Caja aunque no haya efectivo: el libro mostró caja negativa (321 − 662). | Propuesta (pedir forma de pago) |
+| GS-N11 | Baja | Margen de Recetas = (precio − costo)/precio con precio final; no descuenta IT 3 % ni IVA (informativo). | Propuesta |
+
+## Datos del restaurante
+Sucursal «QA Restaurante Andino». Salón: áreas Salón principal y Terraza; mesas 1 y 2 (Salón), 3 (sin área, a propósito), T1 (Terraza). Menú (Bs): Pique macho 78, Silpancho 45, Fricasé 52, Sopa de maní 28, Salteña 12, Api con pastel 15, Jugo de tumbo 14, Mocochinchi 10 (3 categorías, alérgenos). Almacenes Cocina y Bodega seca; 9 insumos con entradas (Papa 20 kg a 4,50; Arroz 15 a 9,00; Maní 3 a 38,00; Huevo 60 a 1,20; Harina 8 a 7,00; Tumbo 5 a 12,00; Durazno 3 a 45,00). Proveedores: Carnes Don Beto S.R.L. (NIT 1023456028, crédito 15 d) y Verduras Mercado Los Pozos (contado). Compra a Don Beto: res 10 kg a 62,50 + cerdo 6 kg a 48,75 = 917,50; recibida parcial (res 10, cerdo 4), factura F-1001 con IVA = 820,00; pagado 320,00 por banco; saldo por pagar 500,00 (vence 30/11). 8 recetas.
+
+## Verificación de cálculos (recálculo independiente, centavo a centavo)
+| Cálculo | Esperado | Pantalla | Res. |
+| --- | --- | --- | --- |
+| Orden de compra | 10×62,50 + 6×48,75 = 917,50 | 917,50 | OK |
+| Recepción parcial | 10×62,50 + 4×48,75 = 820,00 | 820,00 | OK |
+| Vencimiento CxP | 15/11 + 15 d = 30/11/2026 | 30/11 | OK |
+| Pago mayor al saldo | rechazo | «El pago supera el saldo (Bs 820.00)» | OK |
+| Pago 320 | saldo 500,00 | 500,00 | OK |
+| Valor de inventario | 820 + 90+135+114+72+56+60+135 = 1.482,00 | 1.482,00 | OK |
+| Costos de receta (HALF_UP) | Pique 18,175→18,18; Sopa 2,575→2,58; Salteña 4,285→4,29; Silpancho 16,385→16,39; Fricasé 15,525→15,53; Api 1,02; Jugo 3,00; Moco 2,70 | idénticos | OK |
+| Márgenes | 76,70; 90,80; 64,29; 63,59; 70,14; 93,20; 78,57; 73,00 % | idénticos | OK |
+| Pedido QR mesa 1 | 2×78+45+2×14+2×12 = 253,00 | 253,00 | OK |
+| Cobro efectivo: desc 3, propina 10 %, recibido 300 | total 250,00; propina 25,00; a cobrar 275,00; vuelto 25,00 | idénticos | OK |
+| Anulación de línea (2× Mocochinchi) | 124 − 20 = 104,00; sin motivo no cierra | 104,00 | OK |
+| Crédito mesa 3 | 2×45+2×28 = 146,00; plazo 20 d → 05/12/2026 | idénticos | OK |
+| Cobro parcial de cuenta 46,00 | saldo 100,00 | 100,00 | OK |
+| Arqueo | 150,50 + 250,00 + propina 25,00 + 46,00 = 471,50; contado 470,50 → −1,00 | idénticos | OK |
+| Ingresos / IT 3 % | 250+104+146 = 500,00 (propina fuera); IT 15,00 | 500,00 / 15,00 | OK |
+| Costo de ventas por pedido | 67,305→67,31; 36,45 (incluye 5,40 de lo anulado ya enviado); 37,92; 19,195→19,20 | idénticos; total 160,88 | OK |
+| Balance | Activo 864,12 = Pasivo 525,00 + Patrimonio 339,12 | cuadra | OK |
+IVA incluido 13/113: ver GS-N02 (no verificado como correcto).
+
+## No hecho en esta pasada
+Cambio de plan con prorrateo (planes apagados, «Sin plan»; necesita `qa_superadmin`); cocina `/cocina` y sesiones de mesero/caja (el coordinador las abre con los códigos de `QA-CUENTAS-CREADAS.md`); responsive/inglés; textos de miles de caracteres; reservas, eventos, turnos.
+
+## Recorrido para socios: «QA Restaurante Andino»
+Entrar con `qa_gestro_dueno_1` (dueño). Mirar: Panel (suscripción hasta 30/11, «Faltan 15 días» en Panel y Suscripción); Salón (4 mesas; pedido abierto en T1 en cocina, Bs 93,00); Menú y Recetas (costo y margen de 8 platos); Inventario (valor 1.482); Compras → Por pagar (Bs 500,00 a Don Beto); Cuentas por cobrar (QA Cliente Crédito Mamani, saldo 100,00); Caja (cerrada, faltante −1,00); Contabilidad (ingresos 500, IT 15, balance cuadra); Personal (invitaciones).
+
+## Facturación Flujo 1 y panel SuperAdmin (15/11/2026, rama `qa/gestro-facturacion-flujo1-2026-11-15`, en main `cef6cdd`)
+Kyros-Tech factura a sus clientes (restaurantes) la suscripción a través de FacturaSIN. **Todo simulado**: empresa «Kyros-Tech S.R.L. (SIMULADO)», NIT ficticio 1000000001 (`gestro:kyros-tech`); no se inventó ningún NIT real. Guía completa y cómo replicarlo en otros sistemas: `docs/facturacion-kyros.md` del repositorio.
+- **Qué se construyó:** núcleo reutilizable sin dependencias (`apps/api/src/facturacion-kyros/nucleo/`: cálculo en centavos, validación fiscal, CSV seguro, orquestación idempotente `emitirFactura`, copia del SDK de FacturaSIN con `qr()`); servicio y rutas; migración aditiva y reversible `0030` (`accounts.fiscal_doc_type/complement/email`, `kyros_invoices` con RLS forzada, `kyros_invoice_events`); gancho en `SuscripcionService.aprobar` (después de activar, sin bloquear ni fallar); webhook público `POST /api/v1/webhooks/facturasin` (HMAC sobre cuerpo crudo, anti-replay 5 min, 2 secretos en rotación, deduplicación por Event-Id, sin retroceso de estado); ciclo cada 5 min (concilia, reintenta con espera 2^n min, emite lo nunca intentado); pestaña «Facturación de Kyros» en `/plataforma`; «Datos para tu factura» y «Mis facturas» en Suscripción; validación del NIT en el registro (5-13 dígitos, sin ceros a la izquierda).
+- **Reglas aplicadas:** sin pago validado no hay factura; sin factura hay alerta (1 h) y alerta crítica (24 h), nunca bloqueo; se factura lo cobrado; IVA 13 % por dentro en centavos (116,70 → 15,17); TCO del día del pago (11,67); Ley 1733 no activada (la integración nunca llama a `iva-transparente` ni `siat-mode`); sin NIT queda pendiente y solo una persona puede emitir «consumidor final» (CI 0, «S/N»; NO verificado con el SIN).
+- **Seguridad:** integración APAGADA por defecto; secreto de `gestro-service` solo por el catálogo de integraciones (cifrado, solo escritura); URL de FacturaSIN solo https (http solo en local fuera de producción); configuración y secreto del webhook exigen confirmar identidad (15 min); panel solo `SoloPlataforma` (dueño de restaurante = 403, sin sesión = 401; verificado en 11 rutas); PDF/XML/QR pasan por GESTRO; el cliente solo ve y descarga las suyas (RLS + 404 en las ajenas); cada acción se audita (`facturacion_kyros.*`).
+- **Pruebas automáticas (todas en verde):** `test/facturacion-kyros.puro.spec.ts` 40 pruebas de cálculo contra oráculo independiente `decimal.js` (16 importes límite, 1 000 pseudoaleatorios, TCO con 3 decimales, 6,96 ≠ 11,67, promoción 10 %, prorrateo 20→35 USD, renovar suma, firma del webhook con el vector oficial de FacturaSIN, CSV `= + - @ tab \r`) y `test/facturacion-kyros.spec.ts` 18 pruebas del flujo completo contra `test/facturasin-doble.ts` (doble fiel del contrato Fase 1): pago validado→factura (Bs 116,70 / IVA 15,17 / clave = id de pago / extras con USD y TCO); pago no validado 409; reintento idempotente tras respuesta perdida (misma factura, mismo CUF); FacturaSIN caído (503) → suscripción activa + alerta + el ciclo la emite al volver; rechazo del SIN → reintento con clave `:r2`; estado «pendiente» del SIN → conciliación; sin NIT → alerta, consumidor final solo a pedido y marcado; anulación con motivo (400 sin comentario, 409 repetida, auditoría); PDF/XML/QR; totales exactos (tres pagos: cobrado 758,55, facturado 525,15, IVA 68,27 = 15,17 + 53,10, por facturar 233,40) con control SQL; filtros y escape de `%`; CSV sin fórmulas; webhook (firma inválida/vieja/alterada → 401, duplicado, desordenado, anulada manda, factura ajena); permisos del panel; integración apagada no emite; validación de datos fiscales. Suite completa de la API: 311 pruebas verdes + 1 omitida; `tsc` de API y web limpios; web 19 pruebas.
+- **No verificado / límites:** no se probó contra FacturaSIN real ni desplegado (el doble sigue el contrato documentado); consumidor final y método de pago 7 sin confirmar con el contador/SIN (Q4); sin notas de crédito (F6: solo anular); factura siempre «con crédito fiscal» (F10); `hub-service` aún falta en Kyros ID (F12); la política de privacidad/términos de GESTRO dicen «no emite facturas» (§4): sigue verdadero para el restaurante (Flujo 2) pero habrá que mencionar que Kyros-Tech factura la suscripción y trata NIT/razón social, con versión legal nueva, cuando se active en producción.
+- **Qué debe verificar el coordinador en vivo:** (1) el dueño pega el secreto de `gestro-service` en Plataforma › Integraciones (`KYROS_SERVICE_CLIENT_SECRET`) y en Coolify de FacturaSIN `SEMBRAR_SIMULADAS=1` (o `POST /api/v1/admin/seed-simulated`) para crear `gestro:kyros-tech`; (2) en la pestaña «Facturación de Kyros»: «Activar», «Suscribir webhook» (URL pública https de GESTRO) y «Conciliar ahora»; (3) con `qa_gestro_dueno_1`: Suscripción › Datos para tu factura (NIT 1020304050 de prueba), declarar un pago con voucher; con `qa_superadmin`: aprobar y ver la factura Emitida + Simulada, abrir PDF/XML/QR (el PDF debe llevar «Ambiente de pruebas / sin validez fiscal»), anular con motivo, exportar CSV; (4) apagar FacturaSIN (o usar un secreto errado) y comprobar que el pago se aprueba igual y aparece la alerta; (5) el despliegue aplica la migración 0030 sola.
+- **Recorrido para socios:** tras activar, los pagos ya validados de «QA Restaurante Andino» aparecen como «Pendiente de emitir»: el botón «Emitir factura» las convierte en facturas simuladas visibles con PDF.
+
+## Facturación Flujo 2: el restaurante factura a sus comensales vía FacturaSIN (15/11/2026, rama `qa/gestro-facturacion-flujo2-2026-11-15`)
+
+Alcance: todo en **ambiente de pruebas / sin validez fiscal** (decisión del dueño: «lo que hay que probar es el flujo»). Código nuevo en `apps/api/src/facturacion-emisor/` (módulo propio; no toca SuperAdmin ni suscripciones del Flujo 1). Migración **0031** (aditiva y reversible: `billing_settings`, `fiscal_invoices`, `fiscal_webhook_events`, `menu_items.sin_unit_code`; RLS forzada; sin DELETE para `app_user`).
+
+**Qué hace**
+1. **Configuración** (Configuración → «Facturación electrónica a tus clientes», solo dueño/administrador): NIT, razón social, actividades económicas SIN, sucursal y punto de venta, municipio, dirección, leyenda, modalidad (solo «simulado»: `real` se rechaza con 422 hasta que el SIN autorice), código y unidad SIN por defecto, permitir «sin nombre», token delegado del emisor, «Probar conexión» (solo lectura: credencial, Kyros ID, emisor, enlace, sucursal y punto de venta) y «Conectar con FacturaSIN» (crea o enlaza la empresa `gestro:<id>`, envía la credencial si FacturaSIN lo permite, suscribe el webhook). El aviso «Ambiente de pruebas / sin validez fiscal» está siempre visible. Validaciones en pantalla y servidor: NIT de 5 a 13 dígitos, vacíos, símbolos (`<>`), tildes y ñ conservadas (NFC). Un NIT no lo puede reclamar otra cuenta (409). La pantalla está solo en español, como el resto de la web de GESTRO (no existe infraestructura i18n; los textos legales sí son es/en).
+2. **Facturar**: en «Cobrar» aparece «Factura electrónica (pruebas)» (si está configurada) y, en un pedido ya cobrado con recibo o solo contabilizado, el panel «Factura» con «Facturar este pedido». Datos del comensal: NIT / CI (+complemento) / pasaporte / carnet de extranjero / otro, razón social, correo, excepción de NIT, o «sin nombre» (CI 0, S/N) si el dueño lo permite; con tarjeta pide los 4+4 dígitos. Se valida **antes** de cobrar. Ítems con el código SIN del plato (campos nuevos «Código SIN» y «Unidad SIN» en Menú) o el de la configuración; unidad 57 por defecto; el descuento del pedido va como `descuentoAdicional`; **la propina nunca se factura**; moneda Bs; IVA 13 % «por dentro». Clave de idempotencia = `gestro:<pedido>:<intento>` (también `idExterno`); un intento nuevo solo tras rechazo o anulación. Se guardan estado, número, CUF, fecha, enlaces, QR y aviso. Ver/imprimir PDF (lo pide el servidor a FacturaSIN; XML solo dueño), «Reintentar ahora», «Anular factura» con motivo SIN y explicación (solo dueño/administrador) y lista en `/app/facturas` con conciliación. Se quitó el rechazo de `documento:'factura'`.
+3. **Estados y webhook**: `POST /api/v1/public/facturasin/webhook/<restauranteId>` verifica HMAC-SHA256 (`X-FacturaSIN-Signature`, sobre el cuerpo crudo, tolerancia de 5 min, dos firmas en rotación), deduplica por `X-FacturaSIN-Event-Id`, ignora eventos anteriores al último aplicado y de facturas desconocidas, y actualiza pendiente/validada/observada/rechazada/anulada/contingencia. Conciliación cada minuto de «pendiente/contingencia» y cola de reintentos (30 s, 1, 2, 4… máx. 15 min) para «en cola». **La venta nunca se bloquea**: sin FacturaSIN el cobro se registra, la factura queda «Pendiente de emitir» (visible en el pedido y en Facturas), se alerta al dueño (tipo `facturacion`) y se reintenta con la MISMA clave. Un cobro con factura vigente no se puede anular antes que la factura.
+4. **Secretos**: el token delegado y los secretos de webhook se guardan cifrados (AES-256-GCM) en `app_config`; nunca en variables de entorno, logs, auditoría ni respuestas (probado). El secreto del client `gestro-service` se carga en la consola de plataforma (clave `KYROS_SERVICE_CLIENT_SECRET`, ya existente). Las direcciones públicas (`FACTURASIN_URL`, `KYROS_ID_EMISOR_SERVICIO`) se leen en `config/entorno.ts` solo como literales no secretos, con los valores de producción por defecto.
+5. **Legal**: versión **2026-11-15.1** (reaceptación por el patrón del sistema: `VERSION_LEGAL` + textos es/en sincronizados). Términos §2, Políticas §4 y Privacidad §1 y §4 reescritos con precisión («emite facturas a través de FacturaSIN en ambiente de pruebas, sin validez fiscal»; tratamiento de NIT/CI/pasaporte, razón social y correo del comensal; FacturaSIN como encargado; sin afirmar autorización del SIN ni ubicación de servidores).
+
+**Matriz de verificación de cálculos (recálculo independiente en centavos: `factura-calculo.puro.spec.ts` y `facturacion.spec.ts`)**
+
+| Cálculo | Fórmula | Fuente | Casos | Resultado |
+|---|---|---|---|---|
+| Importe de línea | cantidad × precio, un solo redondeo, mitad hacia arriba | igual a `subtotalLineaCentavos` de FacturaSIN | 0,5×15,55=7,78; 0,333×10=3,33; 1,5×0,01=0,02; enteros | OK |
+| Total facturado | Σ líneas − descuento; la propina queda fuera | Ley 843 (la propina no es venta) y decisión de diseño | 163,00 − 13,00 = 150,00 (propina 10,00 aparte); 5000 casos aleatorios con aritmética Number/Math independiente | OK, 0 diferencias |
+| IVA «por dentro» | 13 % × importe facturado, mitad hacia arriba | Ley 843 arts. 4, 5 y 15 según FS-002 de FacturaSIN (fuente secundaria; **no verificado** en Gaceta) | 150,00→19,50; 116,70→15,17; 0,01→0,00; 0,04→0,01; 0,05→0,01; 163,00→21,19 | OK; además se contrasta con lo que devuelve FacturaSIN en cada factura (si difiere: alerta y nota) |
+| Total factura = cobro | total calculado debe igualar `sales_payments.amount` | consistencia interna | caso con descuento | OK; si no cuadra no se emite y se alerta |
+| Método de pago SIN | efectivo 1, tarjeta 2, QR/transferencia/crédito 7 | catálogo del simulador (solo 1, 2 y 7) | — | **A confirmar con el contador** (pregunta Q4) |
+
+**Hallazgos y notas**
+- GS-F2-01 (Media, corregido): `sales_payments.document='factura'` se rechazaba siempre; ahora el cobro funciona y el asiento contable se registra **sin separar IVA** (como «sin documento») porque el criterio de GESTRO (IVA = importe×13/113, GS-N02) difiere del de FacturaSIN (13 % del importe). Hasta que el dueño/contador decida GS-N02, el libro de ventas sigue en cero; la factura de pruebas es un documento paralelo.
+- GS-F2-02 (Baja, corregido): el orden de ítems de una factura era no determinista cuando se enviaban a la vez; ahora es por tiempo, plato e id.
+- Limitación: FacturaSIN no deja que un sistema cree sucursales ni puntos de venta distintos de 0; «Probar conexión» lo avisa.
+- Una factura rechazada o con datos inválidos no se reintenta sola: se corrige y se vuelve a facturar (intento nuevo, otra clave).
+
+**Pruebas**: `factura-calculo.puro.spec.ts` (10) y `facturacion.spec.ts` (15, contra un doble fiel de FacturaSIN, `test/facturasin-doble-emisor.ts`): emisión válida, idempotencia, caída con reintento sin bloquear la venta, falta de credencial, rechazo del SIN, NIT inválido con excepción, anulación, cancelación antes de emitir, conciliación, webhook firmado/inválido/vencido/duplicado/viejo/ajeno, secretos nunca expuestos y aislamiento por sucursal.
+
+**Recorrido para socios** (no se borró ningún dato): entrar a GESTRO con una cuenta de dueño → Configuración → «Facturación electrónica a tus clientes» (NIT de prueba `1000000005`, «Restaurante Demo (SIMULADO)» de FacturaSIN) → Menú (campos «Código SIN») → Caja: abrir caja, tomar un pedido, «Cobrar» → «Factura electrónica (pruebas)» → ver el PDF con el aviso de pruebas → `/app/facturas` → anular con motivo.
+
+**Qué debe verificar el coordinador en vivo (depende del dueño)**
+1. Que el secreto del client `gestro-service` esté cargado en GESTRO (consola de plataforma → Integraciones → `KYROS_SERVICE_CLIENT_SECRET`) y que ese client exista en Kyros ID con audiencia `facturasin-api`. Sin eso las facturas quedan «Pendiente de emitir» con la causa visible.
+2. Que FacturaSIN en producción tenga `SEMBRAR_SIMULADAS=1` (empresas simuladas, `gestro:demo-restaurante` ↔ NIT 1000000005) y `gestro-service` registrado (`/api/v1/admin/systems`).
+3. En pantalla: «Probar conexión» → «Conectar con FacturaSIN» (el webhook exige `URL_PUBLICA` https del compose: `https://gestro.kyros-tech.com`); cobrar con factura; PDF; anular; apagar y encender FacturaSIN para ver «Pendiente de emitir» y su reintento; revisar el aviso «sin validez fiscal» en pantalla y en el PDF.
+4. Aceptación de la versión legal 2026-11-15.1 al ingresar con una cuenta no exenta.
