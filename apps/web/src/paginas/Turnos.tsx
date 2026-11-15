@@ -42,7 +42,7 @@ function Mis() {
   const lista = q.data ?? [];
   return (
     <section className="flex flex-col gap-space-sm">{error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
-      {q.isLoading ? <ListaEsqueleto /> : lista.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">No tienes turnos programados en los próximos días.</p> : (
+      {q.isLoading ? <ListaEsqueleto /> : lista.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">No tienes turnos programados en los próximos días. Para marcar entrada y salida, pide a quien administra el restaurante que te programe un turno en «Turnos & Asistencia».</p> : (
         <ul className="grid grid-cols-1 gap-gutter md:grid-cols-2">{lista.map((t) => (
           <li key={t.id} className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-xs">
             <p className="font-headline-sm text-headline-sm">{nomDia(t.fecha)} · {t.horaInicio}–{t.horaFin}{t.cruzaDia && <span className="font-body-sm text-on-surface-variant"> (+1 día)</span>}</p>

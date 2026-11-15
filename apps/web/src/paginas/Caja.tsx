@@ -24,7 +24,7 @@ export function Caja() {
   const cerrar = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault(); setError(null); const f = new FormData(e.currentTarget);
     if (!(await confirmar({ titulo: 'Cerrar la caja', mensaje: 'Ya no podrás cobrar hasta abrir una nueva. ¿Cerrar la caja?', aceptar: 'Cerrar caja' }))) return;
-    try { const r = await api.post<{ efectivoEsperado: string; montoContado: string; diferencia: string }>('/caja/cerrar', { montoContado: num(f.get('contado')) }, sucursalId!); setCierre({ esperado: r.efectivoEsperado, contado: r.montoContado, diferencia: r.diferencia }); await refrescar(); } catch (err) { setError(mensajeDeError(err)); }
+    try { const r = await api.post<{ efectivoEsperado: string; montoContado: string; diferencia: string }>('/caja/cerrar', { montoContado: num(f.get('contado')) }, sucursalId!); setAviso(null); setCierre({ esperado: r.efectivoEsperado, contado: r.montoContado, diferencia: r.diferencia }); await refrescar(); } catch (err) { setError(mensajeDeError(err)); }
   };
 
   const c = q.data;
