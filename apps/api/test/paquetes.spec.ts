@@ -81,8 +81,8 @@ describe('Planes y precios (portada)', () => {
 
   it('el lector sigue el contrato {usd_bob, fecha, desactualizado} y descarta cualquier otra cosa', async () => {
     const { leerTipoCambio } = await import('../src/suscripcion/planes-publicos');
-    expect(leerTipoCambio({ usd_bob: 9.5, fecha: '2026-10-31', fuente: 'x', antiguedad_dias: 0, desactualizado: false })).toEqual({ bob: 9.5, fecha: '2026-10-31', vigente: true });
-    expect(leerTipoCambio({ usd_bob: 9.5, fecha: '2026-10-20', desactualizado: true })).toEqual({ bob: 9.5, fecha: '2026-10-20', vigente: false });
+    expect(leerTipoCambio({ usd_bob: 9.5, fecha: '2026-10-31', fuente: 'x', antiguedad_dias: 0, desactualizado: false })).toEqual({ bob: 9.5, fecha: '2026-10-31', vigente: true, fuente: 'x' });
+    expect(leerTipoCambio({ usd_bob: 9.5, fecha: '2026-10-20', desactualizado: true })).toEqual({ bob: 9.5, fecha: '2026-10-20', vigente: false, fuente: 'Kyros-Tech' });
     for (const malo of [{ tipoCambio: 9.5, fecha: '2026-10-31' }, { usd_bob: '9.5', fecha: '2026-10-31' }, { usd_bob: 0, fecha: '2026-10-31' }, { usd_bob: 9.5 }, { usd_bob: 9.5, fecha: '31/10/2026' }, null]) expect(leerTipoCambio(malo)).toBeNull();
   });
 });

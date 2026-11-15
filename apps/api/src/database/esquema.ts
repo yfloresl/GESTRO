@@ -317,6 +317,9 @@ export const subscriptionPayments = pgTable('subscription_payments', {
   createdBy: uuid('created_by'),
   expectedAmount: numeric('expected_amount', { precision: 12, scale: 2 }),
   giftMonths: integer('gift_months').notNull().default(0),
+  fxUsdBob: numeric('fx_usd_bob', { precision: 14, scale: 6 }),
+  fxFecha: date('fx_fecha'),
+  fxFuente: text('fx_fuente'),
 });
 
 export const warehouses = pgTable('warehouses', {

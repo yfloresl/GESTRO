@@ -1,10 +1,12 @@
-import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, Inject, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { auditar, esDuplicado } from '../comun/auditoria';
 import { DIAS_DE_GRACIA } from '../comun/guards';
 import { BD, Bd, Tenant, TenantDb } from '../database/database.module';
 import { alcanceDe, MODULOS, type Modulo } from './paquetes';
+import { precioMensualBs, type PrecioPlan, type TcoUsado } from './precio-bs';
+import { TipoCambioService } from './planes-publicos';
 import { diasEntre, prorrateoCambioPlan, renovar, sumarDias } from './periodos';
 import { auditLog, plans, platformSettings, restaurants, saasPromotions, subscriptionPayments } from '../database/esquema';
 import { StorageService } from '../storage/storage.service';
@@ -40,7 +42,20 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
     @Inject(StorageService) private readonly storage: StorageService,
     @Inject(EventosGateway) private readonly eventos: EventosGateway,
     @Inject(PushService) private readonly push: PushService,
+    @Inject(TipoCambioService) private readonly tc: TipoCambioService,
   ) {}
+
+  /** TCO oficial del día (servicio de Kyros-Tech). Sin valor vigente no se cobra ni se cotiza en Bs un plan en USD: nunca se inventa. */
+  private async tcoDelDia(): Promise<TcoUsado> {
+    const v = await this.tc.actual();
+    if (!v || !v.vigente) throw new HttpException({ message: 'El tipo de cambio oficial (TCO) del día no está disponible; no se puede calcular el precio en bolivianos. Inténtalo en unos minutos.', code: 'TIPO_CAMBIO_NO_DISPONIBLE' }, 503);
+    return { usdBob: v.bob, fecha: v.fecha, fuente: v.fuente };
+  }
+
+  /** Precio mensual en Bs de un plan: USD x TCO del día si el plan tiene precio en USD; si no, el Bs cargado a mano. */
+  private async precioBs(plan: PrecioPlan, tco?: TcoUsado | null) {
+    return precioMensualBs(plan, plan.usd === null ? null : tco ?? await this.tcoDelDia());
+  }
 
   /** Cada hora revisa los vencimientos (5 días, 1 día y el día en que vence). En las pruebas se invoca a mano. */
   onModuleInit() {
@@ -77,13 +92,15 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
 
   async mia(t: Tenant) {
     return this.db.run(t, async (tx) => {
-      const r = await tx.execute(sql`SELECT r.paid_until::text AS hasta, (r.paid_until - ${HOY})::int AS dias, r.status, p.name AS plan, p.monthly_price_bob::text AS precio
+      const r = await tx.execute(sql`SELECT r.paid_until::text AS hasta, (r.paid_until - ${HOY})::int AS dias, r.status, p.name AS plan, p.monthly_price_bob::text AS precio, p.monthly_price_usd::text AS usd
         FROM restaurants r LEFT JOIN plans p ON p.id = r.plan_id WHERE r.id = ${t.restaurantId}`);
-      const f = r.rows[0] as { hasta: string | null; dias: number | null; status: string; plan: string | null; precio: string | null };
+      const f = r.rows[0] as { hasta: string | null; dias: number | null; status: string; plan: string | null; precio: string | null; usd: string | null };
+      let precio = f.precio; let tipoCambio: TcoUsado | null = null;
+      try { const x = await this.precioBs({ bob: f.precio, usd: f.usd }); precio = x.precio; tipoCambio = x.fx; } catch { precio = null; }
       const pagos = await tx.select().from(subscriptionPayments).where(eq(subscriptionPayments.restaurantId, t.restaurantId)).orderBy(desc(subscriptionPayments.createdAt)).limit(24);
       const [cfg] = await tx.select().from(platformSettings);
       return {
-        habilitadaHasta: f.hasta, diasRestantes: f.dias, estado: SuscripcionService.estado(f.dias), sucursal: f.status, plan: f.plan, precioMensual: f.precio, diasDeGracia: DIAS_DE_GRACIA,
+        habilitadaHasta: f.hasta, diasRestantes: f.dias, estado: SuscripcionService.estado(f.dias), sucursal: f.status, plan: f.plan, precioMensual: precio, precioUsd: f.usd, tipoCambio, diasDeGracia: DIAS_DE_GRACIA,
         cobro: { instrucciones: cfg?.paymentInstructions ?? null, tieneQr: !!cfg?.paymentQrUrl },
         pagos: pagos.map((p) => ({ id: p.id, meses: p.monthsPaid, mesesDeRegalo: p.giftMonths, monto: p.amountBob, esperado: p.expectedAmount, referencia: p.bankReference, banco: p.bank, estado: p.status, motivo: p.status === 'rechazado' ? p.notes : null, tieneVoucher: !!p.voucherUrl, desde: p.periodFrom, hasta: p.periodTo, creado: p.createdAt.toISOString() })),
       };
@@ -101,10 +118,11 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
     if (!Number.isInteger(meses) || meses < 1 || meses > 24) throw new BadRequestException('Los meses deben ser de 1 a 24.');
     return this.db.run(t, async (tx) => {
       const promo = await this.promocion(tx, meses);
-      const e = await tx.execute(sql`SELECT round(p.monthly_price_bob * ${meses} * (1 - ${promo?.descuento ?? 0}::numeric / 100), 2)::text AS esperado, p.monthly_price_bob::text AS precio
-        FROM restaurants r JOIN plans p ON p.id = r.plan_id WHERE r.id = ${t.restaurantId}`);
-      const f = e.rows[0] as { esperado: string; precio: string } | undefined;
-      return { meses, precioMensual: f?.precio ?? null, montoEsperado: f?.esperado ?? null, promocion: promo ? { nombre: promo.name, mesesDeRegalo: promo.bonus_months, descuentoPct: promo.descuento } : null };
+      const pl = (await tx.execute(sql`SELECT p.monthly_price_bob::text AS bob, p.monthly_price_usd::text AS usd FROM restaurants r JOIN plans p ON p.id = r.plan_id WHERE r.id = ${t.restaurantId}`)).rows[0] as unknown as PrecioPlan | undefined;
+      const px = pl ? await this.precioBs(pl) : null;
+      const e = px?.precio ? await tx.execute(sql`SELECT round(${px.precio}::numeric * ${meses} * (1 - ${promo?.descuento ?? 0}::numeric / 100), 2)::text AS esperado`) : null;
+      const f = px?.precio ? { esperado: (e!.rows[0] as { esperado: string }).esperado, precio: px.precio } : undefined;
+      return { meses, precioMensual: f?.precio ?? null, montoEsperado: f?.esperado ?? null, tipoCambio: px?.fx ?? null, promocion: promo ? { nombre: promo.name, mesesDeRegalo: promo.bonus_months, descuentoPct: promo.descuento } : null };
     });
   }
 
@@ -112,12 +130,14 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
   crearPago(t: Tenant, userId: string, d: z.infer<typeof NuevoPago>) {
     return this.db.run(t, async (tx) => {
       const promo = await this.promocion(tx, d.meses);
-      const e = await tx.execute(sql`SELECT round(p.monthly_price_bob * ${d.meses} * (1 - ${promo?.descuento ?? 0}::numeric / 100), 2)::text AS esperado FROM restaurants r JOIN plans p ON p.id = r.plan_id WHERE r.id = ${t.restaurantId}`);
-      const esperado = (e.rows[0] as { esperado: string } | undefined)?.esperado ?? null;
+      const pl = (await tx.execute(sql`SELECT p.monthly_price_bob::text AS bob, p.monthly_price_usd::text AS usd FROM restaurants r JOIN plans p ON p.id = r.plan_id WHERE r.id = ${t.restaurantId}`)).rows[0] as unknown as PrecioPlan | undefined;
+      const px = pl ? await this.precioBs(pl) : null;
+      const esperado = px?.precio ? (((await tx.execute(sql`SELECT round(${px.precio}::numeric * ${d.meses} * (1 - ${promo?.descuento ?? 0}::numeric / 100), 2)::text AS esperado`)).rows[0] as { esperado: string }).esperado) : null;
       try {
         const [p] = await tx.insert(subscriptionPayments).values({
           restaurantId: t.restaurantId, monthsPaid: d.meses, amountBob: d.monto.toFixed(2), bankReference: d.referencia, bank: d.banco ?? null, paidOn: d.fechaPago ?? null,
           createdBy: userId, promotionId: promo?.id ?? null, giftMonths: promo?.bonus_months ?? 0, expectedAmount: esperado,
+          fxUsdBob: px?.fx ? String(px.fx.usdBob) : null, fxFecha: px?.fx?.fecha ?? null, fxFuente: px?.fx?.fuente ?? null,
         }).returning({ id: subscriptionPayments.id });
         await auditar(tx, t.restaurantId, userId, 'suscripcion.pago_creado', 'subscription_payment', p.id, { meses: d.meses, monto: d.monto, referencia: d.referencia });
         return { id: p.id, mesesDeRegalo: promo?.bonus_months ?? 0, promocion: promo?.name ?? null };
@@ -240,7 +260,12 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
     return { ok: true };
   }
 
-  planes() { return this.bd.select().from(plans).orderBy(plans.monthlyPriceBob).then((r) => r.map((p) => ({ id: p.id, codigo: p.code, nombre: p.name, precioMensual: p.monthlyPriceBob, activo: p.active, precioUsd: p.monthlyPriceUsd, modulos: alcanceDe(p.features).modulos, aplicado: alcanceDe(p.features).aplicado }))); }
+  async planes() {
+    const filas = await this.bd.select().from(plans).orderBy(plans.monthlyPriceBob);
+    let tco: TcoUsado | null = null;
+    if (filas.some((p) => p.monthlyPriceUsd !== null)) { try { tco = await this.tcoDelDia(); } catch { tco = null; } }
+    return filas.map((p) => ({ id: p.id, codigo: p.code, nombre: p.name, precioMensual: p.monthlyPriceUsd === null ? p.monthlyPriceBob : (tco ? precioMensualBs({ bob: p.monthlyPriceBob, usd: p.monthlyPriceUsd }, tco).precio : null), tipoCambio: p.monthlyPriceUsd === null ? null : tco, activo: p.active, precioUsd: p.monthlyPriceUsd, modulos: alcanceDe(p.features).modulos, aplicado: alcanceDe(p.features).aplicado }));
+  }
   async crearPlan(d: z.infer<typeof Plan>) {
     try { const [p] = await this.bd.insert(plans).values({ code: d.codigo, name: d.nombre, monthlyPriceBob: d.precioMensual.toFixed(2), active: d.activo }).returning({ id: plans.id }); return { id: p.id }; }
     catch (e) { if (esDuplicado(e)) throw new ConflictException('Ya existe un plan con ese código.'); throw e; }
@@ -263,17 +288,20 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
     const cambios: Record<string, unknown> = { ...(d.planId !== undefined && { planId: d.planId }), ...(d.habilitadaHasta !== undefined && { paidUntil: d.habilitadaHasta, billingAnchorDay: null }), ...(d.estado !== undefined && { status: d.estado }) };
     if (!Object.keys(cambios).length) throw new BadRequestException('Nada que cambiar.');
     return this.bd.transaction(async (tx) => {
-      const [a] = (await tx.execute(sql`SELECT r.plan_id, r.paid_until::text AS hasta, ${HOY}::text AS hoy, po.monthly_price_bob::text AS viejo FROM restaurants r LEFT JOIN plans po ON po.id = r.plan_id WHERE r.id = ${id} FOR UPDATE OF r`)).rows as { plan_id: string | null; hasta: string | null; hoy: string; viejo: string | null }[];
+      const [a] = (await tx.execute(sql`SELECT r.plan_id, r.paid_until::text AS hasta, ${HOY}::text AS hoy, po.monthly_price_bob::text AS viejo_bob, po.monthly_price_usd::text AS viejo_usd FROM restaurants r LEFT JOIN plans po ON po.id = r.plan_id WHERE r.id = ${id} FOR UPDATE OF r`)).rows as { plan_id: string | null; hasta: string | null; hoy: string; viejo_bob: string | null; viejo_usd: string | null }[];
       if (!a) throw new NotFoundException('Sucursal no encontrada.');
       let prorrateo: { diasRestantes: number; diasNuevos: number; creditoCent: string } | null = null;
       // GS-C04: cambio de plan con días pagados por delante y sin fecha manual: el valor pagado se conserva (días del plan nuevo + crédito).
-      if (d.planId && d.planId !== a.plan_id && d.habilitadaHasta === undefined && a.viejo && a.hasta && diasEntre(a.hoy, a.hasta) >= 0) {
-        const nuevo = ((await tx.execute(sql`SELECT monthly_price_bob::text AS precio FROM plans WHERE id = ${d.planId}`)).rows[0] as { precio: string } | undefined)?.precio;
-        if (!nuevo) throw new NotFoundException('Plan no encontrado.');
+      if (d.planId && d.planId !== a.plan_id && d.habilitadaHasta === undefined && a.viejo_bob && a.hasta && diasEntre(a.hoy, a.hasta) >= 0) {
+        const pn = (await tx.execute(sql`SELECT monthly_price_bob::text AS bob, monthly_price_usd::text AS usd FROM plans WHERE id = ${d.planId}`)).rows[0] as unknown as PrecioPlan | undefined;
+        if (!pn) throw new NotFoundException('Plan no encontrado.');
+        const tco = pn.usd !== null || a.viejo_usd !== null ? await this.tcoDelDia() : null;
+        const nuevo = (await this.precioBs(pn, tco)).precio!;
+        const viejo = (await this.precioBs({ bob: a.viejo_bob, usd: a.viejo_usd }, tco)).precio!;
         const centavos = (x: string) => { const [e, f = ''] = x.split('.'); return BigInt(e) * 100n + BigInt((f + '00').slice(0, 2)); };
         if (centavos(nuevo) > 0n) {
           const diasRestantes = diasEntre(a.hoy, a.hasta) + 1; // cuenta hoy
-          const pr = prorrateoCambioPlan({ diasRestantes, precioViejoCent: centavos(a.viejo), precioNuevoCent: centavos(nuevo) });
+          const pr = prorrateoCambioPlan({ diasRestantes, precioViejoCent: centavos(viejo), precioNuevoCent: centavos(nuevo) });
           if (pr.diasNuevos < 1) throw new ConflictException('El crédito pendiente no alcanza para un día del plan nuevo; define la fecha a mano con su motivo.');
           cambios.paidUntil = sumarDias(a.hoy, pr.diasNuevos - 1); cambios.billingAnchorDay = null;
           prorrateo = { diasRestantes, diasNuevos: pr.diasNuevos, creditoCent: pr.creditoCent.toString() };

@@ -9,30 +9,30 @@ import { MODULOS } from './paquetes';
 /** Servicio de tipo de cambio de Kyros-Tech (literal no secreto, como pide el estándar). */
 const URL_TIPO_CAMBIO = 'https://www.kyros-tech.com/api/v1/tipo-cambio';
 const CACHE_MS = 6 * 3_600_000;
-export type TipoCambio = { bob: number; fecha: string; vigente: boolean };
+export type TipoCambio = { bob: number; fecha: string; vigente: boolean; fuente: string };
 
 /** Contrato de Kyros-Tech: {usd_bob, fecha, fuente, antiguedad_dias, desactualizado}. Cualquier otra forma se descarta. */
-export function leerTipoCambio(j: unknown): { bob: number; fecha: string; vigente: boolean } | null {
-  const o = j as { usd_bob?: unknown; fecha?: unknown; desactualizado?: unknown } | null;
+export function leerTipoCambio(j: unknown): TipoCambio | null {
+  const o = j as { usd_bob?: unknown; fecha?: unknown; desactualizado?: unknown; fuente?: unknown } | null;
   if (!o || typeof o.usd_bob !== 'number' || !Number.isFinite(o.usd_bob) || o.usd_bob <= 1 || o.usd_bob >= 100) return null;
   if (typeof o.fecha !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(o.fecha)) return null;
-  return { bob: o.usd_bob, fecha: o.fecha, vigente: o.desactualizado !== true };
+  return { bob: o.usd_bob, fecha: o.fecha, vigente: o.desactualizado !== true, fuente: typeof o.fuente === 'string' && o.fuente.trim() ? o.fuente.trim().slice(0, 120) : 'Kyros-Tech' };
 }
 
 @Injectable()
 export class TipoCambioService {
-  private ultimo: { bob: number; fecha: string; vigente: boolean; en: number } | null = null;
+  private ultimo: (TipoCambio & { en: number }) | null = null;
 
   /** Caché de 6 h. 503 = el servicio no tiene valor: solo dólares. Si la red falla se usa el último valor bueno con SU fecha (vigente = false). */
   async actual(): Promise<TipoCambio | null> {
-    if (this.ultimo && Date.now() - this.ultimo.en < CACHE_MS) return { bob: this.ultimo.bob, fecha: this.ultimo.fecha, vigente: this.ultimo.vigente };
+    if (this.ultimo && Date.now() - this.ultimo.en < CACHE_MS) return { bob: this.ultimo.bob, fecha: this.ultimo.fecha, vigente: this.ultimo.vigente, fuente: this.ultimo.fuente };
     try {
       const r = await fetch(URL_TIPO_CAMBIO, { signal: AbortSignal.timeout(4000), headers: { accept: 'application/json' } });
       if (r.status === 503) { this.ultimo = null; return null; }
       const v = r.ok ? leerTipoCambio(await r.json()) : null;
       if (v) { this.ultimo = { ...v, en: Date.now() }; return v; }
     } catch { /* se usa el respaldo */ }
-    return this.ultimo ? { bob: this.ultimo.bob, fecha: this.ultimo.fecha, vigente: false } : null;
+    return this.ultimo ? { bob: this.ultimo.bob, fecha: this.ultimo.fecha, vigente: false, fuente: this.ultimo.fuente } : null;
   }
 }
 
