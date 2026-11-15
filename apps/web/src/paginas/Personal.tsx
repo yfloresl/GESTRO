@@ -6,7 +6,7 @@ import { clases } from '../componentes/Marca';
 import { api, ETIQUETA_ROL, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
 
-interface Persona { id: string; nombre: string; correo: string | null; telefono: string | null; activo: boolean; roles: string[]; vinculado: boolean }
+interface Persona { id: string; nombre: string; correo: string | null; telefono: string | null; activo: boolean; roles: string[]; vinculado: boolean; invitacion?: { venceEl: string; vencida: boolean } | null }
 interface Codigo { id?: string; codigo: string; venceEl: string }
 const ASIGNABLES = ROLES.filter((r) => r !== 'owner');
 
@@ -77,7 +77,11 @@ export function Personal() {
                 <span className={`px-2 py-0.5 rounded-full font-label-sm text-label-sm uppercase whitespace-nowrap ${!p.activo ? 'bg-surface-container text-on-surface-variant' : p.vinculado ? 'bg-tertiary-fixed text-on-tertiary-fixed-variant' : 'bg-secondary-fixed text-on-secondary-fixed-variant'}`}>{!p.activo ? 'Inactivo' : p.vinculado ? 'Con Kyros ID' : 'Pendiente de unirse'}</span>
               </div>
               <div className="flex flex-wrap gap-1">{p.roles.map((r) => <span key={r} className="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm">{ETIQUETA_ROL[r] ?? r}</span>)}</div>
+              {!p.vinculado && p.activo && (
+                <p className="font-body-sm text-on-surface-variant">{p.invitacion ? (p.invitacion.vencida ? `Código vencido el ${new Date(p.invitacion.venceEl).toLocaleDateString('es-BO')}: genera uno nuevo.` : `Código de un solo uso vigente hasta el ${new Date(p.invitacion.venceEl).toLocaleDateString('es-BO')}.`) : 'Sin código vigente: genera uno nuevo.'}</p>
+              )}
               <div className="flex flex-wrap gap-space-sm">
+                {!p.vinculado && p.activo && p.invitacion && !p.invitacion.vencida && <button type="button" onClick={async () => { if (await confirmar({ titulo: 'Revocar código', mensaje: `¿Anular el código pendiente de ${p.nombre}? Ya no podrá usarlo; podrás generar otro.`, aceptar: 'Revocar', peligro: true })) accion(async () => { await api.del(`/personal/${p.id}/codigo`, undefined, sucursalId!); }); }} className="h-12 px-space-md rounded-lg border border-outline-variant text-error font-semibold">Revocar código</button>}
                 {!p.vinculado && p.activo && <button type="button" onClick={() => accion(async () => setCodigo({ ...(await api.post<Codigo>(`/personal/${p.id}/codigo`, undefined, sucursalId!)), para: p.nombre }))} className="h-12 px-space-md rounded-lg border border-outline-variant text-primary font-semibold">Nuevo código</button>}
                 <button type="button" onClick={async () => (await confirmar({ titulo: p.activo ? 'Desactivar persona' : 'Reactivar persona', mensaje: p.activo ? `¿Desactivar a ${p.nombre}? Perderá el acceso de inmediato.` : `¿Reactivar a ${p.nombre}?`, aceptar: p.activo ? 'Desactivar' : 'Reactivar', peligro: p.activo })) && accion(() => api.patch(`/personal/${p.id}`, { activo: !p.activo }, sucursalId!))} className={`h-12 px-space-md rounded-lg border font-semibold ${p.activo ? 'border-error text-error' : 'border-outline-variant text-primary'}`}>{p.activo ? 'Desactivar' : 'Reactivar'}</button>
               </div>

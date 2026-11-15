@@ -37,7 +37,10 @@ export class PersonalService {
       const ids = filas.map((f) => f.userId).filter((x): x is string => !!x);
       const rs = ids.length ? await tx.select({ userId: userRoles.userId, rol: roles.code }).from(userRoles).innerJoin(roles, eq(roles.id, userRoles.roleId)).where(and(eq(userRoles.restaurantId, t.restaurantId), inArray(userRoles.userId, ids))) : [];
       const vinc = ids.length ? await tx.select({ userId: kyrosLinks.userId }).from(kyrosLinks).where(inArray(kyrosLinks.userId, ids)) : [];
+      const inv = ids.length ? await tx.select({ userId: userInvitations.userId, vence: userInvitations.expiresAt }).from(userInvitations).where(and(inArray(userInvitations.userId, ids), sql`${userInvitations.usedAt} IS NULL`)) : [];
+      const ahora = Date.now();
       return filas.map((f) => ({
+        invitacion: (() => { const i = inv.filter((x) => x.userId === f.userId).sort((a, b) => b.vence.getTime() - a.vence.getTime())[0]; return i ? { venceEl: i.vence.toISOString(), vencida: i.vence.getTime() < ahora } : null; })(),
         id: f.id, nombre: f.nombre, correo: f.correo, telefono: f.telefono, activo: f.activo,
         roles: rs.filter((r) => r.userId === f.userId).map((r) => r.rol),
         vinculado: vinc.some((v) => v.userId === f.userId),
@@ -78,6 +81,17 @@ export class PersonalService {
       if (v) throw new BadRequestException('Esta persona ya unió su cuenta de Kyros ID.');
       await auditar(tx, t.restaurantId, por, 'personal.codigo_nuevo', 'staff', s.id);
       return this.codigo(tx, s.userId, por);
+    });
+  }
+
+  /** Anula el código pendiente de una persona sin desactivarla (si lo compartió por error). */
+  revocarCodigo(t: Tenant, por: string, staffId: string) {
+    return this.db.run(t, async (tx) => {
+      const [s] = await tx.select().from(staffMembers).where(and(eq(staffMembers.id, staffId), eq(staffMembers.restaurantId, t.restaurantId)));
+      if (!s?.userId) throw new NotFoundException('Persona no encontrada.');
+      await tx.delete(userInvitations).where(and(eq(userInvitations.userId, s.userId), sql`${userInvitations.usedAt} IS NULL`));
+      await auditar(tx, t.restaurantId, por, 'personal.codigo_revocado', 'staff', s.id);
+      return { ok: true };
     });
   }
 

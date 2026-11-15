@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Inject, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Inject, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { Actor, ActorActual, TenantActual } from '../comun/acceso';
 import { DeSucursal } from '../comun/guards';
 import type { Tenant } from '../database/database.module';
@@ -14,6 +14,9 @@ export class PersonalController {
 
   @Post() @DeSucursal('owner', 'admin')
   crear(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Body() body: unknown) { return this.personal.crear(t, a.sub, NuevoPersonal.parse(body)); }
+
+  @Delete(':id/codigo') @DeSucursal('owner', 'admin')
+  revocar(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string) { return this.personal.revocarCodigo(t, a.sub, id); }
 
   @Post(':id/codigo') @HttpCode(200) @DeSucursal('owner', 'admin')
   codigo(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string) { return this.personal.nuevoCodigo(t, a.sub, id); }
