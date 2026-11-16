@@ -4,7 +4,7 @@ import { clases } from '../componentes/Marca';
 import { api, mensajeDeError } from '../lib/sesion';
 import { bs } from '../lib/tipos';
 
-interface Datos { tipo: 'NIT' | 'CI' | 'CEX' | 'PAS'; numero: string | null; complemento: string | null; razonSocial: string; correo: string | null }
+interface Datos { tipo: 'NIT' | 'CI' | 'CEX' | 'PAS'; numero: string | null; complemento: string | null; razonSocial: string; correo: string | null; regimen?: string; avisos?: string[] }
 interface Factura { id: string; estado: string; numero: number | null; total: string; iva: string; descripcion: string; simulada: boolean; avisoFiscal: string | null; emitidaEn: string | null }
 
 /** «Datos para tu factura» (NIT/CI y razón social) y «Mis facturas» de la suscripción, emitidas por Kyros-Tech vía FacturaSIN. */
@@ -12,11 +12,11 @@ export function FacturasDeSuscripcion({ sucursalId }: { sucursalId: string }) {
   const qc = useQueryClient();
   const d = useQuery({ queryKey: ['datos-fiscales', sucursalId], queryFn: () => api.get<Datos>('/suscripcion/datos-fiscales', sucursalId) });
   const f = useQuery({ queryKey: ['mis-facturas', sucursalId], queryFn: () => api.get<Factura[]>('/suscripcion/facturas', sucursalId) });
-  const [error, setError] = useState<string | null>(null); const [ok, setOk] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null); const [ok, setOk] = useState<string | null>(null); const [avisos, setAvisos] = useState<string[] | null>(null);
   const guardar = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault(); setError(null); setOk(null); const x = new FormData(e.currentTarget);
     try {
-      await api.put('/suscripcion/datos-fiscales', { tipo: String(x.get('tipo')), numero: String(x.get('numero')).trim() || null, complemento: String(x.get('complemento')).trim() || null, razonSocial: String(x.get('razon')).trim(), correo: String(x.get('correo')).trim() || null }, sucursalId);
+      await api.put('/suscripcion/datos-fiscales', { tipo: String(x.get('tipo')), numero: String(x.get('numero')).trim() || null, complemento: String(x.get('complemento')).trim() || null, razonSocial: String(x.get('razon')).trim(), correo: String(x.get('correo')).trim() || null, regimen: String(x.get('regimen') || 'no_declarado') }, sucursalId).then((r: any) => setAvisos(r?.avisos ?? []));
       setOk('Datos guardados. Se usarán en tus próximas facturas.'); await qc.invalidateQueries({ queryKey: ['datos-fiscales', sucursalId] });
     } catch (err) { setError(mensajeDeError(err, 'No pudimos guardar tus datos.')); }
   };
@@ -32,6 +32,8 @@ export function FacturasDeSuscripcion({ sucursalId }: { sucursalId: string }) {
           <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Complemento (solo CI)</span><input name="complemento" defaultValue={d.data.complemento ?? ''} maxLength={5} className={clases.input} /></label>
           <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Razón social</span><input name="razon" required minLength={2} maxLength={150} defaultValue={d.data.razonSocial} className={clases.input} /></label>
           <label className="flex flex-col gap-space-xs sm:col-span-2"><span className={clases.etiqueta}>Correo para la factura (opcional)</span><input name="correo" type="email" maxLength={120} defaultValue={d.data.correo ?? ''} className={clases.input} /></label>
+          <label className="flex flex-col gap-space-xs sm:col-span-2"><span className={clases.etiqueta}>Régimen tributario (opcional)</span><select name="regimen" defaultValue={d.data.regimen ?? 'no_declarado'} className={clases.input}><option value="no_declarado">No lo sé / prefiero no indicarlo</option><option value="general">Régimen General</option><option value="simplificado">Régimen Tributario Simplificado</option></select></label>
+          {(avisos ?? d.data.avisos ?? []).map((a) => <p key={a} role="note" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-sm sm:col-span-2">{a}</p>)}
           {error && <p role="alert" className="text-error sm:col-span-2">{error}</p>}{ok && <p role="status" className="rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant p-space-sm sm:col-span-2">{ok}</p>}
           <button className={`${clases.primario} sm:col-span-2`}>Guardar datos</button>
         </form>)}

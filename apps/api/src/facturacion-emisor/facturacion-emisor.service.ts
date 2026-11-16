@@ -9,8 +9,9 @@ import { Bd, BD, Tenant, TenantDb } from '../database/database.module';
 import { IntegracionesService } from '../integraciones/integraciones';
 import {
   armarComprador, armarPayload, calcularFactura, CompradorSalida, CONSUMIDOR_FINAL, deCentavos, ErrorFactura, esperaDeReintento, estadoLocal, idExternoDe,
-  LineaPedido, limpiarTexto, PayloadFactura, tarjetaEnmascarada, TIPOS_DOCUMENTO, validarNit,
+  CODIGOS_PAGO_POR_DEFECTO, CodigosPago, LineaPedido, limpiarTexto, PayloadFactura, tarjetaEnmascarada, TIPOS_DOCUMENTO, validarNit,
 } from './calculo-factura';
+import { evaluarRegimenFiscal, TEXTO_AVISO_CODIGOS } from '../facturacion-kyros/nucleo/normativa';
 import { Factura, FacturaSinClient, FacturaSinError, tokenClientCredentials, verificarFirmaWebhook } from './facturasin-client';
 
 /* ------------------------------------------------------------------ esquemas ------------------------------------------------------------------ */
@@ -26,6 +27,11 @@ export const ConfigFacturacion = z.object({
   codigoSinPorDefecto: z.string().trim().regex(/^\d{3,10}$/, 'El código de producto SIN por defecto es numérico.'),
   unidadPorDefecto: z.number().int().min(1).max(999).default(57),
   permiteConsumidorFinal: z.boolean().default(true), habilitada: z.boolean().default(true),
+  /** F10: régimen declarado (solo avisa; el Simplificado no puede emitir factura con crédito fiscal). */
+  regimen: z.enum(['general', 'simplificado', 'no_declarado']).default('no_declarado'),
+  /** Códigos del catálogo `metodoPago` de FacturaSIN por método de cobro (configuración, no constantes). */
+  codigosPago: z.object({ efectivo: z.number().int().min(1).max(999), tarjeta: z.number().int().min(1).max(999), otro: z.number().int().min(1).max(999) }).default({ efectivo: 1, tarjeta: 2, otro: 7 }),
+  codigosConfirmados: z.boolean().default(false),
   /** Solo escritura: nunca se devuelve. */
   tokenDelegado: z.string().min(10, 'El token delegado parece incompleto.').max(4000).optional(),
   tokenVenceEn: Fecha.nullable().optional(), quitarToken: z.boolean().optional(),
@@ -117,12 +123,14 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
       tokenRegistrado: c.token_set, tokenVenceEn: c.token_expires_on ?? null, webhookRegistrado: c.webhook_set, conectadoEn: c.connected_at ?? null,
       ultimaPrueba: c.last_test_at ? { cuando: c.last_test_at, ok: c.last_test_ok, mensaje: c.last_test_message } : null,
       ambientePruebas: c.mode !== 'real', aviso: c.mode !== 'real' ? AVISO_PRUEBAS : null,
+      regimen: c.tax_regime ?? 'no_declarado', avisosRegimen: evaluarRegimenFiscal({ regimen: c.tax_regime as string, nit: c.nit as string }).avisos,
+      codigosPago: c.payment_codes ?? CODIGOS_PAGO_POR_DEFECTO, codigosConfirmados: c.codes_confirmed === true, avisoCodigos: c.codes_confirmed === true ? null : TEXTO_AVISO_CODIGOS,
     };
   }
 
   async config(t: Tenant) {
     return this.db.run(t, async (tx) => {
-      const c = (await tx.execute(sql`SELECT nit, legal_name, economic_activities, branch_code, pos_code, municipality, address, legend, mode, default_sin_product_code, default_unit_code, allow_final_consumer, enabled,
+      const c = (await tx.execute(sql`SELECT nit, legal_name, economic_activities, branch_code, pos_code, municipality, address, legend, mode, default_sin_product_code, default_unit_code, allow_final_consumer, enabled, tax_regime, payment_codes, codes_confirmed,
         token_set, token_expires_on::text AS token_expires_on, webhook_set, connected_at, last_test_at, last_test_ok, last_test_message FROM billing_settings WHERE restaurant_id = ${t.restaurantId}`)).rows[0] as Record<string, unknown> | undefined;
       if (c) return this.vistaConfig(c);
       const [a] = (await tx.execute(sql`SELECT a.legal_name, a.nit FROM restaurants r JOIN accounts a ON a.id = r.account_id WHERE r.id = ${t.restaurantId}`)).rows as { legal_name: string; nit: string | null }[];
@@ -154,11 +162,11 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
       WHERE b.nit = ${v.nit} AND b.restaurant_id <> ${t.restaurantId} AND r.account_id <> mi.account_id`)).rows;
     if (otra.length) throw new ConflictException('Ese NIT ya está registrado por otra cuenta de GESTRO. Si es tuyo, escribe a administracion@kyros-tech.com.');
     await this.db.run(t, async (tx) => {
-      await tx.execute(sql`INSERT INTO billing_settings (restaurant_id, nit, legal_name, economic_activities, branch_code, pos_code, municipality, address, legend, mode, default_sin_product_code, default_unit_code, allow_final_consumer, enabled, updated_by)
-        VALUES (${t.restaurantId}, ${v.nit}, ${v.razonSocial}, ${`{${d.actividades.join(',')}}`}::text[], ${d.sucursal}, ${d.puntoVenta}, ${v.municipio}, ${v.direccion}, ${v.leyenda}, 'simulado', ${d.codigoSinPorDefecto}, ${d.unidadPorDefecto}, ${d.permiteConsumidorFinal}, ${d.habilitada}, ${userId}::uuid)
+      await tx.execute(sql`INSERT INTO billing_settings (restaurant_id, nit, legal_name, economic_activities, branch_code, pos_code, municipality, address, legend, mode, default_sin_product_code, default_unit_code, allow_final_consumer, enabled, tax_regime, payment_codes, codes_confirmed, updated_by)
+        VALUES (${t.restaurantId}, ${v.nit}, ${v.razonSocial}, ${`{${d.actividades.join(',')}}`}::text[], ${d.sucursal}, ${d.puntoVenta}, ${v.municipio}, ${v.direccion}, ${v.leyenda}, 'simulado', ${d.codigoSinPorDefecto}, ${d.unidadPorDefecto}, ${d.permiteConsumidorFinal}, ${d.habilitada}, ${d.regimen}, ${JSON.stringify(d.codigosPago)}::jsonb, ${d.codigosConfirmados}, ${userId}::uuid)
         ON CONFLICT (restaurant_id) DO UPDATE SET nit = EXCLUDED.nit, legal_name = EXCLUDED.legal_name, economic_activities = EXCLUDED.economic_activities, branch_code = EXCLUDED.branch_code, pos_code = EXCLUDED.pos_code,
           municipality = EXCLUDED.municipality, address = EXCLUDED.address, legend = EXCLUDED.legend, mode = EXCLUDED.mode, default_sin_product_code = EXCLUDED.default_sin_product_code, default_unit_code = EXCLUDED.default_unit_code,
-          allow_final_consumer = EXCLUDED.allow_final_consumer, enabled = EXCLUDED.enabled, updated_by = EXCLUDED.updated_by, updated_at = now()`);
+          allow_final_consumer = EXCLUDED.allow_final_consumer, enabled = EXCLUDED.enabled, tax_regime = EXCLUDED.tax_regime, payment_codes = EXCLUDED.payment_codes, codes_confirmed = EXCLUDED.codes_confirmed, updated_by = EXCLUDED.updated_by, updated_at = now()`);
       // Cambiar el NIT invalida la conexión anterior: hay que volver a conectar.
       await tx.execute(sql`UPDATE billing_settings SET connected_at = NULL WHERE restaurant_id = ${t.restaurantId} AND nit <> ${v.nit}`);
       await auditar(tx, t.restaurantId, userId, 'facturacion.config_guardada', 'billing_settings', t.restaurantId, { nit: v.nit, actividades: d.actividades, sucursal: d.sucursal, puntoVenta: d.puntoVenta, habilitada: d.habilitada, tokenNuevo: !!d.tokenDelegado });
@@ -287,8 +295,8 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
 
   async crearFactura(t: Tenant, userId: string, orderId: string, d: FacturarDatos): Promise<string> {
     return this.db.run(t, async (tx) => {
-      const cfg = (await tx.execute(sql`SELECT branch_code, pos_code, economic_activities, default_sin_product_code, default_unit_code, enabled, allow_final_consumer FROM billing_settings WHERE restaurant_id = ${t.restaurantId}`)).rows[0] as
-        { branch_code: number; pos_code: number; economic_activities: string[]; default_sin_product_code: string; default_unit_code: number; enabled: boolean; allow_final_consumer: boolean } | undefined;
+      const cfg = (await tx.execute(sql`SELECT branch_code, pos_code, economic_activities, default_sin_product_code, default_unit_code, enabled, allow_final_consumer, payment_codes FROM billing_settings WHERE restaurant_id = ${t.restaurantId}`)).rows[0] as
+        { branch_code: number; pos_code: number; economic_activities: string[]; default_sin_product_code: string; default_unit_code: number; enabled: boolean; allow_final_consumer: boolean; payment_codes: CodigosPago | null } | undefined;
       if (!cfg) throw new UnprocessableEntityException('Configura la facturación (Configuración → Facturación electrónica) antes de facturar.');
       if (!cfg.enabled) throw new UnprocessableEntityException('La facturación electrónica está apagada en este restaurante.');
       const o = (await tx.execute(sql`SELECT id, status, discount::text AS discount FROM orders WHERE id = ${orderId} AND restaurant_id = ${t.restaurantId} FOR UPDATE`)).rows[0] as { id: string; status: string; discount: string } | undefined;
@@ -317,7 +325,7 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
       const intento = ((await tx.execute(sql`SELECT COALESCE(MAX(attempt), 0)::int AS n FROM fiscal_invoices WHERE order_id = ${orderId}`)).rows[0] as { n: number }).n + 1;
       const idExterno = idExternoDe(orderId, intento);
       let payload: PayloadFactura;
-      try { payload = armarPayload({ idExterno, lineas: lp, descuento: o.discount, comprador, metodo: pago.method, numeroTarjeta, config: { sucursal: cfg.branch_code, puntoVenta: cfg.pos_code, actividad: cfg.economic_activities[0]!, codigoSinPorDefecto: cfg.default_sin_product_code, unidadPorDefecto: cfg.default_unit_code } }); }
+      try { payload = armarPayload({ idExterno, lineas: lp, descuento: o.discount, comprador, metodo: pago.method, numeroTarjeta, config: { sucursal: cfg.branch_code, puntoVenta: cfg.pos_code, actividad: cfg.economic_activities[0]!, codigoSinPorDefecto: cfg.default_sin_product_code, unidadPorDefecto: cfg.default_unit_code, codigosPago: cfg.payment_codes ?? undefined } }); }
       catch (e) { if (e instanceof ErrorFactura) throw new UnprocessableEntityException(e.message); throw e; }
       const f = (await tx.execute(sql`INSERT INTO fiscal_invoices (restaurant_id, order_id, payment_id, attempt, external_id, status, buyer_doc_type, buyer_doc_number, buyer_complement, buyer_name, buyer_email, buyer_exception, final_consumer,
           subtotal, discount, total, iva_ref, tip_excluded, payload, next_retry_at, created_by)

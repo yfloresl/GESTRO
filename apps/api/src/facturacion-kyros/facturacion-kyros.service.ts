@@ -8,7 +8,7 @@ import { BD, Bd, Tenant, TenantDb } from '../database/database.module';
 import { IntegracionesService } from '../integraciones/integraciones';
 import { KyrosIdService } from '../kyros-id/kyros-id.service';
 import {
-  aceptaTransicion, aCentavos, BOM, celdaNumero, celdaTexto, deCentavos, emitirFactura, estadoLocalDe, FacturaSinClient, FacturaSinError, filaCsv, ivaPorDentro, tokenClientCredentials, validarDatosFiscales, verificarFirmaWebhook,
+  aceptaTransicion, aCentavos, BOM, evaluarRegimenFiscal, TEXTO_AVISO_CODIGOS, celdaNumero, celdaTexto, deCentavos, emitirFactura, estadoLocalDe, FacturaSinClient, FacturaSinError, filaCsv, ivaPorDentro, tokenClientCredentials, validarDatosFiscales, verificarFirmaWebhook,
   type AlmacenFacturas, type ConfigEmision, type DatosIntento, type EstadoLocal, type EventoWebhook, type FilaFactura, type PagoFacturable, type Resultado, type ResultadoGuardado,
 } from './nucleo';
 
@@ -27,12 +27,18 @@ export const ConfigFacturacion = z.object({
   sector: z.number().int().min(1).max(99), sucursal: z.number().int().min(0).max(999), puntoVenta: z.number().int().min(0).max(999),
   metodoPago: z.number().int().min(1).max(99), codigoProducto: z.string().trim().min(1).max(60),
   autoEmitir: z.boolean(),
+  /** Interruptor del IVA «por fuera» (Ley 1733): APAGADO hasta que se publique el decreto reglamentario. */
+  modoIva: z.enum(['por_dentro', 'por_fuera']),
+  /** El contador confirmó los códigos (producto SIN, actividad, método de pago) contra el catálogo sincronizado. Mientras sea false, el panel avisa. */
+  codigosConfirmados: z.boolean(),
 }).strict();
 export type ConfigFacturacionT = z.infer<typeof ConfigFacturacion>;
 /** Por defecto APAGADA: nada sale hacia FacturaSIN hasta que el SuperAdmin la active. La URL es un literal no secreto. */
 export const CONFIG_POR_DEFECTO: ConfigFacturacionT = {
   activo: false, url: 'https://facturasin.kyros-tech.com/api', issuer: null, clientId: 'gestro-service', sistema: 'gestro', empresa: 'kyros-tech',
   sector: 1, sucursal: 0, puntoVenta: 0, metodoPago: 7, codigoProducto: 'SUSC-MENSUAL', autoEmitir: true,
+  // metodoPago 7 y SUSC-MENSUAL: NO CONFIRMADO — definir con el catálogo del SIN (FacturaSIN: GET /v1/catalog/metodoPago).
+  modoIva: 'por_dentro', codigosConfirmados: false,
 };
 export const ConfigParcial = ConfigFacturacion.partial();
 
@@ -47,6 +53,7 @@ export type FiltroListaT = z.infer<typeof FiltroLista>;
 export const Emitir = z.object({ consumidorFinal: z.boolean().optional(), excepcionNit: z.boolean().optional() }).strict();
 export const Anular = z.object({ motivo: z.number().int().min(1).max(4), comentario: z.string().trim().min(3).max(200) }).strict();
 export const DatosFiscalesBody = z.object({
+  regimen: z.enum(['general', 'simplificado', 'no_declarado']).default('no_declarado'),
   tipo: z.enum(['NIT', 'CI', 'CEX', 'PAS']).default('NIT'), numero: z.string().trim().max(30).nullable().optional(), complemento: z.string().trim().max(5).nullable().optional(),
   razonSocial: z.string().trim().max(160), correo: z.string().trim().max(120).nullable().optional(),
 }).strict();
@@ -90,7 +97,7 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
     const c = await this.config();
     const sec = await this.integ.obtener('KYROS_SERVICE_CLIENT_SECRET');
     const wh = await this.cfg.leer<{ secretos: string[] }>(LLAVE_WEBHOOK);
-    return { config: c, secretoConfigurado: !!sec, webhookConfigurado: !!wh?.secretos?.length, lista: c.activo && !!sec };
+    return { config: c, secretoConfigurado: !!sec, webhookConfigurado: !!wh?.secretos?.length, lista: c.activo && !!sec, avisoCodigos: c.codigosConfirmados ? null : TEXTO_AVISO_CODIGOS, ivaPorFueraVigente: false };
   }
 
   private async cliente(c?: ConfigFacturacionT): Promise<FacturaSinClient | null> {
@@ -121,9 +128,9 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
     return {
       obtener: async (pagoId) => { const x = (await this.bd.execute(sql`SELECT * FROM kyros_invoices WHERE payment_id = ${pagoId}`)).rows[0] as Fila | undefined; return x ? fila(x) : null; },
       iniciarIntento: async (pago, d: DatosIntento) => {
-        const x = (await this.bd.execute(sql`INSERT INTO kyros_invoices (payment_id, restaurant_id, account_id, status, attempts, idempotency_key, total_bob_cent, iva_bob_cent, buyer_doc_type, buyer_doc_number, buyer_doc_complement, buyer_name, buyer_email, buyer_fallback, description, fx_usd_bob, fx_fecha, created_by, last_attempt_at)
-          VALUES (${pago.pagoId}, ${restaurantId}, ${cuentaId}, 'emitiendo', 1, ${d.clave}, ${d.totalCent.toString()}::bigint, ${d.ivaCent.toString()}::bigint, ${d.comprador.tipo}, ${d.comprador.numero}, ${d.comprador.complemento}, ${d.comprador.razonSocial}, ${d.comprador.correo}, ${d.consumidorFinal}, ${d.descripcion}, ${pago.tco?.usdBob ?? null}, ${pago.tco?.fecha || null}, ${usuario}, now())
-          ON CONFLICT (payment_id) DO UPDATE SET status = 'emitiendo', attempts = kyros_invoices.attempts + 1, idempotency_key = EXCLUDED.idempotency_key, total_bob_cent = EXCLUDED.total_bob_cent, iva_bob_cent = EXCLUDED.iva_bob_cent,
+        const x = (await this.bd.execute(sql`INSERT INTO kyros_invoices (payment_id, restaurant_id, account_id, status, attempts, idempotency_key, total_bob_cent, iva_bob_cent, net_bob_cent, iva_mode, buyer_doc_type, buyer_doc_number, buyer_doc_complement, buyer_name, buyer_email, buyer_fallback, description, fx_usd_bob, fx_fecha, created_by, last_attempt_at)
+          VALUES (${pago.pagoId}, ${restaurantId}, ${cuentaId}, 'emitiendo', 1, ${d.clave}, ${d.totalCent.toString()}::bigint, ${d.ivaCent.toString()}::bigint, ${d.netoCent.toString()}::bigint, ${d.modoIva}, ${d.comprador.tipo}, ${d.comprador.numero}, ${d.comprador.complemento}, ${d.comprador.razonSocial}, ${d.comprador.correo}, ${d.consumidorFinal}, ${d.descripcion}, ${pago.tco?.usdBob ?? null}, ${pago.tco?.fecha || null}, ${usuario}, now())
+          ON CONFLICT (payment_id) DO UPDATE SET status = 'emitiendo', attempts = kyros_invoices.attempts + 1, idempotency_key = EXCLUDED.idempotency_key, total_bob_cent = EXCLUDED.total_bob_cent, iva_bob_cent = EXCLUDED.iva_bob_cent, net_bob_cent = EXCLUDED.net_bob_cent, iva_mode = EXCLUDED.iva_mode,
             buyer_doc_type = EXCLUDED.buyer_doc_type, buyer_doc_number = EXCLUDED.buyer_doc_number, buyer_doc_complement = EXCLUDED.buyer_doc_complement, buyer_name = EXCLUDED.buyer_name, buyer_email = EXCLUDED.buyer_email,
             buyer_fallback = EXCLUDED.buyer_fallback, description = EXCLUDED.description, last_attempt_at = now(), updated_at = now()
           RETURNING *`)).rows[0] as Fila;
@@ -300,9 +307,10 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
 
   /** Datos fiscales del cliente: el dueño los carga y corrige. */
   async datosFiscales(t: Tenant) {
-    const r = (await this.bd.execute(sql`SELECT a.legal_name, a.nit, a.fiscal_doc_type, a.fiscal_doc_complement, a.fiscal_email FROM restaurants r JOIN accounts a ON a.id = r.account_id WHERE r.id = ${t.restaurantId}`)).rows[0] as Fila | undefined;
+    const r = (await this.bd.execute(sql`SELECT a.legal_name, a.nit, a.fiscal_doc_type, a.fiscal_doc_complement, a.fiscal_email, a.fiscal_regime FROM restaurants r JOIN accounts a ON a.id = r.account_id WHERE r.id = ${t.restaurantId}`)).rows[0] as Fila | undefined;
     if (!r) throw new NotFoundException();
-    return { tipo: r.fiscal_doc_type, numero: r.nit ?? null, complemento: r.fiscal_doc_complement ?? null, razonSocial: r.legal_name, correo: r.fiscal_email ?? null };
+    const regimen = String(r.fiscal_regime ?? 'no_declarado');
+    return { tipo: r.fiscal_doc_type, numero: r.nit ?? null, complemento: r.fiscal_doc_complement ?? null, razonSocial: r.legal_name, correo: r.fiscal_email ?? null, regimen, avisos: evaluarRegimenFiscal({ regimen, nit: r.nit as string | null }).avisos };
   }
   async guardarDatosFiscales(t: Tenant, userId: string, d: z.infer<typeof DatosFiscalesBody>) {
     const vacio = !d.numero || !String(d.numero).trim();
@@ -310,9 +318,10 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
     if (v && !v.ok) throw new BadRequestException(v.errores.join(' '));
     if (vacio) { const rs = validarDatosFiscales({ tipo: 'CI', numero: '1234', razonSocial: d.razonSocial, correo: d.correo }); if (!rs.ok) throw new BadRequestException(rs.errores.join(' ')); }
     const x = v && v.ok ? v.datos : { tipo: d.tipo, numero: null, complemento: null, razonSocial: d.razonSocial.trim().replace(/\s+/g, ' '), correo: d.correo?.trim().toLowerCase() || null };
-    await this.bd.execute(sql`UPDATE accounts SET legal_name = ${x.razonSocial}, nit = ${x.numero}, fiscal_doc_type = ${x.tipo}, fiscal_doc_complement = ${x.complemento ?? null}, fiscal_email = ${x.correo ?? null} WHERE id = (SELECT account_id FROM restaurants WHERE id = ${t.restaurantId})`);
-    await this.auditar(t.restaurantId, userId, 'facturacion_kyros.datos_fiscales', t.restaurantId, { tipo: x.tipo, tieneNumero: !!x.numero });
-    return { ok: true };
+    await this.bd.execute(sql`UPDATE accounts SET legal_name = ${x.razonSocial}, nit = ${x.numero}, fiscal_doc_type = ${x.tipo}, fiscal_doc_complement = ${x.complemento ?? null}, fiscal_email = ${x.correo ?? null}, fiscal_regime = ${d.regimen} WHERE id = (SELECT account_id FROM restaurants WHERE id = ${t.restaurantId})`);
+    await this.auditar(t.restaurantId, userId, 'facturacion_kyros.datos_fiscales', t.restaurantId, { tipo: x.tipo, tieneNumero: !!x.numero, regimen: d.regimen });
+    // F10: avisa (no bloquea) si declara Régimen Simplificado o no tiene un NIT válido.
+    return { ok: true, avisos: evaluarRegimenFiscal({ regimen: d.regimen, nit: x.tipo === 'NIT' ? x.numero : null }).avisos };
   }
 
   /* ---------------- webhook de retorno y conciliación ---------------- */

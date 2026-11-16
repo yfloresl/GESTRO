@@ -14,7 +14,7 @@ interface Fila {
 interface Totales { pagos: number; cobrado: string; facturado: string; iva: string; ivaRecalculado: string; anulado: string; porFacturar: string; control: { ivaCoincide: boolean; filasIvaDistinto: number; filasIvaDistintoDeFacturaSin: number; filasTotalDistintoDelPago: number } }
 interface Alertas { sinFactura: number; enAlerta: number; criticas: number; rechazadas: number; sinDatosFiscales: number; integracionActiva: boolean }
 interface Lista { filas: Fila[]; totales: Totales; alertas: Alertas }
-interface Integracion { config: { activo: boolean; url: string; empresa: string; clientId: string }; secretoConfigurado: boolean; webhookConfigurado: boolean; lista: boolean }
+interface Integracion { avisoCodigos?: string | null; ivaPorFueraVigente?: boolean; config: { activo: boolean; url: string; empresa: string; clientId: string; metodoPago?: number; codigoProducto?: string; modoIva?: string; codigosConfirmados?: boolean }; secretoConfigurado: boolean; webhookConfigurado: boolean; lista: boolean }
 type Resultado = { ok: boolean; estado: Estado; codigo?: string; mensaje?: string };
 
 const ETIQUETA: Record<string, { t: string; c: string }> = {
@@ -56,6 +56,7 @@ export function PlataformaFacturacion() {
   return (
     <section className="flex flex-col gap-space-md">
       <p role="note" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-sm font-label-md">Ambiente de pruebas / sin validez fiscal: hoy FacturaSIN opera contra un SIN simulado y Kyros-Tech S.R.L. usa un NIT ficticio. Ninguna de estas facturas es un documento tributario real.</p>
+      {ig?.avisoCodigos && <p role="note" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-sm font-label-md"><strong>{ig.avisoCodigos.split('.')[0]}.</strong> Hoy el método de pago ({ig.config.metodoPago}) y el producto ({ig.config.codigoProducto}) son marcadores de simulación: NO CONFIRMADO — definir con el catálogo del SIN. Cámbialos abajo y marca «confirmados» cuando tu contador los valide.</p>}
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
       {msg && <p role="status" className="rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant p-space-sm">{msg}</p>}
 
@@ -67,6 +68,15 @@ export function PlataformaFacturacion() {
           <button type="button" onClick={suscribir} disabled={!!ocupado || !ig?.lista} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Suscribir webhook</button>
           <button type="button" onClick={() => correr('conc', () => api.post<{ conciliadas: number; reintentadas: number; emitidas: number }>('/plataforma/facturacion-kyros/conciliar'), (r) => `Conciliación: ${r.conciliadas} conciliadas, ${r.reintentadas} reintentadas, ${r.emitidas} emitidas.`)} disabled={!!ocupado || !ig?.lista} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Conciliar ahora</button></div>
       </div>
+
+      <form className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md grid gap-space-sm sm:grid-cols-4" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void correr('cfg', () => api.put('/plataforma/facturacion-kyros/integracion', { metodoPago: Number(f.get('metodoPago')), codigoProducto: String(f.get('codigoProducto')).trim(), modoIva: String(f.get('modoIva')), codigosConfirmados: f.get('codigosConfirmados') === 'on' }), () => 'Códigos fiscales guardados.'); }}>
+        <h3 className="font-headline-sm text-headline-sm sm:col-span-4">Códigos fiscales de la factura de Kyros-Tech</h3>
+        <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Método de pago (código SIN)</span><input name="metodoPago" type="number" min={1} max={99} defaultValue={ig?.config.metodoPago ?? 7} key={`mp${ig?.config.metodoPago}`} className={clases.input} /></label>
+        <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Código de producto (de FacturaSIN)</span><input name="codigoProducto" defaultValue={ig?.config.codigoProducto ?? ''} key={`cp${ig?.config.codigoProducto}`} maxLength={60} className={clases.input} /></label>
+        <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>IVA</span><select name="modoIva" defaultValue={ig?.config.modoIva ?? 'por_dentro'} key={`mi${ig?.config.modoIva}`} className={clases.input}><option value="por_dentro">Por dentro (vigente, 13 %)</option><option value="por_fuera" disabled={!ig?.ivaPorFueraVigente && ig?.config.modoIva !== 'por_fuera'}>Por fuera (Ley 1733, aún sin decreto)</option></select></label>
+        <label className="flex items-center gap-space-sm"><input name="codigosConfirmados" type="checkbox" defaultChecked={ig?.config.codigosConfirmados} key={`cc${ig?.config.codigosConfirmados}`} /><span className="font-body-sm">Confirmados por el contador</span></label>
+        <button type="submit" disabled={!!ocupado} className={`${clases.secundario} sm:w-auto sm:px-space-md sm:col-span-4`}>Guardar códigos</button>
+      </form>
 
       {al && al.sinFactura > 0 && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm"><strong>{al.sinFactura} pago(s) validado(s) sin factura</strong>{al.criticas ? ` · ${al.criticas} con más de 24 h` : al.enAlerta ? ` · ${al.enAlerta} con más de 1 h` : ''}{al.rechazadas ? ` · ${al.rechazadas} rechazada(s)` : ''}{al.sinDatosFiscales ? ` · ${al.sinDatosFiscales} sin NIT del cliente` : ''}. Es una alerta: las suscripciones siguen activas.{!al.integracionActiva && ' La integración está apagada.'}</p>}
 

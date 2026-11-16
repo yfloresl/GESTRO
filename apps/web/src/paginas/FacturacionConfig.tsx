@@ -6,7 +6,7 @@ import { clases } from '../componentes/Marca';
 interface Cfg {
   configurada: boolean; nit?: string; razonSocial?: string; actividades?: string[]; sucursal: number; puntoVenta: number; municipio?: string; direccion?: string; leyenda?: string | null;
   modalidad: string; codigoSinPorDefecto?: string; unidadPorDefecto: number; permiteConsumidorFinal: boolean; habilitada: boolean; tokenRegistrado?: boolean; tokenVenceEn?: string | null; webhookRegistrado?: boolean;
-  conectadoEn?: string | null; ultimaPrueba?: { cuando: string; ok: boolean; mensaje: string } | null; aviso: string | null; ambientePruebas: boolean; sugerencia?: { nit: string; razonSocial: string };
+  conectadoEn?: string | null; regimen?: string; avisosRegimen?: string[]; codigosPago?: { efectivo: number; tarjeta: number; otro: number }; codigosConfirmados?: boolean; avisoCodigos?: string | null; ultimaPrueba?: { cuando: string; ok: boolean; mensaje: string } | null; aviso: string | null; ambientePruebas: boolean; sugerencia?: { nit: string; razonSocial: string };
 }
 interface Paso { paso: string; ok: boolean; detalle: string }
 
@@ -41,6 +41,7 @@ function Formulario({ c, refrescar }: { c: Cfg; refrescar(): Promise<unknown> })
   const [act, setAct] = useState((c.actividades ?? []).join(', ')); const [suc, setSuc] = useState(String(c.sucursal)); const [pv, setPv] = useState(String(c.puntoVenta));
   const [muni, setMuni] = useState(c.municipio ?? ''); const [dir, setDir] = useState(c.direccion ?? ''); const [ley, setLey] = useState(c.leyenda ?? '');
   const [codSin, setCodSin] = useState(c.codigoSinPorDefecto ?? ''); const [uni, setUni] = useState(String(c.unidadPorDefecto));
+  const [regimen, setRegimen] = useState(c.regimen ?? 'no_declarado'); const [pagoOtro, setPagoOtro] = useState(String(c.codigosPago?.otro ?? 7)); const [confirmados, setConfirmados] = useState(c.codigosConfirmados === true);
   const [final, setFinal] = useState(c.permiteConsumidorFinal); const [hab, setHab] = useState(c.habilitada);
   const [token, setToken] = useState(''); const [vence, setVence] = useState(c.tokenVenceEn ?? '');
   const [errores, setErrores] = useState<Record<string, string>>({}); const [aviso, setAviso] = useState<string | null>(null); const [error, setError] = useState<string | null>(null);
@@ -70,7 +71,7 @@ function Formulario({ c, refrescar }: { c: Cfg; refrescar(): Promise<unknown> })
     try {
       await api.put('/facturacion/config', {
         nit: nit.trim(), razonSocial: razon, actividades: acts, sucursal: Number(suc), puntoVenta: Number(pv), municipio: muni, direccion: dir, leyenda: ley.trim() || null, modalidad: 'simulado',
-        codigoSinPorDefecto: codSin.trim(), unidadPorDefecto: Number(uni), permiteConsumidorFinal: final, habilitada: hab, ...(token.trim() ? { tokenDelegado: token.trim() } : {}), ...(vence ? { tokenVenceEn: vence } : {}), ...extra,
+        codigoSinPorDefecto: codSin.trim(), unidadPorDefecto: Number(uni), permiteConsumidorFinal: final, habilitada: hab, regimen, codigosPago: { efectivo: c.codigosPago?.efectivo ?? 1, tarjeta: c.codigosPago?.tarjeta ?? 2, otro: Number(pagoOtro) || 7 }, codigosConfirmados: confirmados, ...(token.trim() ? { tokenDelegado: token.trim() } : {}), ...(vence ? { tokenVenceEn: vence } : {}), ...extra,
       }, sucursalId!);
       setToken(''); setAviso('Guardado.'); await refrescar(); return true;
     } catch (err) { setError(mensajeDeError(err)); return false; } finally { setOcupado(null); }
@@ -96,6 +97,8 @@ function Formulario({ c, refrescar }: { c: Cfg; refrescar(): Promise<unknown> })
         <p className="font-body-sm text-on-surface-variant">Con estos datos GESTRO pide la factura de cada venta a FacturaSIN, a nombre de tu restaurante. Hoy todo funciona en un ambiente de pruebas: ninguna factura tiene validez fiscal.</p>
       </div>
       <AvisoPruebas texto={c.aviso} />
+      {c.avisoCodigos && !confirmados && <p role="note" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-sm font-label-md">{c.avisoCodigos}</p>}
+      {(c.avisosRegimen ?? []).map((a) => <p key={a} role="note" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-sm font-body-sm">{a}</p>)}
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
       <div className="grid sm:grid-cols-2 gap-space-sm">
         {campoVista('nit', 'NIT del restaurante', nit, setNit, { modo: 'numeric', max: 13, ayuda: 'Solo números. En pruebas usa un NIT ficticio, por ejemplo 1000000005.' })}
@@ -107,6 +110,9 @@ function Formulario({ c, refrescar }: { c: Cfg; refrescar(): Promise<unknown> })
         {campoVista('pv', 'Punto de venta SIN', pv, setPv, { modo: 'numeric', max: 4, ayuda: '0 = primer punto de venta.' })}
         {campoVista('cod', 'Código de producto SIN por defecto', codSin, setCodSin, { modo: 'numeric', max: 10, ayuda: 'Se usa en los platos sin código propio (se pone en Menú).' })}
         {campoVista('uni', 'Unidad de medida por defecto', uni, setUni, { modo: 'numeric', max: 3, ayuda: 'Catálogo SIN: 57 = unidad (bienes), 58 = unidad (servicios).' })}
+        <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Régimen tributario</span><select value={regimen} onChange={(e) => { setRegimen(e.target.value); setAviso(null); }} className={clases.input}><option value="no_declarado">No indicado</option><option value="general">Régimen General</option><option value="simplificado">Régimen Tributario Simplificado</option></select><span className="font-body-sm text-on-surface-variant">Solo avisa: el Simplificado no puede emitir factura con crédito fiscal.</span></label>
+        {campoVista('pago', 'Código SIN de «otro medio de pago» (QR, transferencia)', pagoOtro, setPagoOtro, { modo: 'numeric', max: 3, ayuda: 'Efectivo = 1 y tarjeta = 2 están confirmados; el código de QR/transferencia sale del catálogo sincronizado de FacturaSIN (NO CONFIRMADO — definir con el catálogo del SIN).' })}
+        <label className="flex items-center gap-space-sm sm:col-span-2"><input type="checkbox" checked={confirmados} onChange={(e) => { setConfirmados(e.target.checked); setAviso(null); }} /><span className="font-body-sm">Mi contador confirmó los códigos (producto SIN, actividad y método de pago)</span></label>
         <div className="sm:col-span-2">{campoVista('ley', 'Leyenda (opcional)', ley, setLey, { max: 300, ayuda: 'Mensaje propio que se muestra junto a la factura. La leyenda legal la agrega el SIN.' })}</div>
       </div>
       <div className="grid sm:grid-cols-2 gap-space-sm">

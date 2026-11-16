@@ -63,6 +63,8 @@ export interface Factura {
   idExterno: string;
   fechaEmision: string;
   totales: { montoTotal: number; [k: string]: unknown };
+  /** Neto, IVA y total por separado que devuelve FacturaSIN (normativa 15/11/2026). */
+  desglose?: { modoIva: 'por_dentro' | 'por_fuera'; tasaIva: number; neto: number; iva: number; total: number; tipoCambio: number };
   /** F4: texto «Ambiente de pruebas / sin validez fiscal» mientras la factura sea simulada; null si es real. */
   avisoFiscal: string | null;
   ambientePruebas: boolean;

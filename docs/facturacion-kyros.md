@@ -49,3 +49,11 @@ Ejemplo mínimo: `nucleo/ejemplo-otro-sistema.ts`. Panel, webhook y ciclo se cop
 - Tipo de factura fijo «con crédito fiscal» (F10: consultar al contador si aplica a todos los clientes).
 - Código de producto, actividad económica y método de pago son marcadores de simulación (Q4).
 - `consumidor final` (CI 0 / «S/N») sin verificar con el SIN.
+
+## Normativa de facturación aplicada (informe QA-NORMATIVA-FACTURACION, 15/11/2026)
+
+- **Códigos como configuración, marcados «NO CONFIRMADO — definir con el catálogo del SIN».** Flujo 1 (Kyros-Tech → restaurante): `metodoPago` (7 por defecto) y `codigoProducto` (`SUSC-MENSUAL`) son marcadores de simulación; se editan en Plataforma › Facturación de Kyros y el panel muestra un aviso mientras `codigosConfirmados` sea `false`. Flujo 2 (restaurante → comensal): la actividad económica y el código SIN por defecto son del emisor (el restaurante), no de Kyros-Tech; el método de pago de «otro medio» (QR/transferencia) es configurable (`billing_settings.payment_codes`) y efectivo 1 / tarjeta 2 son fijos y oficiales. Los valores reales salen de `GET /v1/catalog/{nombre}` de FacturaSIN tras sincronizar el NIT con su token delegado.
+- **Neto, IVA y total por factura.** `kyros_invoices` guarda `total_bob_cent`, `iva_bob_cent`, `net_bob_cent`, `iva_mode` y el TCO (`fx_usd_bob`, `fx_fecha`). Bs 116,70 por dentro: neto 101,53 + IVA 15,17.
+- **IVA «por fuera» (Ley 1733) detrás de un interruptor APAGADO** (`modoIva`, por defecto `por_dentro`; la opción está deshabilitada en el panel mientras no esté vigente). Mismo precio final: neto 103,27 + IVA 13,43 = 116,70 (recálculo en enteros). Si un importe no admite neto exacto en centavos, no se emite (`IVA_POR_FUERA_NO_CUADRA`).
+- **F10.** Los datos fiscales del cliente y la configuración del restaurante piden el régimen tributario: si declara Régimen Simplificado (solo artesanos, comerciantes minoristas y vivanderos; no emite factura con crédito fiscal) o no hay un NIT válido, la API devuelve `avisos` y la pantalla los muestra; **no bloquea**.
+- Migración `0032_normativa_facturacion.sql` (aditiva; reversa en `reversas/`). Pruebas: `apps/api/test/normativa.puro.spec.ts`.

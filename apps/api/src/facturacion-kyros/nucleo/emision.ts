@@ -7,7 +7,8 @@
  *  - Nunca lanza por fallos de FacturaSIN: devuelve un resultado y deja el estado guardado (alerta, no bloqueo; la activación no depende del SIN).
  *  - Se factura lo cobrado; IVA 13 % por dentro en centavos enteros.
  */
-import { comoNumero, deCentavos, desglosar, type Centavos } from './calculo';
+import { comoNumero, deCentavos, type Centavos } from './calculo';
+import { desglosarFiscal, type ModoIva } from './normativa';
 import { CODIGO_TIPO_DOC, COMPRADOR_CONSUMIDOR_FINAL, validarDatosFiscales, type DatosFiscales } from './fiscal';
 import { FacturaSinError, type Factura, type EstadoFactura } from './facturasin-client';
 
@@ -34,7 +35,7 @@ export interface FilaFactura {
 }
 export interface DatosIntento {
   clave: string; comprador: { tipo: string; numero: string; complemento: string | null; razonSocial: string; correo: string | null };
-  consumidorFinal: boolean; descripcion: string; totalCent: Centavos; ivaCent: Centavos;
+  consumidorFinal: boolean; descripcion: string; totalCent: Centavos; ivaCent: Centavos; netoCent: Centavos; modoIva: ModoIva;
 }
 export interface ResultadoGuardado {
   estado: EstadoLocal;
@@ -54,9 +55,11 @@ export interface ConfigEmision {
   /** Id de la empresa emisora en TU sistema (`<sistema>:<id>` ya enlazado en FacturaSIN), p. ej. `kyros-tech`. */
   empresa: string;
   sector: number; sucursal: number; puntoVenta: number;
-  /** Catálogo del SIN: 7 = transferencia bancaria (confirmar con el contador). */
+  /** Código del catálogo `metodoPago` sincronizado de FacturaSIN. Por defecto 7 = transferencia: NO CONFIRMADO — definir con el catálogo del SIN. */
   metodoPago: number;
   codigoProducto: string;
+  /** `por_dentro` (vigente) o `por_fuera` (Ley 1733, aún sin decreto): interruptor APAGADO por defecto. */
+  modoIva?: ModoIva;
 }
 
 export type Resultado =
@@ -117,8 +120,12 @@ export async function emitirFactura(
   // Clave: la misma mientras no haya un rechazo del SIN; tras un rechazo, otra (FacturaSIN lo exige).
   const intentoClave = previa ? (previa.estado === 'rechazada' ? previa.intentos + 1 : Math.max(1, previa.intentos)) : 1;
   const clave = previa && previa.estado !== 'rechazada' ? previa.claveIdempotencia : claveDePago(d.config.sistema, pago.pagoId, intentoClave);
-  const { totalCent, ivaCent } = desglosar(pago.montoCent);
-  const fila = await d.almacen.iniciarIntento(pago, { clave, comprador, consumidorFinal, descripcion: descripcionDe(pago), totalCent, ivaCent });
+  const modoIva: ModoIva = d.config.modoIva ?? 'por_dentro';
+  const fis = desglosarFiscal(pago.montoCent, modoIva);
+  const { totalCent, ivaCent, netoCent } = fis;
+  // Mismo precio final: si ningún neto en centavos reproduce el total con IVA 13 % redondeado, no se emite (no se tapa con un centavo).
+  if (modoIva === 'por_fuera' && !fis.exacto) return { ok: false, estado: 'pendiente', codigo: 'IVA_POR_FUERA_NO_CUADRA', mensaje: `El importe Bs ${deCentavos(totalCent)} no se puede descomponer en neto + IVA 13 % exactos en centavos; revisa el precio.`, reintentable: false };
+  const fila = await d.almacen.iniciarIntento(pago, { clave, comprador, consumidorFinal, descripcion: descripcionDe(pago), totalCent, ivaCent, netoCent, modoIva });
 
   const c = d.config;
   const cuerpo = {
@@ -128,14 +135,15 @@ export async function emitirFactura(
       ...(comprador.complemento ? { complemento: comprador.complemento } : {}), razonSocial: comprador.razonSocial,
       ...(comprador.correo ? { correo: comprador.correo } : {}), ...(op.excepcionNit ? { codigoExcepcion: 1 as const } : {}),
     },
-    metodoPago: c.metodoPago, moneda: 1,
-    items: [{ codigoProducto: c.codigoProducto, descripcion: descripcionDe(pago), cantidad: 1, precioUnitario: comoNumero(totalCent), descuento: 0 }],
+    metodoPago: c.metodoPago, moneda: 1, ...(modoIva === 'por_fuera' ? { ivaModo: 'por_fuera' as const } : {}),
+    items: [{ codigoProducto: c.codigoProducto, descripcion: descripcionDe(pago), cantidad: 1, precioUnitario: comoNumero(modoIva === 'por_fuera' ? netoCent : totalCent), descuento: 0 }],
     extras: { pagoId: pago.pagoId, meses: pago.meses, mesesDeRegalo: pago.mesesDeRegalo, ...(pago.precioUsd ? { precioUsd: pago.precioUsd } : {}), ...(pago.tco ? { tcoUsdBob: pago.tco.usdBob, tcoFecha: pago.tco.fecha } : {}), ...(consumidorFinal ? { consumidorFinal: true } : {}) },
   };
   try {
     const f = await d.cliente.emitir(c.empresa, cuerpo, clave);
     const estado = estadoLocalDe(f.estado);
-    const ivaFs = typeof (f.totales as any)?.ivaReferencial === 'number' ? BigInt(Math.round((f.totales as any).ivaReferencial * 100)) : null;
+    const ivaFsNum = typeof (f.desglose as any)?.iva === 'number' ? (f.desglose as any).iva : (f.totales as any)?.ivaReferencial;
+    const ivaFs = typeof ivaFsNum === 'number' ? BigInt(Math.round(ivaFsNum * 100)) : null;
     await d.almacen.guardarResultado(pago.pagoId, { estado, facturasinId: f.id, cuf: f.cuf, numero: f.numero, qrTexto: f.qrTexto, ambientePruebas: f.ambientePruebas !== false, avisoFiscal: f.avisoFiscal ?? null, ivaFsCent: ivaFs, errorCodigo: null, error: null, reintentable: true });
     return { ok: true, estado, yaExistia: false, factura: f };
   } catch (e) {

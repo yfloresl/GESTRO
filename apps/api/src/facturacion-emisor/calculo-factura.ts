@@ -122,11 +122,17 @@ export function armarComprador(c: CompradorEntrada): CompradorSalida {
 
 /* ---------------------------------- pago y payload ---------------------------------- */
 
-/** Método de cobro de GESTRO → código del catálogo SIN. Efectivo 1, tarjeta 2, el resto 7 (transferencia). Confirmar con el contador (pregunta Q4). */
-export function metodoPagoSin(metodo: string): number {
-  if (metodo === 'efectivo') return 1;
-  if (metodo === 'tarjeta') return 2;
-  return 7;
+/**
+ * Códigos del catálogo `metodoPago` del SIN por método de cobro de GESTRO. Son CONFIGURACIÓN de cada restaurante (billing_settings.payment_codes),
+ * leída del catálogo sincronizado de FacturaSIN. Confirmados oficialmente: 1 efectivo, 2 tarjeta, 5 «otros». El valor por defecto de «otro» (7,
+ * transferencia) es NO CONFIRMADO — definir con el catálogo del SIN; mientras `codes_confirmed` sea false el panel lo avisa.
+ */
+export interface CodigosPago { efectivo: number; tarjeta: number; otro: number }
+export const CODIGOS_PAGO_POR_DEFECTO: CodigosPago = { efectivo: 1, tarjeta: 2, otro: 7 };
+export function metodoPagoSin(metodo: string, codigos: CodigosPago = CODIGOS_PAGO_POR_DEFECTO): number {
+  if (metodo === 'efectivo') return codigos.efectivo;
+  if (metodo === 'tarjeta') return codigos.tarjeta;
+  return codigos.otro;
 }
 
 /** FacturaSIN exige un número de tarjeta enmascarado: primeros 4 + ceros + últimos 4. Solo se piden esos 8 dígitos. */
@@ -135,7 +141,7 @@ export function tarjetaEnmascarada(primeros4: string, ultimos4: string): string 
   return `${primeros4}00000000${ultimos4}`;
 }
 
-export interface ConfigEmisor { sucursal: number; puntoVenta: number; actividad: string; codigoSinPorDefecto: string; unidadPorDefecto: number }
+export interface ConfigEmisor { sucursal: number; puntoVenta: number; actividad: string; codigoSinPorDefecto: string; unidadPorDefecto: number; codigosPago?: CodigosPago }
 
 export interface PayloadFactura {
   idExterno: string; sector: number; sucursal: number; puntoVenta: number; comprador: CompradorSalida; metodoPago: number; numeroTarjeta?: string;
@@ -146,7 +152,7 @@ export interface PayloadFactura {
 export function armarPayload(p: { idExterno: string; lineas: LineaPedido[]; descuento: string; comprador: CompradorSalida; metodo: string; numeroTarjeta?: string; config: ConfigEmisor }): PayloadFactura {
   return {
     idExterno: p.idExterno, sector: SECTOR_COMPRA_VENTA, sucursal: p.config.sucursal, puntoVenta: p.config.puntoVenta, comprador: p.comprador,
-    metodoPago: metodoPagoSin(p.metodo), ...(p.metodo === 'tarjeta' && p.numeroTarjeta ? { numeroTarjeta: p.numeroTarjeta } : {}),
+    metodoPago: metodoPagoSin(p.metodo, p.config.codigosPago), ...(p.metodo === 'tarjeta' && p.numeroTarjeta ? { numeroTarjeta: p.numeroTarjeta } : {}),
     moneda: MONEDA_BS, tipoCambio: null, descuentoAdicional: Number(deCentavos(aCentavos(p.descuento))),
     items: p.lineas.map((l) => ({
       codigoProducto: l.itemId.length > 60 ? l.itemId.slice(0, 60) : l.itemId, descripcion: limpiarTexto(l.nombre, 'Nombre del plato', 1, 500),

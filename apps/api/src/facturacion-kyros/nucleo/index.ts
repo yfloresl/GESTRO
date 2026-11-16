@@ -2,5 +2,6 @@
 export * from './calculo';
 export * from './fiscal';
 export * from './csv';
+export * from './normativa';
 export * from './emision';
 export * from './facturasin-client';

@@ -80,7 +80,7 @@ describe('factura: payload', () => {
     expect(JSON.stringify(p)).not.toMatch(/propina/i);
   });
   it('método de pago y reintentos', () => {
-    expect(['efectivo', 'tarjeta', 'qr', 'transferencia'].map(metodoPagoSin)).toEqual([1, 2, 7, 7]);
+    expect(['efectivo', 'tarjeta', 'qr', 'transferencia'].map((m) => metodoPagoSin(m))).toEqual([1, 2, 7, 7]);
     expect([1, 2, 3, 4, 20].map(esperaDeReintento)).toEqual([30000, 60000, 120000, 240000, 900000]);
     expect(() => tarjetaEnmascarada('41', '1111')).toThrow();
   });
