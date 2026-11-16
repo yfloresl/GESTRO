@@ -42,3 +42,11 @@ En el navegador normal nada cambia (`redirect_uri` = `https://…/callback`). Co
 
 ## Notas de seguridad
 `allowBackup=false`; solo el origen de la app navega dentro del WebView (`allowNavigation`); sin cleartext salvo `CAP_SERVER_URL` http de pruebas; sin secretos ni keystores de producción en el repo.
+
+## Publicar en Google Play (AAB firmado)
+
+- Firma: la llave de producción **no vive en el repositorio**. Defina `KYROS_KEYSTORE_FILE`, `KYROS_KEYSTORE_PASSWORD`, `KYROS_KEY_ALIAS`, `KYROS_KEY_PASSWORD` o cree `android/keystore.properties` (ignorado por git) / `~/.kyros-android/keystore.properties` a partir de `android/keystore.properties.example`. Sin llave, `assembleRelease`/`bundleRelease` fallan a propósito (para solo comprobar que compila: `-Pkyros.allowUnsigned=true`; no sirve para publicar).
+- Compilar (JDK 17, Android SDK `platforms;android-36`, `build-tools;36.0.0`; sincronizar antes la web con `cap sync android`): en `android/` ejecutar `gradlew bundleRelease assembleRelease`. AAB: `app/build/outputs/bundle/release/app-release.aab`.
+- Versión: `android/version.properties`; subirla con `node android/bump-version.mjs patch|minor|major|code` (Play exige un `versionCode` mayor en cada envío).
+- `targetSdk`/`compileSdk` 36 (requisito de Play desde 31/08/2026), `minSdk` ver `android/variables.gradle`. R8 activo (`app/proguard-rules.pro`).
+- Textos de la ficha, «Seguridad de los datos», capturas y el ícono de 512 px: `android/play/`. Guía completa y requisitos de la cuenta: `QA-ANDROID-PUBLICACION.md` del repositorio de QA.

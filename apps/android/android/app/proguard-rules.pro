@@ -1,21 +1,27 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Reglas R8 / ProGuard de release (Capacitor). Capacitor y sus plugins ya traen reglas de consumidor; aquí se refuerzan las que
+# el puente JavaScript <-> Java necesita para no romperse al ofuscar (ingreso OIDC/PKCE con Custom Tabs y appUrlOpen incluidos).
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Para leer los errores de producción en Play Console (rastros ofuscados) se conservan líneas y archivo de origen.
+-keepattributes SourceFile,LineNumberTable,*Annotation*,Signature,InnerClasses,EnclosingMethod
+-renamesourcefileattribute SourceFile
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Puente WebView: los métodos expuestos a JS no pueden renombrarse.
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Capacitor: núcleo, plugins (anotación @CapacitorPlugin y métodos @PluginMethod) y actividad principal.
+-keep class com.getcapacitor.** { *; }
+-keep @com.getcapacitor.annotation.CapacitorPlugin public class * { *; }
+-keepclassmembers class * { @com.getcapacitor.PluginMethod public <methods>; @com.getcapacitor.annotation.PermissionCallback <methods>; @com.getcapacitor.annotation.ActivityCallback <methods>; }
+-keep class com.capacitorjs.plugins.** { *; }
+-keep public class * extends com.getcapacitor.Plugin { *; }
+-keep class * extends com.getcapacitor.BridgeActivity { *; }
+-dontwarn com.getcapacitor.**
+
+# Cordova (compatibilidad que carga Capacitor).
+-keep class org.apache.cordova.** { *; }
+-dontwarn org.apache.cordova.**
+
+# Retorno del ingreso: Custom Tabs de androidx.browser y el esquema/enlace de retorno (intent-filter del manifiesto).
+-keep class androidx.browser.** { *; }

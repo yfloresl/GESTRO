@@ -1,0 +1,63 @@
+// Kyros-Tech: versión y firma de release de esta app. Se aplica desde app/build.gradle (apply from: '../kyros-release.gradle').
+// Guía completa para el dueño: informes/QA-ANDROID-PUBLICACION.md (en el repositorio de QA) y la sección «Publicar» del README de esta app.
+//
+// VERSIÓN: android/version.properties (versionCode entero y versionName). Se incrementa con `node bump-version.mjs` (ver ese archivo).
+//
+// FIRMA (nunca dentro del repositorio). Se buscan, en este orden, estos valores:
+//   1) Variables de entorno: KYROS_KEYSTORE_FILE, KYROS_KEYSTORE_PASSWORD, KYROS_KEY_ALIAS, KYROS_KEY_PASSWORD
+//   2) Un archivo .properties (storeFile, storePassword, keyAlias, keyPassword) indicado en KYROS_KEYSTORE_PROPERTIES,
+//      o android/keystore.properties (ignorado por git), o ~/.kyros-android/keystore.properties (fuera del repositorio).
+//   Plantilla sin valores: android/keystore.properties.example.
+// Si no hay llave, assembleRelease/bundleRelease FALLAN con un mensaje claro (jamás se firma con la llave de depuración).
+// Para una compilación de comprobación sin firmar: -Pkyros.allowUnsigned=true (el resultado NO sirve para publicar).
+
+def kyrosVersion = new Properties()
+def versionFile = rootProject.file('version.properties')
+if (!versionFile.isFile()) throw new GradleException("Falta ${versionFile}: debe tener versionCode y versionName.")
+versionFile.withInputStream { kyrosVersion.load(it) }
+
+def kyrosEnv = System.getenv()
+def kyrosFileProps = new Properties()
+def kyrosPropsFile = [
+    kyrosEnv['KYROS_KEYSTORE_PROPERTIES'] ? new File(kyrosEnv['KYROS_KEYSTORE_PROPERTIES']) : null,
+    rootProject.file('keystore.properties'),
+    new File(System.getProperty('user.home'), '.kyros-android/keystore.properties')
+].find { it != null && it.isFile() }
+if (kyrosPropsFile) kyrosPropsFile.withInputStream { kyrosFileProps.load(it) }
+
+def kyrosPick = { String propName, String envName -> kyrosEnv[envName] ?: kyrosFileProps.getProperty(propName) }
+def kyrosStore = kyrosPick('storeFile', 'KYROS_KEYSTORE_FILE')
+def kyrosStoreFile = null
+if (kyrosStore) {
+    def f = new File(kyrosStore)
+    // Una ruta relativa dentro del .properties se resuelve respecto a la carpeta de ese archivo.
+    kyrosStoreFile = (f.isAbsolute() || !kyrosPropsFile || kyrosEnv['KYROS_KEYSTORE_FILE']) ? f : new File(kyrosPropsFile.parentFile, kyrosStore)
+}
+def kyrosSigning = null
+if (kyrosStoreFile && kyrosStoreFile.isFile()
+        && kyrosPick('storePassword', 'KYROS_KEYSTORE_PASSWORD')
+        && kyrosPick('keyAlias', 'KYROS_KEY_ALIAS')
+        && kyrosPick('keyPassword', 'KYROS_KEY_PASSWORD')) {
+    kyrosSigning = [
+        storeFile    : kyrosStoreFile,
+        storePassword: kyrosPick('storePassword', 'KYROS_KEYSTORE_PASSWORD'),
+        keyAlias     : kyrosPick('keyAlias', 'KYROS_KEY_ALIAS'),
+        keyPassword  : kyrosPick('keyPassword', 'KYROS_KEY_PASSWORD')
+    ]
+}
+
+ext.kyros = [
+    versionCode: kyrosVersion.getProperty('versionCode').trim().toInteger(),
+    versionName: kyrosVersion.getProperty('versionName').trim(),
+    signing    : kyrosSigning
+]
+
+gradle.taskGraph.whenReady { graph ->
+    def pideRelease = graph.allTasks.any { it.name in ['assembleRelease', 'bundleRelease', 'packageRelease', 'signReleaseBundle'] }
+    if (pideRelease && !kyrosSigning && !project.hasProperty('kyros.allowUnsigned')) {
+        throw new GradleException(
+            'No hay llave de firma de release. Defina KYROS_KEYSTORE_FILE / KYROS_KEYSTORE_PASSWORD / KYROS_KEY_ALIAS / KYROS_KEY_PASSWORD, ' +
+            'o cree android/keystore.properties a partir de keystore.properties.example (fuera de git). ' +
+            'Para solo comprobar que compila (NO publicable): -Pkyros.allowUnsigned=true.')
+    }
+}
