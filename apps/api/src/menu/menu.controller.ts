@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Header, HttpCode, Inject, Param, ParseUUIDPipe, Patch, Post, Put, Req, Res } from '@nestjs/common';
+import { Body, Controller, Delete, ForbiddenException, Get, Header, HttpCode, Inject, Param, ParseUUIDPipe, Patch, Post, Put, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { Actor, ActorActual, Publico, TenantActual } from '../comun/acceso';
 import { DeSucursal } from '../comun/guards';
@@ -26,7 +26,14 @@ export class MenuController {
   @Post('platos') @DeSucursal(...EDITA)
   crearPlato(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Body() b: unknown) { return this.menu.crearPlato(t, a.sub, Plato.parse(b)); }
   @Patch('platos/:id') @DeSucursal(...EDITA, 'cocina')
-  cambiarPlato(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string, @Body() b: unknown) { return this.menu.cambiarPlato(t, a.sub, id, PlatoParcial.parse(b)); }
+  cambiarPlato(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string, @Body() b: unknown) {
+    const d = PlatoParcial.parse(b);
+    // GS-K02: cocina solo marca disponible/agotado (es lo único que ofrece la pantalla); precio, nombre, categoría y códigos SIN son del dueño o la administración.
+    const roles = a.roles[t.restaurantId] ?? [];
+    const edita = a.plat || roles.some((r) => (EDITA as readonly string[]).includes(r));
+    if (!edita && Object.keys(d).some((k) => k !== 'disponible')) throw new ForbiddenException('Cocina solo puede marcar un plato como disponible o agotado.');
+    return this.menu.cambiarPlato(t, a.sub, id, d);
+  }
   @Delete('platos/:id') @DeSucursal(...EDITA)
   borrarPlato(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string) { return this.menu.borrarPlato(t, a.sub, id); }
 

@@ -10,8 +10,10 @@ export interface Solicitud {
 export interface AvisoPedido { id: string; mesa?: string | null; ticket?: number | null; paraMi?: boolean; items?: number }
 export const ETIQUETA_SOLICITUD: Record<string, string> = { atencion: 'Llamado de mesero', cuenta: 'Pide la cuenta', servicio: 'Pide servicio', otro: 'Solicitud' };
 
-interface Ctx { nuevas: number; ultima: Solicitud | null; descartar(): void; sonido: boolean; alternarSonido(): void }
-const AvisosCtx = createContext<Ctx>({ nuevas: 0, ultima: null, descartar() {}, sonido: true, alternarSonido() {} });
+/** GS-K03: plato anulado después de enviarse a cocina (cocina debe dejar de prepararlo). */
+export interface PlatoAnulado { clave: number; pedidoId: string; mesa: string | null; ticket: number | null; plato: string; cantidad: string; motivo: string }
+interface Ctx { nuevas: number; ultima: Solicitud | null; descartar(): void; sonido: boolean; alternarSonido(): void; anulaciones: PlatoAnulado[]; descartarAnulacion(clave: number): void }
+const AvisosCtx = createContext<Ctx>({ nuevas: 0, ultima: null, descartar() {}, sonido: true, alternarSonido() {}, anulaciones: [], descartarAnulacion() {} });
 export const useAvisos = () => useContext(AvisosCtx);
 
 let audio: AudioContext | null = null;
@@ -43,6 +45,7 @@ export function AvisosProvider({ children }: { children: ReactNode }) {
   const [ultima, setUltima] = useState<Solicitud | null>(null);
   const [sonido, setSonido] = useState(() => { try { return localStorage.getItem('gestro.sonido') !== 'no'; } catch { return true; } });
   const sonidoRef = useRef(sonido); sonidoRef.current = sonido;
+  const [anulaciones, setAnulaciones] = useState<PlatoAnulado[]>([]);
   const usuario = sesion?.usuario.id ?? null;
 
   useEffect(() => { document.addEventListener('pointerdown', despertarAudio, { once: true }); return () => document.removeEventListener('pointerdown', despertarAudio); }, []);
@@ -68,6 +71,12 @@ export function AvisosProvider({ children }: { children: ReactNode }) {
     socket.on('pedido.cobrado', refrescarPedidos);
     const aviso = (a: AvisoPedido) => { refrescarPedidos(); if (a.paraMi === false) return; setNuevas((n) => n + 1); if (sonidoRef.current) pitar(true); try { navigator.vibrate?.([300, 120, 300]); } catch { /* sin vibración */ } };
     socket.on('pedido.listo', aviso);
+    socket.on('plato.anulado', (a: Omit<PlatoAnulado, 'clave'>) => {
+      refrescarPedidos();
+      setAnulaciones((l) => [...l.slice(-9), { ...a, clave: Date.now() + Math.random() }]);
+      if (sonidoRef.current) pitar(true);
+      try { navigator.vibrate?.([300, 120, 300]); } catch { /* sin vibración */ }
+    });
     const refrescarReservas = () => { void qc.invalidateQueries({ queryKey: ['reservas'] }); };
     socket.on('reserva.nueva', () => { refrescarReservas(); if (sonidoRef.current) pitar(false); });
     socket.on('reserva.cambio', refrescarReservas);
@@ -81,8 +90,9 @@ export function AvisosProvider({ children }: { children: ReactNode }) {
   const valor = useMemo<Ctx>(() => ({
     nuevas, ultima, sonido,
     descartar: () => { setNuevas(0); setUltima(null); },
+    anulaciones, descartarAnulacion: (clave: number) => setAnulaciones((l) => l.filter((x) => x.clave !== clave)),
     alternarSonido: () => setSonido((v) => { try { localStorage.setItem('gestro.sonido', v ? 'no' : 'si'); } catch { /* sin almacenamiento */ } return !v; }),
-  }), [nuevas, ultima, sonido]);
+  }), [nuevas, ultima, sonido, anulaciones]);
   return <AvisosCtx.Provider value={valor}>{children}</AvisosCtx.Provider>;
 }
 

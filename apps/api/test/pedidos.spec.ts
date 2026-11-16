@@ -124,8 +124,17 @@ describe('Cocina (KDS)', () => {
     const tk = (await e.cocina.api.get('/cocina/tickets')).body;
     expect(tk).toHaveLength(1); expect(tk[0].items).toHaveLength(2);
     expect((await e.mesero.api.get('/cocina/tickets')).status).toBe(403);
+    // GS-K01: cocina no recibe precios ni totales (ni en el tablero ni al mover el estado) y no lista pedidos completos.
+    expect(JSON.stringify(tk)).not.toContain('"precio"');
+    expect((await e.cocina.api.get('/pedidos')).status).toBe(403);
+    expect((await e.cocina.api.get(`/pedidos/${p.id}`)).status).toBe(403);
+    // GS-K02: cocina solo marca disponible/agotado; no cambia precios.
+    expect((await e.cocina.api.patch(`/menu/platos/${e.pique}`, { precio: 1 })).status).toBe(403);
+    expect((await e.cocina.api.patch(`/menu/platos/${e.pique}`, { disponible: false })).status).toBe(200);
+    expect((await e.cocina.api.patch(`/menu/platos/${e.pique}`, { disponible: true })).status).toBe(200);
 
-    expect((await e.cocina.api.post(`/pedidos/${p.id}/cocina`, { estado: 'en_preparacion' })).body.estado).toBe('en_preparacion');
+    const enPrep = (await e.cocina.api.post(`/pedidos/${p.id}/cocina`, { estado: 'en_preparacion' })).body;
+    expect(enPrep.estado).toBe('en_preparacion'); expect(enPrep.total).toBeUndefined(); expect(JSON.stringify(enPrep)).not.toContain('"precio"');
     const recibidos: { id: string; mesa: string; paraMi: boolean }[] = [];
     sMesero.on('pedido.listo', (d) => recibidos.push(d));
     const fin = await e.cocina.api.post(`/pedidos/${p.id}/cocina`, { estado: 'listo' });
@@ -137,6 +146,20 @@ describe('Cocina (KDS)', () => {
     const t0 = await t.owner.query(`SELECT started_at, ready_at FROM order_items WHERE order_id = $1`, [p.id]);
     expect(t0.rows.every((r) => r.started_at && r.ready_at)).toBe(true);
     sCocina.close(); sMesero.close();
+  });
+
+  it('GS-K03: al anular un plato ya enviado, la cocina recibe el aviso con plato y motivo; uno sin enviar no avisa', async () => {
+    const e = await escenario();
+    const sCocina = await conectar(e.cocina.token);
+    const p = await pedidoDeMesa(e);
+    const it = (await e.mesero.api.post(`/pedidos/${p.id}/items`, { items: [{ platoId: e.pique, cantidad: 2 }] })).body.items[0];
+    await e.mesero.api.post(`/pedidos/${p.id}/enviar`);
+    await e.cocina.api.post(`/pedidos/${p.id}/cocina`, { estado: 'en_preparacion' });
+    const aviso = esperar<{ plato: string; motivo: string; mesa: string; cantidad: string }>(sCocina, 'plato.anulado');
+    expect((await e.cajero.api.post(`/items/${it.id}/anular`, { motivo: 'cliente se fue' })).status).toBe(200);
+    expect(await aviso).toMatchObject({ plato: 'Pique Macho', motivo: 'cliente se fue', mesa: '7' });
+    expect((await e.cocina.api.get('/cocina/tickets')).body).toHaveLength(0);
+    sCocina.close();
   });
 
   it('«Listo parcial»: un plato listo no cierra el ticket', async () => {

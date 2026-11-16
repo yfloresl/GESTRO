@@ -208,6 +208,9 @@ export class PedidosService {
       return this.vista(tx, t.restaurantId, i.orderId);
     });
     this.avisarCocina(t.restaurantId, r, 'ticket.actualizado');
+    // GS-K03: la cocina se entera de que un plato (quizá ya en preparación) se anuló y por qué; antes solo desaparecía del tablero.
+    const anulado = r.items.find((i) => i.id === itemId);
+    if (anulado && anulado.estado !== 'borrador') this.eventos.emitir(salas.sucursal(t.restaurantId), 'plato.anulado', { pedidoId: r.id, mesa: r.mesa, ticket: r.ticket, plato: anulado.nombre, cantidad: anulado.cantidad, motivo });
     return r;
   }
 
@@ -261,7 +264,9 @@ export class PedidosService {
   ticket(p: PedidoVista) {
     const items = p.items.filter((i) => !i.anulado && ['enviado', 'en_preparacion', 'listo'].includes(i.estado));
     const estado = items.length && items.every((i) => i.estado === 'listo') ? 'listo' : items.some((i) => i.estado !== 'enviado') ? 'en_preparacion' : 'nuevo';
-    return { id: p.id, tipo: p.tipo, mesa: p.mesa, ticket: p.ticket, mesero: p.mesero, cliente: p.cliente, recojo: p.recojo, comentario: p.comentario, enviado: p.enviado, estado, items };
+    // GS-K01: cocina no necesita precios, totales, teléfono ni dirección: el ticket solo lleva lo que se cocina.
+    return { id: p.id, tipo: p.tipo, mesa: p.mesa, ticket: p.ticket, mesero: p.mesero, cliente: p.cliente, recojo: p.recojo, comentario: p.comentario, enviado: p.enviado, estado,
+      items: items.map(({ precio: _precio, ...resto }) => resto) };
   }
 
   /** Mueve todos los platos activos del ticket (o solo los que faltan) al estado indicado. Al quedar todo listo avisa al mesero. */
@@ -281,7 +286,7 @@ export class PedidosService {
     });
     this.avisarCocina(t.restaurantId, r.vista, 'ticket.actualizado');
     if (r.todoListo) this.avisarListo(t.restaurantId, r.vista, r.creadoPor);
-    return r.vista;
+    return this.ticket(r.vista); // GS-K01: sin precios ni totales (antes devolvía el pedido completo a cocina)
   }
 
   private avisarCocina(rid: string, p: PedidoVista, evento: 'ticket.nuevo' | 'ticket.actualizado') {

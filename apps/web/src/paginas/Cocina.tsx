@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { cerrarKyrosId } from '../lib/kyrosid';
+import { useAvisos } from '../lib/avisos';
 import { Cargando } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos, useSesion } from '../lib/sesion';
 import { ETIQUETA_TIPO, minutosDesde, Ticket } from '../lib/tipos';
@@ -19,6 +20,7 @@ export function Cocina() {
   const cfg = useQuery({ queryKey: ['kyros-id-config'], queryFn: () => api.kyrosIdConfig(), staleTime: Infinity });
   const { sucursalId, roles, esAdmin } = useRolesActivos();
   const qc = useQueryClient();
+  const { sonido, alternarSonido, anulaciones, descartarAnulacion } = useAvisos();
   const [error, setError] = useState<string | null>(null);
   const [, reloj] = useState(0);
   useEffect(() => { const t = setInterval(() => reloj((n) => n + 1), 20_000); return () => clearInterval(t); }, []);
@@ -43,8 +45,14 @@ export function Cocina() {
           <div><h1 className="font-headline-sm text-headline-sm leading-tight">Cocina</h1><p className="font-label-sm text-label-sm uppercase tracking-wider opacity-70">Línea de producción</p></div></div>
         <div className="font-label-md text-label-md bg-white/10 rounded-lg px-space-md py-space-xs">ACTIVAS: {tickets.length} comandas</div>
         {atrasados > 0 && <div role="alert" className="font-label-md text-label-md bg-error-container text-on-error-container rounded-lg px-space-md py-space-xs flex items-center gap-1"><span className="material-symbols-outlined text-[18px]" aria-hidden="true">notifications_active</span>{atrasados} atrasadas</div>}
-        <div className="ml-auto flex items-center gap-space-sm"><span className="font-label-md text-label-md opacity-70">{new Date().toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/La_Paz' })}</span>{esAdmin && <Link to="/app" className="h-12 px-space-md rounded-lg bg-white/10 flex items-center font-semibold">Volver</Link>}<button type="button" onClick={async () => { await salir(); if (cfg.data) cerrarKyrosId(cfg.data); }} className="h-12 px-space-md rounded-lg bg-white/10 flex items-center font-semibold">Salir</button></div>
+        <div className="ml-auto flex items-center gap-space-sm"><span className="font-label-md text-label-md opacity-70">{new Date().toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/La_Paz' })}</span><button type="button" aria-pressed={sonido} onClick={alternarSonido} className="h-12 px-space-md rounded-lg bg-white/10 flex items-center gap-1 font-semibold"><span className="material-symbols-outlined text-[20px]" aria-hidden="true">{sonido ? 'volume_up' : 'volume_off'}</span>{sonido ? 'Sonido activado' : 'Sonido apagado'}</button>{esAdmin && <Link to="/app" className="h-12 px-space-md rounded-lg bg-white/10 flex items-center font-semibold">Volver</Link>}<button type="button" onClick={async () => { await salir(); if (cfg.data) cerrarKyrosId(cfg.data); }} className="h-12 px-space-md rounded-lg bg-white/10 flex items-center font-semibold">Salir</button></div>
       </header>
+      {anulaciones.map((a) => (
+        <div key={a.clave} role="alert" className="mx-space-md mt-space-sm rounded-lg bg-error-container text-on-error-container p-space-sm flex items-center justify-between gap-space-sm">
+          <p className="font-semibold">ANULADO: {Number(a.cantidad)}× {a.plato} · {a.mesa ? `Mesa ${a.mesa}` : a.ticket ? `Ticket #${a.ticket}` : 'pedido'} · Motivo: {a.motivo}. Deja de prepararlo.</p>
+          <button type="button" onClick={() => descartarAnulacion(a.clave)} className="h-10 px-space-sm rounded-lg bg-white/20 font-label-md whitespace-nowrap">Entendido</button>
+        </div>
+      ))}
       {error && <p role="alert" className="mx-space-md mt-space-sm rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
 
       <main className="flex-1 grid grid-cols-1 gap-space-md p-space-md lg:grid-cols-3 lg:items-start">
@@ -67,7 +75,7 @@ export function Cocina() {
                     <ul className="px-space-md py-space-sm flex flex-col gap-space-sm">
                       {t.items.map((i) => (
                         <li key={i.id} className="flex flex-col gap-1">
-                          <div className="flex items-start justify-between gap-space-sm"><span className={`font-body-lg text-body-lg font-semibold ${i.estado === 'listo' ? 'opacity-50 line-through' : ''}`}>{Number(i.cantidad)}× {i.nombre}</span>
+                          <div className="flex items-start justify-between gap-space-sm"><span className={`font-body-lg text-body-lg font-semibold ${i.estado === 'listo' ? 'opacity-50 line-through' : ''}`}>{Number(i.cantidad)}× {i.nombre}{c.id === 'en_preparacion' && i.estado === 'enviado' && <span className="ml-2 rounded bg-secondary-container text-on-secondary-container px-2 text-label-md align-middle">NUEVO</span>}</span>
                             {i.estado !== 'listo' && t.items.length > 1 && <button type="button" onClick={() => mover.mutate({ id: t.id, estado: 'listo', item: i.id })} className="h-10 px-space-sm rounded-lg bg-white/10 font-label-md whitespace-nowrap">Listo parcial</button>}</div>
                           {(i.modificadores.length > 0 || i.nota) && <p className="rounded bg-secondary-container/90 text-on-secondary-container px-space-sm py-1 font-body-md font-semibold">{[...i.modificadores, i.nota].filter(Boolean).join(' · ')}</p>}
                         </li>

@@ -19,10 +19,10 @@ export class PedidosController {
   @Post('pedidos') @DeSucursal(...SALON)
   crear(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Body() b: unknown) { return this.p.crear(t, a.sub, NuevoPedido.parse(b)); }
 
-  @Get('pedidos') @DeSucursal(...SALON, 'cocina')
+  @Get('pedidos') @DeSucursal(...SALON)
   listar(@TenantActual() t: Tenant, @Query() q: Record<string, string>) { const f = Filtro.parse(q); return this.p.listar(t, f.filtro, f.tipo); }
 
-  @Get('pedidos/:id') @DeSucursal(...SALON, 'cocina')
+  @Get('pedidos/:id') @DeSucursal(...SALON)
   detalle(@TenantActual() t: Tenant, @Param('id', ParseUUIDPipe) id: string) { return this.p.detalle(t, id); }
 
   @Post('pedidos/:id/items') @DeSucursal(...SALON)
