@@ -8,7 +8,7 @@ import { BD, Bd, Tenant, TenantDb } from '../database/database.module';
 import { IntegracionesService } from '../integraciones/integraciones';
 import { KyrosIdService } from '../kyros-id/kyros-id.service';
 import {
-  aceptaTransicion, aCentavos, BOM, evaluarRegimenFiscal, TEXTO_AVISO_CODIGOS, celdaNumero, celdaTexto, deCentavos, emitirFactura, estadoLocalDe, FacturaSinClient, FacturaSinError, filaCsv, ivaPorDentro, tokenClientCredentials, validarDatosFiscales, verificarFirmaWebhook,
+  aceptaTransicion, aCentavos, BOM, codigosFiscalesFaltantes, evaluarRegimenFiscal, TEXTO_AVISO_CODIGOS, celdaNumero, celdaTexto, deCentavos, emitirFactura, estadoLocalDe, FacturaSinClient, FacturaSinError, filaCsv, ivaPorDentro, tokenClientCredentials, validarDatosFiscales, verificarFirmaWebhook,
   type AlmacenFacturas, type ConfigEmision, type DatosIntento, type EstadoLocal, type EventoWebhook, type FilaFactura, type PagoFacturable, type Resultado, type ResultadoGuardado,
 } from './nucleo';
 
@@ -26,6 +26,13 @@ export const ConfigFacturacion = z.object({
   empresa: z.string().trim().regex(/^[a-z][a-z0-9-]{1,40}$/),
   sector: z.number().int().min(1).max(99), sucursal: z.number().int().min(0).max(999), puntoVenta: z.number().int().min(0).max(999),
   metodoPago: z.number().int().min(1).max(99), codigoProducto: z.string().trim().min(1).max(60),
+  /**
+   * Códigos fiscales que GESTRO ENVÍA en cada ítem de la factura de Kyros-Tech (FacturaSIN no registra los productos de los sistemas Kyros).
+   * Se eligen del catálogo sincronizado de FacturaSIN (`GET /v1/catalog/{nombre}`). Predeterminados: provisionales de pruebas, NO CONFIRMADOS.
+   */
+  codigoProductoSin: z.string().trim().regex(/^\d{3,8}$/, 'El código de producto SIN son de 3 a 8 dígitos'),
+  actividadEconomica: z.string().trim().regex(/^\d{4,8}$/, 'La actividad económica son de 4 a 8 dígitos'),
+  unidadMedida: z.number().int().min(1).max(999),
   autoEmitir: z.boolean(),
   /** Interruptor del IVA «por fuera» (Ley 1733): APAGADO hasta que se publique el decreto reglamentario. */
   modoIva: z.enum(['por_dentro', 'por_fuera']),
@@ -36,7 +43,8 @@ export type ConfigFacturacionT = z.infer<typeof ConfigFacturacion>;
 /** Por defecto APAGADA: nada sale hacia FacturaSIN hasta que el SuperAdmin la active. La URL es un literal no secreto. */
 export const CONFIG_POR_DEFECTO: ConfigFacturacionT = {
   activo: false, url: 'https://facturasin.kyros-tech.com/api', issuer: null, clientId: 'gestro-service', sistema: 'gestro', empresa: 'kyros-tech',
-  sector: 1, sucursal: 0, puntoVenta: 0, metodoPago: 7, codigoProducto: 'SUSC-MENSUAL', autoEmitir: true,
+  sector: 1, sucursal: 0, puntoVenta: 0, metodoPago: 7, codigoProducto: 'SUSC-MENSUAL', codigoProductoSin: '83141', actividadEconomica: '620100', unidadMedida: 58, autoEmitir: true,
+  // codigoProductoSin/actividadEconomica/unidadMedida: NO CONFIRMADO — provisional de pruebas (catálogo SIMULADO de FacturaSIN).
   // metodoPago 7 y SUSC-MENSUAL: NO CONFIRMADO — definir con el catálogo del SIN (FacturaSIN: GET /v1/catalog/metodoPago).
   modoIva: 'por_dentro', codigosConfirmados: false,
 };
@@ -58,6 +66,7 @@ export const DatosFiscalesBody = z.object({
   razonSocial: z.string().trim().max(160), correo: z.string().trim().max(120).nullable().optional(),
 }).strict();
 
+export const CATALOGOS_LEGIBLES = ['productosServicios', 'actividades', 'unidadMedida', 'metodoPago'];
 const likeSeguro = (s: string) => `%${s.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 type Fila = Record<string, unknown>;
 
@@ -97,13 +106,33 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
     const c = await this.config();
     const sec = await this.integ.obtener('KYROS_SERVICE_CLIENT_SECRET');
     const wh = await this.cfg.leer<{ secretos: string[] }>(LLAVE_WEBHOOK);
-    return { config: c, secretoConfigurado: !!sec, webhookConfigurado: !!wh?.secretos?.length, lista: c.activo && !!sec, avisoCodigos: c.codigosConfirmados ? null : TEXTO_AVISO_CODIGOS, ivaPorFueraVigente: false };
+    return { config: c, secretoConfigurado: !!sec, webhookConfigurado: !!wh?.secretos?.length, lista: c.activo && !!sec, codigosSinFaltan: codigosFiscalesFaltantes(c), avisoCodigos: c.codigosConfirmados ? null : TEXTO_AVISO_CODIGOS, ivaPorFueraVigente: false };
   }
 
-  private async cliente(c?: ConfigFacturacionT): Promise<FacturaSinClient | null> {
+  /**
+   * Valores de un catálogo sincronizado de FacturaSIN (`productosServicios`, `actividades`, `unidadMedida`, `metodoPago`) para ELEGIR los códigos.
+   * Nunca lanza: si no se puede consultar devuelve `disponible: false` con qué configurar y dónde (no el error de «registrar productos en FacturaSIN»).
+   */
+  async catalogo(nombre: string): Promise<{ nombre: string; disponible: boolean; items: Array<Record<string, unknown>>; aviso: string | null }> {
+    if (!CATALOGOS_LEGIBLES.includes(nombre)) throw new BadRequestException(`Catálogo no válido (${CATALOGOS_LEGIBLES.join(', ')}).`);
+    const config = await this.config(); const cliente = await this.cliente(config, true);
+    const manual = 'o escribe los códigos a mano en Facturación → Códigos fiscales del producto';
+    if (!cliente) return { nombre, disponible: false, items: [], aviso: `No se puede consultar el catálogo de FacturaSIN: falta el secreto de gestro-service (Integraciones › KYROS_SERVICE_CLIENT_SECRET); ${manual}.` };
+    try {
+      const r = await cliente.catalogo(config.empresa, nombre);
+      const items = Array.isArray(r?.items) ? r.items : [];
+      return { nombre, disponible: items.length > 0, items, aviso: items.length ? null : `El catálogo «${nombre}» de la empresa ${config.sistema}:${config.empresa} aún no está sincronizado en FacturaSIN; sincronízalo allí ${manual}.` };
+    } catch (e) {
+      const fe = e instanceof FacturaSinError ? e : null;
+      return { nombre, disponible: false, items: [], aviso: `No se pudo consultar el catálogo de FacturaSIN (${fe ? `${fe.codigo} HTTP ${fe.estado}` : 'sin respuesta'}). Revisa la conexión y el secreto de gestro-service ${manual}.` };
+    }
+  }
+
+  /** `soloLectura`: para leer catálogos no hace falta el interruptor de emisión (solo el secreto y el emisor). */
+  private async cliente(c?: ConfigFacturacionT, soloLectura = false): Promise<FacturaSinClient | null> {
     const conf = c ?? (await this.config());
     const secreto = await this.integ.obtener('KYROS_SERVICE_CLIENT_SECRET');
-    if (!conf.activo || !secreto) return null;
+    if ((!conf.activo && !soloLectura) || !secreto) return null;
     const issuer = conf.issuer ?? (await this.kid.ajustes()).emisor;
     return new FacturaSinClient({ baseUrl: conf.url, sistema: conf.sistema, token: tokenClientCredentials({ issuer, clientId: conf.clientId, clientSecret: secreto }), reintentos: 2 });
   }
@@ -171,7 +200,7 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
     if (pago.estadoPago !== 'validado') throw new ConflictException('Solo se factura un pago validado: sin pago validado no hay factura.');
     const config = await this.config(); const cliente = await this.cliente(config);
     if (!cliente) return { ok: false, estado: 'pendiente', codigo: 'NO_CONFIGURADO', mensaje: 'La integración con FacturaSIN no está activa o falta el secreto de gestro-service.', reintentable: false };
-    const ce: ConfigEmision = { sistema: config.sistema, empresa: config.empresa, sector: config.sector, sucursal: config.sucursal, puntoVenta: config.puntoVenta, metodoPago: config.metodoPago, codigoProducto: config.codigoProducto };
+    const ce: ConfigEmision = { sistema: config.sistema, empresa: config.empresa, sector: config.sector, sucursal: config.sucursal, puntoVenta: config.puntoVenta, metodoPago: config.metodoPago, codigoProducto: config.codigoProducto, codigoProductoSin: config.codigoProductoSin, actividadEconomica: config.actividadEconomica, unidadMedida: config.unidadMedida };
     const r = await emitirFactura({ almacen: this.almacen(pago.restaurantId, pago.cuentaId, userId), cliente, config: ce }, pago, op);
     await this.auditar(pago.restaurantId, userId, accion, pagoId, r.ok ? { estado: r.estado, yaExistia: r.yaExistia, ...op } : { codigo: r.codigo, mensaje: r.mensaje, ...op });
     return r;

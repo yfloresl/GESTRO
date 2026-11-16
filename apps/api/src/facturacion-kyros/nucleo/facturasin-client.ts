@@ -200,6 +200,11 @@ export class FacturaSinClient {
     return this.pedir('GET', `/v1/invoices/${facturaId}/xml`, { cab: this.empresa(idEmpresaExterna), crudo: true });
   }
 
+  /** Valores de un catálogo SINCRONIZADO de la empresa (`GET /v1/catalog/{nombre}`), para ELEGIR códigos de la lista sin inventarlos. */
+  catalogo(idEmpresaExterna: string, nombre: string): Promise<{ nombre: string; sincronizado: boolean; items: Array<Record<string, unknown>> }> {
+    return this.pedir('GET', `/v1/catalog/${encodeURIComponent(nombre)}`, { cab: this.empresa(idEmpresaExterna) });
+  }
+
   /** Suscribe TU webhook (solo recibirás los eventos de las facturas que TU sistema originó). El secreto se muestra una sola vez. */
   crearWebhook(idEmpresaExterna: string, url: string, eventos?: string[]): Promise<{ id: string; secreto: string }> {
     return this.pedir('POST', '/v1/webhooks', { cuerpo: { url, ...(eventos ? { eventos } : {}) }, cab: this.empresa(idEmpresaExterna) });

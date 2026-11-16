@@ -29,6 +29,8 @@ export class FacturacionKyrosController {
   csv(@Query() q: unknown) { const f = FiltroLista.parse(q); return this.s.csv(f); }
 
   @Get('integracion') integracion() { return this.s.estadoIntegracion(); }
+  /** Catálogo sincronizado de FacturaSIN (productos SIN, actividades, unidades, métodos de pago) para elegir los códigos que GESTRO envía en cada ítem. */
+  @Get('catalogo/:nombre') catalogo(@Param('nombre') nombre: string) { return this.s.catalogo(nombre); }
   @Put('integracion') @HttpCode(200) guardar(@ActorActual() a: Actor, @Body() b: unknown) { reauth(a); return this.s.guardarConfig(a, ConfigParcial.parse(b)); }
   @Put('webhook/secreto') @HttpCode(200)
   async secreto(@ActorActual() a: Actor, @Body() b: unknown) { reauth(a); await this.s.guardarSecretoWebhook(a, z.object({ valor: z.string().regex(/^[0-9a-fA-F]{32,128}$/) }).strict().parse(b).valor); return { ok: true }; }

@@ -14,7 +14,43 @@ interface Fila {
 interface Totales { pagos: number; cobrado: string; facturado: string; iva: string; ivaRecalculado: string; anulado: string; porFacturar: string; control: { ivaCoincide: boolean; filasIvaDistinto: number; filasIvaDistintoDeFacturaSin: number; filasTotalDistintoDelPago: number } }
 interface Alertas { sinFactura: number; enAlerta: number; criticas: number; rechazadas: number; sinDatosFiscales: number; integracionActiva: boolean }
 interface Lista { filas: Fila[]; totales: Totales; alertas: Alertas }
-interface Integracion { avisoCodigos?: string | null; ivaPorFueraVigente?: boolean; config: { activo: boolean; url: string; empresa: string; clientId: string; metodoPago?: number; codigoProducto?: string; modoIva?: string; codigosConfirmados?: boolean }; secretoConfigurado: boolean; webhookConfigurado: boolean; lista: boolean }
+interface Integracion { avisoCodigos?: string | null; ivaPorFueraVigente?: boolean; config: { activo: boolean; url: string; empresa: string; clientId: string; metodoPago?: number; codigoProducto?: string; modoIva?: string; codigosConfirmados?: boolean; codigoProductoSin?: string; actividadEconomica?: string; unidadMedida?: number }; codigosSinFaltan?: string[]; secretoConfigurado: boolean; webhookConfigurado: boolean; lista: boolean }
+interface CatalogoFs { nombre: string; disponible: boolean; items: Array<Record<string, unknown>>; aviso: string | null }
+const txt = (v: unknown) => (v === undefined || v === null ? '' : String(v));
+
+/** Códigos fiscales que GESTRO envía en cada ítem de la factura de Kyros-Tech: se ELIGEN del catálogo sincronizado de FacturaSIN (o se escriben a mano si no se puede consultar). */
+function CodigosFiscales({ ig, ocupado, onGuardar }: { ig: Integracion; ocupado: boolean; onGuardar: (parcial: Record<string, unknown>) => void }) {
+  const prod = useQuery({ queryKey: ['plat-fact-cat', 'productosServicios'], queryFn: () => api.get<CatalogoFs>('/plataforma/facturacion-kyros/catalogo/productosServicios'), retry: false, staleTime: 60_000 });
+  const act = useQuery({ queryKey: ['plat-fact-cat', 'actividades'], queryFn: () => api.get<CatalogoFs>('/plataforma/facturacion-kyros/catalogo/actividades'), retry: false, staleTime: 60_000 });
+  const uni = useQuery({ queryKey: ['plat-fact-cat', 'unidadMedida'], queryFn: () => api.get<CatalogoFs>('/plataforma/facturacion-kyros/catalogo/unidadMedida'), retry: false, staleTime: 60_000 });
+  const [producto, setProducto] = useState<string | null>(null); const [actividad, setActividad] = useState<string | null>(null); const [unidad, setUnidad] = useState<string | null>(null);
+  const vProducto = producto ?? ig.config.codigoProductoSin ?? ''; const vActividad = actividad ?? ig.config.actividadEconomica ?? ''; const vUnidad = unidad ?? String(ig.config.unidadMedida ?? '');
+  const avisos = [prod.data, act.data, uni.data].map((c) => c?.aviso).filter((a): a is string => !!a);
+  const lP = (prod.data?.items ?? []).filter((x) => !vActividad || !x.codigoActividad || txt(x.codigoActividad) === vActividad).map((x) => ({ v: txt(x.codigoProducto), e: `${txt(x.codigoProducto)} · ${txt(x.descripcionProducto)}` }));
+  const lA = (act.data?.items ?? []).map((x) => ({ v: txt(x.codigoCaeb), e: `${txt(x.codigoCaeb)} · ${txt(x.descripcion)}` }));
+  const lU = (uni.data?.items ?? []).map((x) => ({ v: txt(x.codigoClasificador), e: `${txt(x.codigoClasificador)} · ${txt(x.descripcion)}` }));
+  const campo = (etiqueta: string, valor: string, set: (v: string) => void, lista: { v: string; e: string }[]) => (
+    <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>{etiqueta}</span>
+      {lista.length > 0
+        ? <select value={valor} onChange={(e) => set(e.target.value)} className={clases.input}>{!lista.some((x) => x.v === valor) && <option value={valor}>{valor || 'Elegir del catálogo'}</option>}{lista.map((x) => <option key={x.v} value={x.v}>{x.e}</option>)}</select>
+        : <input value={valor} onChange={(e) => set(e.target.value)} maxLength={12} inputMode="numeric" className={clases.input} />}
+    </label>
+  );
+  return (
+    <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md grid gap-space-sm sm:grid-cols-4">
+      <h3 className="font-headline-sm text-headline-sm sm:col-span-4">Códigos fiscales del producto (se envían en cada ítem)</h3>
+      <p className="font-body-sm text-on-surface-variant sm:col-span-4">FacturaSIN no registra los productos de GESTRO: este sistema envía en cada ítem el producto SIN, la actividad económica y la unidad. Elige los valores del catálogo sincronizado de FacturaSIN.</p>
+      {(ig.codigosSinFaltan?.length ?? 0) > 0 && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm sm:col-span-4"><strong>Faltan códigos fiscales:</strong> {ig.codigosSinFaltan!.join(', ')}. Sin ellos la factura queda pendiente; elígelos aquí y usa «Reintentar».</p>}
+      {ig.avisoCodigos && <p role="note" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-sm font-label-md sm:col-span-4"><strong>NO CONFIRMADO — provisional de pruebas.</strong> Los valores predeterminados salen del catálogo SIMULADO de FacturaSIN; el contador los confirma con el catálogo del SIN antes de operar en real.</p>}
+      {avisos.length > 0 && <p role="note" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-sm font-label-md sm:col-span-4">No se pudo leer el catálogo de FacturaSIN: {avisos[0]}</p>}
+      {campo('Actividad económica', vActividad, setActividad, lA)}
+      {campo('Producto SIN', vProducto, setProducto, lP)}
+      {campo('Unidad de medida', vUnidad, setUnidad, lU)}
+      <div className="flex items-end"><button type="button" disabled={ocupado || !vProducto.trim() || !vActividad.trim() || !/^\d+$/.test(vUnidad)} onClick={() => { onGuardar({ codigoProductoSin: vProducto.trim(), actividadEconomica: vActividad.trim(), unidadMedida: Number(vUnidad) }); setProducto(null); setActividad(null); setUnidad(null); }} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Guardar códigos</button></div>
+    </div>
+  );
+}
+
 type Resultado = { ok: boolean; estado: Estado; codigo?: string; mensaje?: string };
 
 const ETIQUETA: Record<string, { t: string; c: string }> = {
@@ -68,6 +104,8 @@ export function PlataformaFacturacion() {
           <button type="button" onClick={suscribir} disabled={!!ocupado || !ig?.lista} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Suscribir webhook</button>
           <button type="button" onClick={() => correr('conc', () => api.post<{ conciliadas: number; reintentadas: number; emitidas: number }>('/plataforma/facturacion-kyros/conciliar'), (r) => `Conciliación: ${r.conciliadas} conciliadas, ${r.reintentadas} reintentadas, ${r.emitidas} emitidas.`)} disabled={!!ocupado || !ig?.lista} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Conciliar ahora</button></div>
       </div>
+
+      {ig && <CodigosFiscales ig={ig} ocupado={!!ocupado} onGuardar={(parcial) => void correr('cfg-sin', () => api.put('/plataforma/facturacion-kyros/integracion', parcial), () => 'Códigos fiscales guardados.')} />}
 
       <form className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md grid gap-space-sm sm:grid-cols-4" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void correr('cfg', () => api.put('/plataforma/facturacion-kyros/integracion', { metodoPago: Number(f.get('metodoPago')), codigoProducto: String(f.get('codigoProducto')).trim(), modoIva: String(f.get('modoIva')), codigosConfirmados: f.get('codigosConfirmados') === 'on' }), () => 'Códigos fiscales guardados.'); }}>
         <h3 className="font-headline-sm text-headline-sm sm:col-span-4">Códigos fiscales de la factura de Kyros-Tech</h3>

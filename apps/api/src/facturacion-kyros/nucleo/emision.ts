@@ -58,6 +58,14 @@ export interface ConfigEmision {
   /** Código del catálogo `metodoPago` sincronizado de FacturaSIN. Por defecto 7 = transferencia: NO CONFIRMADO — definir con el catálogo del SIN. */
   metodoPago: number;
   codigoProducto: string;
+  /**
+   * Códigos fiscales que ESTE sistema envía en cada ítem (FacturaSIN no registra los productos de los sistemas Kyros):
+   * producto del catálogo `productosServicios` del SIN, actividad económica (CAEB) y unidad de medida (`unidadMedida`).
+   * Si faltan, NO se emite: queda pendiente con un aviso que dice qué configurar y dónde.
+   */
+  codigoProductoSin?: string;
+  actividadEconomica?: string;
+  unidadMedida?: number;
   /** `por_dentro` (vigente) o `por_fuera` (Ley 1733, aún sin decreto): interruptor APAGADO por defecto. */
   modoIva?: ModoIva;
 }
@@ -95,6 +103,19 @@ export function descripcionDe(p: PagoFacturable): string {
   return `Suscripción ${p.plan ?? 'GESTRO'} · ${p.meses} ${p.meses === 1 ? 'mes' : 'meses'}${regalo}${per}`.slice(0, 250);
 }
 
+/** Unidad de medida «UNIDAD (SERVICIOS)» del catálogo `unidadMedida` sincronizado (simulado 58): NO CONFIRMADO, provisional de pruebas. */
+export const UNIDAD_SERVICIOS_PRUEBAS = 58;
+/** Pareja provisional de pruebas tomada del catálogo SIMULADO de FacturaSIN (`productosServicios`: actividad 620100 con producto SIN 83141). NO CONFIRMADO. */
+export const CODIGOS_SIN_PRUEBAS = { codigoProductoSin: '83141', actividadEconomica: '620100' } as const;
+
+const NOMBRES_CODIGOS: Record<string, string> = { codigoProductoSin: 'código de producto SIN', actividadEconomica: 'actividad económica' };
+/** Códigos fiscales obligatorios que el sistema debe enviar en cada ítem y que no están configurados. */
+export function codigosFiscalesFaltantes(c: Pick<ConfigEmision, 'codigoProductoSin' | 'actividadEconomica'>): string[] {
+  return (['codigoProductoSin', 'actividadEconomica'] as const).filter((k) => !String(c[k] ?? '').trim()).map((k) => NOMBRES_CODIGOS[k]!);
+}
+export const mensajeCodigosFaltantes = (faltan: string[]) =>
+  `Falta configurar en GESTRO: ${faltan.join(' y ')}. Elígelos en Facturación → «Códigos fiscales del producto» (se leen del catálogo sincronizado de FacturaSIN). FacturaSIN no registra los productos de este sistema: GESTRO envía esos códigos en cada ítem.`;
+
 export interface OpcionesEmision { consumidorFinal?: boolean; excepcionNit?: boolean }
 
 export async function emitirFactura(
@@ -128,6 +149,12 @@ export async function emitirFactura(
   const fila = await d.almacen.iniciarIntento(pago, { clave, comprador, consumidorFinal, descripcion: descripcionDe(pago), totalCent, ivaCent, netoCent, modoIva });
 
   const c = d.config;
+  const faltan = codigosFiscalesFaltantes(c);
+  if (faltan.length) {
+    const mensaje = mensajeCodigosFaltantes(faltan);
+    await d.almacen.guardarResultado(pago.pagoId, { estado: 'pendiente', errorCodigo: 'CODIGOS_SIN_NO_CONFIGURADOS', error: mensaje, reintentable: false });
+    return { ok: false, estado: 'pendiente', codigo: 'CODIGOS_SIN_NO_CONFIGURADOS', mensaje, reintentable: false };
+  }
   const cuerpo = {
     idExterno: clave, sector: c.sector, sucursal: c.sucursal, puntoVenta: c.puntoVenta,
     comprador: {
@@ -136,7 +163,7 @@ export async function emitirFactura(
       ...(comprador.correo ? { correo: comprador.correo } : {}), ...(op.excepcionNit ? { codigoExcepcion: 1 as const } : {}),
     },
     metodoPago: c.metodoPago, moneda: 1, ...(modoIva === 'por_fuera' ? { ivaModo: 'por_fuera' as const } : {}),
-    items: [{ codigoProducto: c.codigoProducto, descripcion: descripcionDe(pago), cantidad: 1, precioUnitario: comoNumero(modoIva === 'por_fuera' ? netoCent : totalCent), descuento: 0 }],
+    items: [{ codigoProducto: c.codigoProducto, descripcion: descripcionDe(pago), cantidad: 1, unidadMedida: c.unidadMedida ?? UNIDAD_SERVICIOS_PRUEBAS, codigoProductoSin: String(c.codigoProductoSin).trim(), actividadEconomica: String(c.actividadEconomica).trim(), precioUnitario: comoNumero(modoIva === 'por_fuera' ? netoCent : totalCent), descuento: 0 }],
     extras: { pagoId: pago.pagoId, meses: pago.meses, mesesDeRegalo: pago.mesesDeRegalo, ...(pago.precioUsd ? { precioUsd: pago.precioUsd } : {}), ...(pago.tco ? { tcoUsdBob: pago.tco.usdBob, tcoFecha: pago.tco.fecha } : {}), ...(consumidorFinal ? { consumidorFinal: true } : {}) },
   };
   try {
