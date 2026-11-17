@@ -43,7 +43,7 @@ export class FacturacionKyrosController {
   @Get('webhook/entregas') entregas() { return this.s.entregasAviso(); }
   @Post('webhook/probar-entrega') @HttpCode(200) probarEntrega(@ActorActual() a: Actor) { return this.s.probarEntregaAviso(a); }
   @Post('webhook/reprocesar') @HttpCode(200)
-  reprocesarEntrega(@ActorActual() a: Actor, @Body() b: unknown) { const d = (b && typeof b === 'object' ? b : {}) as Record<string, unknown>; return this.s.reprocesarEntrega(a, { idExterno: typeof d.idExterno === 'string' ? d.idExterno : null, entregaId: typeof d.entregaId === 'string' ? d.entregaId : null }); }
+  reprocesarEntrega(@ActorActual() a: Actor, @Body() b: unknown) { const d = (b && typeof b === 'object' ? b : {}) as Record<string, unknown>; return this.s.reprocesarEntrega(a, { idExterno: typeof d.idExterno === 'string' ? d.idExterno : null, entregaId: typeof d.entregaId === 'string' ? d.entregaId : null, facturaId: typeof d.facturaId === 'string' ? d.facturaId : null, tipo: typeof d.tipo === 'string' ? d.tipo : null }); }
   @Post('facturas/:id/reprocesar') @HttpCode(200)
   reprocesar(@ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string) { return this.s.reprocesar(a, id); }
   @Post('integracion/verificar') @HttpCode(200)

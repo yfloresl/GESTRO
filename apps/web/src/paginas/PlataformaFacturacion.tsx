@@ -102,8 +102,9 @@ export function PlataformaFacturacion() {
   const fijarCliente = (id: string, habilitada: boolean | null) => correr(`cf-${id}`, () => api.put(`/plataforma/facturacion-kyros/clientes-facturacion/${id}`, { habilitada }), () => { void clientesFact.refetch(); return 'Facturación del cliente actualizada.'; });
   const entregas = useQuery({ queryKey: ['fact-entregas'], queryFn: () => api.get<EntregasAviso>('/plataforma/facturacion-kyros/webhook/entregas'), refetchInterval: 30_000, retry: false });
   const probarEntrega = () => correr('entrega', () => api.post<{ ok: boolean; mensaje: string }>('/plataforma/facturacion-kyros/webhook/probar-entrega', {}), (r) => { void entregas.refetch(); return r.mensaje; });
-  const reprocesarEntrega = (d: { idExterno?: string | null; entregaId?: string | null }) => correr('reproc', () => api.post<{ ok: boolean; mensaje: string }>('/plataforma/facturacion-kyros/webhook/reprocesar', d), (r) => { void entregas.refetch(); void q.refetch(); return r.mensaje; });
-  const reprocesarFactura = (id: string) => correr(`rp-${id}`, () => api.post<{ ok: boolean; mensaje?: string }>(`/plataforma/facturacion-kyros/facturas/${id}/reprocesar`, {}), (r) => { void q.refetch(); return r.ok ? 'Factura reprocesada: detalle completo registrado.' : (r.mensaje ?? ''); });
+  const [resRep, setResRep] = useState<{ id: string; ok: boolean; texto: string } | null>(null);
+  const reprocesarEntrega = (d: { idExterno?: string | null; entregaId?: string | null; facturaId?: string | null; tipo?: string | null }) => { setResRep({ id: d.entregaId ?? '', ok: true, texto: 'Reprocesando…' }); return correr('reproc', () => api.post<{ ok: boolean; mensaje: string }>('/plataforma/facturacion-kyros/webhook/reprocesar', d), (r) => { setResRep({ id: d.entregaId ?? '', ok: r.ok, texto: r.mensaje }); void entregas.refetch(); void q.refetch(); return r.mensaje; }).catch((e) => setResRep({ id: d.entregaId ?? '', ok: false, texto: String(e?.message ?? 'No se pudo reprocesar') })); };
+  const reprocesarFactura = (id: string) => { setResRep({ id, ok: true, texto: 'Reprocesando…' }); return correr(`rp-${id}`, () => api.post<{ ok: boolean; mensaje: string }>(`/plataforma/facturacion-kyros/facturas/${id}/reprocesar`, {}), (r) => { setResRep({ id, ok: r.ok, texto: r.mensaje }); void q.refetch(); return r.mensaje; }).catch((e) => setResRep({ id, ok: false, texto: String(e?.message ?? 'No se pudo reprocesar') })); };
   const verificar = () => correr('wh', () => api.post<{ ok: boolean; mensaje: string }>('/plataforma/facturacion-kyros/integracion/verificar', {}), (r) => r.mensaje);
 
   const t = q.data?.totales; const al = q.data?.alertas; const ig = integ.data;
@@ -150,9 +151,10 @@ export function PlataformaFacturacion() {
         <ul className="flex flex-col gap-1">
           {(entregas.data?.entregas ?? []).map((e) => (
             <li key={e.id} data-testid="entrega" className="flex flex-wrap items-center gap-space-sm font-body-sm"><strong>{e.tipo}</strong><span>{e.numero ? `N.º ${e.numero}` : (e.facturaId ?? '-')}</span><span>{e.estado}</span><span>{e.intentos} intento(s)</span><span>{e.ultimoIntentoEn ? new Date(e.ultimoIntentoEn).toLocaleString('es-BO', { timeZone: 'America/La_Paz' }) : '-'}</span><span>HTTP {e.ultimoCodigoHttp ?? '-'}</span><span>{e.registrada ? 'Registrada aquí' : 'No registrada aquí'}</span>
-              {!e.registrada && <button type="button" disabled={!!ocupado} onClick={() => void reprocesarEntrega({ idExterno: e.idExterno ?? null, entregaId: e.id })} className="h-9 px-space-sm text-primary font-label-md">Reprocesar</button>}</li>
+              {!e.registrada && <button type="button" disabled={!!ocupado} onClick={() => void reprocesarEntrega({ idExterno: e.idExterno ?? null, entregaId: e.id, facturaId: e.facturaId ?? null, tipo: e.tipo })} className="h-9 px-space-sm text-primary font-label-md">Reprocesar</button>}</li>
           ))}
         </ul>
+        {resRep && <p role="status" data-testid="res-reprocesar" className={`rounded-lg p-space-sm font-label-md ${resRep.ok ? 'bg-primary-fixed text-on-surface' : 'bg-error-container text-on-error-container'}`}>{resRep.texto}</p>}
       </div>
 
       <details className="rounded-xl border border-outline-variant p-space-md" data-testid="avanzado">
@@ -198,6 +200,7 @@ export function PlataformaFacturacion() {
               {x.error && <p className="font-body-sm text-error">{x.errorCodigo}: {x.error}{x.intentos ? ` (intentos: ${x.intentos})` : ''}</p>}
               {!x.error && x.errorCodigo === 'SIN_DATOS_FISCALES' && <p className="font-body-sm text-error">El cliente no tiene NIT/razón social válidos. Pídele que los cargue en Suscripción › Datos para tu factura, o emite como consumidor final.</p>}
               <div className="flex flex-wrap gap-space-xs">
+                {resRep && resRep.id === x.facturaId && <span role="status" className="font-body-sm">{resRep.texto}</span>}
                 {x.facturaId && !x.vistaRegistrada && ['emitida', 'en_proceso', 'observada'].includes(x.estado) && <button type="button" disabled={!!ocupado} onClick={() => void reprocesarFactura(x.facturaId!)} className="h-11 px-space-sm text-primary font-label-lg">Reprocesar</button>}
                 {(x.estado === 'pendiente' || x.estado === 'rechazada' || x.estado === 'emitiendo') && <button type="button" disabled={!!ocupado} onClick={() => emitir(x)} className={`${clases.primario} sm:w-auto sm:px-space-md`}>{trab ? 'Emitiendo…' : x.facturaId ? 'Reintentar' : 'Emitir factura'}</button>}
                 {x.estado === 'pendiente' && x.errorCodigo === 'SIN_DATOS_FISCALES' && <button type="button" disabled={!!ocupado} onClick={() => sinDatos(x)} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Emitir como consumidor final</button>}
