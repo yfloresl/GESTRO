@@ -5,7 +5,7 @@ import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { BD, Bd } from '../database/database.module';
 import { appConfig } from '../database/esquema';
 import { FacturaSinConexion } from './facturasin-conexion';
-import { asegurarWebhook, huellaCoincide, mensajeIntegracion, mensajePruebaEntrega, NUCLEO_INTEGRACION_VERSION, RegistroUrlPublica, urlPublica, urlWebhookDe, vistaEntregas, type EntregaFs, type SolicitudLike } from './nucleo/integracion';
+import { asegurarWebhook, cruzarEntregas, datosDeEvento, describirPruebaEntrega, huellaCoincide, huellaSecreto, latenciaReceptor, leerRegistroEntregas, mensajeIntegracion, NUCLEO_INTEGRACION_VERSION, puertoConHuella, registrarEntregaLocal, RegistroUrlPublica, urlPublica, urlWebhookDe, type EntregaFs, type RegistroEntregas, type SolicitudLike } from './nucleo/integracion';
 import { fijarUrlConocida, urlPublicaConocida } from './url-publica-conocida';
 
 export { urlPublicaConocida, origenPublicoDerivado } from './url-publica-conocida';
@@ -17,9 +17,7 @@ export const PREFIJO_TOKEN_EMISOR = 'facturacion.token.';
 
 type Webhook = { estado: 'pendiente' | 'suscrito' | 'error'; url: string | null; id: string | null; error: string | null; cuando: string | null; ultimaEntrega: string | null };
 type Enlace = { estado: string; error: string | null; cuando: string | null };
-type Recibida = { cuando: string; eventoId: string | null; tipo: string | null; factura: string | null; firmaOk: boolean; resultado: string };
-interface Guardado { urlPublica: string | null; urlPublicaAt: string | null; webhook: Webhook; enlace: Enlace; version: string; recepcion?: { total: number; rechazadas: number; ultimas: Recibida[] }; secretoResyncAt?: string | null }
-const TENANT_KYROS = 'kyros-tech';
+interface Guardado { urlPublica: string | null; urlPublicaAt: string | null; webhook: Webhook; enlace: Enlace; version: string; entregasRecibidas?: RegistroEntregas }
 const VACIO: Guardado = { urlPublica: null, urlPublicaAt: null, webhook: { estado: 'pendiente', url: null, id: null, error: null, cuando: null, ultimaEntrega: null }, enlace: { estado: 'pendiente', error: null, cuando: null }, version: NUCLEO_INTEGRACION_VERSION };
 
 export interface EstadoIntegracion {
@@ -93,67 +91,43 @@ export class IntegracionFacturaSinService implements OnModuleInit, OnModuleDestr
     else if (w.estado === 'suscrito') mensaje = `Listo: FacturaSIN avisa a ${w.url}.`;
     else if (w.estado === 'error') mensaje = w.error ?? 'No se pudo suscribir el aviso; el sistema reintenta solo.';
     else mensaje = 'El aviso de estados se suscribe solo en unos segundos.';
-    return { version: NUCLEO_INTEGRACION_VERSION, urlPublica: urlPublicaConocida(), webhook: w, credencial, recepcion: { total: g.recepcion?.total ?? 0, rechazadas: g.recepcion?.rechazadas ?? 0 }, enlace: g.enlace, mensaje };
+    return { version: NUCLEO_INTEGRACION_VERSION, urlPublica: urlPublicaConocida(), webhook: w, credencial, recepcion: (() => { const r = leerRegistroEntregas(g.entregasRecibidas); return { total: r.total, rechazadas: r.firmaInvalida }; })(), enlace: g.enlace, mensaje };
   }
 
-  /** Entrega RECIBIDA (la llama el endpoint receptor): fecha, evento, factura y resultado de firma/aplicacion. Guarda las 100 ultimas y lleva contadores reales. Nunca lanza. */
-  async registrarRecepcion(e: { eventoId?: string | null; tipo?: string | null; factura?: string | null; firmaOk: boolean; resultado: string }) {
-    const ahora = new Date().toISOString();
-    await this.escribir((g) => {
-      const r = g.recepcion ?? { total: 0, rechazadas: 0, ultimas: [] };
-      return { ...g, recepcion: { total: r.total + 1, rechazadas: r.rechazadas + (e.firmaOk ? 0 : 1), ultimas: [{ cuando: ahora, eventoId: e.eventoId ?? null, tipo: e.tipo ?? null, factura: e.factura ?? null, firmaOk: e.firmaOk, resultado: e.resultado.slice(0, 60) }, ...r.ultimas].slice(0, 100) },
-        webhook: e.firmaOk ? { ...g.webhook, ultimaEntrega: ahora } : g.webhook };
-    });
+  /** Cada peticion que llega al receptor del aviso queda registrada (fecha, evento, factura, resultado, firma, latencia): de aqui salen el contador real y la lista del panel. Nunca lanza. */
+  async registrarEntrega(crudo: string, eventoId: string, r: { http: number; resultado: string }, ms: number): Promise<void> {
+    const firmaValida = r.resultado !== 'firma_invalida' && r.resultado !== 'error_interno';
+    await this.escribir((g) => ({ ...g, entregasRecibidas: registrarEntregaLocal(leerRegistroEntregas(g.entregasRecibidas), { fecha: new Date().toISOString(), ...datosDeEvento(crudo, eventoId), resultado: r.resultado, firmaValida, ms }),
+      webhook: r.resultado !== 'firma_invalida' ? { ...g.webhook, ultimaEntrega: new Date().toISOString() } : g.webhook }));
   }
 
-  /** «Ultimas entregas del aviso»: las 5 ultimas segun FacturaSIN (estado, intentos, ultimo intento, HTTP) y si ESTE sistema la registro. */
-  async entregas() {
-    const g = await this.leer();
-    const rc = g.recepcion ?? { total: 0, rechazadas: 0, ultimas: [] };
-    const recepcion = { total: rc.total, rechazadas: rc.rechazadas, ultimas: rc.ultimas.slice(0, 5) };
-    const cli = await this.conexion.cliente(1);
-    if (!cli) return { disponible: false, mensaje: mensajeIntegracion({ codigo: 'NO_CONFIGURADO' }).mensaje, ultimas: [], recepcion };
+  /** «Ultimas entregas del aviso»: lo que FacturaSIN dice que entrego (con su HTTP) cruzado con lo que este sistema registro, contador real, latencia del receptor y huella del secreto. */
+  async entregasAviso() {
+    const reg = leerRegistroEntregas((await this.leer()).entregasRecibidas);
+    const secreto = (await this.cfg.leer<{ secretos: string[] }>(LLAVE_WEBHOOK))?.secretos?.[0] ?? null;
+    let remotas: EntregaFs[] = []; let error: string | null = null; let huella: { coincide: boolean; remota: string | null; local: string | null } | null = null;
     try {
-      const r = (await cli.llamar('GET', '/v1/integraciones/webhooks/entregas?limite=20')) as EntregaFs[] | { items?: EntregaFs[] };
-      const lista = Array.isArray(r) ? r : r.items ?? [];
-      const ids = new Set(rc.ultimas.filter((x) => x.firmaOk && ['aplicado', 'duplicado', 'sin_cambio', 'sin_efecto'].includes(x.resultado) && x.eventoId).map((x) => x.eventoId as string));
-      return { disponible: true, mensaje: null, ultimas: vistaEntregas(lista, ids), recepcion };
-    } catch (e) { return { disponible: false, mensaje: mensajeIntegracion(e).mensaje, ultimas: [], recepcion }; }
+      const av = await this.conexion.avisos();
+      remotas = await av.entregas(5);
+      const hr = await av.huellaRemota().catch(() => null);
+      huella = { coincide: huellaCoincide(hr, secreto), remota: hr, local: secreto ? huellaSecreto(secreto) : null };
+    } catch (e) { error = mensajeIntegracion(e).mensaje; }
+    return { recibidas: { total: reg.total, firmaInvalida: reg.firmaInvalida, ultima: reg.ultimas[0] ?? null, ultimas: reg.ultimas.slice(0, 5) }, latencia: latenciaReceptor(reg.ultimas), entregas: cruzarEntregas(remotas, reg.ultimas), huella, error };
   }
 
-  /** «Probar entrega»: FacturaSIN envia AHORA un aviso de prueba firmado a este sistema; el resultado se dice en lenguaje simple y se contrasta la huella del secreto. */
-  async probarEntrega() {
-    const cli = await this.conexion.cliente(0);
-    if (!cli) return { ok: false, mensaje: mensajeIntegracion({ codigo: 'NO_CONFIGURADO' }).mensaje, resultados: [] };
+  /** «Probar entrega»: primero compara la huella del secreto (y lo re-sincroniza UNA vez si no coincide) y luego pide a FacturaSIN un aviso de prueba; devuelve el HTTP real en lenguaje simple. */
+  async probarEntrega(actor: string | null) {
+    await this.asegurarWebhook(actor);
     try {
-      const r = (await cli.llamar('POST', '/v1/integraciones/webhooks/probar', { cuerpo: { tenantId: TENANT_KYROS } })) as { resultados?: Array<{ ok: boolean; codigoHttp: number | null; error?: string | null; secretoHuella?: string; ms?: number }> };
-      const resultados = r.resultados ?? [];
-      const sec = (await this.cfg.leer<{ secretos: string[] }>(LLAVE_WEBHOOK))?.secretos?.[0] ?? null;
-      const m = mensajePruebaEntrega(resultados, sec);
-      return { ...m, resultados: resultados.map((x) => ({ ok: x.ok, http: x.codigoHttp, ms: x.ms ?? null })) };
-    } catch (e) { return { ok: false, mensaje: mensajeIntegracion(e).mensaje, resultados: [] }; }
+      const r = await (await this.conexion.avisos()).probarEntrega('kyros-tech');
+      const d = describirPruebaEntrega(r);
+      await this.auditar(actor, 'facturacion_kyros.entrega_probada', { ok: d.ok, http: r.codigoHttp });
+      return { ...d, codigoHttp: r.codigoHttp, ms: r.ms ?? null };
+    } catch (e) { return { ok: false, mensaje: mensajeIntegracion(e).mensaje, codigoHttp: null, ms: null }; }
   }
 
-  /**
-   * Huella del secreto: lo que FacturaSIN firma debe ser lo que este sistema guardo. Si no coincide se re-sincroniza UNA vez (rota el secreto y lo guarda); nunca en cada «Verificar»:
-   * solo cuando hay desajuste y no se hizo ya en los ultimos 10 minutos.
-   */
-  private async secretoCoincide(guardados: string[]): Promise<boolean> {
-    if (!guardados.length) return false;
-    try {
-      const cli = await this.conexion.cliente(0);
-      if (!cli) return true;
-      const r = (await cli.llamar('GET', '/v1/integraciones/webhooks')) as Array<{ tenantId?: string; secretoHuella?: string }> | { items?: Array<{ tenantId?: string; secretoHuella?: string }> };
-      const lista = Array.isArray(r) ? r : r.items ?? [];
-      const h = lista.find((x) => x.tenantId === TENANT_KYROS)?.secretoHuella ?? lista[0]?.secretoHuella;
-      if (!h) return true; // FacturaSIN aun no publica la huella: no se toca nada
-      if (guardados.some((s) => huellaCoincide(h, s))) return true;
-      const g = await this.leer();
-      if (g.secretoResyncAt && Date.now() - new Date(g.secretoResyncAt).getTime() < 10 * 60_000) return true; // ya se resincronizo hace poco: una sola vez
-      await this.escribir((x) => ({ ...x, secretoResyncAt: new Date().toISOString() }));
-      return false;
-    } catch { return true; }
-  }
+  /** Pide a FacturaSIN que vuelva a enviar UNA entrega concreta. */
+  async reintentarEntrega(id: string): Promise<void> { await (await this.conexion.avisos()).reintentarEntrega(id); }
 
   async enlazarCredencial(actor: string | null, token?: string | null): Promise<'propia' | 'puente' | 'ninguna'> {
     try {
@@ -180,7 +154,7 @@ export class IntegracionFacturaSinService implements OnModuleInit, OnModuleDestr
     try {
       const url = urlWebhookDe(base);
       const previos = (await this.cfg.leer<{ secretos: string[] }>(LLAVE_WEBHOOK))?.secretos ?? [];
-      const r = await asegurarWebhook(await this.conexion.enlace(), { url, secretoGuardado: await this.secretoCoincide(previos) });
+      const r = await asegurarWebhook(puertoConHuella(await this.conexion.enlace(), await this.conexion.avisos()), { url, secretoGuardado: previos.length > 0, huellaLocal: previos[0] ? huellaSecreto(previos[0]) : null });
       if (r.secreto) await this.cfg.guardar(LLAVE_WEBHOOK, { secretos: [r.secreto, ...previos].slice(0, 2) }, null);
       await this.anotarWebhook({ estado: 'suscrito', url, id: r.id, error: null });
       if (r.accion !== 'sin_cambios') await this.auditar(actor, 'facturacion_kyros.webhook_asegurado', { url, accion: r.accion });

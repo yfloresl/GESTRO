@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createHmac } from 'node:crypto';
-import { evaluarEntrega, huellaCoincide, huellaSecreto, mensajePruebaEntrega, vistaEntregas, asegurarWebhook, convencion, empresaExterna, mensajeIntegracion, normalizarEmpresa, pasosDeFacturaSin, RegistroUrlPublica, resumenPrueba, RUTA_WEBHOOK, urlPublica, urlWebhookDe, type PuertoEnlaceWebhook } from '../src/facturacion-kyros/nucleo/integracion';
+import { asegurarWebhook, convencion, empresaExterna, mensajeIntegracion, normalizarEmpresa, pasosDeFacturaSin, RegistroUrlPublica, resumenPrueba, RUTA_WEBHOOK, urlPublica, urlWebhookDe, type PuertoEnlaceWebhook } from '../src/facturacion-kyros/nucleo/integracion';
 import { ErrorEnlace, verificarFirmaWebhook } from '../src/facturacion-kyros/nucleo/enlace-facturasin';
 
 const req = (h: Record<string, string>, protocol = 'http') => ({ headers: h, protocol });
@@ -84,45 +84,134 @@ describe('mensajes', () => {
   });
 });
 
-const firmar = (secreto: string, cuerpo: string, t = Math.floor(Date.now() / 1000)) => `t=${t},v1=${createHmac('sha256', secreto).update(`${t}.${cuerpo}`).digest('hex')}`;
+/* ------------------------------ Fase 4: entregas del aviso, huella, registro local y contrato de firma ------------------------------ */
+import { createHmac as hmac } from 'node:crypto';
+import { vistaParaGuardar, resumirPrueba, latenciaReceptor, AvisosFacturaSin, cruzarEntregas, datosDeEvento, describirPruebaEntrega, huellaCoincide, huellaSecreto, leerRegistroEntregas, puertoConHuella, registrarEntregaLocal } from '../src/facturacion-kyros/nucleo/integracion';
 
-describe('entregas del aviso (v2.1.0)', () => {
-  it('huella del secreto: 8 hex y coincidencia', () => {
-    expect(huellaSecreto('abc')).toMatch(/^[0-9a-f]{8}$/);
-    expect(huellaCoincide(huellaSecreto('abc'), 'abc')).toBe(true);
-    expect(huellaCoincide(huellaSecreto('abc'), 'otro')).toBe(false);
+describe('huella del secreto de firma', () => {
+  it('es el SHA-256 truncado a 8 hex (igual que FacturaSIN) y compara sin mostrar el secreto', () => {
+    expect(huellaSecreto('abc')).toBe('ba7816bf');
+    expect(huellaCoincide('ba7816bf', 'abc')).toBe(true);
+    expect(huellaCoincide('ba7816bf', 'otro')).toBe(false);
     expect(huellaCoincide(null, 'abc')).toBe(false);
-    expect(huellaCoincide(huellaSecreto('abc'), null)).toBe(false);
   });
-  it('vistaEntregas: 5 ultimas y si el sistema la registro', () => {
-    const e = (i: number) => ({ id: `d${i}`, eventoId: `ev${i}`, tipo: 'factura.validada', estado: 'entregada', intentos: 1, ultimoIntentoEn: null, ultimoCodigoHttp: 200, ultimoError: null, facturaId: `f${i}`, numero: i, estadoFactura: 'validada', idExterno: null });
-    const v = vistaEntregas([1, 2, 3, 4, 5, 6, 7].map(e), new Set(['ev2']));
-    expect(v).toHaveLength(5);
-    expect(v[1]!.registradaPorElSistema).toBe(true);
-    expect(v[0]!.registradaPorElSistema).toBe(false);
-    expect(v[0]).toMatchObject({ http: 200, facturaId: 'f1', estadoFactura: 'validada' });
+});
+
+describe('asegurarWebhook: no rota el secreto en cada pulsación; solo si la huella no coincide', () => {
+  const url = urlWebhookDe('https://hub.kyros-tech.com');
+  function puerto(huellaRemota: string | null) {
+    const llamadas: Array<{ rotar: boolean }> = [];
+    const p = { huellaRemota: async () => huellaRemota, asegurarWebhook: async (_u: string, _t?: string, o?: { rotarSecreto?: boolean }) => { llamadas.push({ rotar: !!o?.rotarSecreto }); return { suscripciones: [{ id: 'w', tenantId: '*', url, estado: 'sin_cambios' }], secreto: o?.rotarSecreto ? 'nuevo-secreto' : null }; } };
+    return { p, llamadas };
+  }
+  it('huella igual → ninguna rotación (Verificar repetido no cambia nada)', async () => {
+    const f = puerto(huellaSecreto('guardado'));
+    for (let i = 0; i < 3; i++) { const r = await asegurarWebhook(f.p, { url, secretoGuardado: true, huellaLocal: huellaSecreto('guardado') }); expect(r.accion).toBe('sin_cambios'); }
+    expect(f.llamadas.every((l) => !l.rotar)).toBe(true);
   });
-  it('mensajes de la prueba de entrega en lenguaje simple', () => {
-    expect(mensajePruebaEntrega([]).ok).toBe(false);
-    expect(mensajePruebaEntrega([{ ok: true, codigoHttp: 200, secretoHuella: huellaSecreto('s') }], 's')).toMatchObject({ ok: true });
-    expect(mensajePruebaEntrega([{ ok: true, codigoHttp: 200, secretoHuella: huellaSecreto('s') }], 'otro').ok).toBe(false);
-    expect(mensajePruebaEntrega([{ ok: false, codigoHttp: 401 }]).mensaje).toMatch(/firma/);
-    expect(mensajePruebaEntrega([{ ok: false, codigoHttp: 404 }]).mensaje).toMatch(/ruta/);
-    expect(mensajePruebaEntrega([{ ok: false, codigoHttp: 503 }]).mensaje).toMatch(/error interno/);
-    expect(mensajePruebaEntrega([{ ok: false, codigoHttp: null, error: 'ECONNREFUSED' }]).mensaje).toMatch(/llegar/);
-    for (const r of [401, 404, 500, null]) expect(mensajePruebaEntrega([{ ok: false, codigoHttp: r }]).mensaje).not.toMatch(/Keycloak|variable/i);
+  it('huella distinta (el secreto local no es el que usa FacturaSIN) → se re-sincroniza UNA vez', async () => {
+    const f = puerto(huellaSecreto('el-de-facturasin'));
+    const r = await asegurarWebhook(f.p, { url, secretoGuardado: true, huellaLocal: huellaSecreto('viejo') });
+    expect(r).toMatchObject({ accion: 'secreto_renovado', secreto: 'nuevo-secreto' });
+    expect(f.llamadas.filter((l) => l.rotar)).toHaveLength(1);
   });
-  it('contrato: un evento factura.validada firmado con el secreto del sistema se acepta; con otro secreto, alterado o viejo se rechaza', () => {
-    const secreto = 'a'.repeat(64);
-    const cuerpo = JSON.stringify({ id: 'ev1', tipo: 'factura.validada', empresaId: 'e', creadoEn: new Date().toISOString(), datos: { facturaId: 'f1', estado: 'validada', idExterno: 'x:1', numero: 7, cuf: 'C', factura: { desglose: { neto: 1, iva: 0.13, total: 1.13 } } } });
-    const ok = evaluarEntrega([secreto], firmar(secreto, cuerpo), cuerpo);
-    expect(ok).toMatchObject({ http: 200, resultado: 'ok' });
-    expect(ok.evento).toMatchObject({ id: 'ev1', tipo: 'factura.validada' });
-    expect(evaluarEntrega(['b'.repeat(64)], firmar(secreto, cuerpo), cuerpo)).toMatchObject({ http: 401, resultado: 'firma_invalida' });
-    expect(evaluarEntrega([secreto], firmar(secreto, cuerpo), cuerpo + ' ')).toMatchObject({ http: 401 });
-    expect(evaluarEntrega([secreto], firmar(secreto, cuerpo, Math.floor(Date.now() / 1000) - 3600), cuerpo)).toMatchObject({ http: 401 });
-    expect(evaluarEntrega([], firmar(secreto, cuerpo), cuerpo)).toMatchObject({ http: 401 });
-    const sinTipo = JSON.stringify({ id: 'ev2', datos: {} });
-    expect(evaluarEntrega([secreto], firmar(secreto, sinTipo), sinTipo)).toMatchObject({ http: 400, resultado: 'cuerpo_invalido' });
+  it('si no se puede leer la huella remota no rota (no se rompe lo que funciona)', async () => {
+    const p = { huellaRemota: async (): Promise<string | null> => { throw new Error('x'); }, asegurarWebhook: async () => ({ suscripciones: [{ id: 'w', tenantId: '*', url, estado: 'sin_cambios' }], secreto: null }) };
+    expect((await asegurarWebhook(p, { url, secretoGuardado: true, huellaLocal: 'aaaaaaaa' })).accion).toBe('sin_cambios');
+  });
+});
+
+describe('registro local de entregas recibidas', () => {
+  const e = (o: Partial<{ resultado: string; firmaValida: boolean; facturaId: string | null; evento: string; eventoId: string }> = {}) => ({ fecha: '2026-11-17T15:00:00Z', evento: 'factura.validada', eventoId: 'ev-1', facturaId: 'f1', resultado: 'aplicado', firmaValida: true, ...o });
+  it('cuenta, guarda las últimas 20 y lee texto u objeto', () => {
+    let r = leerRegistroEntregas(null); expect(r).toEqual({ total: 0, firmaInvalida: 0, ultimas: [] });
+    for (let i = 0; i < 25; i++) r = registrarEntregaLocal(r, e({ eventoId: `ev-${i}`, firmaValida: i % 5 !== 0, resultado: i % 5 !== 0 ? 'aplicado' : 'firma_invalida' }));
+    expect(r.total).toBe(25); expect(r.firmaInvalida).toBe(5); expect(r.ultimas).toHaveLength(20); expect(r.ultimas[0]!.eventoId).toBe('ev-24');
+    expect(leerRegistroEntregas(JSON.stringify(r))).toEqual(r); expect(leerRegistroEntregas(r)).toEqual(r); expect(leerRegistroEntregas('basura').total).toBe(0);
+  });
+  it('datosDeEvento no confía en el cuerpo y no lanza', () => {
+    expect(datosDeEvento('{"id":"e1","tipo":"factura.validada","datos":{"facturaId":"f9"}}')).toEqual({ evento: 'factura.validada', eventoId: 'e1', facturaId: 'f9' });
+    expect(datosDeEvento('no json', 'cab-1')).toEqual({ evento: '—', eventoId: 'cab-1', facturaId: null });
+  });
+  it('cruza lo que FacturaSIN entregó con lo que el sistema registró (firma válida y misma factura/evento)', () => {
+    const rem = [{ id: '1', facturaId: 'f1', tipo: 'factura.validada', estado: 'entregada', intentos: 1, ultimoCodigoHttp: 200, ultimoIntentoEn: 'x' }, { id: '2', facturaId: 'f2', tipo: 'factura.validada', estado: 'pendiente', intentos: 2, ultimoCodigoHttp: 401, ultimoIntentoEn: 'x' }];
+    const cr = cruzarEntregas(rem, [e({ facturaId: 'f1' }), e({ facturaId: 'f2', firmaValida: false, resultado: 'firma_invalida' })]);
+    expect(cr.map((x) => x.registrada)).toEqual([true, false]);
+  });
+});
+
+describe('«Probar entrega» en lenguaje simple', () => {
+  const url = 'https://hub.kyros-tech.com/api/v1/webhooks/facturasin';
+  it('éxito y fallos con HTTP real', () => {
+    expect(describirPruebaEntrega({ ok: true, codigoHttp: 204, ms: 120, url }).mensaje).toBe('FacturaSIN pudo avisarte (HTTP 204, 120 ms).');
+    expect(describirPruebaEntrega({ ok: false, codigoHttp: 404, url }).mensaje).toContain('FacturaSIN no pudo llegar a /api/v1/webhooks/facturasin: HTTP 404');
+    expect(describirPruebaEntrega({ ok: false, codigoHttp: 401, url }).mensaje).toContain('firma');
+    expect(describirPruebaEntrega({ ok: false, codigoHttp: 413, url }).mensaje).toContain('más grande');
+    expect(describirPruebaEntrega({ ok: false, codigoHttp: null, error: 'ECONNREFUSED', url }).mensaje).toContain('ECONNREFUSED');
+  });
+});
+
+describe('AvisosFacturaSin (auditoría con la credencial propia)', () => {
+  it('consulta entregas, huella y prueba; ante 401 se re-enlaza UNA vez', async () => {
+    let enlaces = 0; let cred = 'viejo';
+    const enlace = { credencial: async () => cred, enlazar: async () => { enlaces++; cred = 'nuevo'; return cred; } };
+    const visto: string[] = [];
+    const f = (async (u: string, i: { method: string; headers: Record<string, string> }) => {
+      visto.push(`${i.method} ${u.replace('https://fs.test/api', '')} ${i.headers.authorization}`);
+      if (i.headers.authorization === 'Bearer viejo') return new Response('{"codigo":"NO_AUTENTICADO","mensaje":"x"}', { status: 401 });
+      if (u.includes('/reintentar')) return Response.json({ ok: true });
+      if (u.includes('/entregas')) return Response.json([{ id: '1', facturaId: 'f1', tipo: 'factura.validada', estado: 'entregada', intentos: 1, ultimoCodigoHttp: 200, ultimoIntentoEn: 't' }]);
+      if (u.endsWith('/probar')) return Response.json({ empresa: 'x:kyros-tech', resultados: [{ webhookId: 'w', url: 'https://x/y', ok: true, codigoHttp: 204, ms: 9, error: null, secretoHuella: 'abcd1234' }] });
+      return Response.json([{ id: 'w', tenantId: 'kyros-tech', url: 'https://x', activo: true, secretoHuella: 'abcd1234' }]);
+    }) as unknown as typeof fetch;
+    const a = new AvisosFacturaSin(enlace, 'https://fs.test/api', f);
+    expect((await a.entregas(5))[0]!.facturaId).toBe('f1');
+    expect(enlaces).toBe(1);
+    expect(await a.huellaRemota()).toBe('abcd1234');
+    expect((await a.probarEntrega())).toMatchObject({ ok: true, codigoHttp: 204 });
+    expect(await a.reintentarEntrega('en-1')).toEqual({ ok: true });
+    expect(visto[0]).toContain('/v1/integraciones/webhooks/entregas?limite=5');
+    const p = puertoConHuella({ asegurarWebhook: async () => ({ suscripciones: [], secreto: null }) }, a);
+    expect(await p.huellaRemota!()).toBe('abcd1234');
+  });
+});
+
+describe('contrato de firma: evento factura.validada real firmado como FacturaSIN', () => {
+  /** Misma construcción que FacturaSIN: `X-FacturaSIN-Signature: t=<epoch>,v1=HMAC-SHA256(secreto, "t.cuerpoCrudo")`. */
+  const firmar = (secreto: string, cuerpo: string, t = Math.floor(Date.now() / 1000)) => `t=${t},v1=${hmac('sha256', secreto).update(`${t}.${cuerpo}`).digest('hex')}`;
+  const evento = (xml: string) => JSON.stringify({ id: 'ev-9', tipo: 'factura.validada', empresaId: 'e1', creadoEn: new Date().toISOString(), datos: { facturaId: 'f-9', cuf: 'ABC123', numero: 14, estado: 'validada', idExterno: 'hub:factura-1', ambientePruebas: true, version: 1, factura: { fechaEmision: '2026-11-17T15:30:00.000Z', totales: { montoTotal: 1969.93 }, items: [{ descripcion: 'Suscripción Hub — Ñandú «plan» ✓', cantidad: 1, precioUnitario: 1969.93 }] }, enlaces: { pdf: '/p', xml: '/x', qr: null }, xml } });
+  it('la firma vale sobre el cuerpo CRUDO (con acentos, ñ, comillas y un XML grande), y falla con otro secreto, cuerpo alterado o reenvío viejo', async () => {
+    const { verificarFirmaWebhook } = await import('../src/facturacion-kyros/nucleo/enlace-facturasin');
+    const secreto = 'a'.repeat(64); const grande = evento('<facturaElectronica>' + 'x'.repeat(300_000) + '</facturaElectronica>');
+    expect(Buffer.byteLength(grande)).toBeGreaterThan(300_000); // más que el límite por defecto (100 kB) de los servidores Express/Nest
+    expect(verificarFirmaWebhook(secreto, firmar(secreto, grande), grande)).toBe(true);
+    expect(verificarFirmaWebhook(secreto, firmar(secreto, grande), grande.replace('1969.93', '1.00'))).toBe(false);
+    expect(verificarFirmaWebhook('b'.repeat(64), firmar(secreto, grande), grande)).toBe(false);
+    expect(verificarFirmaWebhook(secreto, firmar(secreto, grande, 1_000_000_000), grande)).toBe(false);
+    expect(verificarFirmaWebhook(['b'.repeat(64), secreto], firmar(secreto, grande), grande)).toBe(true); // rotación con dos secretos
+  });
+});
+
+describe('v2.2: «Probar entrega» sin mensajes contradictorios, latencia del receptor y vista completa', () => {
+  it('resumirPrueba lee {resultados:[…]} (respuesta real de FacturaSIN): ok con HTTP real; el primer fallo gana; sin resultados es un error explícito', () => {
+    expect(resumirPrueba({ empresa: 'e', resultados: [{ webhookId: 'w', url: 'u', ok: true, codigoHttp: 204, ms: 12, error: null, secretoHuella: 'abcd1234' }] })).toMatchObject({ ok: true, codigoHttp: 204, ms: 12 });
+    expect(resumirPrueba({ resultados: [{ ok: true, codigoHttp: 204 }, { ok: false, codigoHttp: 401, error: 'firma' }] })).toMatchObject({ ok: false, codigoHttp: 401 });
+    expect(resumirPrueba({ ok: true, codigoHttp: 200 })).toMatchObject({ ok: true, codigoHttp: 200 });
+    const vacio = resumirPrueba({ empresa: 'e', resultados: [] });
+    expect(vacio.ok).toBe(false); expect(vacio.error).toMatch(/no devolvió/);
+    expect(describirPruebaEntrega(resumirPrueba({ resultados: [{ ok: true, codigoHttp: 204, ms: 9 }] })).ok).toBe(true);
+  });
+  it('latenciaReceptor resume lo medido (última, máxima, promedio) y tolera registros sin medida', () => {
+    const l = (ms?: number) => ({ fecha: 'x', evento: 'e', eventoId: 'i', facturaId: null, resultado: 'aplicado', firmaValida: true, ms });
+    expect(latenciaReceptor([l(40), l(10), l()])).toEqual({ ultimaMs: 40, maxMs: 40, promedioMs: 25 });
+    expect(latenciaReceptor([])).toEqual({ ultimaMs: null, maxMs: null, promedioMs: null });
+  });
+  it('vistaParaGuardar conserva la factura tal cual (sin alterar totales) y completa enlaces/estado/CUF/número; fecha solo si es válida', () => {
+    const f = { fechaEmision: '2026-11-17T15:30:00.000Z', totales: { montoTotal: 1969.93 }, items: [{ descripcion: 'x' }] };
+    const v = vistaParaGuardar(f, { enlaces: { pdf: '/p' }, estado: 'validada', cuf: 'ABC', numero: 14 })!;
+    expect(v.respuesta).toMatchObject({ totales: { montoTotal: 1969.93 }, enlaces: { pdf: '/p' }, estado: 'validada', cuf: 'ABC', numero: 14 });
+    expect(v.fechaEmision).toBe('2026-11-17T15:30:00.000Z');
+    expect(vistaParaGuardar({ fechaEmision: 'nada', a: 1 })!.fechaEmision).toBeNull();
+    expect(vistaParaGuardar(null)).toBeNull(); expect(vistaParaGuardar({})).toBeNull(); expect(vistaParaGuardar([1])).toBeNull();
   });
 });

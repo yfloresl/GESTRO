@@ -8,6 +8,8 @@ import { AppModule } from './app.module';
 import { FiltroDeErrores } from './comun/errores';
 import { entorno } from './config/entorno';
 import { aplicarMigraciones } from './database/migraciones';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import { analizadorAviso, esAviso } from './facturacion-kyros/aviso-cuerpo';
 import { IntegracionFacturaSinService } from './facturacion-kyros/integracion-fs.service';
 
 export async function crearApp(): Promise<NestExpressApplication> {
@@ -15,6 +17,8 @@ export async function crearApp(): Promise<NestExpressApplication> {
   app.set('trust proxy', 1); // detrás del gateway: IP real para los límites de uso
   app.setGlobalPrefix('api/v1');
   // R1 (integracion FacturaSIN): cada peticion mantiene al dia la URL publica derivada (Host/X-Forwarded-*); nada de variables de entorno.
+  // Aviso de FacturaSIN: lleva la factura completa y su XML (puede pasar de los 100 kB por defecto). Se admite hasta 2 MB SOLO en esa ruta y se conserva el cuerpo crudo para verificar la firma.
+  app.use((req: IncomingMessage, res: ServerResponse, next: (err?: unknown) => void) => (esAviso(req.method ?? '', (req as { path?: string }).path ?? req.url ?? '') ? analizadorAviso(req, res, next) : next()));
   const integracionFs = app.get(IntegracionFacturaSinService);
   app.use(((req: never, _res: unknown, next: () => void) => { void integracionFs.observar(req); next(); }) as never);
   app.use(cookieParser());

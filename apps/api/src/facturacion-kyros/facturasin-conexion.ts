@@ -4,7 +4,7 @@ import { IntegracionesService } from '../integraciones/integraciones';
 import { EMISOR_POR_DEFECTO, KyrosIdService } from '../kyros-id/kyros-id.service';
 import { FacturaSinClient, tokenClientCredentials } from './nucleo';
 import { EnlaceFacturaSin } from './nucleo/enlace-facturasin';
-import { convencion } from './nucleo/integracion';
+import { AvisosFacturaSin, convencion } from './nucleo/integracion';
 
 const CONV = convencion('gestro');
 export const SISTEMA = 'gestro';
@@ -74,6 +74,9 @@ export class FacturaSinConexion {
     });
     return this.enlaceFs;
   }
+
+  /** Auditoria del aviso de FacturaSIN (entregas, huella del secreto, prueba de entrega, reintento) con la credencial propia. */
+  async avisos(): Promise<AvisosFacturaSin> { return new AvisosFacturaSin(await this.enlace(), await this.urlBase(), this.fetchConTiempo()); }
 
   /** Enlace automatico al arrancar o al «Conectar y probar»: idempotente; si ya hay credencial no hace nada. `token` = administrador de plataforma (opcional, no se guarda). */
   async enlazarSiFalta(token?: string | null): Promise<'ya_enlazada' | 'enlazada' | 'sin_arranque'> {

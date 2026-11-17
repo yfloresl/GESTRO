@@ -5,7 +5,8 @@ import type { Actor } from '../comun/acceso';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { entorno } from '../config/entorno';
 import { BD, Bd, Tenant, TenantDb } from '../database/database.module';
-import { evaluarEntrega, normalizarEmpresa, urlWebhookDe } from './nucleo/integracion';
+import { mensajeIntegracion as mensajeIntegracionFs, normalizarEmpresa, urlWebhookDe, vistaParaGuardar } from './nucleo/integracion';
+import { verificarFirmaWebhook } from './nucleo';
 import { FacturaSinConexion } from './facturasin-conexion';
 import { FacturacionEmisorService } from '../facturacion-emisor/facturacion-emisor.service';
 import { IntegracionFacturaSinService, LLAVE_WEBHOOK } from './integracion-fs.service';
@@ -249,7 +250,7 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
       pagoId: x.pago_id, facturaId: x.k_id ?? null, cliente: x.cuenta, sucursal: x.sucursal, nit: x.nit ?? null,
       monto: x.monto, validadoEn: x.validado_en ? new Date(String(x.validado_en)).toISOString() : null,
       estado, simulada: emitidaSim, sinFactura: !x.k_id || ['pendiente', 'emitiendo', 'rechazada'].includes(estado),
-      numero: x.k_numero ?? null, cuf: x.k_cuf ?? null, total: x.k_total === null || x.k_total === undefined ? null : deCentavos(BigInt(String(x.k_total))), iva: x.k_iva === null || x.k_iva === undefined ? null : deCentavos(BigInt(String(x.k_iva))),
+      numero: x.k_numero ?? null, cuf: x.k_cuf ?? null, vistaRegistrada: x.k_tienevista === true, verificadaEn: x.k_verif ?? null, total: x.k_total === null || x.k_total === undefined ? null : deCentavos(BigInt(String(x.k_total))), iva: x.k_iva === null || x.k_iva === undefined ? null : deCentavos(BigInt(String(x.k_iva))),
       comprador: x.k_id ? { nombre: x.k_nombre, documento: x.k_doc, consumidorFinal: x.k_cf } : null,
       intentos: x.k_intentos ?? 0, error: x.k_err ?? null, errorCodigo: x.k_errc ?? (sinDatos ? 'SIN_DATOS_FISCALES' : null), reintentable: x.k_retry ?? !sinDatos,
       avisoFiscal: x.k_aviso ?? null, motivoAnulacion: x.k_vcom ?? null, emitidaEn: x.k_emit ? new Date(String(x.k_emit)).toISOString() : null,
@@ -259,7 +260,7 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
 
   async listar(f: FiltroListaT) {
     const filas = (await this.bd.execute(sql`SELECT p.id AS pago_id, a.legal_name AS cuenta, r.name AS sucursal, a.nit, a.fiscal_doc_type AS doc_tipo, p.amount_bob::text AS monto, p.validated_at AS validado_en,
-        k.id AS k_id, k.status AS k_status, k.test_environment AS k_test, k.invoice_number AS k_numero, k.cuf AS k_cuf, k.total_bob_cent::text AS k_total, k.iva_bob_cent::text AS k_iva, k.buyer_name AS k_nombre,
+        k.id AS k_id, k.status AS k_status, k.test_environment AS k_test, k.invoice_number AS k_numero, k.cuf AS k_cuf, (k.fs_response IS NOT NULL) AS k_tienevista, k.verified_at AS k_verif, k.total_bob_cent::text AS k_total, k.iva_bob_cent::text AS k_iva, k.buyer_name AS k_nombre,
         (k.buyer_doc_type || ' ' || k.buyer_doc_number) AS k_doc, k.buyer_fallback AS k_cf, k.attempts AS k_intentos, k.last_error AS k_err, k.last_error_code AS k_errc, k.retryable AS k_retry, k.fiscal_notice AS k_aviso, k.void_comment AS k_vcom, k.emitted_at AS k_emit
       ${this.DESDE} WHERE ${this.where(f)} ORDER BY p.validated_at DESC NULLS LAST, p.id LIMIT ${f.limite} OFFSET ${f.desde}`)).rows as Fila[];
     return { filas: filas.map((x) => this.vista(x)), totales: await this.totales(f), alertas: await this.alertas() };
@@ -357,28 +358,81 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
   /* ---------------- webhook de retorno y conciliación ---------------- */
 
   /** «Verificar / Reintentar»: dispara lo mismo que el sistema hace solo (enlace de credenciales + webhook con la URL publica derivada). Sin contrasena, sin URL tecleada. */
-  /** Panel: ultimas entregas del aviso (segun FacturaSIN) + entregas recibidas aqui. */
-  entregasAviso() { return this.integracion.entregas(); }
-  probarEntregaAviso() { return this.integracion.probarEntrega(); }
   verificarIntegracion(a: Actor, token?: string | null) { return this.integracion.verificar(a.sub, true, token); }
 
   /** Procesa una entrega firmada. Devuelve el código HTTP que debe recibir FacturaSIN. */
-  /** Endpoint receptor: evalua la firma, aplica el evento y deja registro de la entrega (fecha, evento, factura, resultado) para el panel. */
-  async recibirWebhook(cabeceraFirma: string, eventoId: string, crudo: string): Promise<{ http: number; resultado: string }> {
-    const r = await this.aplicarWebhook(cabeceraFirma, eventoId, crudo);
-    let tipo: string | null = null; let factura: string | null = null; let evId: string | null = eventoId || null;
-    if (r.resultado !== 'firma_invalida') {
-      try { const ev = JSON.parse(crudo) as { id?: string; tipo?: string; datos?: { facturaId?: string; idExterno?: string } }; tipo = ev.tipo ?? null; factura = ev.datos?.facturaId ?? ev.datos?.idExterno ?? null; evId = evId ?? ev.id ?? null; } catch { /* cuerpo invalido */ }
+  /** «Ultimas entregas del aviso» y «Probar entrega» (HTTP real) para el panel. */
+  entregasAviso() { return this.integracion.entregasAviso(); }
+  probarEntregaAviso(a: Actor) { return this.integracion.probarEntrega(a.sub); }
+
+  /** Guarda la vista COMPLETA devuelta por FacturaSIN (tal cual, sin alterar datos fiscales). Nunca lanza: «Reprocesar» y el ciclo la completan. */
+  private async guardarVista(id: string, v: ReturnType<typeof vistaParaGuardar>): Promise<boolean> {
+    if (!v) return false;
+    try {
+      await this.bd.execute(sql`UPDATE kyros_invoices SET fs_response = ${JSON.stringify(v.respuesta)}::jsonb, emitted_at = COALESCE(emitted_at, ${v.fechaEmision}::timestamptz), verified_at = now() WHERE id = ${id}::uuid`);
+      return true;
+    } catch { return false; }
+  }
+
+  /** Consulta la factura a FacturaSIN por el id de este sistema, aplica estado/CUF/numero (sin retroceder) y REGISTRA la vista completa. Idempotente. */
+  private async sincronizarDesdeFs(k: Fila): Promise<{ estado: string; registrada: boolean }> {
+    const config = await this.config(); const cliente = await this.cliente(config, true);
+    if (!cliente) throw new HttpException({ code: 'NO_CONFIGURADO', message: 'La integracion con FacturaSIN no esta lista.' }, 503);
+    const f = await cliente.porIdExterno(String(k.idempotency_key), config.empresa);
+    const destino = estadoLocalDe(f.estado);
+    if (aceptaTransicion(k.status as EstadoLocal, destino)) {
+      await this.bd.execute(sql`UPDATE kyros_invoices SET status = ${destino}, facturasin_id = COALESCE(facturasin_id, ${f.id ?? null}), cuf = COALESCE(${f.cuf ?? null}, cuf), invoice_number = COALESCE(${f.numero ?? null}, invoice_number),
+        emitted_at = CASE WHEN ${destino} = 'emitida' AND emitted_at IS NULL THEN now() ELSE emitted_at END, updated_at = now() WHERE id = ${String(k.id)}::uuid`);
     }
-    void this.integracion.registrarRecepcion({ eventoId: evId, tipo, factura, firmaOk: r.resultado !== 'firma_invalida', resultado: r.resultado });
+    const registrada = await this.guardarVista(String(k.id), vistaParaGuardar(f));
+    return { estado: destino, registrada };
+  }
+
+  /** «Reprocesar» una factura de Kyros: la busca en FacturaSIN por su id externo y registra la vista completa (CUF, fecha, estado, totales, enlaces). */
+  async reprocesar(a: Actor, id: string): Promise<{ ok: boolean; estado?: string; registrada?: boolean; mensaje?: string }> {
+    const k = (await this.bd.execute(sql`SELECT id, status, restaurant_id, idempotency_key FROM kyros_invoices WHERE id = ${id}::uuid`)).rows[0] as Fila | undefined;
+    if (!k) throw new NotFoundException('Factura no encontrada.');
+    try {
+      const r = await this.sincronizarDesdeFs(k);
+      await this.auditar(String(k.restaurant_id), a.sub, 'facturacion_kyros.reprocesada', String(k.id), { estado: r.estado, registrada: r.registrada });
+      return { ok: true, ...r };
+    } catch (e) { return { ok: false, mensaje: mensajeIntegracionFs(e).mensaje }; }
+  }
+
+  /** «Reprocesar» una ENTREGA que FacturaSIN hizo y este sistema no registro: busca la factura por su id externo y la registra; si no se encuentra, pide reenviar esa entrega. */
+  async reprocesarEntrega(a: Actor, d: { idExterno?: string | null; entregaId?: string | null }): Promise<{ ok: boolean; mensaje: string; registrada?: boolean }> {
+    const ext = String(d.idExterno ?? '').slice(0, 200);
+    if (ext) {
+      const k = (await this.bd.execute(sql`SELECT id FROM kyros_invoices WHERE idempotency_key = ${ext} LIMIT 1`)).rows[0] as Fila | undefined;
+      if (k) {
+        const r = await this.reprocesar(a, String(k.id));
+        return { ok: r.ok, registrada: r.registrada, mensaje: r.ok ? (r.registrada ? `Factura registrada (${r.estado}).` : 'FacturaSIN no devolvio el detalle; se reintentara solo.') : (r.mensaje ?? 'No se pudo reprocesar.') };
+      }
+      const e = (await this.bd.execute(sql`SELECT id::text, restaurant_id::text FROM fiscal_invoices WHERE external_id = ${ext} LIMIT 1`)).rows[0] as { id: string; restaurant_id: string } | undefined;
+      if (e) { try { const r = await this.emisor.verificarPorId(e.restaurant_id, e.id); return { ok: true, registrada: r, mensaje: r ? 'Factura registrada.' : 'FacturaSIN no devolvio el detalle; se reintentara solo.' }; } catch (er) { return { ok: false, mensaje: mensajeIntegracionFs(er).mensaje }; } }
+    }
+    if (d.entregaId) {
+      try { await this.integracion.reintentarEntrega(String(d.entregaId)); return { ok: true, mensaje: 'Pedimos a FacturaSIN que vuelva a enviar esa entrega: llegara en unos segundos.' }; }
+      catch (e) { return { ok: false, mensaje: mensajeIntegracionFs(e).mensaje }; }
+    }
+    return { ok: false, mensaje: 'No se encontro la factura en este sistema ni hay una entrega que reintentar.' };
+  }
+
+  /** Procesa una entrega firmada y la REGISTRA (fecha, evento, factura, firma, resultado, latencia): el contador y la lista del panel salen de aqui. */
+  async recibirWebhook(cabeceraFirma: string, eventoId: string, crudo: string): Promise<{ http: number; resultado: string }> {
+    let r: { http: number; resultado: string };
+    const t0 = Date.now();
+    try { r = await this.aplicarWebhook(cabeceraFirma, eventoId, crudo); } catch (e) { await this.integracion.registrarEntrega(crudo, eventoId, { http: 500, resultado: 'error_interno' }, Date.now() - t0); throw e; }
+    await this.integracion.registrarEntrega(crudo, eventoId, r, Date.now() - t0);
     return r;
   }
 
   private async aplicarWebhook(cabeceraFirma: string, eventoId: string, crudo: string): Promise<{ http: number; resultado: string }> {
     const secretos = (await this.cfg.leer<{ secretos: string[] }>(LLAVE_WEBHOOK))?.secretos ?? [];
-    const ev0 = evaluarEntrega(secretos, cabeceraFirma, crudo);
-    if (ev0.http !== 200) return { http: ev0.http, resultado: ev0.resultado };
-    const ev = ev0.evento as unknown as EventoWebhook;
+    if (!secretos.length || !verificarFirmaWebhook(secretos, cabeceraFirma, crudo)) return { http: 401, resultado: 'firma_invalida' };
+    let ev: EventoWebhook;
+    try { ev = JSON.parse(crudo) as EventoWebhook; } catch { return { http: 400, resultado: 'cuerpo_invalido' }; }
+    if (!ev?.id || !ev.tipo || !ev.datos) return { http: 400, resultado: 'cuerpo_invalido' };
     const id = eventoId || ev.id;
     const nuevo = (await this.bd.execute(sql`INSERT INTO kyros_invoice_events (event_id, kind) VALUES (${id}, ${ev.tipo}) ON CONFLICT DO NOTHING RETURNING 1`)).rows.length;
     if (!nuevo) return { http: 200, resultado: 'duplicado' };
@@ -390,6 +444,7 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
     }
     const destino = estadoLocalDe(ev.datos.estado ?? ev.tipo.replace('factura.', ''));
     await this.bd.execute(sql`UPDATE kyros_invoice_events SET invoice_id = ${String(f.id)} WHERE event_id = ${id}`);
+    await this.guardarVista(String(f.id), vistaParaGuardar((ev.datos as { factura?: unknown }).factura, { enlaces: (ev.datos as { enlaces?: unknown }).enlaces, estado: ev.datos.estado, cuf: ev.datos.cuf, numero: ev.datos.numero }));
     if (!aceptaTransicion(f.status as EstadoLocal, destino)) return { http: 200, resultado: 'sin_cambio' };
     await this.bd.execute(sql`UPDATE kyros_invoices SET status = ${destino}, facturasin_id = COALESCE(facturasin_id, ${ev.datos.facturaId ?? null}), cuf = COALESCE(${ev.datos.cuf ?? null}, cuf), invoice_number = COALESCE(${ev.datos.numero ?? null}, invoice_number),
       emitted_at = CASE WHEN ${destino} = 'emitida' AND emitted_at IS NULL THEN now() ELSE emitted_at END, voided_at = CASE WHEN ${destino} = 'anulada' THEN COALESCE(voided_at, now()) ELSE voided_at END, updated_at = now() WHERE id = ${String(f.id)}`);
@@ -416,6 +471,9 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
           }
         } catch { /* se reintenta en el próximo ciclo */ }
       }
+      // Facturas ya validadas pero sin su vista completa (aviso perdido o anterior a la columna): se consultan y se registran.
+      const sinVista = (await this.bd.execute(sql`SELECT id, status, idempotency_key FROM kyros_invoices WHERE facturasin_id IS NOT NULL AND fs_response IS NULL AND status IN ('emitida','en_proceso','observada','anulada') ORDER BY updated_at LIMIT 20`)).rows as Fila[];
+      for (const k of sinVista) { try { const r = await this.sincronizarDesdeFs(k); if (r.registrada) conciliadas++; } catch { /* proximo ciclo */ } }
       const reint = (await this.bd.execute(sql`SELECT payment_id FROM kyros_invoices WHERE (status = 'pendiente' AND retryable AND attempts < 12 AND last_attempt_at < now() - (LEAST(60, power(2, attempts))::int || ' minutes')::interval)
           OR (status = 'emitiendo' AND last_attempt_at < now() - interval '2 minutes') ORDER BY last_attempt_at LIMIT 20`)).rows as Fila[];
       for (const k of reint) { const r = await this.emitirPago(String(k.payment_id), null, {}, 'facturacion_kyros.reintento_automatico').catch(() => null); if (r) reintentadas++; }

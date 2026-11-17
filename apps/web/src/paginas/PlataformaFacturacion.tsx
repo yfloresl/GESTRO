@@ -8,15 +8,21 @@ import { bs } from '../lib/tipos';
 
 type Estado = 'pendiente' | 'emitiendo' | 'en_proceso' | 'emitida' | 'observada' | 'rechazada' | 'anulada';
 interface Fila {
-  pagoId: string; facturaId: string | null; cliente: string; sucursal: string; nit: string | null; monto: string; validadoEn: string | null; estado: Estado; simulada: boolean; sinFactura: boolean;
+  pagoId: string; facturaId: string | null; cliente: string; sucursal: string; nit: string | null; monto: string; validadoEn: string | null; estado: Estado; simulada: boolean; sinFactura: boolean; vistaRegistrada?: boolean;
   numero: number | null; total: string | null; iva: string | null; comprador: { nombre: string; documento: string; consumidorFinal: boolean } | null; intentos: number; error: string | null; errorCodigo: string | null; reintentable: boolean; horasSinFactura: number;
 }
 interface Totales { pagos: number; cobrado: string; facturado: string; iva: string; ivaRecalculado: string; anulado: string; porFacturar: string; control: { ivaCoincide: boolean; filasIvaDistinto: number; filasIvaDistintoDeFacturaSin: number; filasTotalDistintoDelPago: number } }
 interface Alertas { sinFactura: number; enAlerta: number; criticas: number; rechazadas: number; sinDatosFiscales: number; integracionActiva: boolean }
 interface Lista { filas: Fila[]; totales: Totales; alertas: Alertas }
 interface EstadoEnlace { mensaje: string; webhook: { ultimaEntrega: string | null } }
-interface EntregaAviso { id: string; tipo: string; facturaId: string | null; numero: number | null; estado: string; intentos: number; ultimoIntentoEn: string | null; http: number | null; registradaPorElSistema: boolean }
-interface EntregasAviso { disponible: boolean; mensaje: string | null; ultimas: EntregaAviso[]; recepcion: { total: number; rechazadas: number; ultimas: Array<{ cuando: string | null; tipo: string | null; resultado: string }> } }
+interface EntregaLocalAviso { fecha: string; evento: string; eventoId: string; facturaId: string | null; resultado: string; firmaValida: boolean; ms?: number }
+interface EntregasAviso {
+  recibidas: { total: number; firmaInvalida: number; ultima: EntregaLocalAviso | null; ultimas: EntregaLocalAviso[] };
+  latencia?: { ultimaMs: number | null; maxMs: number | null; promedioMs: number | null };
+  entregas: Array<{ id: string; tipo: string; estado: string; intentos: number; ultimoCodigoHttp: number | null; ultimoIntentoEn: string | null; numero?: number | null; idExterno?: string | null; facturaId?: string | null; registrada: boolean }>;
+  huella: { coincide: boolean; remota: string | null; local: string | null } | null;
+  error: string | null;
+}
 interface Integracion { enlace?: EstadoEnlace; avisoCodigos?: string | null; ivaPorFueraVigente?: boolean; config: { activo: boolean; url: string; empresa: string; clientId: string; metodoPago?: number; codigoProducto?: string; modoIva?: string; codigosConfirmados?: boolean; codigoProductoSin?: string; actividadEconomica?: string; unidadMedida?: number }; codigosSinFaltan?: string[]; secretoConfigurado: boolean; webhookConfigurado: boolean; lista: boolean }
 interface CatalogoFs { nombre: string; disponible: boolean; items: Array<Record<string, unknown>>; aviso: string | null }
 const txt = (v: unknown) => (v === undefined || v === null ? '' : String(v));
@@ -90,8 +96,10 @@ export function PlataformaFacturacion() {
   const csv = () => correr('csv', async () => { const b = await api.blob(`/plataforma/facturacion-kyros/exportar.csv?${qs}`); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = 'facturacion-kyros.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(u), 10_000); });
   const alternar = () => correr('integ', () => api.put('/plataforma/facturacion-kyros/integracion', { activo: !integ.data?.config.activo }), () => 'Configuración guardada.');
   /** «Verificar / Reintentar»: el servidor asegura solo el enlace y el aviso de estados (sin contraseña ni URL tecleada). */
-  const entregas = useQuery({ queryKey: ['fact-entregas'], queryFn: () => api.get<EntregasAviso>('/plataforma/facturacion-kyros/integracion/entregas'), refetchInterval: 60_000 });
-  const probarEntrega = () => correr('entrega', () => api.post<{ ok: boolean; mensaje: string }>('/plataforma/facturacion-kyros/integracion/probar-entrega', {}), (r) => { void entregas.refetch(); return r.mensaje; });
+  const entregas = useQuery({ queryKey: ['fact-entregas'], queryFn: () => api.get<EntregasAviso>('/plataforma/facturacion-kyros/webhook/entregas'), refetchInterval: 30_000, retry: false });
+  const probarEntrega = () => correr('entrega', () => api.post<{ ok: boolean; mensaje: string }>('/plataforma/facturacion-kyros/webhook/probar-entrega', {}), (r) => { void entregas.refetch(); return r.mensaje; });
+  const reprocesarEntrega = (d: { idExterno?: string | null; entregaId?: string | null }) => correr('reproc', () => api.post<{ ok: boolean; mensaje: string }>('/plataforma/facturacion-kyros/webhook/reprocesar', d), (r) => { void entregas.refetch(); void q.refetch(); return r.mensaje; });
+  const reprocesarFactura = (id: string) => correr(`rp-${id}`, () => api.post<{ ok: boolean; mensaje?: string }>(`/plataforma/facturacion-kyros/facturas/${id}/reprocesar`, {}), (r) => { void q.refetch(); return r.ok ? 'Factura reprocesada: detalle completo registrado.' : (r.mensaje ?? ''); });
   const verificar = () => correr('wh', () => api.post<{ ok: boolean; mensaje: string }>('/plataforma/facturacion-kyros/integracion/verificar', {}), (r) => r.mensaje);
 
   const t = q.data?.totales; const al = q.data?.alertas; const ig = integ.data;
@@ -117,12 +125,15 @@ export function PlataformaFacturacion() {
           <h2 className="font-headline-sm text-headline-sm">Últimas entregas del aviso</h2>
           <button type="button" onClick={probarEntrega} disabled={!!ocupado} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Probar entrega</button>
         </div>
-        <p className="font-body-sm text-on-surface-variant" data-testid="recibidas">Entregas recibidas: {entregas.data?.recepcion.total ?? 0} ({entregas.data?.recepcion.rechazadas ?? 0} rechazadas por firma).{entregas.data?.recepcion.ultimas[0]?.cuando ? ` Última: ${new Date(entregas.data.recepcion.ultimas[0].cuando).toLocaleString('es-BO', { timeZone: 'America/La_Paz' })} (${entregas.data.recepcion.ultimas[0].tipo ?? '-'}, ${entregas.data.recepcion.ultimas[0].resultado}).` : ''}</p>
-        {entregas.data?.mensaje && <p role="status" className="font-body-sm text-on-surface-variant">{entregas.data.mensaje}</p>}
-        {entregas.data && entregas.data.ultimas.length === 0 && !entregas.data.mensaje && <p className="font-body-sm text-on-surface-variant">FacturaSIN todavía no ha enviado avisos.</p>}
+        <p className="font-body-sm text-on-surface-variant" data-testid="recibidas">Entregas recibidas: {entregas.data?.recibidas.total ?? 0} (con firma inválida: {entregas.data?.recibidas.firmaInvalida ?? 0}).{entregas.data?.recibidas.ultima ? ` Última: ${new Date(entregas.data.recibidas.ultima.fecha).toLocaleString('es-BO', { timeZone: 'America/La_Paz' })} (${entregas.data.recibidas.ultima.evento}, ${entregas.data.recibidas.ultima.resultado}).` : ''}</p>
+        {entregas.data?.latencia && entregas.data.latencia.ultimaMs !== null && <p className="font-body-sm text-on-surface-variant" data-testid="latencia">Tiempo de respuesta del receptor: última {entregas.data.latencia.ultimaMs} ms · máxima {entregas.data.latencia.maxMs ?? 0} ms · promedio {entregas.data.latencia.promedioMs ?? 0} ms (FacturaSIN espera hasta 10 000 ms).</p>}
+        {entregas.data?.huella && !entregas.data.huella.coincide && <p role="status" className="font-body-sm text-on-surface-variant">El secreto de firma guardado no coincide con el de FacturaSIN: el sistema lo re-sincroniza solo al pulsar «Probar entrega» o «Verificar».</p>}
+        {entregas.data?.error && <p role="alert" className="font-body-sm text-error">{entregas.data.error}</p>}
+        {entregas.data && entregas.data.entregas.length === 0 && !entregas.data.error && <p className="font-body-sm text-on-surface-variant">FacturaSIN todavía no registra entregas del aviso para este sistema.</p>}
         <ul className="flex flex-col gap-1">
-          {(entregas.data?.ultimas ?? []).map((e) => (
-            <li key={e.id} data-testid="entrega" className="flex flex-wrap gap-space-sm font-body-sm"><strong>{e.tipo}</strong><span>{e.numero ? `N.º ${e.numero}` : (e.facturaId ?? '-')}</span><span>{e.estado}</span><span>{e.intentos} intento(s)</span><span>{e.ultimoIntentoEn ? new Date(e.ultimoIntentoEn).toLocaleString('es-BO', { timeZone: 'America/La_Paz' }) : '-'}</span><span>HTTP {e.http ?? '-'}</span><span>{e.registradaPorElSistema ? 'Registrada aquí' : 'No registrada aquí'}</span></li>
+          {(entregas.data?.entregas ?? []).map((e) => (
+            <li key={e.id} data-testid="entrega" className="flex flex-wrap items-center gap-space-sm font-body-sm"><strong>{e.tipo}</strong><span>{e.numero ? `N.º ${e.numero}` : (e.facturaId ?? '-')}</span><span>{e.estado}</span><span>{e.intentos} intento(s)</span><span>{e.ultimoIntentoEn ? new Date(e.ultimoIntentoEn).toLocaleString('es-BO', { timeZone: 'America/La_Paz' }) : '-'}</span><span>HTTP {e.ultimoCodigoHttp ?? '-'}</span><span>{e.registrada ? 'Registrada aquí' : 'No registrada aquí'}</span>
+              {!e.registrada && <button type="button" disabled={!!ocupado} onClick={() => void reprocesarEntrega({ idExterno: e.idExterno ?? null, entregaId: e.id })} className="h-9 px-space-sm text-primary font-label-md">Reprocesar</button>}</li>
           ))}
         </ul>
       </div>
@@ -170,6 +181,7 @@ export function PlataformaFacturacion() {
               {x.error && <p className="font-body-sm text-error">{x.errorCodigo}: {x.error}{x.intentos ? ` (intentos: ${x.intentos})` : ''}</p>}
               {!x.error && x.errorCodigo === 'SIN_DATOS_FISCALES' && <p className="font-body-sm text-error">El cliente no tiene NIT/razón social válidos. Pídele que los cargue en Suscripción › Datos para tu factura, o emite como consumidor final.</p>}
               <div className="flex flex-wrap gap-space-xs">
+                {x.facturaId && !x.vistaRegistrada && ['emitida', 'en_proceso', 'observada'].includes(x.estado) && <button type="button" disabled={!!ocupado} onClick={() => void reprocesarFactura(x.facturaId!)} className="h-11 px-space-sm text-primary font-label-lg">Reprocesar</button>}
                 {(x.estado === 'pendiente' || x.estado === 'rechazada' || x.estado === 'emitiendo') && <button type="button" disabled={!!ocupado} onClick={() => emitir(x)} className={`${clases.primario} sm:w-auto sm:px-space-md`}>{trab ? 'Emitiendo…' : x.facturaId ? 'Reintentar' : 'Emitir factura'}</button>}
                 {x.estado === 'pendiente' && x.errorCodigo === 'SIN_DATOS_FISCALES' && <button type="button" disabled={!!ocupado} onClick={() => sinDatos(x)} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Emitir como consumidor final</button>}
                 {x.estado === 'pendiente' && x.error?.includes('NIT') && <button type="button" disabled={!!ocupado} onClick={() => emitir(x, { excepcionNit: true })} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Emitir con excepción de NIT</button>}

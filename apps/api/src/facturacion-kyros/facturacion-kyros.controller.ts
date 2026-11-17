@@ -33,8 +33,13 @@ export class FacturacionKyrosController {
   @Get('catalogo/:nombre') catalogo(@Param('nombre') nombre: string) { return this.s.catalogo(nombre); }
   @Put('integracion') @HttpCode(200) guardar(@ActorActual() a: Actor, @Body() b: unknown) { reauth(a); return this.s.guardarConfig(a, ConfigParcial.parse(b)); }
   /** «Verificar / Reintentar»: el servidor asegura el enlace y el webhook solo (sin contrasena de Kyros ID ni URL tecleada: la URL es la derivada del sitio). */
-  @Get('integracion/entregas') entregas() { return this.s.entregasAviso(); }
-  @Post('integracion/probar-entrega') @HttpCode(200) probarEntrega() { return this.s.probarEntregaAviso(); }
+  /** «Ultimas entregas del aviso» (lo que FacturaSIN entrego vs lo que este sistema registro) y «Probar entrega» (HTTP real). */
+  @Get('webhook/entregas') entregas() { return this.s.entregasAviso(); }
+  @Post('webhook/probar-entrega') @HttpCode(200) probarEntrega(@ActorActual() a: Actor) { return this.s.probarEntregaAviso(a); }
+  @Post('webhook/reprocesar') @HttpCode(200)
+  reprocesarEntrega(@ActorActual() a: Actor, @Body() b: unknown) { const d = (b && typeof b === 'object' ? b : {}) as Record<string, unknown>; return this.s.reprocesarEntrega(a, { idExterno: typeof d.idExterno === 'string' ? d.idExterno : null, entregaId: typeof d.entregaId === 'string' ? d.entregaId : null }); }
+  @Post('facturas/:id/reprocesar') @HttpCode(200)
+  reprocesar(@ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string) { return this.s.reprocesar(a, id); }
   @Post('integracion/verificar') @HttpCode(200)
   verificar(@ActorActual() a: Actor, @Body() b: unknown) { const t = (b && typeof b === 'object' ? (b as { token?: unknown }).token : undefined); return this.s.verificarIntegracion(a, typeof t === 'string' && t.length > 20 ? t : null); }
 

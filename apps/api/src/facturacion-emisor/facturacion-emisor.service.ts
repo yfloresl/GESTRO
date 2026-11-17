@@ -393,6 +393,9 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
     const aConciliar = await this.db.run(plat, async (tx) => (await tx.execute(sql`SELECT id::text, restaurant_id::text FROM fiscal_invoices WHERE status IN ('pendiente','contingencia') AND updated_at < now() - interval '1 minute' ORDER BY updated_at LIMIT ${limite}`)).rows as { id: string; restaurant_id: string }[]);
     let conciliadas = 0;
     for (const x of aConciliar) { if (await this.conciliarUna({ restaurantId: x.restaurant_id, restaurantIds: [] }, x.id)) conciliadas++; }
+    // Facturas ya emitidas pero sin la vista completa del SIN (aviso perdido o anterior a la columna): se consultan y se registran.
+    const sinVista = await this.db.run(plat, async (tx) => (await tx.execute(sql`SELECT id::text, restaurant_id::text FROM fiscal_invoices WHERE fs_invoice_id IS NOT NULL AND snapshot IS NULL AND status IN ('validada','observada','contingencia','anulada') ORDER BY updated_at LIMIT 20`)).rows as { id: string; restaurant_id: string }[]);
+    for (const x of sinVista) { try { if (await this.verificarPorId(x.restaurant_id, x.id)) conciliadas++; } catch { /* proximo ciclo */ } }
     return { enviadas, conciliadas };
   }
 
@@ -517,6 +520,16 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
       await auditar(tx, rid, null, 'factura.webhook', 'fiscal_invoice', f.id, { evento: ev.tipo, estado });
       return { ok: true, estado };
     });
+  }
+
+  /** Registra la factura DEVUELTA por el SIN (snapshot completo) de una factura de restaurante sin intervención del usuario (conciliación y «Reprocesar»). `true` si quedó registrada. */
+  async verificarPorId(restaurantId: string, id: string): Promise<boolean> {
+    const t: Tenant = { restaurantId, restaurantIds: [] };
+    const f = await this.db.run(t, (tx) => this.cargar(tx, restaurantId, id));
+    if (!f.external_id || ['en_cola', 'error_datos'].includes(f.status)) return false;
+    const r = await (await this.cliente(1)).porIdExterno(f.external_id, restaurantId);
+    await this.db.run(t, (tx) => this.aplicarRemoto(tx, f, r));
+    return true;
   }
 
   /** Botón «Verificar»: reconsulta a FacturaSIN el estado FINAL de la factura (por id externo) y lo registra; si FacturaSIN no avisa, esto la deja al día. */
