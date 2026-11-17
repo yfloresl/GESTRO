@@ -3,9 +3,10 @@
  * Sin dependencias de framework: URL pública derivada, convenciones, normalización de empresa, webhook idempotente y mensajes legibles.
  * v2.0.0: el webhook y la credencial pasan por `enlace-facturasin.ts` (núcleo de FacturaSIN v1.0.0, copiado TAL CUAL); aquí NO hay segunda lógica de firma ni de enlace.
  * v2.3.0: `facturacionHabilitada` (estándar «pago + interruptor» de la facturación del cliente).
+ * v2.4.0: `probarConFacturaDePrueba` (en ambiente simulado «Conectar y probar» emite una factura de prueba) y texto simple en el paso de factura de prueba.
  * Cualquier cambio se hace aquí, se sube NUCLEO_INTEGRACION_VERSION y se copia a los demás sistemas.
  */
-export const NUCLEO_INTEGRACION_VERSION = '2.3.0';
+export const NUCLEO_INTEGRACION_VERSION = '2.4.0';
 
 import { createHash } from 'node:crypto';
 import { ErrorEnlace, RUTA_WEBHOOK_FACTURASIN, type PasoPrueba as PasoFacturaSin } from './enlace-facturasin';
@@ -143,7 +144,22 @@ export function mensajeIntegracion(e: unknown): { codigo: string; mensaje: strin
 }
 
 /** Pasos de «probar integración» de FacturaSIN (`ok|error|aviso|omitido`) al formato del panel. «error» es el único que bloquea. */
-export const pasosDeFacturaSin = (pasos: PasoFacturaSin[]): PasoPrueba[] => pasos.map((p) => ({ clave: p.id, ok: p.estado !== 'error', detalle: `${p.titulo}: ${p.detalle}` }));
+/** El paso de «factura de prueba» no la emitió y lo dice con el parámetro técnico: se explica en lenguaje simple (GL-041). */
+const detalleSimple = (p: PasoFacturaSin): string => (/emitirPrueba/i.test(p.detalle) ? 'todavía no se emitió una factura de prueba. En ambiente SIMULADO «Conectar y probar» la emite sola; en el real solo si se pide.' : p.detalle);
+export const pasosDeFacturaSin = (pasos: PasoFacturaSin[]): PasoPrueba[] => pasos.map((p) => ({ clave: p.id, ok: p.estado !== 'error', detalle: `${p.titulo}: ${detalleSimple(p)}` }));
+
+/** ¿FacturaSIN opera en ambiente SIMULADO? (paso «ambiente» de la prueba legible). */
+export const esAmbienteSimulado = (pasos: PasoFacturaSin[]): boolean => pasos.some((p) => /ambiente/i.test(`${p.id} ${p.titulo}`) && /simulad/i.test(p.detalle));
+const esPasoFacturaPrueba = (p: PasoFacturaSin): boolean => /factura.*prueba|prueba.*factura|emision_prueba/i.test(`${p.id} ${p.titulo}`);
+/**
+ * «Conectar y probar» de la empresa de Kyros-Tech: en ambiente SIMULADO emite por defecto una factura de prueba (sin validez fiscal) para probar la emisión de punta a punta;
+ * en ambiente real no emite nada salvo que se pida (`emitirPrueba: true`). `emitirPrueba: false` nunca emite.
+ */
+export async function probarConFacturaDePrueba(enlace: { probar(tenantId: string, emitirPrueba?: boolean): Promise<{ pasos: PasoFacturaSin[] }> }, tenantId: string, emitirPrueba?: boolean): Promise<{ pasos: PasoFacturaSin[] }> {
+  let r = await enlace.probar(tenantId, emitirPrueba === true);
+  if (emitirPrueba === undefined && esAmbienteSimulado(r.pasos) && !r.pasos.some((p) => esPasoFacturaPrueba(p) && p.estado === 'ok')) r = await enlace.probar(tenantId, true);
+  return r;
+}
 
 /** Un paso del diagnóstico «Conectar y probar». */
 export interface PasoPrueba { clave: string; ok: boolean; detalle: string }
