@@ -216,9 +216,12 @@ describe('Documentos, listado, totales y exportación', () => {
 describe('Webhook de retorno', () => {
   let secreto = ''; let destino = '';
   beforeAll(async () => {
-    expect((await kyros.post(`${P}/webhook/suscribir`, { url: 'http://insegura.test/x' })).status).toBe(400);
-    const s = await kyros.post(`${P}/webhook/suscribir`, { url: 'https://gestro.test/api/v1/webhooks/facturasin' });
-    expect(s.status).toBe(200); expect(JSON.stringify(s.body)).not.toMatch(/secreto/i); // el secreto no vuelve por la API
+    // Cero configuracion: no hay ruta que reciba una URL ni un secreto; el servidor deriva la URL de la peticion y suscribe solo.
+    expect((await kyros.post(`${P}/webhook/suscribir`, { url: 'https://otro-dominio.test/x' })).status).toBe(404);
+    expect((await kyros.put(`${P}/webhook/secreto`, { valor: 'a'.repeat(64) })).status).toBe(404);
+    const s = await kyros.post(`${P}/integracion/verificar`, {});
+    expect(s.status).toBe(200); expect(s.body.ok).toBe(true); expect(JSON.stringify(s.body)).not.toMatch(/"secreto"|secretos/i); // el secreto no vuelve por la API
+    expect(fs.webhooks).toHaveLength(1); expect((await kyros.post(`${P}/integracion/verificar`, {})).status).toBe(200); expect(fs.webhooks).toHaveLength(1); // idempotente: sin duplicados
     secreto = fs.webhooks.at(-1)!.secreto; destino = `${t.url}/api/v1/webhooks/facturasin`;
   });
 

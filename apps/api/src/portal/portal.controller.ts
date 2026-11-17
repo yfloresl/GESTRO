@@ -1,3 +1,4 @@
+import { urlPublicaConocida } from '../facturacion-kyros/integracion/url-publica-estado';
 import { Controller, Get, HttpCode, Inject, Options, Req, Res, UnauthorizedException } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { sql } from 'drizzle-orm';
@@ -46,7 +47,7 @@ export class PortalController {
   async resumen(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     this.cabeceras(req, res);
     const v = await this.identificar(req);
-    const entrar = `${entorno.urlPublica}/entrar`;
+    const entrar = `${(urlPublicaConocida() ?? entorno.urlPublica)}/entrar`;
     if (!v) return { vinculado: false, entrar };
     const perfiles = await this.perfiles(v);
     const p0 = perfiles[0];
@@ -57,7 +58,7 @@ export class PortalController {
   async cuenta(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     this.cabeceras(req, res);
     const v = await this.identificar(req);
-    const entrar = `${entorno.urlPublica}/entrar`;
+    const entrar = `${(urlPublicaConocida() ?? entorno.urlPublica)}/entrar`;
     if (!v) return { vinculado: false, entrar };
     const perfiles = await this.perfiles(v);
     const p0 = perfiles[0];

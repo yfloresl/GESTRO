@@ -8,11 +8,15 @@ import { AppModule } from './app.module';
 import { FiltroDeErrores } from './comun/errores';
 import { entorno } from './config/entorno';
 import { aplicarMigraciones } from './database/migraciones';
+import { configurarDesarrollo, urlPublicaMiddleware } from './facturacion-kyros/integracion/url-publica-estado';
 
 export async function crearApp(): Promise<NestExpressApplication> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { rawBody: true, logger: entorno.produccion ? ['error', 'warn', 'log'] : undefined });
   app.set('trust proxy', 1); // detrás del gateway: IP real para los límites de uso
   app.setGlobalPrefix('api/v1');
+  // R1 (integracion FacturaSIN): cada peticion mantiene al dia la URL publica derivada (Host/X-Forwarded-*); nada de variables de entorno.
+  configurarDesarrollo(() => !entorno.produccion);
+  app.use(urlPublicaMiddleware as never);
   app.use(cookieParser());
   app.useBodyParser('raw', { type: ['image/jpeg', 'image/png', 'image/webp'], limit: '4mb' }); // foto de plato, voucher y QR de cobro
   app.useBodyParser('urlencoded', { extended: false, limit: '16kb' }); // back-channel logout

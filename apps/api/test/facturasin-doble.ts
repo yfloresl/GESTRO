@@ -43,7 +43,8 @@ export async function levantarFacturaSin() {
     }
     llamadas.push({ metodo: req.method ?? '', ruta, empresa, clave, auth });
     if (!auth?.startsWith('Bearer doble.')) return err(res, 401, 'NO_AUTENTICADO', 'Token requerido');
-    if (empresa !== 'gestro:kyros-tech' && ruta !== '/api/v1/webhooks') return err(res, 403, 'SIN_PERMISO', 'Empresa no enlazada a este sistema');
+    if (ruta.startsWith('/api/v1/integraciones')) return err(res, 404, 'NO_ENCONTRADO', 'El enlace automatico aun no esta publicado'); // el sistema cae al adaptador de compatibilidad
+    if (empresa !== 'gestro:kyros-tech' && !ruta.startsWith('/api/v1/webhooks')) return err(res, 403, 'SIN_PERMISO', 'Empresa no enlazada a este sistema');
     if (modo.caido && req.method === 'POST' && ruta === '/api/v1/invoices') return err(res, 503, 'SIAT_NO_DISPONIBLE', 'El SIN no responde');
 
     if (req.method === 'POST' && ruta === '/api/v1/invoices') {
@@ -78,6 +79,8 @@ export async function levantarFacturaSin() {
         f.estado = 'anulada'; f.motivoAnulacion = d.motivo; return json(res, 200, vista(f));
       }
     }
+    if (req.method === 'GET' && ruta === '/api/v1/webhooks') return json(res, 200, webhooks.map((w) => ({ id: w.id, url: w.url, activo: true })));
+    if (req.method === 'DELETE' && ruta.startsWith('/api/v1/webhooks/')) { const i = webhooks.findIndex((w) => w.id === ruta.split('/').pop()); if (i >= 0) webhooks.splice(i, 1); return json(res, 200, { deshabilitado: true }); }
     if (req.method === 'POST' && ruta === '/api/v1/webhooks') { const w = { id: randomUUID(), url: JSON.parse(crudo).url as string, secreto: createHash('sha256').update(randomUUID()).digest('hex') }; webhooks.push(w); return json(res, 201, { id: w.id, secreto: w.secreto }); }
     err(res, 404, 'NO_ENCONTRADO', `${req.method} ${ruta}`);
   });

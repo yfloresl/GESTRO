@@ -103,7 +103,7 @@ describe('Facturación: configuración del restaurante', () => {
     const c = await e.dueno.post('/facturacion/conectar'); expect(c.body.ok).toBe(true);
     expect(c.body.pasos.map((x: { paso: string }) => x.paso)).toContain('Aviso de estados (webhook)');
     const p2 = await e.dueno.post('/facturacion/probar'); expect(p2.body.ok).toBe(true); expect(p2.body.aviso).toMatch(/sin validez fiscal/);
-    expect(fs.webhooks.at(-1)?.url).toBe(`https://gestro.prueba.bo/api/v1/public/facturasin/webhook/${e.d.rid}`);
+    expect(fs.webhooks.at(-1)?.url).toBe(`${t.url}/api/v1/public/facturasin/webhook/${e.d.rid}`);
     const cfg = await e.dueno.get('/facturacion/config'); expect(cfg.body.webhookRegistrado).toBe(true); expect(cfg.body.ultimaPrueba.ok).toBe(true);
     // Credencial rechazada por FacturaSIN: no rompe la conexión y avisa.
     fs.estado.permitirCredenciales = false; const e2 = await escenario(false); await e2.dueno.put('/facturacion/config', CONFIG(nitUnico()));

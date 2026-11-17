@@ -14,6 +14,8 @@ export const CATALOGO_SECRETOS = {
   KYROS_SERVICE_CLIENT_SECRET: { nombre: 'Secreto del client de servicio de GESTRO en Kyros ID (gestro-service)', uso: 'Llamadas de servicio a servicio (client_credentials) hacia otros sistemas de Kyros-Tech.' },
 } as const;
 export type ClaveSecreto = keyof typeof CATALOGO_SECRETOS;
+/** Secretos que solo escribe y lee el SERVIDOR (enlace automatico con FacturaSIN): fuera del catalogo, sin ruta ni pantalla, sin pegarlos a mano. */
+export type ClaveInterna = 'FACTURASIN_API_KEY';
 
 /** Escribir exige haber confirmado la identidad hace poco (contraseña + segundo factor en Kyros ID). */
 export const VENTANA_REAUTH_S = 15 * 60;
@@ -63,8 +65,14 @@ export class IntegracionesService {
     return { ok: true, clave, estado: 'no_configurada' };
   }
 
+  /** Escritura de SERVIDOR (enlace automatico con FacturaSIN): sin usuario ni reautenticacion. No esta expuesta por ninguna ruta y nunca devuelve el valor. */
+  async guardarDeServicio(clave: ClaveInterna, valor: string): Promise<void> {
+    const previo = await this.cfg.leer<Guardado>(llaveDe(clave));
+    await this.cfg.guardar(llaveDe(clave), { valor, actualizado: new Date().toISOString(), deshabilitadaEn: null, versiones: (previo?.versiones ?? 0) + 1 } satisfies Guardado, null);
+  }
+
   /** Solo para uso interno del servidor (futuras llamadas servicio-a-servicio). No está expuesto por ninguna ruta. */
-  async obtener(c: ClaveSecreto): Promise<string | null> { return (await this.cfg.leer<Guardado>(llaveDe(c)))?.valor ?? null; }
+  async obtener(c: ClaveSecreto | ClaveInterna): Promise<string | null> { return (await this.cfg.leer<Guardado>(llaveDe(c)))?.valor ?? null; }
 }
 
 @Controller('plataforma/secretos')

@@ -32,9 +32,8 @@ export class FacturacionKyrosController {
   /** Catálogo sincronizado de FacturaSIN (productos SIN, actividades, unidades, métodos de pago) para elegir los códigos que GESTRO envía en cada ítem. */
   @Get('catalogo/:nombre') catalogo(@Param('nombre') nombre: string) { return this.s.catalogo(nombre); }
   @Put('integracion') @HttpCode(200) guardar(@ActorActual() a: Actor, @Body() b: unknown) { reauth(a); return this.s.guardarConfig(a, ConfigParcial.parse(b)); }
-  @Put('webhook/secreto') @HttpCode(200)
-  async secreto(@ActorActual() a: Actor, @Body() b: unknown) { reauth(a); await this.s.guardarSecretoWebhook(a, z.object({ valor: z.string().regex(/^[0-9a-fA-F]{32,128}$/) }).strict().parse(b).valor); return { ok: true }; }
-  @Post('webhook/suscribir') @HttpCode(200) suscribir(@ActorActual() a: Actor, @Body() b: unknown) { reauth(a); return this.s.suscribirWebhook(a, z.object({ url: z.string().url().max(300).refine((u) => u.startsWith('https://'), 'Debe ser https') }).strict().parse(b).url); }
+  /** «Verificar / Reintentar»: el servidor asegura el enlace y el webhook solo (sin contrasena de Kyros ID ni URL tecleada: la URL es la derivada del sitio). */
+  @Post('integracion/verificar') @HttpCode(200) verificar(@ActorActual() a: Actor) { return this.s.verificarIntegracion(a); }
 
   @Post('pagos/:id/emitir') @HttpCode(200) emitir(@ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string, @Body() b: unknown) { return this.s.emitirPago(id, a.sub, Emitir.parse(b ?? {})); }
   @Post('pagos/:id/reintentar') @HttpCode(200) reintentar(@ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string, @Body() b: unknown) { return this.s.emitirPago(id, a.sub, Emitir.parse(b ?? {}), 'facturacion_kyros.reintentar'); }

@@ -5,15 +5,15 @@ import type { Actor } from '../comun/acceso';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { entorno } from '../config/entorno';
 import { BD, Bd, Tenant, TenantDb } from '../database/database.module';
-import { IntegracionesService } from '../integraciones/integraciones';
-import { KyrosIdService } from '../kyros-id/kyros-id.service';
+import { empresaExterna } from './integracion/convencion';
+import { IntegracionFacturaSinService, LLAVE_WEBHOOK, RUTA_WEBHOOK_KYROS } from './integracion-fs.service';
+import { urlPublicaConocida } from './integracion/url-publica-estado';
 import {
-  aceptaTransicion, aCentavos, BOM, codigosFiscalesFaltantes, evaluarRegimenFiscal, TEXTO_AVISO_CODIGOS, celdaNumero, celdaTexto, deCentavos, emitirFactura, estadoLocalDe, FacturaSinClient, FacturaSinError, filaCsv, ivaPorDentro, tokenClientCredentials, validarDatosFiscales, verificarFirmaWebhook,
+  aceptaTransicion, aCentavos, BOM, codigosFiscalesFaltantes, evaluarRegimenFiscal, TEXTO_AVISO_CODIGOS, celdaNumero, celdaTexto, deCentavos, emitirFactura, estadoLocalDe, FacturaSinClient, FacturaSinError, filaCsv, ivaPorDentro, validarDatosFiscales, verificarFirmaWebhook,
   type AlmacenFacturas, type ConfigEmision, type DatosIntento, type EstadoLocal, type EventoWebhook, type FilaFactura, type PagoFacturable, type Resultado, type ResultadoGuardado,
 } from './nucleo';
 
 const LLAVE_CONFIG = 'facturacion.kyros';
-const LLAVE_WEBHOOK = 'facturacion.kyros.webhook';
 const OCULTAR = /^(localhost|127\.0\.0\.1|\[::1\])$/;
 
 /** Configuración NO secreta de la integración. El secreto del client (gestro-service) vive en el catálogo de integraciones (cifrado, solo escritura). */
@@ -40,9 +40,9 @@ export const ConfigFacturacion = z.object({
   codigosConfirmados: z.boolean(),
 }).strict();
 export type ConfigFacturacionT = z.infer<typeof ConfigFacturacion>;
-/** Por defecto APAGADA: nada sale hacia FacturaSIN hasta que el SuperAdmin la active. La URL es un literal no secreto. */
+/** Encendida por defecto: solo actua cuando la conexion con FacturaSIN esta lista (credencial enlazada); todo es de prueba mientras FacturaSIN opere en simulacion. */
 export const CONFIG_POR_DEFECTO: ConfigFacturacionT = {
-  activo: false, url: 'https://facturasin.kyros-tech.com/api', issuer: null, clientId: 'gestro-service', sistema: 'gestro', empresa: 'kyros-tech',
+  activo: true, url: 'https://facturasin.kyros-tech.com/api', issuer: null, clientId: 'gestro-service', sistema: 'gestro', empresa: 'kyros-tech',
   sector: 1, sucursal: 0, puntoVenta: 0, metodoPago: 7, codigoProducto: 'SUSC-MENSUAL', codigoProductoSin: '83141', actividadEconomica: '620100', unidadMedida: 58, autoEmitir: true,
   // codigoProductoSin/actividadEconomica/unidadMedida: NO CONFIRMADO — provisional de pruebas (catálogo SIMULADO de FacturaSIN).
   // metodoPago 7 y SUSC-MENSUAL: NO CONFIRMADO — definir con el catálogo del SIN (FacturaSIN: GET /v1/catalog/metodoPago).
@@ -80,8 +80,7 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
     @Inject(BD) private readonly bd: Bd,
     @Inject(TenantDb) private readonly db: TenantDb,
     @Inject(ConfiguracionService) private readonly cfg: ConfiguracionService,
-    @Inject(IntegracionesService) private readonly integ: IntegracionesService,
-    @Inject(KyrosIdService) private readonly kid: KyrosIdService,
+    @Inject(IntegracionFacturaSinService) private readonly integracion: IntegracionFacturaSinService,
   ) {}
 
   /** Cada 5 min: concilia lo pendiente y emite lo que quedó sin factura. En las pruebas se invoca a mano. */
@@ -92,7 +91,7 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
 
   /* ---------------- configuración ---------------- */
 
-  async config(): Promise<ConfigFacturacionT> { return { ...CONFIG_POR_DEFECTO, ...((await this.cfg.leer<Partial<ConfigFacturacionT>>(LLAVE_CONFIG)) ?? {}) }; }
+  async config(): Promise<ConfigFacturacionT> { const c = { ...CONFIG_POR_DEFECTO, ...((await this.cfg.leer<Partial<ConfigFacturacionT>>(LLAVE_CONFIG)) ?? {}) }; return { ...c, empresa: empresaExterna(c.sistema, c.empresa) || CONFIG_POR_DEFECTO.empresa }; }
 
   async guardarConfig(a: Actor, d: z.infer<typeof ConfigParcial>) {
     const nueva = ConfigFacturacion.parse({ ...(await this.config()), ...d });
@@ -104,9 +103,9 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
   /** Estado de la integración para la pantalla: nunca devuelve secretos. */
   async estadoIntegracion() {
     const c = await this.config();
-    const sec = await this.integ.obtener('KYROS_SERVICE_CLIENT_SECRET');
+    const sec = (await this.integracion.tipoCredencial()) !== 'ninguna';
     const wh = await this.cfg.leer<{ secretos: string[] }>(LLAVE_WEBHOOK);
-    return { config: c, secretoConfigurado: !!sec, webhookConfigurado: !!wh?.secretos?.length, lista: c.activo && !!sec, codigosSinFaltan: codigosFiscalesFaltantes(c), avisoCodigos: c.codigosConfirmados ? null : TEXTO_AVISO_CODIGOS, ivaPorFueraVigente: false };
+    return { config: c, secretoConfigurado: sec, urlWebhook: urlPublicaConocida() ? `${urlPublicaConocida()}${RUTA_WEBHOOK_KYROS}` : null, enlace: await this.integracion.estado(), webhookConfigurado: !!wh?.secretos?.length, lista: c.activo && sec, codigosSinFaltan: codigosFiscalesFaltantes(c), avisoCodigos: c.codigosConfirmados ? null : TEXTO_AVISO_CODIGOS, ivaPorFueraVigente: false };
   }
 
   /**
@@ -131,10 +130,8 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
   /** `soloLectura`: para leer catálogos no hace falta el interruptor de emisión (solo el secreto y el emisor). */
   private async cliente(c?: ConfigFacturacionT, soloLectura = false): Promise<FacturaSinClient | null> {
     const conf = c ?? (await this.config());
-    const secreto = await this.integ.obtener('KYROS_SERVICE_CLIENT_SECRET');
-    if ((!conf.activo && !soloLectura) || !secreto) return null;
-    const issuer = conf.issuer ?? (await this.kid.ajustes()).emisor;
-    return new FacturaSinClient({ baseUrl: conf.url, sistema: conf.sistema, token: tokenClientCredentials({ issuer, clientId: conf.clientId, clientSecret: secreto }), reintentos: 2 });
+    if (!conf.activo && !soloLectura) return null;
+    return this.integracion.cliente(2);
   }
 
   /* ---------------- pagos y almacén ---------------- */
@@ -355,28 +352,14 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
 
   /* ---------------- webhook de retorno y conciliación ---------------- */
 
-  /** Secreto del webhook: se muestra una sola vez al suscribir; aquí se guarda cifrado (hasta 2: el nuevo y el anterior durante la rotación). */
-  async guardarSecretoWebhook(a: Actor, secreto: string) {
-    const previo = (await this.cfg.leer<{ secretos: string[] }>(LLAVE_WEBHOOK))?.secretos ?? [];
-    await this.cfg.guardar(LLAVE_WEBHOOK, { secretos: [secreto, ...previo].slice(0, 2) }, a.sub);
-    await this.auditar(null, a.sub, 'facturacion_kyros.webhook_secreto', 'webhook', {});
-  }
-
-  /** Suscribe a GESTRO en FacturaSIN (solo recibe los eventos de las facturas que GESTRO originó). El secreto NO se devuelve. */
-  async suscribirWebhook(a: Actor, url: string) {
-    const config = await this.config(); const cliente = await this.cliente(config);
-    if (!cliente) throw new HttpException({ code: 'NO_CONFIGURADO', message: 'Activa la integración y carga el secreto de gestro-service primero.' }, 503);
-    try {
-      const w = await cliente.crearWebhook(config.empresa, url, ['factura.pendiente', 'factura.validada', 'factura.observada', 'factura.rechazada', 'factura.anulada', 'factura.contingencia']);
-      await this.guardarSecretoWebhook(a, w.secreto);
-      return { ok: true, id: w.id };
-    } catch (e) { throw new HttpException({ code: e instanceof FacturaSinError ? e.codigo : 'FACTURASIN_NO_DISPONIBLE', message: 'FacturaSIN no aceptó la suscripción.' }, 502); }
-  }
+  /** «Verificar / Reintentar»: dispara lo mismo que el sistema hace solo (enlace de credenciales + webhook con la URL publica derivada). Sin contrasena, sin URL tecleada. */
+  verificarIntegracion(a: Actor) { return this.integracion.verificar(a.sub, true); }
 
   /** Procesa una entrega firmada. Devuelve el código HTTP que debe recibir FacturaSIN. */
   async recibirWebhook(cabeceraFirma: string, eventoId: string, crudo: string): Promise<{ http: number; resultado: string }> {
     const secretos = (await this.cfg.leer<{ secretos: string[] }>(LLAVE_WEBHOOK))?.secretos ?? [];
     if (!secretos.length || !verificarFirmaWebhook(secretos, cabeceraFirma, crudo)) return { http: 401, resultado: 'firma_invalida' };
+    void this.integracion.registrarEntrega();
     let ev: EventoWebhook;
     try { ev = JSON.parse(crudo) as EventoWebhook; } catch { return { http: 400, resultado: 'cuerpo_invalido' }; }
     if (!ev?.id || !ev.tipo || !ev.datos) return { http: 400, resultado: 'cuerpo_invalido' };

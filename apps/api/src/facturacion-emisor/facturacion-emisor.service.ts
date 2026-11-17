@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { auditar } from '../comun/auditoria';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { destinosFacturasin } from '../config/entorno';
+import { IntegracionFacturaSinService, origenPublicoDerivado, rutaWebhookEmisor } from '../facturacion-kyros/integracion-fs.service';
 import { Bd, BD, Tenant, TenantDb } from '../database/database.module';
 import { IntegracionesService } from '../integraciones/integraciones';
 import {
@@ -92,6 +93,7 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
   constructor(
     @Inject(TenantDb) private readonly db: TenantDb, @Inject(BD) private readonly bd: Bd,
     @Inject(ConfiguracionService) private readonly cfg: ConfiguracionService, @Inject(IntegracionesService) private readonly integ: IntegracionesService,
+    @Inject(IntegracionFacturaSinService) private readonly integracion: IntegracionFacturaSinService,
   ) {}
 
   /** Cola de reintentos y conciliación de pendientes: cada minuto. La venta nunca depende de este proceso. */
@@ -105,6 +107,8 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
   /* ------------------------------------------------------------- cliente FacturaSIN ------------------------------------------------------------- */
 
   private async cliente(reintentos: number): Promise<FacturaSinClient> {
+    const propia = await this.integ.obtener('FACTURASIN_API_KEY');
+    if (propia) return new FacturaSinClient({ baseUrl: destinosFacturasin().api, sistema: 'gestro', token: async () => propia, reintentos, fetchImpl: (u, i) => fetch(u, { ...i, signal: AbortSignal.timeout(10_000) }) });
     const secreto = await this.integ.obtener('KYROS_SERVICE_CLIENT_SECRET');
     if (!secreto) throw new ServiceUnavailableException({ code: 'SIN_CREDENCIAL_DE_SERVICIO', message: 'Falta la credencial de GESTRO ante FacturaSIN (secreto del client gestro-service). La carga el equipo de plataforma en Integraciones.' });
     const d = destinosFacturasin();
@@ -246,9 +250,10 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
       const yaHook = await this.cfg.leer<{ secretos: string[] }>(CLAVE_WEBHOOK(t.restaurantId));
       if (!yaHook?.secretos?.length) {
         try {
-          const url = `${destinosFacturasin().urlPublica.replace(/\/$/, '')}/api/v1/public/facturasin/webhook/${t.restaurantId}`;
+          if (!origenPublicoDerivado()) throw new Error('Aun no se detecto la direccion publica del sistema.');
+          const url = `${origenPublicoDerivado()}${rutaWebhookEmisor(t.restaurantId)}`;
           const w = await cli.crearWebhook(t.restaurantId, url, ['factura.pendiente', 'factura.validada', 'factura.observada', 'factura.rechazada', 'factura.anulada', 'factura.contingencia']);
-          await this.cfg.guardar(CLAVE_WEBHOOK(t.restaurantId), { secretos: [w.secreto] }, userId);
+          await this.cfg.guardar(CLAVE_WEBHOOK(t.restaurantId), { secretos: [w.secreto], url }, userId);
           await this.db.run(t, (tx) => tx.execute(sql`UPDATE billing_settings SET webhook_set = true, webhook_updated_at = now() WHERE restaurant_id = ${t.restaurantId}`));
           pasos.push({ paso: 'Aviso de estados (webhook)', ok: true, detalle: 'Suscrito; el secreto se guardó cifrado.' });
         } catch (e) { pasos.push({ paso: 'Aviso de estados (webhook)', ok: false, detalle: `No se pudo suscribir (${this.mensajeDe(e)}). La conciliación periódica cubre los estados mientras tanto.` }); }
@@ -517,6 +522,7 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
   async recibirWebhook(rid: string, cabeceraFirma: string | undefined, eventoId: string | undefined, crudo: string | undefined) {
     const guardado = /^[0-9a-f-]{36}$/i.test(rid) ? await this.cfg.leer<{ secretos: string[] }>(CLAVE_WEBHOOK(rid)) : null;
     if (!guardado?.secretos?.length || !crudo || !cabeceraFirma || !verificarFirmaWebhook(guardado.secretos, cabeceraFirma, crudo)) throw new UnauthorizedException('Firma no válida.');
+    void this.integracion.registrarEntrega();
     let ev: { id?: string; tipo?: string; creadoEn?: string; datos?: { idExterno?: string; cuf?: string; numero?: number; estado?: string; ambientePruebas?: boolean } };
     try { ev = JSON.parse(crudo); } catch { throw new BadRequestException('Cuerpo inválido.'); }
     const idEv = (eventoId ?? ev.id ?? '').slice(0, 120);

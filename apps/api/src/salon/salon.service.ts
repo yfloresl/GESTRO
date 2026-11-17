@@ -1,3 +1,4 @@
+import { urlPublicaConocida } from '../facturacion-kyros/integracion/url-publica-estado';
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -58,7 +59,7 @@ export class SalonService {
       const porMesa = new Map((asig.rows as { table_id: string; waiter_id: string }[]).map((r) => [r.table_id, r.waiter_id]));
       return filas.map((m) => ({
         id: m.id, numero: m.number, asientos: m.seats, areaId: m.areaId, posX: m.posX, posY: m.posY, activa: m.active, meseroId: porMesa.get(m.id) ?? null,
-        ...(conQr && { urlQr: `${entorno.urlPublica}/m/${m.qrToken}` }),
+        ...(conQr && { urlQr: `${(urlPublicaConocida() ?? entorno.urlPublica)}/m/${m.qrToken}` }),
       }));
     });
   }
@@ -103,7 +104,7 @@ export class SalonService {
       const r = await tx.update(restaurantTables).set({ qrToken: sql`encode(gen_random_bytes(18),'hex')` as unknown as string }).where(and(eq(restaurantTables.id, id), eq(restaurantTables.restaurantId, t.restaurantId))).returning({ q: restaurantTables.qrToken });
       if (!r.length) throw new NotFoundException('Mesa no encontrada.');
       await auditar(tx, t.restaurantId, por, 'salon.qr_regenerado', 'table', id);
-      return { urlQr: `${entorno.urlPublica}/m/${r[0].q}` };
+      return { urlQr: `${(urlPublicaConocida() ?? entorno.urlPublica)}/m/${r[0].q}` };
     });
   }
 

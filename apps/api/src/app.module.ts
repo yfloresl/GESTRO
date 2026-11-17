@@ -64,6 +64,7 @@ import { SaludController } from './salud/salud.controller';
 import { SucursalController } from './tenancy/sucursal.controller';
 import { FacturacionKyrosClienteController, FacturacionKyrosController, FacturacionKyrosWebhookController } from './facturacion-kyros/facturacion-kyros.controller';
 import { FacturacionKyrosService } from './facturacion-kyros/facturacion-kyros.service';
+import { IntegracionFacturaSinService } from './facturacion-kyros/integracion-fs.service';
 import { SecretosService } from './secretos/secretos.service';
 import { FacturacionEmisorController, FacturasinWebhookController } from './facturacion-emisor/facturacion-emisor.controller';
 import { FacturacionEmisorService } from './facturacion-emisor/facturacion-emisor.service';
@@ -84,7 +85,7 @@ class NucleoModule {}
   ],
   controllers: [SaludController, LegalController, IntegracionesController, AuthController, KyrosIdController, SucursalController, PersonalController, MenuController, MenuPublicoController, SalonController, QrController, SolicitudesController, PushController, PedidosController, CajaController, SuscripcionController, PlataformaController, PlanesPublicosController, PlanesPublicosAdminController, PortalController, InventarioController, RecetasController, ComprasController, ContabilidadController, CobranzasController, ReservasController, ReservasPublicasController, CateringController, TurnosController, PromocionesController, EstadisticasController, AlertasController, FodaController, AsistenteController, PlataformaIaController, DemoController, PlataformaDemoController, SoporteController, FacturacionEmisorController, FacturasinWebhookController, FacturacionKyrosController, FacturacionKyrosWebhookController, FacturacionKyrosClienteController],
   providers: [
-    SesionService, LegalService, IntegracionesService, KyrosIdService, JwtAuthGuard, StorageService, PersonalService, MenuService, SalonService, SolicitudesService, TableTokenGuard, EventosGateway, PushService, PedidosService, CajaService, SuscripcionService, PlanesPublicosService, TipoCambioService, InventarioService, RecetasService, ConsumoService, ComprasService, ContabilidadService, CobranzasService, ReservasService, CateringService, TurnosService, PromocionesService, EstadisticasService, AlertasService, IaService, FodaService, AsistenteService, DemoService, FacturacionEmisorService, FacturacionKyrosService,
+    SesionService, LegalService, IntegracionesService, KyrosIdService, JwtAuthGuard, StorageService, PersonalService, MenuService, SalonService, SolicitudesService, TableTokenGuard, EventosGateway, PushService, PedidosService, CajaService, SuscripcionService, PlanesPublicosService, TipoCambioService, InventarioService, RecetasService, ConsumoService, ComprasService, ContabilidadService, CobranzasService, ReservasService, CateringService, TurnosService, PromocionesService, EstadisticasService, AlertasService, IaService, FodaService, AsistenteService, DemoService, FacturacionEmisorService, FacturacionKyrosService, IntegracionFacturaSinService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useExisting: JwtAuthGuard },
     LegalGuard,

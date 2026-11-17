@@ -14,7 +14,8 @@ interface Fila {
 interface Totales { pagos: number; cobrado: string; facturado: string; iva: string; ivaRecalculado: string; anulado: string; porFacturar: string; control: { ivaCoincide: boolean; filasIvaDistinto: number; filasIvaDistintoDeFacturaSin: number; filasTotalDistintoDelPago: number } }
 interface Alertas { sinFactura: number; enAlerta: number; criticas: number; rechazadas: number; sinDatosFiscales: number; integracionActiva: boolean }
 interface Lista { filas: Fila[]; totales: Totales; alertas: Alertas }
-interface Integracion { avisoCodigos?: string | null; ivaPorFueraVigente?: boolean; config: { activo: boolean; url: string; empresa: string; clientId: string; metodoPago?: number; codigoProducto?: string; modoIva?: string; codigosConfirmados?: boolean; codigoProductoSin?: string; actividadEconomica?: string; unidadMedida?: number }; codigosSinFaltan?: string[]; secretoConfigurado: boolean; webhookConfigurado: boolean; lista: boolean }
+interface EstadoEnlace { mensaje: string; webhook: { ultimaEntrega: string | null } }
+interface Integracion { enlace?: EstadoEnlace; avisoCodigos?: string | null; ivaPorFueraVigente?: boolean; config: { activo: boolean; url: string; empresa: string; clientId: string; metodoPago?: number; codigoProducto?: string; modoIva?: string; codigosConfirmados?: boolean; codigoProductoSin?: string; actividadEconomica?: string; unidadMedida?: number }; codigosSinFaltan?: string[]; secretoConfigurado: boolean; webhookConfigurado: boolean; lista: boolean }
 interface CatalogoFs { nombre: string; disponible: boolean; items: Array<Record<string, unknown>>; aviso: string | null }
 const txt = (v: unknown) => (v === undefined || v === null ? '' : String(v));
 
@@ -86,7 +87,8 @@ export function PlataformaFacturacion() {
   const abrir = (x: Fila, tipo: 'pdf' | 'xml' | 'qr') => correr(`${x.pagoId}-${tipo}`, async () => { const b = await api.blob(`/plataforma/facturacion-kyros/facturas/${x.facturaId}/${tipo}`); const u = URL.createObjectURL(b); window.open(u, '_blank', 'noopener'); setTimeout(() => URL.revokeObjectURL(u), 60_000); });
   const csv = () => correr('csv', async () => { const b = await api.blob(`/plataforma/facturacion-kyros/exportar.csv?${qs}`); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = 'facturacion-kyros.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(u), 10_000); });
   const alternar = () => correr('integ', () => api.put('/plataforma/facturacion-kyros/integracion', { activo: !integ.data?.config.activo }), () => 'Configuración guardada.');
-  const suscribir = async () => { const u = await pedirTexto({ titulo: 'Webhook de retorno', mensaje: 'URL pública https de GESTRO que recibirá los eventos de FacturaSIN.', etiqueta: 'URL', valor: `${window.location.origin}/api/v1/webhooks/facturasin`, obligatorio: true, minimo: 12, maximo: 300 }); if (u) await correr('wh', () => api.post('/plataforma/facturacion-kyros/webhook/suscribir', { url: u }), () => 'Webhook suscrito (el secreto se guardó cifrado y no se muestra).'); };
+  /** «Verificar / Reintentar»: el servidor asegura solo el enlace y el aviso de estados (sin contraseña ni URL tecleada). */
+  const verificar = () => correr('wh', () => api.post<{ ok: boolean; mensaje: string }>('/plataforma/facturacion-kyros/integracion/verificar', {}), (r) => r.mensaje);
 
   const t = q.data?.totales; const al = q.data?.alertas; const ig = integ.data;
   return (
@@ -99,12 +101,17 @@ export function PlataformaFacturacion() {
       <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-wrap items-center justify-between gap-space-sm">
         <div><h2 className="font-headline-sm text-headline-sm">Integración con FacturaSIN</h2>
           <p className="font-body-sm text-on-surface-variant">{ig ? `${ig.config.url} · empresa ${ig.config.empresa} · client ${ig.config.clientId}` : '…'}</p>
-          <p className="font-body-sm">{ig?.config.activo ? 'Activa' : 'Apagada'} · secreto de gestro-service: {ig?.secretoConfigurado ? 'configurado' : 'FALTA (Integraciones)'} · webhook: {ig?.webhookConfigurado ? 'configurado' : 'sin configurar'}</p></div>
+          <p className="font-body-sm" data-testid="estado-enlace">{ig?.config.activo ? 'Activa' : 'Apagada'} · conexión con FacturaSIN: {ig?.secretoConfigurado ? 'lista' : 'falta la credencial de servicio (la coloca el despliegue una vez)'} · aviso de estados: {ig?.webhookConfigurado ? 'suscrito' : 'pendiente (se suscribe solo)'}</p>
+          <p className="font-body-sm text-on-surface-variant">{ig?.enlace?.mensaje ?? 'El aviso de estados se suscribe solo en cuanto el sistema detecta su dirección pública.'}{ig?.enlace?.webhook.ultimaEntrega ? ` Última entrega: ${new Date(ig.enlace.webhook.ultimaEntrega).toLocaleString('es-BO')}.` : ''}</p></div>
         <div className="flex flex-wrap gap-space-sm"><button type="button" onClick={alternar} disabled={!!ocupado} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>{ig?.config.activo ? 'Apagar' : 'Activar'}</button>
-          <button type="button" onClick={suscribir} disabled={!!ocupado || !ig?.lista} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Suscribir webhook</button>
+          <button type="button" onClick={verificar} disabled={!!ocupado} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Verificar / Reintentar</button>
           <button type="button" onClick={() => correr('conc', () => api.post<{ conciliadas: number; reintentadas: number; emitidas: number }>('/plataforma/facturacion-kyros/conciliar'), (r) => `Conciliación: ${r.conciliadas} conciliadas, ${r.reintentadas} reintentadas, ${r.emitidas} emitidas.`)} disabled={!!ocupado || !ig?.lista} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Conciliar ahora</button></div>
       </div>
 
+      <details className="rounded-xl border border-outline-variant p-space-md" data-testid="avanzado">
+        <summary className="cursor-pointer font-label-md font-bold">Avanzado (solo SuperAdmin de la plataforma)</summary>
+        <div className="mt-space-md flex flex-col gap-space-md">
+          <p className="font-body-sm text-on-surface-variant">Estos códigos fiscales son provisionales (NO CONFIRMADOS) y se completan solos. Ajústalos solo si el contador lo indica.</p>
       {ig && <CodigosFiscales ig={ig} ocupado={!!ocupado} onGuardar={(parcial) => void correr('cfg-sin', () => api.put('/plataforma/facturacion-kyros/integracion', parcial), () => 'Códigos fiscales guardados.')} />}
 
       <form className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md grid gap-space-sm sm:grid-cols-4" onSubmit={(e) => { e.preventDefault(); const f = new FormData(e.currentTarget); void correr('cfg', () => api.put('/plataforma/facturacion-kyros/integracion', { metodoPago: Number(f.get('metodoPago')), codigoProducto: String(f.get('codigoProducto')).trim(), modoIva: String(f.get('modoIva')), codigosConfirmados: f.get('codigosConfirmados') === 'on' }), () => 'Códigos fiscales guardados.'); }}>
@@ -115,6 +122,8 @@ export function PlataformaFacturacion() {
         <label className="flex items-center gap-space-sm"><input name="codigosConfirmados" type="checkbox" defaultChecked={ig?.config.codigosConfirmados} key={`cc${ig?.config.codigosConfirmados}`} /><span className="font-body-sm">Confirmados por el contador</span></label>
         <button type="submit" disabled={!!ocupado} className={`${clases.secundario} sm:w-auto sm:px-space-md sm:col-span-4`}>Guardar códigos</button>
       </form>
+        </div>
+      </details>
 
       {al && al.sinFactura > 0 && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm"><strong>{al.sinFactura} pago(s) validado(s) sin factura</strong>{al.criticas ? ` · ${al.criticas} con más de 24 h` : al.enAlerta ? ` · ${al.enAlerta} con más de 1 h` : ''}{al.rechazadas ? ` · ${al.rechazadas} rechazada(s)` : ''}{al.sinDatosFiscales ? ` · ${al.sinDatosFiscales} sin NIT del cliente` : ''}. Es una alerta: las suscripciones siguen activas.{!al.integracionActiva && ' La integración está apagada.'}</p>}
 
