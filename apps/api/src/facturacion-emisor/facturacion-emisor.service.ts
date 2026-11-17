@@ -1,41 +1,35 @@
-import { BadRequestException, ConflictException, HttpException, Inject, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit, ServiceUnavailableException, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, HttpException, Inject, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit, ServiceUnavailableException, UnprocessableEntityException } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
-import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { auditar } from '../comun/auditoria';
-import { ConfiguracionService } from '../configuracion/configuracion.service';
-import { destinosFacturasin } from '../config/entorno';
-import { IntegracionFacturaSinService, origenPublicoDerivado, rutaWebhookEmisor } from '../facturacion-kyros/integracion-fs.service';
+import { FacturaSinConexion } from '../facturacion-kyros/facturasin-conexion';
+import { mensajeIntegracion } from '../facturacion-kyros/nucleo/integracion';
 import { Bd, BD, Tenant, TenantDb } from '../database/database.module';
-import { IntegracionesService } from '../integraciones/integraciones';
 import {
   armarComprador, armarPayload, calcularFactura, CompradorSalida, CONSUMIDOR_FINAL, deCentavos, ErrorFactura, esperaDeReintento, estadoLocal, idExternoDe,
   CODIGOS_PAGO_POR_DEFECTO, CodigosPago, LineaPedido, limpiarTexto, PayloadFactura, tarjetaEnmascarada, TIPOS_DOCUMENTO, validarNit,
 } from './calculo-factura';
 import { evaluarRegimenFiscal, TEXTO_AVISO_CODIGOS } from '../facturacion-kyros/nucleo/normativa';
-import { Factura, FacturaSinClient, FacturaSinError, tokenClientCredentials, verificarFirmaWebhook } from './facturasin-client';
+import { Factura, FacturaSinError } from '../facturacion-kyros/nucleo';
 
 /* ------------------------------------------------------------------ esquemas ------------------------------------------------------------------ */
 
 const Fecha = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha AAAA-MM-DD').refine((s) => !Number.isNaN(Date.parse(`${s}T00:00:00Z`)), 'Fecha inválida');
+/** Paso 2 «Datos del SIN»: lo ESTRICTAMENTE necesario. Sucursal, punto de venta, actividad, producto y unidad los pone FacturaSIN por convencion/rubro. */
 export const ConfigFacturacion = z.object({
   nit: z.string().trim(),
   razonSocial: z.string(),
-  actividades: z.array(z.string().trim().regex(/^\d{4,8}$/, 'Cada actividad económica es un código numérico del SIN (4 a 8 dígitos).')).min(1, 'Indica al menos una actividad económica.').max(10),
-  sucursal: z.number().int().min(0).max(9999), puntoVenta: z.number().int().min(0).max(9999),
   municipio: z.string(), direccion: z.string(), leyenda: z.string().max(300).nullable().optional(),
-  modalidad: z.enum(['simulado', 'real']).default('simulado'),
-  codigoSinPorDefecto: z.string().trim().regex(/^\d{3,10}$/, 'El código de producto SIN por defecto es numérico.'),
-  unidadPorDefecto: z.number().int().min(1).max(999).default(57),
   permiteConsumidorFinal: z.boolean().default(true), habilitada: z.boolean().default(true),
   /** F10: régimen declarado (solo avisa; el Simplificado no puede emitir factura con crédito fiscal). */
   regimen: z.enum(['general', 'simplificado', 'no_declarado']).default('no_declarado'),
-  /** Códigos del catálogo `metodoPago` de FacturaSIN por método de cobro (configuración, no constantes). */
+  /** Avanzado: códigos del catálogo `metodoPago` de FacturaSIN por método de cobro (configuración, no constantes). */
   codigosPago: z.object({ efectivo: z.number().int().min(1).max(999), tarjeta: z.number().int().min(1).max(999), otro: z.number().int().min(1).max(999) }).default({ efectivo: 1, tarjeta: 2, otro: 7 }),
   codigosConfirmados: z.boolean().default(false),
-  /** Solo escritura: nunca se devuelve. */
+  /** Lo que entrega el SIN al restaurante: se ENVÍA a FacturaSIN (cifrado allá) y no se guarda en GESTRO. */
+  codigoSistema: z.string().trim().min(3, 'El código de sistema del SIN parece incompleto (mínimo 3 caracteres).').max(100).optional(),
   tokenDelegado: z.string().min(10, 'El token delegado parece incompleto.').max(4000).optional(),
-  tokenVenceEn: Fecha.nullable().optional(), quitarToken: z.boolean().optional(),
+  tokenVenceEn: Fecha.nullable().optional(),
 }).strict();
 
 export const DatosComprador = z.object({
@@ -51,8 +45,6 @@ export const AnularFactura = z.object({ motivo: z.number().int().min(1).max(20),
 
 export const VIVAS = ['en_cola', 'pendiente', 'validada', 'observada', 'contingencia'] as const;
 const AVISO_PRUEBAS = 'Ambiente de pruebas / sin validez fiscal';
-const CLAVE_TOKEN = (rid: string) => `facturacion.token.${rid}`;
-const CLAVE_WEBHOOK = (rid: string) => `facturacion.webhook.${rid}`;
 
 interface Fila {
   id: string; restaurant_id: string; order_id: string; payment_id: string; attempt: number; external_id: string; status: string;
@@ -60,11 +52,13 @@ interface Fila {
   subtotal: string; discount: string; total: string; iva_ref: string; tip_excluded: string; payload: PayloadFactura;
   fs_invoice_id: string | null; invoice_number: string | null; cuf: string | null; issued_at: Date | string | null; fs_total: string | null; fs_iva: string | null;
   qr_text: string | null; notice: string | null; test_env: boolean; errors: unknown; last_error: string | null; tries: number; next_retry_at: Date | string | null; last_event_at: Date | string | null;
+  links?: unknown;
+  snapshot: { desglose?: { neto?: number; iva?: number; total?: number; modoIva?: string }; fechaEmision?: string } | null;
   void_code: number | null; void_reason: string | null; voided_at: Date | string | null; created_at: Date | string;
 }
 const COLUMNAS = sql.raw(`id, restaurant_id, order_id, payment_id, attempt, external_id, status, buyer_doc_type, buyer_doc_number, buyer_complement, buyer_name, buyer_email, final_consumer,
   subtotal::text, discount::text, total::text, iva_ref::text, tip_excluded::text, payload, fs_invoice_id, invoice_number::text, cuf, issued_at, fs_total::text, fs_iva::text,
-  qr_text, notice, test_env, errors, last_error, tries, next_retry_at, last_event_at, void_code, void_reason, voided_at, created_at`);
+  qr_text, notice, test_env, links, errors, last_error, tries, next_retry_at, last_event_at, void_code, void_reason, voided_at, created_at, snapshot`);
 
 /** El driver entrega las fechas de `execute` como texto: se aceptan texto o Date. */
 const iso = (v: Date | string | null | undefined): string | null => (v ? new Date(v).toISOString() : null);
@@ -77,6 +71,7 @@ export function vistaFactura(f: Fila) {
     numero: f.invoice_number ? Number(f.invoice_number) : null, cuf: f.cuf, emitida: iso(f.issued_at), qrTexto: f.qr_text,
     aviso: f.test_env ? (f.notice ?? AVISO_PRUEBAS) : f.notice, ambientePruebas: f.test_env, puedeImprimir: !!f.fs_invoice_id,
     error: f.last_error, errores: f.errors, reintentos: f.tries, proximoReintento: iso(f.next_retry_at),
+    registrada: f.snapshot ? { desglose: f.snapshot.desglose ?? null, fecha: f.snapshot.fechaEmision ?? null, enlaces: f.links ?? null, ambientePruebas: f.test_env } : null,
     anulacion: f.status === 'anulada' ? { motivo: f.void_reason, codigo: f.void_code, cuando: iso(f.voided_at) } : null, creada: iso(f.created_at)!,
   };
 }
@@ -88,12 +83,10 @@ const ERRORES_DE_CONFIGURACION = new Set(['NO_AUTENTICADO', 'SIN_PERMISO', 'EMPR
 export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
   private readonly log = new Logger('Facturacion');
   private reloj?: NodeJS.Timeout;
-  private tokenFn?: { huella: string; fn: () => Promise<string> };
 
   constructor(
     @Inject(TenantDb) private readonly db: TenantDb, @Inject(BD) private readonly bd: Bd,
-    @Inject(ConfiguracionService) private readonly cfg: ConfiguracionService, @Inject(IntegracionesService) private readonly integ: IntegracionesService,
-    @Inject(IntegracionFacturaSinService) private readonly integracion: IntegracionFacturaSinService,
+    @Inject(FacturaSinConexion) private readonly conexion: FacturaSinConexion,
   ) {}
 
   /** Cola de reintentos y conciliación de pendientes: cada minuto. La venta nunca depende de este proceso. */
@@ -106,53 +99,66 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
 
   /* ------------------------------------------------------------- cliente FacturaSIN ------------------------------------------------------------- */
 
-  private async cliente(reintentos: number): Promise<FacturaSinClient> {
-    const propia = await this.integ.obtener('FACTURASIN_API_KEY');
-    if (propia) return new FacturaSinClient({ baseUrl: destinosFacturasin().api, sistema: 'gestro', token: async () => propia, reintentos, fetchImpl: (u, i) => fetch(u, { ...i, signal: AbortSignal.timeout(10_000) }) });
-    const secreto = await this.integ.obtener('KYROS_SERVICE_CLIENT_SECRET');
-    if (!secreto) throw new ServiceUnavailableException({ code: 'SIN_CREDENCIAL_DE_SERVICIO', message: 'Falta la credencial de GESTRO ante FacturaSIN (secreto del client gestro-service). La carga el equipo de plataforma en Integraciones.' });
-    const d = destinosFacturasin();
-    const conTiempo: typeof fetch = (u, i) => fetch(u, { ...i, signal: AbortSignal.timeout(10_000) });
-    const huella = createHash('sha256').update(`${d.emisor}|${d.clientId}|${secreto}`).digest('hex');
-    if (this.tokenFn?.huella !== huella) this.tokenFn = { huella, fn: tokenClientCredentials({ issuer: d.emisor, clientId: d.clientId, clientSecret: secreto, fetchImpl: conTiempo }) };
-    return new FacturaSinClient({ baseUrl: d.api, sistema: 'gestro', token: this.tokenFn.fn, reintentos, fetchImpl: conTiempo });
+  private async cliente(reintentos: number) {
+    const c = await this.conexion.cliente(reintentos);
+    if (!c) throw new ServiceUnavailableException({ code: 'SIN_CREDENCIAL_DE_SERVICIO', message: 'Falta enlazar GESTRO con FacturaSIN (arranque inicial de la plataforma, una sola vez). Tus facturas quedan en cola y salen solas al conectar.' });
+    return c;
   }
 
   /* ------------------------------------------------------------------ configuración ------------------------------------------------------------------ */
 
   private vistaConfig(c: Record<string, unknown>) {
     return {
-      configurada: true, nit: c.nit, razonSocial: c.legal_name, actividades: c.economic_activities, sucursal: c.branch_code, puntoVenta: c.pos_code, municipio: c.municipality, direccion: c.address,
-      leyenda: c.legend ?? null, modalidad: c.mode, codigoSinPorDefecto: c.default_sin_product_code, unidadPorDefecto: c.default_unit_code, permiteConsumidorFinal: c.allow_final_consumer, habilitada: c.enabled,
-      tokenRegistrado: c.token_set, tokenVenceEn: c.token_expires_on ?? null, webhookRegistrado: c.webhook_set, conectadoEn: c.connected_at ?? null,
+      configurada: true, nit: c.nit, razonSocial: c.legal_name, municipio: c.municipality, direccion: c.address, leyenda: c.legend ?? null,
+      permiteConsumidorFinal: c.allow_final_consumer, habilitada: c.enabled,
+      credencialSinEnviada: c.token_set, tokenVenceEn: c.token_expires_on ?? null, sincronizadaEn: c.connected_at ?? null,
       ultimaPrueba: c.last_test_at ? { cuando: c.last_test_at, ok: c.last_test_ok, mensaje: c.last_test_message } : null,
-      ambientePruebas: c.mode !== 'real', aviso: c.mode !== 'real' ? AVISO_PRUEBAS : null,
+      ambientePruebas: true, aviso: AVISO_PRUEBAS,
       regimen: c.tax_regime ?? 'no_declarado', avisosRegimen: evaluarRegimenFiscal({ regimen: c.tax_regime as string, nit: c.nit as string }).avisos,
       codigosPago: c.payment_codes ?? CODIGOS_PAGO_POR_DEFECTO, codigosConfirmados: c.codes_confirmed === true, avisoCodigos: c.codes_confirmed === true ? null : TEXTO_AVISO_CODIGOS,
     };
   }
 
+  /** Paso 1 («Facturación» solo si el plan la incluye): GESTRO no limita módulos por plan en este tramo; se declara a FacturaSIN y manda lo que este diga. */
+  async habilitacion(t: Tenant): Promise<{ habilitada: boolean; mensaje: string | null }> {
+    try {
+      if ((await this.conexion.conectada()) || (await this.conexion.puedeEnlazar())) {
+        const en = await this.conexion.enlace();
+        await en.declararHabilitacion(t.restaurantId, true, 'Plan de GESTRO vigente');
+        const h = await en.habilitacion(t.restaurantId);
+        if (!h.habilitada) return { habilitada: false, mensaje: h.mensaje || 'La facturación electrónica no está habilitada para tu cuenta.' };
+      }
+    } catch { /* FacturaSIN no responde: manda el plan; se reintenta en el próximo uso */ }
+    return { habilitada: true, mensaje: null };
+  }
+
   async config(t: Tenant) {
-    return this.db.run(t, async (tx) => {
-      const c = (await tx.execute(sql`SELECT nit, legal_name, economic_activities, branch_code, pos_code, municipality, address, legend, mode, default_sin_product_code, default_unit_code, allow_final_consumer, enabled, tax_regime, payment_codes, codes_confirmed,
-        token_set, token_expires_on::text AS token_expires_on, webhook_set, connected_at, last_test_at, last_test_ok, last_test_message FROM billing_settings WHERE restaurant_id = ${t.restaurantId}`)).rows[0] as Record<string, unknown> | undefined;
-      if (c) return this.vistaConfig(c);
-      const [a] = (await tx.execute(sql`SELECT a.legal_name, a.nit FROM restaurants r JOIN accounts a ON a.id = r.account_id WHERE r.id = ${t.restaurantId}`)).rows as { legal_name: string; nit: string | null }[];
-      return { configurada: false, sugerencia: { nit: a?.nit ?? '', razonSocial: a?.legal_name ?? '' }, modalidad: 'simulado', ambientePruebas: true, aviso: AVISO_PRUEBAS, unidadPorDefecto: 57, permiteConsumidorFinal: true, habilitada: true, sucursal: 0, puntoVenta: 0 };
-    });
+    const hab = await this.habilitacion(t);
+    const c = await this.db.run(t, async (tx) => (await tx.execute(sql`SELECT nit, legal_name, municipality, address, legend, allow_final_consumer, enabled, tax_regime,
+        token_set, token_expires_on::text AS token_expires_on, connected_at, last_test_at, last_test_ok, last_test_message, payment_codes, codes_confirmed FROM billing_settings WHERE restaurant_id = ${t.restaurantId}`)).rows[0] as Record<string, unknown> | undefined);
+    if (c) return { ...this.vistaConfig(c), habilitacion: hab };
+    const [a] = await this.db.run(t, async (tx) => (await tx.execute(sql`SELECT a.legal_name, a.nit FROM restaurants r JOIN accounts a ON a.id = r.account_id WHERE r.id = ${t.restaurantId}`)).rows as { legal_name: string; nit: string | null }[]);
+    return { configurada: false, sugerencia: { nit: a?.nit ?? '', razonSocial: a?.legal_name ?? '' }, ambientePruebas: true, aviso: AVISO_PRUEBAS, permiteConsumidorFinal: true, habilitada: true, regimen: 'no_declarado', avisosRegimen: [], codigosPago: CODIGOS_PAGO_POR_DEFECTO, codigosConfirmados: false, avisoCodigos: TEXTO_AVISO_CODIGOS, habilitacion: hab };
   }
 
   /** Lo mínimo que necesita Caja para decidir si ofrece «Facturar» (lo lee cualquier rol de cobro). */
   async estado(t: Tenant) {
+    const hab = await this.habilitacion(t);
     return this.db.run(t, async (tx) => {
-      const c = (await tx.execute(sql`SELECT enabled, mode, allow_final_consumer FROM billing_settings WHERE restaurant_id = ${t.restaurantId}`)).rows[0] as { enabled: boolean; mode: string; allow_final_consumer: boolean } | undefined;
+      const c = (await tx.execute(sql`SELECT enabled, allow_final_consumer FROM billing_settings WHERE restaurant_id = ${t.restaurantId}`)).rows[0] as { enabled: boolean; allow_final_consumer: boolean } | undefined;
       const p = (await tx.execute(sql`SELECT count(*)::int AS n FROM fiscal_invoices WHERE restaurant_id = ${t.restaurantId} AND status = 'en_cola'`)).rows[0] as { n: number };
-      return { disponible: !!c?.enabled, ambientePruebas: !c || c.mode !== 'real', aviso: c && c.mode === 'real' ? null : AVISO_PRUEBAS, permiteConsumidorFinal: c?.allow_final_consumer ?? false, pendientesDeEmitir: p.n };
+      return { disponible: !!c?.enabled && hab.habilitada, habilitacion: hab, ambientePruebas: true, aviso: AVISO_PRUEBAS, permiteConsumidorFinal: c?.allow_final_consumer ?? false, pendientesDeEmitir: p.n };
     });
   }
 
+  /**
+   * Paso 2 «Datos del SIN»: guarda lo estrictamente necesario y crea/actualiza la empresa del restaurante en FacturaSIN (`PUT /integraciones/empresas/{id}`), con las
+   * credenciales del SIN que se ENVÍAN y se descartan. Si FacturaSIN no responde, los datos quedan guardados y se reintenta en «Probar facturación».
+   */
   async guardarConfig(t: Tenant, userId: string, cuerpo: unknown) {
     const d = ConfigFacturacion.parse(cuerpo);
+    const hab = await this.habilitacion(t);
+    if (!hab.habilitada) throw new ForbiddenException(hab.mensaje ?? 'La facturación electrónica no está incluida en tu plan.');
     let v;
     try {
       v = {
@@ -160,117 +166,76 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
         leyenda: d.leyenda?.trim() ? limpiarTexto(d.leyenda, 'Leyenda', 3, 300) : null,
       };
     } catch (e) { if (e instanceof ErrorFactura) throw new UnprocessableEntityException(e.message); throw e; }
-    if (d.modalidad === 'real') throw new UnprocessableEntityException('La facturación real todavía no está disponible: se habilita cuando el SIN autorice el sistema. Por ahora todo es ambiente de pruebas.');
     // Un mismo NIT no puede ser reclamado por dos cuentas distintas de GESTRO (evita facturar a nombre de otro).
     const otra = (await this.bd.execute(sql`SELECT 1 FROM billing_settings b JOIN restaurants r ON r.id = b.restaurant_id JOIN restaurants mi ON mi.id = ${t.restaurantId}
       WHERE b.nit = ${v.nit} AND b.restaurant_id <> ${t.restaurantId} AND r.account_id <> mi.account_id`)).rows;
     if (otra.length) throw new ConflictException('Ese NIT ya está registrado por otra cuenta de GESTRO. Si es tuyo, escribe a administracion@kyros-tech.com.');
+    const enviaCred = !!(d.codigoSistema && d.tokenDelegado);
+    if ((d.codigoSistema || d.tokenDelegado) && !enviaCred) throw new UnprocessableEntityException('Para cargar las credenciales del SIN indica el código de sistema y el token delegado juntos.');
     await this.db.run(t, async (tx) => {
-      await tx.execute(sql`INSERT INTO billing_settings (restaurant_id, nit, legal_name, economic_activities, branch_code, pos_code, municipality, address, legend, mode, default_sin_product_code, default_unit_code, allow_final_consumer, enabled, tax_regime, payment_codes, codes_confirmed, updated_by)
-        VALUES (${t.restaurantId}, ${v.nit}, ${v.razonSocial}, ${`{${d.actividades.join(',')}}`}::text[], ${d.sucursal}, ${d.puntoVenta}, ${v.municipio}, ${v.direccion}, ${v.leyenda}, 'simulado', ${d.codigoSinPorDefecto}, ${d.unidadPorDefecto}, ${d.permiteConsumidorFinal}, ${d.habilitada}, ${d.regimen}, ${JSON.stringify(d.codigosPago)}::jsonb, ${d.codigosConfirmados}, ${userId}::uuid)
-        ON CONFLICT (restaurant_id) DO UPDATE SET nit = EXCLUDED.nit, legal_name = EXCLUDED.legal_name, economic_activities = EXCLUDED.economic_activities, branch_code = EXCLUDED.branch_code, pos_code = EXCLUDED.pos_code,
-          municipality = EXCLUDED.municipality, address = EXCLUDED.address, legend = EXCLUDED.legend, mode = EXCLUDED.mode, default_sin_product_code = EXCLUDED.default_sin_product_code, default_unit_code = EXCLUDED.default_unit_code,
-          allow_final_consumer = EXCLUDED.allow_final_consumer, enabled = EXCLUDED.enabled, tax_regime = EXCLUDED.tax_regime, payment_codes = EXCLUDED.payment_codes, codes_confirmed = EXCLUDED.codes_confirmed, updated_by = EXCLUDED.updated_by, updated_at = now()`);
-      // Cambiar el NIT invalida la conexión anterior: hay que volver a conectar.
-      await tx.execute(sql`UPDATE billing_settings SET connected_at = NULL WHERE restaurant_id = ${t.restaurantId} AND nit <> ${v.nit}`);
-      await auditar(tx, t.restaurantId, userId, 'facturacion.config_guardada', 'billing_settings', t.restaurantId, { nit: v.nit, actividades: d.actividades, sucursal: d.sucursal, puntoVenta: d.puntoVenta, habilitada: d.habilitada, tokenNuevo: !!d.tokenDelegado });
+      await tx.execute(sql`INSERT INTO billing_settings (restaurant_id, nit, legal_name, economic_activities, municipality, address, legend, mode, default_sin_product_code, allow_final_consumer, enabled, tax_regime, payment_codes, codes_confirmed, token_set, token_expires_on, updated_by, connected_at)
+        VALUES (${t.restaurantId}, ${v.nit}, ${v.razonSocial}, NULL, ${v.municipio}, ${v.direccion}, ${v.leyenda}, 'simulado', NULL, ${d.permiteConsumidorFinal}, ${d.habilitada}, ${d.regimen}, ${JSON.stringify(d.codigosPago)}::jsonb, ${d.codigosConfirmados}, ${enviaCred}, ${d.tokenVenceEn ?? null}::date, ${userId}::uuid, NULL)
+        ON CONFLICT (restaurant_id) DO UPDATE SET nit = EXCLUDED.nit, legal_name = EXCLUDED.legal_name, municipality = EXCLUDED.municipality, address = EXCLUDED.address, legend = EXCLUDED.legend, mode = 'simulado',
+          allow_final_consumer = EXCLUDED.allow_final_consumer, enabled = EXCLUDED.enabled, tax_regime = EXCLUDED.tax_regime, payment_codes = EXCLUDED.payment_codes, codes_confirmed = EXCLUDED.codes_confirmed,
+          token_set = billing_settings.token_set OR EXCLUDED.token_set, token_expires_on = COALESCE(EXCLUDED.token_expires_on, billing_settings.token_expires_on), updated_by = EXCLUDED.updated_by, updated_at = now(), connected_at = NULL`);
+      await auditar(tx, t.restaurantId, userId, 'facturacion.datos_sin_guardados', 'billing_settings', t.restaurantId, { nit: v.nit, habilitada: d.habilitada, credencialEnviada: enviaCred });
     });
-    if (d.tokenDelegado) {
-      await this.cfg.guardar(CLAVE_TOKEN(t.restaurantId), { valor: d.tokenDelegado, actualizado: new Date().toISOString() }, userId);
-      await this.db.run(t, (tx) => tx.execute(sql`UPDATE billing_settings SET token_set = true, token_updated_at = now(), token_expires_on = ${d.tokenVenceEn ?? null}::date WHERE restaurant_id = ${t.restaurantId}`));
-    } else if (d.quitarToken) {
-      await this.cfg.guardar(CLAVE_TOKEN(t.restaurantId), { valor: null, actualizado: new Date().toISOString() }, userId);   // se limpia el valor; el registro queda
-      await this.db.run(t, async (tx) => { await tx.execute(sql`UPDATE billing_settings SET token_set = false, token_expires_on = NULL WHERE restaurant_id = ${t.restaurantId}`); await auditar(tx, t.restaurantId, userId, 'facturacion.token_quitado', 'billing_settings', t.restaurantId); });
-    } else if (d.tokenVenceEn !== undefined) {
-      await this.db.run(t, (tx) => tx.execute(sql`UPDATE billing_settings SET token_expires_on = ${d.tokenVenceEn}::date WHERE restaurant_id = ${t.restaurantId}`));
-    }
-    return this.config(t);
-  }
-
-  private async ajustes(t: Tenant) {
-    const c = await this.db.run(t, async (tx) => (await tx.execute(sql`SELECT nit, legal_name, economic_activities, branch_code, pos_code, municipality, address, default_sin_product_code, default_unit_code, allow_final_consumer, enabled FROM billing_settings WHERE restaurant_id = ${t.restaurantId}`)).rows[0] as
-      { nit: string; legal_name: string; economic_activities: string[]; branch_code: number; pos_code: number; municipality: string; address: string; default_sin_product_code: string; default_unit_code: number; allow_final_consumer: boolean; enabled: boolean } | undefined);
-    return c ?? null;
+    let sincronizada = false; let mensaje: string | null = null; let codigo: string | null = null;
+    try {
+      if (!(await this.conexion.conectada()) && !(await this.conexion.puedeEnlazar())) throw Object.assign(new Error('sin enlace'), { codigo: 'NO_CONFIGURADO' });
+      await (await this.conexion.enlace()).asegurarEmpresa(t.restaurantId, {
+        nit: v.nit, razonSocial: v.razonSocial, municipio: v.municipio, direccion: v.direccion,
+        ...(enviaCred ? { credencialesSin: { codigoSistema: d.codigoSistema!, tokenDelegado: d.tokenDelegado!, ...(d.tokenVenceEn ? { tokenVenceEn: `${d.tokenVenceEn}T23:59:59Z` } : {}) } } : {}),
+      });
+      await this.db.run(t, (tx) => tx.execute(sql`UPDATE billing_settings SET connected_at = now() WHERE restaurant_id = ${t.restaurantId}`));
+      sincronizada = true;
+    } catch (e) { const m = mensajeIntegracion(e); mensaje = m.mensaje; codigo = m.codigo; }
+    return { ...(await this.config(t)), sincronizada, ...(mensaje ? { mensaje, codigo } : {}) };
   }
 
   /* ------------------------------------------------------------------ conexión ------------------------------------------------------------------ */
 
-  /** Diagnóstico de solo lectura: credencial de servicio, token de Kyros ID, emisor en FacturaSIN, enlace y sucursal/punto de venta. */
+  /**
+   * Paso 3 «Probar facturación»: valida de punta a punta (credenciales del SIN, ambiente, catálogos, rubro, factura de prueba simulada y webhook) con
+   * `POST /integraciones/empresas/{id}/probar` y lo dice en lenguaje simple. Si falta elegir el rubro lo avisa para mostrar el selector.
+   */
   async probar(t: Tenant, userId: string) {
-    const c = await this.ajustes(t);
-    if (!c) throw new ConflictException('Primero guarda la configuración de facturación.');
-    const pasos: { paso: string; ok: boolean; detalle: string }[] = [];
-    const paso = (p: string, ok: boolean, detalle: string) => { pasos.push({ paso: p, ok, detalle }); return ok; };
-    let ambiente: string | null = null;
+    const c = (await this.db.run(t, async (tx) => (await tx.execute(sql`SELECT nit, legal_name, municipality, address, connected_at FROM billing_settings WHERE restaurant_id = ${t.restaurantId}`)).rows[0])) as { nit: string; legal_name: string; municipality: string; address: string; connected_at: string | null } | undefined;
+    if (!c) throw new ConflictException('Primero completa los datos del SIN (paso 2).');
+    let pasos: Array<{ id: string; titulo: string; estado: string; detalle: string; accion?: string }> = [];
+    let listo = false; let resumen: string; let requiereRubro = false;
     try {
-      const cli = await this.cliente(0);
-      paso('Credencial de GESTRO ante FacturaSIN', true, 'Cargada (nunca se muestra).');
-      const lista = (await cli.llamar('GET', '/v1/tenants')) as { id: string; nit: string; modoSiat?: string; nitDePrueba?: boolean }[];
-      paso('Conexión con Kyros ID y FacturaSIN', true, `Autenticación correcta; GESTRO ve ${lista.length} emisor(es).`);
-      const e = lista.find((x) => x.nit === c.nit);
-      if (!e) paso('Emisor registrado', false, `El NIT ${c.nit} todavía no está en FacturaSIN. Usa «Conectar con FacturaSIN».`);
-      else {
-        ambiente = e.modoSiat ?? null;
-        paso('Emisor registrado', true, `NIT ${c.nit} encontrado${e.modoSiat ? ` (modo ${e.modoSiat}${e.nitDePrueba ? ', NIT de prueba' : ''})` : ''}.`);
-        const enlaces = (await cli.llamar('GET', `/v1/tenants/${e.id}/systems`)) as { sistema: string; idExterno: string }[];
-        paso('Enlace de este restaurante', enlaces.some((x) => x.sistema === 'gestro' && x.idExterno === t.restaurantId), enlaces.some((x) => x.sistema === 'gestro' && x.idExterno === t.restaurantId) ? 'Enlazado.' : 'Este restaurante aún no está enlazado al emisor: usa «Conectar con FacturaSIN».');
-        const suc = (await cli.llamar('GET', `/v1/tenants/${e.id}/branches`)) as { codigo: number }[];
-        paso('Sucursal SIN', suc.some((s) => s.codigo === c.branch_code), suc.some((s) => s.codigo === c.branch_code) ? `La sucursal ${c.branch_code} existe.` : `La sucursal ${c.branch_code} no existe en FacturaSIN (hoy GESTRO solo puede usar la 0).`);
-        const pv = (await cli.llamar('GET', `/v1/tenants/${e.id}/pos`)) as { sucursal: number; codigo: number }[];
-        paso('Punto de venta SIN', pv.some((p) => p.sucursal === c.branch_code && p.codigo === c.pos_code), pv.some((p) => p.sucursal === c.branch_code && p.codigo === c.pos_code) ? `El punto de venta ${c.pos_code} existe.` : `El punto de venta ${c.pos_code} no existe en FacturaSIN.`);
+      const en = await this.conexion.enlace();
+      if (!c.connected_at) { // la empresa aún no se sincronizó (FacturaSIN no respondía al guardar): se vuelve a enviar sin credenciales nuevas
+        await en.asegurarEmpresa(t.restaurantId, { nit: c.nit, razonSocial: c.legal_name, municipio: c.municipality, direccion: c.address });
+        await this.db.run(t, (tx) => tx.execute(sql`UPDATE billing_settings SET connected_at = now() WHERE restaurant_id = ${t.restaurantId}`));
       }
-    } catch (e) { paso('Conexión', false, this.mensajeDe(e)); }
-    const ok = pasos.length > 0 && pasos.every((p) => p.ok);
-    const resumen = ok ? 'Conexión correcta.' : pasos.find((p) => !p.ok)?.detalle ?? 'No se pudo comprobar.';
-    await this.db.run(t, async (tx) => { await tx.execute(sql`UPDATE billing_settings SET last_test_at = now(), last_test_ok = ${ok}, last_test_message = ${resumen.slice(0, 300)} WHERE restaurant_id = ${t.restaurantId}`); await auditar(tx, t.restaurantId, userId, 'facturacion.probada', 'billing_settings', t.restaurantId, { ok }); });
-    return { ok, pasos, ambiente, aviso: AVISO_PRUEBAS };
+      const r = await en.probar(t.restaurantId, true);
+      pasos = r.pasos;
+      requiereRubro = pasos.some((p) => p.id === 'rubro' && p.estado !== 'ok');
+      const falla = pasos.find((p) => p.estado === 'error');
+      listo = !falla && r.ok !== false;
+      resumen = listo ? 'Todo listo: ya puedes facturar. Las facturas de esta etapa son de prueba y no tienen validez fiscal.' : `Falta: ${falla?.detalle ?? 'revisar los pasos marcados'}`;
+    } catch (e) { const m = mensajeIntegracion(e); resumen = m.mensaje; requiereRubro = m.codigo === 'REQUIERE_ELEGIR_RUBRO'; }
+    await this.db.run(t, async (tx) => {
+      await tx.execute(sql`UPDATE billing_settings SET last_test_at = now(), last_test_ok = ${listo}, last_test_message = ${resumen.slice(0, 300)} WHERE restaurant_id = ${t.restaurantId}`);
+      await auditar(tx, t.restaurantId, userId, 'facturacion.probada', 'billing_settings', t.restaurantId, { ok: listo });
+    });
+    return { ok: listo, listo, resumen, pasos, requiereRubro, aviso: AVISO_PRUEBAS };
   }
 
-  /** Registra al emisor en FacturaSIN (o lo enlaza si ya existe para GESTRO), envía la credencial si está permitido y suscribe el webhook de retorno. */
-  async conectar(t: Tenant, userId: string) {
-    const c = await this.ajustes(t);
-    if (!c) throw new ConflictException('Primero guarda la configuración de facturación.');
-    const pasos: { paso: string; ok: boolean; detalle: string }[] = [];
-    const cli = await this.cliente(1);
+  /** Selector simple de rubro (solo si FacturaSIN responde 409 REQUIERE_ELEGIR_RUBRO): del catálogo SINCRONIZADO de la empresa; no se inventa nada. */
+  async rubros(t: Tenant) {
+    try { return await (await this.conexion.enlace()).rubros(t.restaurantId); } catch (e) { throw new ServiceUnavailableException(mensajeIntegracion(e).mensaje); }
+  }
+  async elegirRubro(t: Tenant, userId: string, cuerpo: unknown) {
+    const o = z.object({ actividadEconomica: z.string().regex(/^\d{4,8}$/), codigoProductoSin: z.string().regex(/^\d{3,10}$/), unidadMedida: z.number().int().optional() }).strict().parse(cuerpo);
     try {
-      const lista = (await cli.llamar('GET', '/v1/tenants')) as { id: string; nit: string }[];
-      let emp = lista.find((x) => x.nit === c.nit);
-      if (!emp) {
-        emp = (await cli.llamar('POST', '/v1/tenants', { cuerpo: { nit: c.nit, razonSocial: c.legal_name, modalidad: 2, ambiente: 2, municipio: c.municipality, direccion: c.address, sectores: [1], idsExternos: [{ sistema: 'gestro', id: t.restaurantId }] } })) as { id: string; nit: string };
-        pasos.push({ paso: 'Emisor creado en FacturaSIN', ok: true, detalle: `NIT ${c.nit} registrado en ambiente de pruebas.` });
-      } else {
-        await cli.llamar('POST', `/v1/tenants/${emp.id}/systems`, { cuerpo: { sistema: 'gestro', id: t.restaurantId } });
-        pasos.push({ paso: 'Emisor enlazado', ok: true, detalle: `NIT ${c.nit} ya existía; este restaurante quedó enlazado.` });
-      }
-      const tok = await this.cfg.leer<{ valor: string | null }>(CLAVE_TOKEN(t.restaurantId));
-      if (tok?.valor) {
-        try { await cli.llamar('PUT', `/v1/tenants/${emp.id}/credentials`, { cuerpo: { tokenDelegado: tok.valor } }); pasos.push({ paso: 'Credencial del emisor', ok: true, detalle: 'Enviada a FacturaSIN (cifrada allá; no se puede leer).' }); }
-        catch (e) { pasos.push({ paso: 'Credencial del emisor', ok: false, detalle: `FacturaSIN no la aceptó desde GESTRO (${this.mensajeDe(e)}). Cárgala en el panel de FacturaSIN.` }); }
-      }
-      const yaHook = await this.cfg.leer<{ secretos: string[] }>(CLAVE_WEBHOOK(t.restaurantId));
-      if (!yaHook?.secretos?.length) {
-        try {
-          if (!origenPublicoDerivado()) throw new Error('Aun no se detecto la direccion publica del sistema.');
-          const url = `${origenPublicoDerivado()}${rutaWebhookEmisor(t.restaurantId)}`;
-          const w = await cli.crearWebhook(t.restaurantId, url, ['factura.pendiente', 'factura.validada', 'factura.observada', 'factura.rechazada', 'factura.anulada', 'factura.contingencia']);
-          await this.cfg.guardar(CLAVE_WEBHOOK(t.restaurantId), { secretos: [w.secreto], url }, userId);
-          await this.db.run(t, (tx) => tx.execute(sql`UPDATE billing_settings SET webhook_set = true, webhook_updated_at = now() WHERE restaurant_id = ${t.restaurantId}`));
-          pasos.push({ paso: 'Aviso de estados (webhook)', ok: true, detalle: 'Suscrito; el secreto se guardó cifrado.' });
-        } catch (e) { pasos.push({ paso: 'Aviso de estados (webhook)', ok: false, detalle: `No se pudo suscribir (${this.mensajeDe(e)}). La conciliación periódica cubre los estados mientras tanto.` }); }
-      } else pasos.push({ paso: 'Aviso de estados (webhook)', ok: true, detalle: 'Ya estaba suscrito.' });
-      await this.db.run(t, async (tx) => { await tx.execute(sql`UPDATE billing_settings SET connected_at = now() WHERE restaurant_id = ${t.restaurantId}`); await auditar(tx, t.restaurantId, userId, 'facturacion.conectada', 'billing_settings', t.restaurantId, { pasos: pasos.map((p) => `${p.paso}:${p.ok}`) }); });
-    } catch (e) { pasos.push({ paso: 'Conexión con FacturaSIN', ok: false, detalle: this.mensajeDe(e) }); }
-    return { ok: pasos.every((p) => p.ok), pasos, aviso: AVISO_PRUEBAS };
+      const r = await (await this.conexion.enlace()).elegirRubro(t.restaurantId, o);
+      await this.db.run(t, (tx) => auditar(tx, t.restaurantId, userId, 'facturacion.rubro_elegido', 'billing_settings', t.restaurantId, { actividad: o.actividadEconomica }));
+      return r;
+    } catch (e) { throw new UnprocessableEntityException(mensajeIntegracion(e).mensaje); }
   }
-
-  private mensajeDe(e: unknown): string {
-    if (e instanceof FacturaSinError) return `${e.codigo}: ${e.message.replace(/^[A-Z_]+: /, '')}`;
-    if (e instanceof HttpException) { const r = e.getResponse() as { message?: string }; return typeof r === 'string' ? r : r.message ?? e.message; }
-    const m = (e as Error)?.message ?? String(e);
-    return /timeout|abort/i.test(m) ? 'FacturaSIN no respondió a tiempo.' : m.replace(/client_secret=[^&\s]*/gi, 'client_secret=***');
-  }
-
-  /* ------------------------------------------------------------------ emisión ------------------------------------------------------------------ */
 
   /** Valida y arma al comprador ANTES de cobrar (si falla, no se cobra con factura). */
   prepararComprador(d: FacturarDatos, permiteConsumidorFinal: boolean): { comprador: CompradorSalida; final: boolean } {
@@ -282,6 +247,13 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
       if (!d.comprador) throw new ErrorFactura('Para facturar indica el NIT, CI o pasaporte y la razón social del comensal (o elige «sin nombre»).');
       return { comprador: armarComprador(d.comprador), final: false };
     } catch (e) { if (e instanceof ErrorFactura) throw new UnprocessableEntityException(e.message); throw e; }
+  }
+
+  private mensajeDe(e: unknown): string {
+    if (e instanceof FacturaSinError) return `${e.codigo}: ${e.message.replace(/^[A-Z_]+: /, '')}`;
+    if (e instanceof HttpException) { const r = e.getResponse() as { message?: string }; return typeof r === 'string' ? r : r.message ?? e.message; }
+    const m = (e as Error)?.message ?? String(e);
+    return /timeout|abort/i.test(m) ? 'FacturaSIN no respondió a tiempo.' : m.replace(/client_secret=[^&\s]*/gi, 'client_secret=***');
   }
 
   async exigirLista(tx: Bd, t: Tenant): Promise<{ permiteConsumidorFinal: boolean }> {
@@ -300,8 +272,8 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
 
   async crearFactura(t: Tenant, userId: string, orderId: string, d: FacturarDatos): Promise<string> {
     return this.db.run(t, async (tx) => {
-      const cfg = (await tx.execute(sql`SELECT branch_code, pos_code, economic_activities, default_sin_product_code, default_unit_code, enabled, allow_final_consumer, payment_codes FROM billing_settings WHERE restaurant_id = ${t.restaurantId}`)).rows[0] as
-        { branch_code: number; pos_code: number; economic_activities: string[]; default_sin_product_code: string; default_unit_code: number; enabled: boolean; allow_final_consumer: boolean; payment_codes: CodigosPago | null } | undefined;
+      const cfg = (await tx.execute(sql`SELECT branch_code, pos_code, enabled, allow_final_consumer, payment_codes FROM billing_settings WHERE restaurant_id = ${t.restaurantId}`)).rows[0] as
+        { branch_code: number; pos_code: number; enabled: boolean; allow_final_consumer: boolean; payment_codes: CodigosPago | null } | undefined;
       if (!cfg) throw new UnprocessableEntityException('Configura la facturación (Configuración → Facturación electrónica) antes de facturar.');
       if (!cfg.enabled) throw new UnprocessableEntityException('La facturación electrónica está apagada en este restaurante.');
       const o = (await tx.execute(sql`SELECT id, status, discount::text AS discount FROM orders WHERE id = ${orderId} AND restaurant_id = ${t.restaurantId} FOR UPDATE`)).rows[0] as { id: string; status: string; discount: string } | undefined;
@@ -330,7 +302,7 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
       const intento = ((await tx.execute(sql`SELECT COALESCE(MAX(attempt), 0)::int AS n FROM fiscal_invoices WHERE order_id = ${orderId}`)).rows[0] as { n: number }).n + 1;
       const idExterno = idExternoDe(orderId, intento);
       let payload: PayloadFactura;
-      try { payload = armarPayload({ idExterno, lineas: lp, descuento: o.discount, comprador, metodo: pago.method, numeroTarjeta, config: { sucursal: cfg.branch_code, puntoVenta: cfg.pos_code, actividad: cfg.economic_activities[0]!, codigoSinPorDefecto: cfg.default_sin_product_code, unidadPorDefecto: cfg.default_unit_code, codigosPago: cfg.payment_codes ?? undefined } }); }
+      try { payload = armarPayload({ idExterno, lineas: lp, descuento: o.discount, comprador, metodo: pago.method, numeroTarjeta, config: { sucursal: cfg.branch_code, puntoVenta: cfg.pos_code, codigosPago: cfg.payment_codes ?? undefined } }); }
       catch (e) { if (e instanceof ErrorFactura) throw new UnprocessableEntityException(e.message); throw e; }
       const f = (await tx.execute(sql`INSERT INTO fiscal_invoices (restaurant_id, order_id, payment_id, attempt, external_id, status, buyer_doc_type, buyer_doc_number, buyer_complement, buyer_name, buyer_email, buyer_exception, final_consumer,
           subtotal, discount, total, iva_ref, tip_excluded, payload, next_retry_at, created_by)
@@ -373,7 +345,7 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
     const nota = cuadra ? null : `Los totales de FacturaSIN (total ${totalFs}, IVA ${ivaFs}) no coinciden con el cálculo de GESTRO (total ${f.total}, IVA ${f.iva_ref}).`;
     if (nota) await this.alertar(tx, f.restaurant_id, `totales:${f.id}`, 'alta', nota, { facturaId: f.id });
     await tx.execute(sql`UPDATE fiscal_invoices SET status = ${estado}, fs_invoice_id = ${r.id}, invoice_number = ${r.numero ?? null}, cuf = ${r.cuf ?? null}, issued_at = ${r.fechaEmision ?? null}::timestamptz,
-      fs_total = ${Number.isFinite(totalFs) ? totalFs.toFixed(2) : null}::numeric, fs_iva = ${Number.isFinite(ivaFs) ? ivaFs.toFixed(2) : null}::numeric, links = ${JSON.stringify(r.enlaces ?? null)}::jsonb, qr_text = ${r.qrTexto ?? null},
+      fs_total = ${Number.isFinite(totalFs) ? totalFs.toFixed(2) : null}::numeric, fs_iva = ${Number.isFinite(ivaFs) ? ivaFs.toFixed(2) : null}::numeric, links = ${JSON.stringify(r.enlaces ?? null)}::jsonb, snapshot = ${JSON.stringify(r)}::jsonb, qr_text = ${r.qrTexto ?? null},
       notice = ${r.avisoFiscal ?? null}, test_env = ${r.ambientePruebas !== false}, errors = ${r.errores ? JSON.stringify(r.errores) : null}::jsonb, last_error = ${nota}, next_retry_at = NULL, updated_at = now() WHERE id = ${f.id}::uuid`);
     await this.resolverAlerta(tx, f.restaurant_id, `pendiente:${f.id}`);
     await auditar(tx, f.restaurant_id, null, 'factura.respuesta', 'fiscal_invoice', f.id, { estado, numero: r.numero, cuf: r.cuf });
@@ -518,33 +490,52 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
 
   /* ------------------------------------------------------------------ webhook de retorno ------------------------------------------------------------------ */
 
-  /** Recibe un evento firmado de FacturaSIN. Verifica HMAC sobre el cuerpo CRUDO, tolera 5 min, deduplica por id de evento y no retrocede por eventos viejos. */
-  async recibirWebhook(rid: string, cabeceraFirma: string | undefined, eventoId: string | undefined, crudo: string | undefined) {
-    const guardado = /^[0-9a-f-]{36}$/i.test(rid) ? await this.cfg.leer<{ secretos: string[] }>(CLAVE_WEBHOOK(rid)) : null;
-    if (!guardado?.secretos?.length || !crudo || !cabeceraFirma || !verificarFirmaWebhook(guardado.secretos, cabeceraFirma, crudo)) throw new UnauthorizedException('Firma no válida.');
-    void this.integracion.registrarEntrega();
-    let ev: { id?: string; tipo?: string; creadoEn?: string; datos?: { idExterno?: string; cuf?: string; numero?: number; estado?: string; ambientePruebas?: boolean } };
-    try { ev = JSON.parse(crudo); } catch { throw new BadRequestException('Cuerpo inválido.'); }
-    const idEv = (eventoId ?? ev.id ?? '').slice(0, 120);
-    if (!idEv || !ev.tipo || !ev.datos?.idExterno) throw new BadRequestException('Evento incompleto.');
-    const t: Tenant = { restaurantId: rid, restaurantIds: [] };
+  /**
+   * Aplica un evento YA verificado (el webhook único `/webhooks/facturasin` comprueba la firma HMAC con el secreto único del sistema). Registra la factura DEVUELTA por el SIN:
+   * estado final, número, CUF, fecha, totales, desglose y enlaces en `snapshot`, de forma idempotente (id de evento) y sin retroceder por eventos viejos.
+   */
+  async aplicarEvento(ev: { id?: string; tipo?: string; creadoEn?: string; datos?: { idExterno?: string; facturaId?: string; cuf?: string; numero?: number; factura?: unknown; enlaces?: unknown } }, idEv: string): Promise<{ ok: boolean; estado?: string; ignorado?: string }> {
     const mapa: Record<string, string> = { 'factura.pendiente': 'pendiente', 'factura.validada': 'validada', 'factura.observada': 'observada', 'factura.rechazada': 'rechazada', 'factura.anulada': 'anulada', 'factura.contingencia': 'contingencia' };
+    const estado = ev.tipo ? mapa[ev.tipo] : undefined;
+    if (!estado || !ev.datos?.idExterno) return { ok: true, ignorado: 'evento sin efecto en facturas' };
+    const rid = ((await this.bd.execute(sql`SELECT restaurant_id FROM fiscal_invoices WHERE external_id = ${ev.datos.idExterno}`)).rows[0] as { restaurant_id: string } | undefined)?.restaurant_id;
+    if (!rid) return { ok: false };
+    const t: Tenant = { restaurantId: rid, restaurantIds: [] };
     return this.db.run(t, async (tx) => {
       const nuevo = (await tx.execute(sql`INSERT INTO fiscal_webhook_events (event_id, restaurant_id, kind) VALUES (${idEv}, ${rid}, ${ev.tipo!}) ON CONFLICT DO NOTHING RETURNING event_id`)).rows.length > 0;
-      if (!nuevo) return { ok: true, duplicado: true };
-      const estado = mapa[ev.tipo!];
-      if (!estado) return { ok: true, ignorado: 'evento sin efecto en facturas' };
+      if (!nuevo) return { ok: true, ignorado: 'duplicado' };
       const f = (await tx.execute(sql`SELECT ${COLUMNAS} FROM fiscal_invoices WHERE restaurant_id = ${rid} AND external_id = ${ev.datos!.idExterno!}`)).rows[0] as unknown as Fila | undefined;
-      if (!f) return { ok: true, ignorado: 'factura desconocida' };
+      if (!f) return { ok: false };
       const cuando = ev.creadoEn && !Number.isNaN(Date.parse(ev.creadoEn)) ? new Date(ev.creadoEn) : new Date();
       if (f.last_event_at && cuando.getTime() < new Date(f.last_event_at).getTime()) return { ok: true, ignorado: 'evento anterior al último aplicado' };
-      await tx.execute(sql`UPDATE fiscal_invoices SET status = ${estado}, cuf = COALESCE(cuf, ${ev.datos!.cuf ?? null}), invoice_number = COALESCE(invoice_number, ${ev.datos!.numero ?? null}::bigint), last_event_at = ${cuando.toISOString()}::timestamptz,
+      if (f.status === 'anulada' && estado !== 'anulada') return { ok: true, ignorado: 'la factura ya está anulada' };
+      await tx.execute(sql`UPDATE fiscal_invoices SET status = ${estado}, fs_invoice_id = COALESCE(fs_invoice_id, ${ev.datos!.facturaId ?? null}), cuf = COALESCE(${ev.datos!.cuf ?? null}, cuf), invoice_number = COALESCE(${ev.datos!.numero ?? null}::bigint, invoice_number),
+        snapshot = COALESCE(${ev.datos!.factura ? JSON.stringify(ev.datos!.factura) : null}::jsonb, snapshot), links = COALESCE(${ev.datos!.enlaces ? JSON.stringify(ev.datos!.enlaces) : null}::jsonb, links), last_event_at = ${cuando.toISOString()}::timestamptz,
         next_retry_at = CASE WHEN ${estado} = 'pendiente' THEN next_retry_at ELSE NULL END,
         last_error = CASE WHEN ${estado} IN ('validada','observada','anulada') THEN NULL ELSE last_error END, updated_at = now() WHERE id = ${f.id}::uuid`);
       if (estado !== 'pendiente') await this.resolverAlerta(tx, rid, `pendiente:${f.id}`);
       await auditar(tx, rid, null, 'factura.webhook', 'fiscal_invoice', f.id, { evento: ev.tipo, estado });
       return { ok: true, estado };
     });
+  }
+
+  /** Botón «Verificar»: reconsulta a FacturaSIN el estado FINAL de la factura (por id externo) y lo registra; si FacturaSIN no avisa, esto la deja al día. */
+  async verificar(t: Tenant, _userId: string, id: string) {
+    const f = await this.db.run(t, (tx) => this.cargar(tx, t.restaurantId, id));
+    if (['en_cola', 'error_datos'].includes(f.status)) return vistaFactura(f);
+    try {
+      const r = await (await this.cliente(1)).porIdExterno(f.external_id, t.restaurantId);
+      await this.db.run(t, (tx) => this.aplicarRemoto(tx, f, r));
+    } catch (e) { throw new ServiceUnavailableException(mensajeIntegracion(e).mensaje); }
+    return this.vista(t, id);
+  }
+
+  /** «Reenviar aviso»: pide a FacturaSIN que vuelva a enviar el aviso firmado de esa factura (por si el sistema estuvo caído). */
+  async reenviarAviso(t: Tenant, id: string) {
+    const f = await this.db.run(t, (tx) => this.cargar(tx, t.restaurantId, id));
+    if (!f.fs_invoice_id) throw new ConflictException('Esta factura todavía no llegó a FacturaSIN: no hay aviso que reenviar.');
+    try { await (await this.conexion.enlace()).reenviarAviso(t.restaurantId, f.fs_invoice_id); } catch (e) { throw new ServiceUnavailableException(mensajeIntegracion(e).mensaje); }
+    return { ok: true, mensaje: 'FacturaSIN reenviará el aviso firmado en unos segundos.' };
   }
 }
 

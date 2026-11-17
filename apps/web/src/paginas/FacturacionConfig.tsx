@@ -4,11 +4,16 @@ import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { clases } from '../componentes/Marca';
 
 interface Cfg {
-  configurada: boolean; nit?: string; razonSocial?: string; actividades?: string[]; sucursal: number; puntoVenta: number; municipio?: string; direccion?: string; leyenda?: string | null;
-  modalidad: string; codigoSinPorDefecto?: string; unidadPorDefecto: number; permiteConsumidorFinal: boolean; habilitada: boolean; tokenRegistrado?: boolean; tokenVenceEn?: string | null; webhookRegistrado?: boolean;
-  conectadoEn?: string | null; regimen?: string; avisosRegimen?: string[]; codigosPago?: { efectivo: number; tarjeta: number; otro: number }; codigosConfirmados?: boolean; avisoCodigos?: string | null; ultimaPrueba?: { cuando: string; ok: boolean; mensaje: string } | null; aviso: string | null; ambientePruebas: boolean; sugerencia?: { nit: string; razonSocial: string };
+  configurada: boolean; sugerencia?: { nit: string; razonSocial: string }; nit?: string; razonSocial?: string; municipio?: string; direccion?: string; leyenda?: string | null;
+  permiteConsumidorFinal: boolean; habilitada?: boolean; credencialSinEnviada?: boolean; tokenVenceEn?: string | null; sincronizadaEn?: string | null;
+  regimen?: string; avisosRegimen?: string[]; codigosPago?: { efectivo: number; tarjeta: number; otro: number }; codigosConfirmados?: boolean; avisoCodigos?: string | null;
+  ultimaPrueba?: { cuando: string; ok: boolean; mensaje: string } | null; aviso?: string | null;
+  /** Paso 1: «No incluida en tu plan» + como pedirla. */
+  habilitacion?: { habilitada: boolean; mensaje: string | null };
 }
-interface Paso { paso: string; ok: boolean; detalle: string }
+interface Paso { id: string; titulo: string; estado: 'ok' | 'error' | 'aviso' | 'omitido'; detalle: string; accion?: string }
+interface Resultado { ok: boolean; listo: boolean; resumen: string; pasos: Paso[]; requiereRubro: boolean }
+interface Rubros { actividades: Array<{ actividadEconomica: string; descripcion: string; productosSin: Array<{ codigoProductoSin: string; descripcion: string }> }> }
 
 /** Aviso permanente mientras la facturación sea simulada. */
 export function AvisoPruebas({ texto }: { texto?: string | null }) {
@@ -25,27 +30,56 @@ const campo = (v: string, nombre: string, min: number, max: number): string | nu
   return null;
 };
 
-/** Configuración de la facturación del restaurante a sus comensales (FacturaSIN). Solo dueño y administrador. */
+/** Facturación del restaurante a sus comensales (FacturaSIN) en TRES pasos: 1) Facturación (si tu plan la incluye), 2) Datos del SIN, 3) Probar facturación. Solo dueño y administrador. */
 export function FacturacionConfig() {
   const { sucursalId } = useRolesActivos();
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['fact-config', sucursalId], queryFn: () => api.get<Cfg>('/facturacion/config', sucursalId!), enabled: !!sucursalId });
   const c = q.data;
   if (!c) return <p className="text-on-surface-variant">Cargando facturación…</p>;
+  if (c.habilitacion && !c.habilitacion.habilitada) {
+    return (
+      <p role="status" data-testid="no-incluida" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-md font-body-md">
+        <strong>No incluida en tu plan.</strong> {c.habilitacion.mensaje ?? 'Pídela a administracion@kyros-tech.com o mejora tu plan en Suscripción.'}
+      </p>
+    );
+  }
   return <Formulario key={`${c.nit ?? ''}-${c.configurada}`} c={c} refrescar={() => qc.invalidateQueries({ queryKey: ['fact-config', sucursalId] })} />;
+}
+
+/** Solo si FacturaSIN pide elegir el rubro (409 REQUIERE_ELEGIR_RUBRO): lista MÍNIMA del catálogo sincronizado; nada se inventa. */
+function SelectorRubro({ onElegido }: { onElegido(): void }) {
+  const { sucursalId } = useRolesActivos();
+  const r = useQuery({ queryKey: ['fact-rubros', sucursalId], queryFn: () => api.get<Rubros>('/facturacion/rubros', sucursalId!), enabled: !!sucursalId });
+  const [sel, setSel] = useState(''); const [error, setError] = useState<string | null>(null);
+  const opciones = (r.data?.actividades ?? []).flatMap((a) => a.productosSin.map((p) => ({ v: `${a.actividadEconomica}|${p.codigoProductoSin}`, e: `${a.descripcion} — ${p.descripcion}` })));
+  const guardar = async () => {
+    const [actividadEconomica, codigoProductoSin] = sel.split('|'); setError(null);
+    try { await api.put('/facturacion/rubro', { actividadEconomica, codigoProductoSin }, sucursalId!); onElegido(); } catch (e) { setError(mensajeDeError(e)); }
+  };
+  return (
+    <div className="flex flex-col gap-space-sm" data-testid="selector-rubro">
+      <p className="font-body-sm text-on-surface-variant">FacturaSIN necesita saber el rubro de tu restaurante una sola vez. Elige la actividad y el producto de la lista.</p>
+      <select value={sel} onChange={(e) => setSel(e.target.value)} className={clases.input} aria-label="Rubro">
+        <option value="">Elige una actividad y un producto</option>
+        {opciones.map((o) => <option key={o.v} value={o.v}>{o.e}</option>)}
+      </select>
+      <button type="button" disabled={!sel} onClick={() => void guardar()} className={clases.secundario}>Guardar rubro</button>
+      {error && <p role="alert" className="text-error font-body-sm">{error}</p>}
+    </div>
+  );
 }
 
 function Formulario({ c, refrescar }: { c: Cfg; refrescar(): Promise<unknown> }) {
   const { sucursalId } = useRolesActivos();
   const [nit, setNit] = useState(c.nit ?? c.sugerencia?.nit ?? ''); const [razon, setRazon] = useState(c.razonSocial ?? c.sugerencia?.razonSocial ?? '');
-  const [act, setAct] = useState((c.actividades ?? []).join(', ')); const [suc, setSuc] = useState(String(c.sucursal)); const [pv, setPv] = useState(String(c.puntoVenta));
   const [muni, setMuni] = useState(c.municipio ?? ''); const [dir, setDir] = useState(c.direccion ?? ''); const [ley, setLey] = useState(c.leyenda ?? '');
-  const [codSin, setCodSin] = useState(c.codigoSinPorDefecto ?? ''); const [uni, setUni] = useState(String(c.unidadPorDefecto));
+  const [codigoSistema, setCodigoSistema] = useState('');
   const [regimen, setRegimen] = useState(c.regimen ?? 'no_declarado'); const [pagoOtro, setPagoOtro] = useState(String(c.codigosPago?.otro ?? 7)); const [confirmados, setConfirmados] = useState(c.codigosConfirmados === true);
-  const [final, setFinal] = useState(c.permiteConsumidorFinal); const [hab, setHab] = useState(c.habilitada);
+  const [final, setFinal] = useState(c.permiteConsumidorFinal);
   const [token, setToken] = useState(''); const [vence, setVence] = useState(c.tokenVenceEn ?? '');
   const [errores, setErrores] = useState<Record<string, string>>({}); const [aviso, setAviso] = useState<string | null>(null); const [error, setError] = useState<string | null>(null);
-  const [pasos, setPasos] = useState<Paso[] | null>(null); const [ocupado, setOcupado] = useState<string | null>(null);
+  const [res, setRes] = useState<Resultado | null>(null); const [ocupado, setOcupado] = useState<string | null>(null);
 
   const validar = () => {
     const e: Record<string, string> = {};
@@ -54,33 +88,30 @@ function Formulario({ c, refrescar }: { c: Cfg; refrescar(): Promise<unknown> })
     const m = campo(muni, 'El municipio', 2, 100); if (m) e.muni = m;
     const d = campo(dir, 'La dirección', 3, 300); if (d) e.dir = d;
     if (ley.trim()) { const l = campo(ley, 'La leyenda', 3, 300); if (l) e.ley = l; }
-    const acts = act.split(/[,\s]+/).filter(Boolean);
-    if (!acts.length || acts.some((a) => !/^\d{4,8}$/.test(a))) e.act = 'Escribe uno o más códigos de actividad económica del SIN (solo números), separados por coma.';
-    if (!/^\d{3,10}$/.test(codSin.trim())) e.cod = 'El código de producto SIN son 3 a 10 dígitos.';
-    if (!/^\d{1,3}$/.test(uni.trim()) || Number(uni) < 1) e.uni = 'La unidad de medida es un número del catálogo SIN (por ejemplo 57).';
-    if (!/^\d{1,4}$/.test(suc.trim())) e.suc = 'Número de sucursal: 0 o más.';
-    if (!/^\d{1,4}$/.test(pv.trim())) e.pv = 'Número de punto de venta: 0 o más.';
-    if (token.trim() && token.trim().length < 10) e.token = 'El token delegado parece incompleto.';
+    if ((token.trim() || codigoSistema.trim()) && (token.trim().length < 10 || codigoSistema.trim().length < 3)) e.token = 'Para cargar las credenciales del SIN escribe el código de sistema y el token delegado completos.';
     if (vence && !/^\d{4}-\d{2}-\d{2}$/.test(vence)) e.vence = 'Fecha AAAA-MM-DD.';
-    setErrores(e); return { e, acts };
+    setErrores(e); return e;
   };
 
-  const guardar = async (extra: Record<string, unknown> = {}) => {
-    setError(null); setAviso(null); const { e, acts } = validar(); if (Object.keys(e).length) return false;
+  /** Paso 2: solo los datos y credenciales que da el SIN; la empresa se crea sola en FacturaSIN. */
+  const guardar = async () => {
+    setError(null); setAviso(null); if (Object.keys(validar()).length) return false;
     setOcupado('guardar');
     try {
-      await api.put('/facturacion/config', {
-        nit: nit.trim(), razonSocial: razon, actividades: acts, sucursal: Number(suc), puntoVenta: Number(pv), municipio: muni, direccion: dir, leyenda: ley.trim() || null, modalidad: 'simulado',
-        codigoSinPorDefecto: codSin.trim(), unidadPorDefecto: Number(uni), permiteConsumidorFinal: final, habilitada: hab, regimen, codigosPago: { efectivo: c.codigosPago?.efectivo ?? 1, tarjeta: c.codigosPago?.tarjeta ?? 2, otro: Number(pagoOtro) || 7 }, codigosConfirmados: confirmados, ...(token.trim() ? { tokenDelegado: token.trim() } : {}), ...(vence ? { tokenVenceEn: vence } : {}), ...extra,
+      const r = await api.put<{ sincronizada?: boolean; mensaje?: string }>('/facturacion/config', {
+        nit: nit.trim(), razonSocial: razon, municipio: muni, direccion: dir, leyenda: ley.trim() || null, permiteConsumidorFinal: final, habilitada: true, regimen,
+        codigosPago: { efectivo: c.codigosPago?.efectivo ?? 1, tarjeta: c.codigosPago?.tarjeta ?? 2, otro: Number(pagoOtro) || 7 }, codigosConfirmados: confirmados,
+        ...(codigoSistema.trim() && token.trim() ? { codigoSistema: codigoSistema.trim(), tokenDelegado: token.trim() } : {}), ...(vence ? { tokenVenceEn: vence } : {}),
       }, sucursalId!);
-      setToken(''); setAviso('Guardado.'); await refrescar(); return true;
+      setToken(''); setCodigoSistema(''); setAviso(r.mensaje ?? 'Guardado.'); await refrescar(); return true;
     } catch (err) { setError(mensajeDeError(err)); return false; } finally { setOcupado(null); }
   };
-  const accion = async (ruta: 'probar' | 'conectar') => {
-    setPasos(null); setError(null);
+  /** Paso 3: valida todo de punta a punta y lo dice en lenguaje simple. */
+  const probar = async () => {
+    setRes(null); setError(null);
     if (!(await guardar())) return;
-    setOcupado(ruta);
-    try { const r = await api.post<{ ok: boolean; pasos: Paso[] }>(`/facturacion/${ruta}`, undefined, sucursalId!); setPasos(r.pasos); await refrescar(); }
+    setOcupado('probar');
+    try { setRes(await api.post<Resultado>('/facturacion/probar', undefined, sucursalId!)); await refrescar(); }
     catch (err) { setError(mensajeDeError(err)); } finally { setOcupado(null); }
   };
   const campoVista = (id: string, etiqueta: string, valor: string, cambiar: (v: string) => void, extra: { ayuda?: string; modo?: 'numeric' | 'text'; tipo?: string; max?: number } = {}) => (
@@ -94,51 +125,42 @@ function Formulario({ c, refrescar }: { c: Cfg; refrescar(): Promise<unknown> })
     <section className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-md" aria-labelledby="fact-titulo">
       <div>
         <h2 id="fact-titulo" className="font-headline-sm text-headline-sm text-primary">Facturación electrónica a tus clientes</h2>
-        <p className="font-body-sm text-on-surface-variant">Con estos datos GESTRO pide la factura de cada venta a FacturaSIN, a nombre de tu restaurante. Hoy todo funciona en un ambiente de pruebas: ninguna factura tiene validez fiscal.</p>
+        <p className="font-body-sm text-on-surface-variant">Tres pasos: 1) Facturación (incluida en tu plan), 2) Datos del SIN, 3) Probar facturación. Todo lo demás es automático. Hoy todo funciona en un ambiente de pruebas: ninguna factura tiene validez fiscal.</p>
       </div>
       <AvisoPruebas texto={c.aviso} />
       {c.avisoCodigos && !confirmados && <p role="note" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-sm font-label-md">{c.avisoCodigos}</p>}
       {(c.avisosRegimen ?? []).map((a) => <p key={a} role="note" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-sm font-body-sm">{a}</p>)}
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
+      <h3 className="font-label-md font-bold">Paso 2 · Datos del SIN</h3>
       <div className="grid sm:grid-cols-2 gap-space-sm">
         {campoVista('nit', 'NIT del restaurante', nit, setNit, { modo: 'numeric', max: 13, ayuda: 'Solo números. En pruebas usa un NIT ficticio, por ejemplo 1000000005.' })}
         {campoVista('razon', 'Razón social', razon, setRazon, { max: 200 })}
-        {campoVista('act', 'Actividad económica (códigos SIN)', act, setAct, { ayuda: 'Uno o varios, separados por coma. El primero es el principal.' })}
         {campoVista('muni', 'Municipio', muni, setMuni, { max: 100 })}
-        <div className="sm:col-span-2">{campoVista('dir', 'Dirección', dir, setDir, { max: 300 })}</div>
-        {campoVista('suc', 'Sucursal SIN', suc, setSuc, { modo: 'numeric', max: 4, ayuda: '0 = casa matriz.' })}
-        {campoVista('pv', 'Punto de venta SIN', pv, setPv, { modo: 'numeric', max: 4, ayuda: '0 = primer punto de venta.' })}
-        {campoVista('cod', 'Código de producto SIN por defecto', codSin, setCodSin, { modo: 'numeric', max: 10, ayuda: 'Se usa en los platos sin código propio (se pone en Menú).' })}
-        {campoVista('uni', 'Unidad de medida por defecto', uni, setUni, { modo: 'numeric', max: 3, ayuda: 'Catálogo SIN: 57 = unidad (bienes), 58 = unidad (servicios).' })}
-        <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Régimen tributario</span><select value={regimen} onChange={(e) => { setRegimen(e.target.value); setAviso(null); }} className={clases.input}><option value="no_declarado">No indicado</option><option value="general">Régimen General</option><option value="simplificado">Régimen Tributario Simplificado</option></select><span className="font-body-sm text-on-surface-variant">Solo avisa: el Simplificado no puede emitir factura con crédito fiscal.</span></label>
-        {campoVista('pago', 'Código SIN de «otro medio de pago» (QR, transferencia)', pagoOtro, setPagoOtro, { modo: 'numeric', max: 3, ayuda: 'Efectivo = 1 y tarjeta = 2 están confirmados; el código de QR/transferencia sale del catálogo sincronizado de FacturaSIN (NO CONFIRMADO — definir con el catálogo del SIN).' })}
-        <label className="flex items-center gap-space-sm sm:col-span-2"><input type="checkbox" checked={confirmados} onChange={(e) => { setConfirmados(e.target.checked); setAviso(null); }} /><span className="font-body-sm">Mi contador confirmó los códigos (producto SIN, actividad y método de pago)</span></label>
-        <div className="sm:col-span-2">{campoVista('ley', 'Leyenda (opcional)', ley, setLey, { max: 300, ayuda: 'Mensaje propio que se muestra junto a la factura. La leyenda legal la agrega el SIN.' })}</div>
+        {campoVista('dir', 'Dirección', dir, setDir, { max: 300 })}
+        {campoVista('codigo', 'Código de sistema del SIN', codigoSistema, setCodigoSistema, { max: 100, ayuda: 'Te lo da el SIN al registrar tu sistema de facturación. Se envía a FacturaSIN y no se guarda aquí.' })}
+        {campoVista('token', c.credencialSinEnviada ? 'Reemplazar token delegado (opcional)' : 'Token delegado del SIN', token, setToken, { tipo: 'password', max: 4000, ayuda: 'Se envía a FacturaSIN (cifrado allá) y no se guarda en GESTRO.' })}
       </div>
+      <details className="rounded-lg border border-outline-variant p-space-sm" data-testid="avanzado-emisor">
+        <summary className="cursor-pointer font-label-md font-bold">Avanzado</summary>
+        <div className="grid sm:grid-cols-2 gap-space-sm mt-space-sm">
+          {campoVista('ley', 'Leyenda (opcional)', ley, setLey, { max: 300, ayuda: 'Mensaje propio que se muestra junto a la factura. La leyenda legal la agrega el SIN.' })}
+          {campoVista('vence', 'El token vence el (AAAA-MM-DD)', vence, setVence, { max: 10 })}
+          <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Régimen tributario</span><select value={regimen} onChange={(e) => { setRegimen(e.target.value); setAviso(null); }} className={clases.input}><option value="no_declarado">No lo sé / prefiero no indicarlo</option><option value="general">Régimen General</option><option value="simplificado">Régimen Tributario Simplificado</option></select></label>
+          {campoVista('pago', 'Código SIN de «otro medio de pago» (QR, transferencia)', pagoOtro, setPagoOtro, { modo: 'numeric', max: 3, ayuda: 'Efectivo = 1 y tarjeta = 2 están confirmados; el de QR/transferencia sale del catálogo metodoPago.' })}
+          <label className="flex items-center gap-space-sm sm:col-span-2"><input type="checkbox" checked={confirmados} onChange={(e) => { setConfirmados(e.target.checked); setAviso(null); }} /><span className="font-body-sm">Mi contador confirmó los códigos con el catálogo sincronizado.</span></label>
+          <label className="flex items-center gap-space-sm sm:col-span-2 min-h-11"><input type="checkbox" checked={final} onChange={(e) => setFinal(e.target.checked)} className="w-5 h-5" /><span>Permitir factura «sin nombre» (consumidor final)</span></label>
+        </div>
+      </details>
       <div className="grid sm:grid-cols-2 gap-space-sm">
-        <div><span className={clases.etiqueta}>Modalidad</span><p className="h-[52px] flex items-center rounded-lg bg-surface-container px-space-md">Simulado (pruebas)</p><p className="font-body-sm text-on-surface-variant">La modalidad real se habilita cuando el SIN autorice el sistema.</p></div>
-        <div className="flex flex-col gap-space-xs">
-          <label className="flex items-center gap-space-sm min-h-11"><input type="checkbox" checked={hab} onChange={(e) => setHab(e.target.checked)} className="w-5 h-5" /><span>Facturar en Caja (encendido)</span></label>
-          <label className="flex items-center gap-space-sm min-h-11"><input type="checkbox" checked={final} onChange={(e) => setFinal(e.target.checked)} className="w-5 h-5" /><span>Permitir factura «sin nombre» (consumidor final)</span></label>
-        </div>
-      </div>
-      <fieldset className="rounded-lg border border-outline-variant p-space-sm flex flex-col gap-space-sm">
-        <legend className={`${clases.etiqueta} px-1`}>Credencial del emisor (token delegado del SIN)</legend>
-        <p className="font-body-sm text-on-surface-variant">{c.tokenRegistrado ? 'Hay un token guardado, cifrado. Por seguridad no se puede ver; pega uno nuevo solo si quieres reemplazarlo.' : 'Aún no hay token. En pruebas no es obligatorio.'}</p>
-        <div className="grid sm:grid-cols-2 gap-space-sm">
-          {campoVista('token', c.tokenRegistrado ? 'Reemplazar token (opcional)' : 'Token delegado', token, setToken, { tipo: 'password', max: 4000 })}
-          {campoVista('vence', 'Vence el (AAAA-MM-DD)', vence, setVence, { max: 10 })}
-        </div>
-        {c.tokenRegistrado && <button type="button" onClick={() => guardar({ quitarToken: true })} className="self-start h-11 px-space-sm text-error font-label-md">Quitar el token guardado</button>}
-      </fieldset>
-      <div className="grid sm:grid-cols-3 gap-space-sm">
-        <button type="button" disabled={!!ocupado} onClick={() => void guardar()} className={clases.primario}>{ocupado === 'guardar' ? 'Guardando…' : 'Guardar'}</button>
-        <button type="button" disabled={!!ocupado} onClick={() => void accion('probar')} className={clases.secundario}>{ocupado === 'probar' ? 'Probando…' : 'Probar conexión'}</button>
-        <button type="button" disabled={!!ocupado} onClick={() => void accion('conectar')} className={clases.secundario}>{ocupado === 'conectar' ? 'Conectando…' : 'Conectar con FacturaSIN'}</button>
+        <button type="button" disabled={!!ocupado} onClick={() => void guardar()} className={clases.primario}>{ocupado === 'guardar' ? 'Guardando…' : 'Guardar datos del SIN'}</button>
       </div>
       {aviso && <p role="status" className="text-primary font-body-sm">{aviso}</p>}
-      {pasos && <ul aria-live="polite" className="flex flex-col gap-1">{pasos.map((p) => <li key={p.paso} className={`rounded-lg px-space-sm py-space-xs ${p.ok ? 'bg-primary-fixed text-on-surface' : 'bg-error-container text-on-error-container'}`}><strong>{p.ok ? '✔' : '✖'} {p.paso}.</strong> {p.detalle}</li>)}</ul>}
-      <p className="font-body-sm text-on-surface-variant">{c.ultimaPrueba ? `Última prueba: ${new Date(c.ultimaPrueba.cuando).toLocaleString('es-BO', { timeZone: 'America/La_Paz' })} · ${c.ultimaPrueba.ok ? 'correcta' : c.ultimaPrueba.mensaje}.` : 'Todavía no se ha probado la conexión.'}{c.conectadoEn ? ` Conectado el ${new Date(c.conectadoEn).toLocaleDateString('es-BO', { timeZone: 'America/La_Paz' })}.` : ''}</p>
+      <h3 className="font-label-md font-bold">Paso 3 · Probar facturación</h3>
+      <button type="button" disabled={!!ocupado} onClick={() => void probar()} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>{ocupado === 'probar' ? 'Probando…' : 'Probar facturación'}</button>
+      {res && <p role="status" className={`rounded-lg p-space-sm font-label-md ${res.listo ? 'bg-primary-fixed text-on-surface' : 'bg-secondary-fixed text-on-secondary-fixed-variant'}`}>{res.resumen}</p>}
+      {res && res.pasos.length > 0 && <ul aria-live="polite" className="flex flex-col gap-1">{res.pasos.map((p) => <li key={p.id} className={`rounded-lg px-space-sm py-space-xs ${p.estado === 'error' ? 'bg-error-container text-on-error-container' : 'bg-primary-fixed text-on-surface'}`}><strong>{p.estado === 'ok' ? '✓' : p.estado === 'error' ? '✗' : '•'} {p.titulo}:</strong> {p.detalle}{p.accion ? ` (${p.accion})` : ''}</li>)}</ul>}
+      {res?.requiereRubro && <SelectorRubro onElegido={() => void probar()} />}
+      <p className="font-body-sm text-on-surface-variant">{c.ultimaPrueba ? `Última prueba: ${new Date(c.ultimaPrueba.cuando).toLocaleString('es-BO', { timeZone: 'America/La_Paz' })} · ${c.ultimaPrueba.ok ? 'correcta' : c.ultimaPrueba.mensaje}` : 'Aún no se ha probado.'}</p>
     </section>
   );
 }

@@ -1,7 +1,5 @@
-import { Body, Controller, Get, Header, HttpCode, Inject, Param, ParseUUIDPipe, Post, Put, Query, Req, StreamableFile } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
-import type { Request } from 'express';
-import { Actor, ActorActual, Publico, TenantActual } from '../comun/acceso';
+import { Body, Controller, Get, Header, HttpCode, Inject, Param, ParseUUIDPipe, Post, Put, Query, StreamableFile } from '@nestjs/common';
+import { Actor, ActorActual, TenantActual } from '../comun/acceso';
 import { DeSucursal } from '../comun/guards';
 import type { Tenant } from '../database/database.module';
 import { FacturacionEmisorService } from './facturacion-emisor.service';
@@ -20,8 +18,10 @@ export class FacturacionEmisorController {
   guardar(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Body() b: unknown) { return this.s.guardarConfig(t, a.sub, b); }
   @Post('facturacion/probar') @HttpCode(200) @DeSucursal(...DUENO)
   probar(@TenantActual() t: Tenant, @ActorActual() a: Actor) { return this.s.probar(t, a.sub); }
-  @Post('facturacion/conectar') @HttpCode(200) @DeSucursal(...DUENO)
-  conectar(@TenantActual() t: Tenant, @ActorActual() a: Actor) { return this.s.conectar(t, a.sub); }
+  @Get('facturacion/rubros') @DeSucursal(...DUENO)
+  rubros(@TenantActual() t: Tenant) { return this.s.rubros(t); }
+  @Put('facturacion/rubro') @HttpCode(200) @DeSucursal(...DUENO)
+  rubro(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Body() b: unknown) { return this.s.elegirRubro(t, a.sub, b); }
   @Get('facturacion/estado') @DeSucursal(...COBRO)
   estado(@TenantActual() t: Tenant) { return this.s.estado(t); }
   @Post('facturacion/conciliar') @HttpCode(200) @DeSucursal(...COBRO)
@@ -36,6 +36,10 @@ export class FacturacionEmisorController {
   lista(@TenantActual() t: Tenant, @Query('estado') estado?: string) { return this.s.lista(t, estado); }
   @Post('facturas/:id/reintentar') @HttpCode(200) @DeSucursal(...COBRO)
   reintentar(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string) { return this.s.reintentar(t, a.sub, id); }
+  @Post('facturas/:id/verificar') @HttpCode(200) @DeSucursal(...COBRO)
+  verificar(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string) { return this.s.verificar(t, a.sub, id); }
+  @Post('facturas/:id/reenviar-aviso') @HttpCode(200) @DeSucursal(...COBRO)
+  reenviar(@TenantActual() t: Tenant, @Param('id', ParseUUIDPipe) id: string) { return this.s.reenviarAviso(t, id); }
   @Post('facturas/:id/anular') @HttpCode(200) @DeSucursal(...DUENO)
   anular(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string, @Body() b: unknown) { return this.s.anular(t, a.sub, id, b); }
 
@@ -43,15 +47,4 @@ export class FacturacionEmisorController {
   async pdf(@TenantActual() t: Tenant, @Param('id', ParseUUIDPipe) id: string, @Query('formato') formato?: string) { return new StreamableFile(await this.s.archivo(t, id, 'pdf', formato === 'rollo' ? 'rollo' : 'a4')); }
   @Get('facturas/:id/xml') @Header('Content-Type', 'application/xml') @DeSucursal(...DUENO)
   async xml(@TenantActual() t: Tenant, @Param('id', ParseUUIDPipe) id: string) { return new StreamableFile(await this.s.archivo(t, id, 'xml', 'a4')); }
-}
-
-/** Retorno de estados desde FacturaSIN: firmado con HMAC-SHA256 (X-FacturaSIN-Signature) sobre el cuerpo crudo. Sin sesión, con límite de uso. */
-@Controller('public/facturasin')
-export class FacturasinWebhookController {
-  constructor(@Inject(FacturacionEmisorService) private readonly s: FacturacionEmisorService) {}
-
-  @Publico() @Throttle({ default: { limit: 120, ttl: 60_000 } }) @Post('webhook/:restaurantId') @HttpCode(200)
-  recibir(@Param('restaurantId') rid: string, @Req() req: Request & { rawBody?: Buffer }) {
-    return this.s.recibirWebhook(rid, req.header('x-facturasin-signature'), req.header('x-facturasin-event-id'), req.rawBody?.toString('utf8'));
-  }
 }

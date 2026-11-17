@@ -33,7 +33,8 @@ export class FacturacionKyrosController {
   @Get('catalogo/:nombre') catalogo(@Param('nombre') nombre: string) { return this.s.catalogo(nombre); }
   @Put('integracion') @HttpCode(200) guardar(@ActorActual() a: Actor, @Body() b: unknown) { reauth(a); return this.s.guardarConfig(a, ConfigParcial.parse(b)); }
   /** «Verificar / Reintentar»: el servidor asegura el enlace y el webhook solo (sin contrasena de Kyros ID ni URL tecleada: la URL es la derivada del sitio). */
-  @Post('integracion/verificar') @HttpCode(200) verificar(@ActorActual() a: Actor) { return this.s.verificarIntegracion(a); }
+  @Post('integracion/verificar') @HttpCode(200)
+  verificar(@ActorActual() a: Actor, @Body() b: unknown) { const t = (b && typeof b === 'object' ? (b as { token?: unknown }).token : undefined); return this.s.verificarIntegracion(a, typeof t === 'string' && t.length > 20 ? t : null); }
 
   @Post('pagos/:id/emitir') @HttpCode(200) emitir(@ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string, @Body() b: unknown) { return this.s.emitirPago(id, a.sub, Emitir.parse(b ?? {})); }
   @Post('pagos/:id/reintentar') @HttpCode(200) reintentar(@ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string, @Body() b: unknown) { return this.s.emitirPago(id, a.sub, Emitir.parse(b ?? {}), 'facturacion_kyros.reintentar'); }

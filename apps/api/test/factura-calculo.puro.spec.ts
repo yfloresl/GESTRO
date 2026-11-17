@@ -70,13 +70,13 @@ describe('factura: comprador y textos', () => {
 });
 
 describe('factura: payload', () => {
-  const config = { sucursal: 0, puntoVenta: 0, actividad: '561011', codigoSinPorDefecto: '63111', unidadPorDefecto: 57 };
-  it('arma el payload con códigos SIN por plato, propina fuera y clave pedido+intento', () => {
+  const config = { sucursal: 0, puntoVenta: 0 };
+  it('arma el payload con líneas libres (códigos SIN solo si el plato los trae), propina fuera y clave pedido+intento', () => {
     const p = armarPayload({ idExterno: idExternoDe('ped-1', 2), lineas: [{ itemId: 'm1', nombre: 'Silpancho', cantidad: '2', precio: '45.50', codigoSin: '99999', unidad: 58 }, { itemId: 'm2', nombre: 'Té', cantidad: '1', precio: '8.00' }], descuento: '5.00', comprador: armarComprador({ tipo: 'ci', numero: '4567890', razonSocial: 'Ana' }), metodo: 'tarjeta', numeroTarjeta: tarjetaEnmascarada('4111', '1111'), config });
     expect(p.idExterno).toBe('gestro:ped-1:2'); expect(p.moneda).toBe(1); expect(p.descuentoAdicional).toBe(5); expect(p.metodoPago).toBe(2);
     expect(p.numeroTarjeta).toBe('4111000000001111');
-    expect(p.items[0]).toMatchObject({ codigoProductoSin: '99999', unidadMedida: 58, cantidad: 2, precioUnitario: 45.5, actividadEconomica: '561011' });
-    expect(p.items[1]).toMatchObject({ codigoProductoSin: '63111', unidadMedida: 57 });
+    expect(p.items[0]).toMatchObject({ codigoProductoSin: '99999', unidadMedida: 58, cantidad: 2, precioUnitario: 45.5 });
+    expect(JSON.stringify(p.items[1])).not.toMatch(/codigoProductoSin|actividadEconomica|unidadMedida/); // línea libre: el rubro lo completa FacturaSIN
     expect(JSON.stringify(p)).not.toMatch(/propina/i);
   });
   it('método de pago y reintentos', () => {

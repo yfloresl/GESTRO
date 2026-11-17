@@ -5,9 +5,11 @@ import type { Actor } from '../comun/acceso';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { entorno } from '../config/entorno';
 import { BD, Bd, Tenant, TenantDb } from '../database/database.module';
-import { empresaExterna } from './integracion/convencion';
-import { IntegracionFacturaSinService, LLAVE_WEBHOOK, RUTA_WEBHOOK_KYROS } from './integracion-fs.service';
-import { urlPublicaConocida } from './integracion/url-publica-estado';
+import { normalizarEmpresa, urlWebhookDe } from './nucleo/integracion';
+import { FacturaSinConexion } from './facturasin-conexion';
+import { FacturacionEmisorService } from '../facturacion-emisor/facturacion-emisor.service';
+import { IntegracionFacturaSinService, LLAVE_WEBHOOK } from './integracion-fs.service';
+import { urlPublicaConocida } from './url-publica-conocida';
 import {
   aceptaTransicion, aCentavos, BOM, codigosFiscalesFaltantes, evaluarRegimenFiscal, TEXTO_AVISO_CODIGOS, celdaNumero, celdaTexto, deCentavos, emitirFactura, estadoLocalDe, FacturaSinClient, FacturaSinError, filaCsv, ivaPorDentro, validarDatosFiscales, verificarFirmaWebhook,
   type AlmacenFacturas, type ConfigEmision, type DatosIntento, type EstadoLocal, type EventoWebhook, type FilaFactura, type PagoFacturable, type Resultado, type ResultadoGuardado,
@@ -81,6 +83,8 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
     @Inject(TenantDb) private readonly db: TenantDb,
     @Inject(ConfiguracionService) private readonly cfg: ConfiguracionService,
     @Inject(IntegracionFacturaSinService) private readonly integracion: IntegracionFacturaSinService,
+    @Inject(FacturaSinConexion) private readonly conexion: FacturaSinConexion,
+    @Inject(FacturacionEmisorService) private readonly emisor: FacturacionEmisorService,
   ) {}
 
   /** Cada 5 min: concilia lo pendiente y emite lo que quedó sin factura. En las pruebas se invoca a mano. */
@@ -91,7 +95,7 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
 
   /* ---------------- configuración ---------------- */
 
-  async config(): Promise<ConfigFacturacionT> { const c = { ...CONFIG_POR_DEFECTO, ...((await this.cfg.leer<Partial<ConfigFacturacionT>>(LLAVE_CONFIG)) ?? {}) }; return { ...c, empresa: empresaExterna(c.sistema, c.empresa) || CONFIG_POR_DEFECTO.empresa }; }
+  async config(): Promise<ConfigFacturacionT> { const c = { ...CONFIG_POR_DEFECTO, ...((await this.cfg.leer<Partial<ConfigFacturacionT>>(LLAVE_CONFIG)) ?? {}) }; return { ...c, empresa: normalizarEmpresa(c.sistema, c.empresa) }; }
 
   async guardarConfig(a: Actor, d: z.infer<typeof ConfigParcial>) {
     const nueva = ConfigFacturacion.parse({ ...(await this.config()), ...d });
@@ -103,9 +107,9 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
   /** Estado de la integración para la pantalla: nunca devuelve secretos. */
   async estadoIntegracion() {
     const c = await this.config();
-    const sec = (await this.integracion.tipoCredencial()) !== 'ninguna';
+    const sec = (await this.conexion.tipoCredencial()) !== 'ninguna';
     const wh = await this.cfg.leer<{ secretos: string[] }>(LLAVE_WEBHOOK);
-    return { config: c, secretoConfigurado: sec, urlWebhook: urlPublicaConocida() ? `${urlPublicaConocida()}${RUTA_WEBHOOK_KYROS}` : null, enlace: await this.integracion.estado(), webhookConfigurado: !!wh?.secretos?.length, lista: c.activo && sec, codigosSinFaltan: codigosFiscalesFaltantes(c), avisoCodigos: c.codigosConfirmados ? null : TEXTO_AVISO_CODIGOS, ivaPorFueraVigente: false };
+    return { config: c, secretoConfigurado: sec, urlWebhook: urlPublicaConocida() ? urlWebhookDe(urlPublicaConocida()!) : null, enlace: await this.integracion.estado(), webhookConfigurado: !!wh?.secretos?.length, lista: c.activo && sec, codigosSinFaltan: codigosFiscalesFaltantes(c), avisoCodigos: c.codigosConfirmados ? null : TEXTO_AVISO_CODIGOS, ivaPorFueraVigente: false };
   }
 
   /**
@@ -131,7 +135,7 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
   private async cliente(c?: ConfigFacturacionT, soloLectura = false): Promise<FacturaSinClient | null> {
     const conf = c ?? (await this.config());
     if (!conf.activo && !soloLectura) return null;
-    return this.integracion.cliente(2);
+    return this.conexion.cliente(2);
   }
 
   /* ---------------- pagos y almacén ---------------- */
@@ -353,7 +357,7 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
   /* ---------------- webhook de retorno y conciliación ---------------- */
 
   /** «Verificar / Reintentar»: dispara lo mismo que el sistema hace solo (enlace de credenciales + webhook con la URL publica derivada). Sin contrasena, sin URL tecleada. */
-  verificarIntegracion(a: Actor) { return this.integracion.verificar(a.sub, true); }
+  verificarIntegracion(a: Actor, token?: string | null) { return this.integracion.verificar(a.sub, true, token); }
 
   /** Procesa una entrega firmada. Devuelve el código HTTP que debe recibir FacturaSIN. */
   async recibirWebhook(cabeceraFirma: string, eventoId: string, crudo: string): Promise<{ http: number; resultado: string }> {
@@ -367,7 +371,11 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
     const nuevo = (await this.bd.execute(sql`INSERT INTO kyros_invoice_events (event_id, kind) VALUES (${id}, ${ev.tipo}) ON CONFLICT DO NOTHING RETURNING 1`)).rows.length;
     if (!nuevo) return { http: 200, resultado: 'duplicado' };
     const f = (await this.bd.execute(sql`SELECT id, status, restaurant_id FROM kyros_invoices WHERE facturasin_id = ${ev.datos.facturaId ?? ''} OR idempotency_key = ${ev.datos.idExterno ?? ''} LIMIT 1`)).rows[0] as Fila | undefined;
-    if (!f) return { http: 200, resultado: 'factura_desconocida' };
+    if (!f) { // no es de Kyros-Tech: es del Flujo 2 (restaurante). El mismo aviso unico lo registra el emisor.
+      await this.bd.execute(sql`DELETE FROM kyros_invoice_events WHERE event_id = ${id}`);
+      const r2 = await this.emisor.aplicarEvento(ev as never, id);
+      return { http: 200, resultado: r2.ok ? (r2.estado ? 'aplicado' : String(r2.ignorado ?? 'sin_cambio')) : 'factura_desconocida' };
+    }
     const destino = estadoLocalDe(ev.datos.estado ?? ev.tipo.replace('factura.', ''));
     await this.bd.execute(sql`UPDATE kyros_invoice_events SET invoice_id = ${String(f.id)} WHERE event_id = ${id}`);
     if (!aceptaTransicion(f.status as EstadoLocal, destino)) return { http: 200, resultado: 'sin_cambio' };

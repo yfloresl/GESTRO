@@ -1,4 +1,4 @@
-import { urlPublicaConocida } from '../facturacion-kyros/integracion/url-publica-estado';
+import { urlPublicaConocida } from '../facturacion-kyros/url-publica-conocida';
 import { Controller, Get, HttpCode, Inject, Options, Req, Res, UnauthorizedException } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { sql } from 'drizzle-orm';

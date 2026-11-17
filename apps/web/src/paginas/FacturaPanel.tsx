@@ -11,6 +11,8 @@ export interface Factura {
   subtotal: string; descuento: string; total: string; ivaReferencial: string; propinaNoFacturada: string; numero: number | null; cuf: string | null; emitida: string | null; qrTexto: string | null;
   aviso: string | null; ambientePruebas: boolean; puedeImprimir: boolean; error: string | null; reintentos: number; proximoReintento: string | null;
   anulacion: { motivo: string | null; cuando: string | null } | null; creada: string; ticket?: string | null;
+  /** La factura tal como la devolvió el SIN (desglose, fecha, enlaces); null hasta que llegue. */
+  registrada?: { desglose: { neto?: number; iva?: number; total?: number; modoIva?: string } | null; fecha: string | null; enlaces: unknown; ambientePruebas: boolean } | null;
 }
 export const ETIQUETA_FACTURA: Record<string, string> = {
   en_cola: 'Pendiente de emitir', pendiente: 'Esperando al SIN', validada: 'Validada', observada: 'Observada por el SIN', contingencia: 'Emitida sin conexión (en contingencia)',

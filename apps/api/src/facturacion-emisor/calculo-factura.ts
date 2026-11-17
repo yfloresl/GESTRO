@@ -141,12 +141,14 @@ export function tarjetaEnmascarada(primeros4: string, ultimos4: string): string 
   return `${primeros4}00000000${ultimos4}`;
 }
 
-export interface ConfigEmisor { sucursal: number; puntoVenta: number; actividad: string; codigoSinPorDefecto: string; unidadPorDefecto: number; codigosPago?: CodigosPago }
+/** Solo sucursal y punto de venta (y los codigos de metodo de pago): actividad, producto y unidad los completa FacturaSIN desde el rubro de la empresa. */
+export interface ConfigEmisor { sucursal: number; puntoVenta: number; codigosPago?: CodigosPago }
 
 export interface PayloadFactura {
   idExterno: string; sector: number; sucursal: number; puntoVenta: number; comprador: CompradorSalida; metodoPago: number; numeroTarjeta?: string;
   moneda: number; tipoCambio: null; descuentoAdicional: number;
-  items: { codigoProducto: string; descripcion: string; cantidad: number; unidadMedida: number; precioUnitario: number; descuento: number; codigoProductoSin: string; actividadEconomica: string }[];
+  /** Lineas LIBRES (plato = descripcion + cantidad + precio). Los codigos del SIN solo viajan si el propio plato los trae; si no, los pone FacturaSIN del rubro. */
+  items: { codigoProducto: string; descripcion: string; cantidad: number; precioUnitario: number; descuento: number; unidadMedida?: number; codigoProductoSin?: string }[];
 }
 
 export function armarPayload(p: { idExterno: string; lineas: LineaPedido[]; descuento: string; comprador: CompradorSalida; metodo: string; numeroTarjeta?: string; config: ConfigEmisor }): PayloadFactura {
@@ -156,8 +158,8 @@ export function armarPayload(p: { idExterno: string; lineas: LineaPedido[]; desc
     moneda: MONEDA_BS, tipoCambio: null, descuentoAdicional: Number(deCentavos(aCentavos(p.descuento))),
     items: p.lineas.map((l) => ({
       codigoProducto: l.itemId.length > 60 ? l.itemId.slice(0, 60) : l.itemId, descripcion: limpiarTexto(l.nombre, 'Nombre del plato', 1, 500),
-      cantidad: Number(l.cantidad), unidadMedida: l.unidad ?? p.config.unidadPorDefecto, precioUnitario: Number(l.precio), descuento: 0,
-      codigoProductoSin: (l.codigoSin ?? '').trim() || p.config.codigoSinPorDefecto, actividadEconomica: p.config.actividad,
+      cantidad: Number(l.cantidad), precioUnitario: Number(l.precio), descuento: 0,
+      ...(l.unidad ? { unidadMedida: l.unidad } : {}), ...((l.codigoSin ?? '').trim() ? { codigoProductoSin: (l.codigoSin ?? '').trim() } : {}),
     })),
   };
 }

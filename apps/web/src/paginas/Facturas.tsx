@@ -14,6 +14,8 @@ export function Facturas() {
   const [estado, setEstado] = useState(''); const [error, setError] = useState<string | null>(null);
   const q = useQuery({ queryKey: ['facturas', sucursalId, estado], queryFn: () => api.get<Factura[]>(`/facturas${estado ? `?estado=${estado}` : ''}`, sucursalId!), enabled: !!sucursalId, refetchInterval: 30_000 });
   const conciliar = useMutation({ mutationFn: () => api.post<{ revisadas: number; cambiadas: number }>('/facturacion/conciliar', undefined, sucursalId!), onSuccess: () => qc.invalidateQueries({ queryKey: ['facturas', sucursalId] }), onError: (e) => setError(mensajeDeError(e)) });
+  const verificar = useMutation({ mutationFn: (id: string) => api.post<Factura>(`/facturas/${id}/verificar`, undefined, sucursalId!), onSuccess: () => qc.invalidateQueries({ queryKey: ['facturas', sucursalId] }), onError: (e) => setError(mensajeDeError(e)) });
+  const reenviar = useMutation({ mutationFn: (id: string) => api.post<{ mensaje: string }>(`/facturas/${id}/reenviar-aviso`, undefined, sucursalId!), onError: (e) => setError(mensajeDeError(e)) });
   const pendientes = (q.data ?? []).filter((f) => f.estado === 'en_cola').length;
   return (
     <div className="flex flex-col gap-space-md max-w-4xl">
@@ -32,8 +34,11 @@ export function Facturas() {
               <div>
                 <p className="font-semibold">{f.numero ? `N.º ${f.numero} · ` : ''}{f.comprador.consumidorFinal ? 'Sin nombre' : f.comprador.razonSocial} · {bs(f.total)}</p>
                 <p className="font-body-sm text-on-surface-variant">{ETIQUETA_FACTURA[f.estado] ?? f.estado} · {new Date(f.creada).toLocaleString('es-BO', { timeZone: 'America/La_Paz' })}{f.ticket ? ` · ticket ${f.ticket}` : ''}{f.error && ['en_cola', 'rechazada', 'error_datos'].includes(f.estado) ? ` · ${f.error}` : ''}</p>
+                {f.registrada?.desglose && <p data-testid="registrada" className="font-body-sm text-on-surface-variant">Registrada por el SIN: neto {bs(String(f.registrada.desglose.neto ?? ''))} · IVA {bs(String(f.registrada.desglose.iva ?? ''))} · total {bs(String(f.registrada.desglose.total ?? ''))}</p>}
               </div>
               <div className="flex gap-space-xs">
+                {f.estado !== 'en_cola' && f.estado !== 'error_datos' && <button type="button" disabled={verificar.isPending} onClick={() => verificar.mutate(f.id)} className="h-11 px-space-sm text-primary font-label-lg">Verificar</button>}
+                {f.estado !== 'en_cola' && f.estado !== 'error_datos' && <button type="button" disabled={reenviar.isPending} onClick={() => reenviar.mutate(f.id)} className="h-11 px-space-sm text-on-surface-variant font-label-lg">Reenviar aviso</button>}
                 {f.puedeImprimir && <button type="button" onClick={() => void abrirPdf(f.id, sucursalId!).catch((e) => setError(mensajeDeError(e)))} className="h-11 px-space-sm text-primary font-label-lg">PDF</button>}
                 <Link to={`/app/pedidos?abrir=${f.pedidoId}`} className="h-11 px-space-sm text-primary font-label-lg flex items-center">Pedido</Link>
               </div>

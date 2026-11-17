@@ -15,7 +15,7 @@ export const CATALOGO_SECRETOS = {
 } as const;
 export type ClaveSecreto = keyof typeof CATALOGO_SECRETOS;
 /** Secretos que solo escribe y lee el SERVIDOR (enlace automatico con FacturaSIN): fuera del catalogo, sin ruta ni pantalla, sin pegarlos a mano. */
-export type ClaveInterna = 'FACTURASIN_API_KEY';
+export type ClaveInterna = 'FACTURASIN_CREDENCIAL' | 'FACTURASIN_SECRETO_PLATAFORMA';
 
 /** Escribir exige haber confirmado la identidad hace poco (contraseña + segundo factor en Kyros ID). */
 export const VENTANA_REAUTH_S = 15 * 60;

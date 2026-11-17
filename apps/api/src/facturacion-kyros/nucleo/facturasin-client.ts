@@ -11,7 +11,6 @@
  *   los datos y volver a emitir con OTRA clave.
  * - Verificación de webhooks: `verificarFirmaWebhook` (HMAC-SHA256, anti-replay de 5 minutos, rotación con dos firmas).
  */
-import { createHmac, timingSafeEqual } from 'node:crypto';
 
 export type EstadoFactura = 'pendiente' | 'validada' | 'observada' | 'rechazada' | 'anulada' | 'contingencia';
 
@@ -242,26 +241,8 @@ export function tokenClientCredentials(o: { issuer: string; clientId: string; cl
   };
 }
 
-/**
- * Verifica la cabecera `X-FacturaSIN-Signature: t=<epoch>,v1=<hex>[,v1=<hex>]` sobre el cuerpo CRUDO (sin reparsear).
- * Acepta uno o varios secretos (rotación de 24 h), compara en tiempo constante y rechaza firmas de más de 5 minutos.
- */
-export function verificarFirmaWebhook(secretos: string | string[], cabecera: string, cuerpoCrudo: string, ahora = Date.now()): boolean {
-  const t = /t=(\d+)/.exec(cabecera);
-  const firmas = [...cabecera.matchAll(/v1=([0-9a-f]{64})/g)].map((m) => m[1]!);
-  if (!t || !firmas.length) return false;
-  const ts = Number(t[1]);
-  if (Math.abs(ahora / 1000 - ts) > 300) return false;
-  let ok = false;
-  for (const secreto of ([] as string[]).concat(secretos)) {
-    const esperado = Buffer.from(createHmac('sha256', secreto).update(`${ts}.${cuerpoCrudo}`).digest('hex'), 'hex');
-    for (const f of firmas) {
-      const b = Buffer.from(f, 'hex');
-      if (b.length === esperado.length && timingSafeEqual(b, esperado)) ok = true;
-    }
-  }
-  return ok;
-}
+/** La verificación de firma es UNA sola: la del núcleo de enlace de FacturaSIN. */
+export { verificarFirmaWebhook } from './enlace-facturasin';
 
 /** Evento de webhook ya verificado. Deduplica por `X-FacturaSIN-Event-Id` (puede llegar más de una vez). */
 export interface EventoWebhook {
