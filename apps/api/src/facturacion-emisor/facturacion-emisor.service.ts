@@ -3,7 +3,8 @@ import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { auditar } from '../comun/auditoria';
 import { FacturaSinConexion } from '../facturacion-kyros/facturasin-conexion';
-import { mensajeIntegracion } from '../facturacion-kyros/nucleo/integracion';
+import { facturacionHabilitada, mensajeIntegracion, type HabilitacionFacturacion } from '../facturacion-kyros/nucleo/integracion';
+import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { Bd, BD, Tenant, TenantDb } from '../database/database.module';
 import {
   armarComprador, armarPayload, calcularFactura, CompradorSalida, CONSUMIDOR_FINAL, deCentavos, ErrorFactura, esperaDeReintento, estadoLocal, idExternoDe,
@@ -86,7 +87,7 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     @Inject(TenantDb) private readonly db: TenantDb, @Inject(BD) private readonly bd: Bd,
-    @Inject(FacturaSinConexion) private readonly conexion: FacturaSinConexion,
+    @Inject(ConfiguracionService) private readonly cfg: ConfiguracionService, @Inject(FacturaSinConexion) private readonly conexion: FacturaSinConexion,
   ) {}
 
   /** Cola de reintentos y conciliación de pendientes: cada minuto. La venta nunca depende de este proceso. */
@@ -119,17 +120,60 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  /** Paso 1 («Facturación» solo si el plan la incluye): GESTRO no limita módulos por plan en este tramo; se declara a FacturaSIN y manda lo que este diga. */
-  async habilitacion(t: Tenant): Promise<{ habilitada: boolean; mensaje: string | null }> {
+  /** Override del SuperAdmin (si existe) de la facturacion de un restaurante. Vive cifrado en `app_config` (sin tabla con RLS nueva). */
+  private async overrideDe(rid: string): Promise<boolean | null> {
+    const o = await this.cfg.leer<{ valor: boolean | null }>(`facturacion.habilitada.${rid}`);
+    return typeof o?.valor === 'boolean' ? o.valor : null;
+  }
+
+  /** Datos del cliente para el estandar «pago + interruptor»: override del SuperAdmin y si tiene un plan de PAGO vigente (sucursal activa, vigente y con un pago de suscripcion validado; la prueba y la demostracion no lo son). */
+  async clienteFacturable(rid: string): Promise<{ override: boolean | null; planDePagoVigente: boolean }> {
+    const p = (await this.bd.execute(sql`SELECT (r.status = 'activo' AND r.paid_until IS NOT NULL AND r.paid_until >= CURRENT_DATE AND EXISTS (SELECT 1 FROM subscription_payments sp WHERE sp.restaurant_id = r.id AND sp.status = 'validado')) AS pago FROM restaurants r WHERE r.id = ${rid}::uuid`)).rows[0] as { pago: boolean } | undefined;
+    return { override: await this.overrideDe(rid), planDePagoVigente: p?.pago === true };
+  }
+
+  /** Estado efectivo (helper unico `facturacionHabilitada`): override del SuperAdmin, luego plan de pago, luego «No incluida». Se declara a FacturaSIN (`PUT /integraciones/habilitacion/{id}`). */
+  async habilitacionDe(rid: string): Promise<HabilitacionFacturacion> {
+    const h = facturacionHabilitada(await this.clienteFacturable(rid));
+    try { if ((await this.conexion.conectada()) || (await this.conexion.puedeEnlazar())) await (await this.conexion.enlace()).declararHabilitacion(rid, h.habilitada, h.etiqueta); } catch { /* FacturaSIN no responde: manda el criterio local; se reintenta en el proximo uso */ }
+    return h;
+  }
+
+  /** Paso 1 («Facturación» solo si está habilitada): si no, «No incluida en tu plan» + cómo pedirla. */
+  async habilitacion(t: Tenant): Promise<{ habilitada: boolean; mensaje: string | null; motivo?: string }> {
+    const h = await this.habilitacionDe(t.restaurantId);
+    if (!h.habilitada) return { habilitada: false, mensaje: h.mensaje, motivo: h.motivo };
     try {
       if ((await this.conexion.conectada()) || (await this.conexion.puedeEnlazar())) {
-        const en = await this.conexion.enlace();
-        await en.declararHabilitacion(t.restaurantId, true, 'Plan de GESTRO vigente');
-        const h = await en.habilitacion(t.restaurantId);
-        if (!h.habilitada) return { habilitada: false, mensaje: h.mensaje || 'La facturación electrónica no está habilitada para tu cuenta.' };
+        const r = await (await this.conexion.enlace()).habilitacion(t.restaurantId);
+        if (!r.habilitada) return { habilitada: false, mensaje: r.mensaje || 'La facturación electrónica no está habilitada para tu cuenta.', motivo: 'no_incluida' };
       }
-    } catch { /* FacturaSIN no responde: manda el plan; se reintenta en el próximo uso */ }
-    return { habilitada: true, mensaje: null };
+    } catch { /* FacturaSIN no responde: manda el criterio local */ }
+    return { habilitada: true, mensaje: null, motivo: h.motivo };
+  }
+
+  /** SuperAdmin: clientes (restaurantes) con su estado efectivo de facturacion y su motivo, para el interruptor por cliente. */
+  async clientesFacturacion(q?: string) {
+    const filtro = q && q.trim() ? `%${q.trim().replace(/[\\%_]/g, (c) => `\\${c}`)}%` : null;
+    const filas = (await this.bd.execute(sql`SELECT r.id::text AS id, (a.legal_name || ' · ' || r.name) AS nombre FROM restaurants r JOIN accounts a ON a.id = r.account_id
+      WHERE ${filtro}::text IS NULL OR (a.legal_name || ' ' || r.name) ILIKE ${filtro} ORDER BY nombre LIMIT 100`)).rows as { id: string; nombre: string }[];
+    const out = [];
+    for (const x of filas) {
+      const c = await this.clienteFacturable(x.id);
+      const h = facturacionHabilitada(c);
+      out.push({ id: x.id, nombre: x.nombre, override: c.override, habilitada: h.habilitada, motivo: h.motivo, etiqueta: h.etiqueta });
+    }
+    return { clientes: out };
+  }
+
+  /** SuperAdmin: interruptor «Facturación» de un cliente: `true` encendido, `false` apagado, `null` vuelve al criterio por plan. Se declara a FacturaSIN al instante. */
+  async fijarFacturacionCliente(actor: string, rid: string, habilitada: boolean | null) {
+    const e = (await this.bd.execute(sql`SELECT 1 FROM restaurants WHERE id = ${rid}::uuid`)).rows[0];
+    if (!e) throw new NotFoundException('Cliente no encontrado.');
+    await this.cfg.guardar(`facturacion.habilitada.${rid}`, { valor: habilitada }, actor);
+    const h = await this.habilitacionDe(rid);
+    await this.bd.execute(sql`INSERT INTO audit_log (restaurant_id, user_id, action, entity, entity_id, after) VALUES (${rid}::uuid, ${actor}::uuid, 'facturacion.habilitacion_fijada', 'facturacion_cliente', ${rid}, ${JSON.stringify({ override: habilitada, motivo: h.motivo })}::jsonb)`).catch(() => undefined);
+    return { id: rid, override: habilitada, habilitada: h.habilitada, motivo: h.motivo, etiqueta: h.etiqueta };
   }
 
   async config(t: Tenant) {

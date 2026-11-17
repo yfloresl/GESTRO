@@ -15,6 +15,7 @@ interface Totales { pagos: number; cobrado: string; facturado: string; iva: stri
 interface Alertas { sinFactura: number; enAlerta: number; criticas: number; rechazadas: number; sinDatosFiscales: number; integracionActiva: boolean }
 interface Lista { filas: Fila[]; totales: Totales; alertas: Alertas }
 interface EstadoEnlace { mensaje: string; webhook: { ultimaEntrega: string | null } }
+interface ClienteFact { id: string; nombre: string; override: boolean | null; habilitada: boolean; motivo: string; etiqueta: string }
 interface EntregaLocalAviso { fecha: string; evento: string; eventoId: string; facturaId: string | null; resultado: string; firmaValida: boolean; ms?: number }
 interface EntregasAviso {
   recibidas: { total: number; firmaInvalida: number; ultima: EntregaLocalAviso | null; ultimas: EntregaLocalAviso[] };
@@ -96,6 +97,9 @@ export function PlataformaFacturacion() {
   const csv = () => correr('csv', async () => { const b = await api.blob(`/plataforma/facturacion-kyros/exportar.csv?${qs}`); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = 'facturacion-kyros.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(u), 10_000); });
   const alternar = () => correr('integ', () => api.put('/plataforma/facturacion-kyros/integracion', { activo: !integ.data?.config.activo }), () => 'Configuración guardada.');
   /** «Verificar / Reintentar»: el servidor asegura solo el enlace y el aviso de estados (sin contraseña ni URL tecleada). */
+  const [qCli, setQCli] = useState('');
+  const clientesFact = useQuery({ queryKey: ['fact-clientes', qCli], queryFn: () => api.get<{ clientes: ClienteFact[] }>(`/plataforma/facturacion-kyros/clientes-facturacion${qCli ? `?q=${encodeURIComponent(qCli)}` : ''}`) });
+  const fijarCliente = (id: string, habilitada: boolean | null) => correr(`cf-${id}`, () => api.put(`/plataforma/facturacion-kyros/clientes-facturacion/${id}`, { habilitada }), () => { void clientesFact.refetch(); return 'Facturación del cliente actualizada.'; });
   const entregas = useQuery({ queryKey: ['fact-entregas'], queryFn: () => api.get<EntregasAviso>('/plataforma/facturacion-kyros/webhook/entregas'), refetchInterval: 30_000, retry: false });
   const probarEntrega = () => correr('entrega', () => api.post<{ ok: boolean; mensaje: string }>('/plataforma/facturacion-kyros/webhook/probar-entrega', {}), (r) => { void entregas.refetch(); return r.mensaje; });
   const reprocesarEntrega = (d: { idExterno?: string | null; entregaId?: string | null }) => correr('reproc', () => api.post<{ ok: boolean; mensaje: string }>('/plataforma/facturacion-kyros/webhook/reprocesar', d), (r) => { void entregas.refetch(); void q.refetch(); return r.mensaje; });
@@ -118,6 +122,19 @@ export function PlataformaFacturacion() {
         <div className="flex flex-wrap gap-space-sm"><button type="button" onClick={alternar} disabled={!!ocupado} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>{ig?.config.activo ? 'Apagar' : 'Activar'}</button>
           <button type="button" onClick={verificar} disabled={!!ocupado} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Verificar / Reintentar</button>
           <button type="button" onClick={() => correr('conc', () => api.post<{ conciliadas: number; reintentadas: number; emitidas: number }>('/plataforma/facturacion-kyros/conciliar'), (r) => `Conciliación: ${r.conciliadas} conciliadas, ${r.reintentadas} reintentadas, ${r.emitidas} emitidas.`)} disabled={!!ocupado || !ig?.lista} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Conciliar ahora</button></div>
+      </div>
+
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm" data-testid="clientes-facturacion">
+        <h2 className="font-headline-sm text-headline-sm">Facturación por cliente</h2>
+        <p className="font-body-sm text-on-surface-variant">Estándar «pago + interruptor»: el interruptor del administrador manda; sin él, la facturación se habilita sola con un plan de pago vigente (prueba y demostración: apagada).</p>
+        <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Buscar cliente</span><input value={qCli} onChange={(e) => setQCli(e.target.value)} className={clases.input} /></label>
+        <ul className="flex flex-col gap-1">
+          {(clientesFact.data?.clientes ?? []).map((c) => (
+            <li key={c.id} data-testid="cliente-facturacion" className="flex flex-wrap items-center gap-space-sm font-body-sm"><strong>{c.nombre}</strong><span className={c.habilitada ? 'text-primary' : 'text-on-surface-variant'}>{c.etiqueta}</span>
+              <select aria-label="Facturación del cliente" value={c.override === null ? 'defecto' : c.override ? 'on' : 'off'} disabled={!!ocupado} onChange={(e) => void fijarCliente(c.id, e.target.value === 'defecto' ? null : e.target.value === 'on')} className={clases.input}>
+                <option value="defecto">Por defecto (según plan)</option><option value="on">Encendida</option><option value="off">Apagada</option></select></li>
+          ))}
+        </ul>
       </div>
 
       <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm" data-testid="entregas-aviso">

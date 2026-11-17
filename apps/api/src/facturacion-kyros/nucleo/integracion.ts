@@ -2,9 +2,10 @@
  * NÚCLEO DE INTEGRACIÓN CON FACTURASIN — versión única para los 7 sistemas Kyros (copia idéntica en cada repo).
  * Sin dependencias de framework: URL pública derivada, convenciones, normalización de empresa, webhook idempotente y mensajes legibles.
  * v2.0.0: el webhook y la credencial pasan por `enlace-facturasin.ts` (núcleo de FacturaSIN v1.0.0, copiado TAL CUAL); aquí NO hay segunda lógica de firma ni de enlace.
+ * v2.3.0: `facturacionHabilitada` (estándar «pago + interruptor» de la facturación del cliente).
  * Cualquier cambio se hace aquí, se sube NUCLEO_INTEGRACION_VERSION y se copia a los demás sistemas.
  */
-export const NUCLEO_INTEGRACION_VERSION = '2.2.0';
+export const NUCLEO_INTEGRACION_VERSION = '2.3.0';
 
 import { createHash } from 'node:crypto';
 import { ErrorEnlace, RUTA_WEBHOOK_FACTURASIN, type PasoPrueba as PasoFacturaSin } from './enlace-facturasin';
@@ -263,3 +264,36 @@ export class AvisosFacturaSin {
 export const puertoConHuella = (enlace: PuertoEnlaceWebhook, avisos: Pick<AvisosFacturaSin, 'huellaRemota'>): PuertoEnlaceWebhook => ({
   asegurarWebhook: (u, t, o) => enlace.asegurarWebhook(u, t, o), huellaRemota: () => avisos.huellaRemota(),
 });
+
+/* ------------------------------ habilitación de la facturación del cliente: «pago + interruptor» (v2.3.0) ------------------------------ */
+
+/** Por qué la facturación de un cliente está (o no) habilitada. */
+export type MotivoFacturacion = 'habilitada_por_admin' | 'desactivada_por_admin' | 'por_plan' | 'no_incluida';
+/** Lo único que hace falta saber de un cliente (consultorio/odontólogo/médico/restaurante/clínica) para decidirlo. */
+export interface ClienteFacturable {
+  /** Interruptor del SuperAdmin de la plataforma: `true` = encendido, `false` = apagado, `null`/`undefined` = sin override (decide el plan). */
+  override?: boolean | null;
+  /** ¿Tiene un plan de PAGO vigente? (prueba gratuita, demostración o plan vencido/en mora = `false`). */
+  planDePagoVigente: boolean;
+}
+export interface HabilitacionFacturacion { habilitada: boolean; motivo: MotivoFacturacion; origen: 'superadmin' | 'plan' | 'ninguno'; etiqueta: string; mensaje: string | null }
+
+const ETIQUETA_FACTURACION: Record<MotivoFacturacion, string> = {
+  habilitada_por_admin: 'Habilitada por el administrador',
+  desactivada_por_admin: 'Desactivada por el administrador',
+  por_plan: 'Por plan',
+  no_incluida: 'No incluida',
+};
+
+/**
+ * ESTÁNDAR ÚNICO «pago + interruptor» (decisión del dueño, 17/11/2026), idéntico en los 7 sistemas. Orden: 1) override explícito del SuperAdmin de la plataforma
+ * (encendido o apagado); 2) sin override, plan de pago vigente = habilitada; 3) en otro caso «No incluida en tu plan» + cómo pedirla.
+ * Alimenta `PUT /v1/integraciones/habilitacion/{tenantId}` de FacturaSIN y el interruptor por cliente del panel del SuperAdmin.
+ */
+export function facturacionHabilitada(c: ClienteFacturable): HabilitacionFacturacion {
+  const hecho = (habilitada: boolean, motivo: MotivoFacturacion, origen: HabilitacionFacturacion['origen'], mensaje: string | null): HabilitacionFacturacion => ({ habilitada, motivo, origen, etiqueta: ETIQUETA_FACTURACION[motivo], mensaje });
+  if (c.override === true) return hecho(true, 'habilitada_por_admin', 'superadmin', null);
+  if (c.override === false) return hecho(false, 'desactivada_por_admin', 'superadmin', 'La facturación electrónica fue desactivada para tu cuenta por el administrador de la plataforma. Escribe a administracion@kyros-tech.com para reactivarla.');
+  if (c.planDePagoVigente) return hecho(true, 'por_plan', 'plan', null);
+  return hecho(false, 'no_incluida', 'ninguno', 'No incluida en tu plan. Se activa sola con un plan de pago vigente; también puedes pedirla a administracion@kyros-tech.com.');
+}

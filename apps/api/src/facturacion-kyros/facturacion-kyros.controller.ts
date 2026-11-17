@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { Actor, ActorActual, Publico, TenantActual } from '../comun/acceso';
 import { DeSucursalSiempre, SoloPlataforma } from '../comun/guards';
 import type { Tenant } from '../database/database.module';
+import { FacturacionEmisorService } from '../facturacion-emisor/facturacion-emisor.service';
 import { Anular, ConfigParcial, DatosFiscalesBody, Emitir, FacturacionKyrosService, FiltroLista } from './facturacion-kyros.service';
 
 const DUENOS = ['owner', 'admin'] as const;
@@ -21,7 +22,7 @@ const Formato = z.enum(['a4', 'rollo']).default('a4');
 @Controller('plataforma/facturacion-kyros')
 @SoloPlataforma()
 export class FacturacionKyrosController {
-  constructor(@Inject(FacturacionKyrosService) private readonly s: FacturacionKyrosService) {}
+  constructor(@Inject(FacturacionKyrosService) private readonly s: FacturacionKyrosService, @Inject(FacturacionEmisorService) private readonly emisor: FacturacionEmisorService) {}
 
   @Get() lista(@Query() q: unknown) { return this.s.listar(FiltroLista.parse(q)); }
   @Get('alertas') alertas() { return this.s.alertas(); }
@@ -34,6 +35,11 @@ export class FacturacionKyrosController {
   @Put('integracion') @HttpCode(200) guardar(@ActorActual() a: Actor, @Body() b: unknown) { reauth(a); return this.s.guardarConfig(a, ConfigParcial.parse(b)); }
   /** «Verificar / Reintentar»: el servidor asegura el enlace y el webhook solo (sin contrasena de Kyros ID ni URL tecleada: la URL es la derivada del sitio). */
   /** «Ultimas entregas del aviso» (lo que FacturaSIN entrego vs lo que este sistema registro) y «Probar entrega» (HTTP real). */
+  /** Interruptor «Facturacion» por cliente (estandar «pago + interruptor»): lista con estado efectivo y motivo, y override encendido/apagado/por defecto. */
+  @Get('clientes-facturacion') clientes(@Query() q: unknown) { return this.emisor.clientesFacturacion(typeof (q as { q?: unknown })?.q === 'string' ? (q as { q: string }).q : undefined); }
+  @Put('clientes-facturacion/:id') @HttpCode(200)
+  fijarCliente(@ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string, @Body() b: unknown) { return this.emisor.fijarFacturacionCliente(a.sub, id, z.object({ habilitada: z.boolean().nullable() }).strict().parse(b).habilitada); }
+
   @Get('webhook/entregas') entregas() { return this.s.entregasAviso(); }
   @Post('webhook/probar-entrega') @HttpCode(200) probarEntrega(@ActorActual() a: Actor) { return this.s.probarEntregaAviso(a); }
   @Post('webhook/reprocesar') @HttpCode(200)

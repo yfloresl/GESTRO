@@ -215,3 +215,25 @@ describe('v2.2: «Probar entrega» sin mensajes contradictorios, latencia del re
     expect(vistaParaGuardar(null)).toBeNull(); expect(vistaParaGuardar({})).toBeNull(); expect(vistaParaGuardar([1])).toBeNull();
   });
 });
+
+import { facturacionHabilitada } from '../src/facturacion-kyros/nucleo/integracion';
+
+describe('v2.3: facturacionHabilitada «pago + interruptor» (override del SuperAdmin, luego plan de pago, luego no incluida)', () => {
+  it('1) el override del SuperAdmin manda sobre el plan: encendido aunque no haya pago, apagado aunque haya pago', () => {
+    expect(facturacionHabilitada({ override: true, planDePagoVigente: false })).toMatchObject({ habilitada: true, motivo: 'habilitada_por_admin', origen: 'superadmin', etiqueta: 'Habilitada por el administrador', mensaje: null });
+    const apagada = facturacionHabilitada({ override: false, planDePagoVigente: true });
+    expect(apagada).toMatchObject({ habilitada: false, motivo: 'desactivada_por_admin', origen: 'superadmin', etiqueta: 'Desactivada por el administrador' });
+    expect(apagada.mensaje).toMatch(/desactivada/);
+  });
+  it('2) sin override, un plan de pago vigente la habilita por defecto', () => {
+    expect(facturacionHabilitada({ planDePagoVigente: true })).toMatchObject({ habilitada: true, motivo: 'por_plan', origen: 'plan', etiqueta: 'Por plan', mensaje: null });
+    expect(facturacionHabilitada({ override: null, planDePagoVigente: true }).habilitada).toBe(true);
+  });
+  it('3) sin override y sin plan de pago (prueba gratuita, demostración, vencido): «No incluida en tu plan» + cómo pedirla', () => {
+    const r = facturacionHabilitada({ override: null, planDePagoVigente: false });
+    expect(r).toMatchObject({ habilitada: false, motivo: 'no_incluida', etiqueta: 'No incluida' });
+    expect(r.mensaje).toMatch(/No incluida en tu plan/);
+    expect(r.mensaje).toMatch(/administracion@kyros-tech\.com/);
+    expect(facturacionHabilitada({ planDePagoVigente: false }).habilitada).toBe(false);
+  });
+});
