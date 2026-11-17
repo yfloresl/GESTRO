@@ -1,3 +1,4 @@
+import { lineaCuf } from './lineaCuf';
 import { confirmar, pedirTexto } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -9,7 +10,7 @@ import { bs } from '../lib/tipos';
 type Estado = 'pendiente' | 'emitiendo' | 'en_proceso' | 'emitida' | 'observada' | 'rechazada' | 'anulada';
 interface Fila {
   pagoId: string; facturaId: string | null; cliente: string; sucursal: string; nit: string | null; monto: string; validadoEn: string | null; estado: Estado; simulada: boolean; sinFactura: boolean; vistaRegistrada?: boolean;
-  numero: number | null; total: string | null; iva: string | null; comprador: { nombre: string; documento: string; consumidorFinal: boolean } | null; intentos: number; error: string | null; errorCodigo: string | null; reintentable: boolean; horasSinFactura: number;
+  numero: number | null; cuf?: string | null; emitidaEn?: string | null; total: string | null; iva: string | null; comprador: { nombre: string; documento: string; consumidorFinal: boolean } | null; intentos: number; error: string | null; errorCodigo: string | null; reintentable: boolean; horasSinFactura: number;
 }
 interface Totales { pagos: number; cobrado: string; facturado: string; iva: string; ivaRecalculado: string; anulado: string; porFacturar: string; control: { ivaCoincide: boolean; filasIvaDistinto: number; filasIvaDistintoDeFacturaSin: number; filasTotalDistintoDelPago: number } }
 interface Alertas { sinFactura: number; enAlerta: number; criticas: number; rechazadas: number; sinDatosFiscales: number; integracionActiva: boolean }
@@ -196,6 +197,7 @@ export function PlataformaFacturacion() {
               <div className="flex flex-wrap items-start justify-between gap-space-sm"><div><h3 className="font-headline-sm text-headline-sm">{x.cliente}</h3><p className="font-body-sm text-on-surface-variant">{x.sucursal} · NIT {x.nit ?? 'sin NIT'} · validado {x.validadoEn ? new Date(x.validadoEn).toLocaleString('es-BO') : '—'}</p></div>
                 <div className="flex flex-col items-end gap-1"><span className="font-headline-sm text-primary font-label-lg">{bs(x.monto)}</span><span className="flex gap-1"><span className={`px-2 py-0.5 rounded-full font-label-sm uppercase ${e.c}`}>{e.t}</span>{x.simulada && <span className="px-2 py-0.5 rounded-full font-label-sm uppercase bg-secondary-fixed text-on-secondary-fixed-variant">Simulada</span>}</span></div></div>
               {x.facturaId && x.total && <p className="font-body-sm">N.º {x.numero ?? '—'} · total {bs(x.total)} · IVA {bs(x.iva ?? '0')} · comprador {x.comprador?.nombre} ({x.comprador?.documento}){x.comprador?.consumidorFinal ? ' · CONSUMIDOR FINAL' : ''}</p>}
+              {x.cuf && <p className="font-body-sm text-on-surface-variant break-all" data-testid="fk-cuf">{lineaCuf(x.cuf, x.emitidaEn, (f) => `Emitida el ${f}`, (i) => new Date(i).toLocaleString('es-BO', { timeZone: 'America/La_Paz' }))}</p>}
               {x.sinFactura && x.horasSinFactura >= 1 && <p className="font-body-sm text-error">Sin factura hace {x.horasSinFactura} h{x.horasSinFactura >= 24 ? ' (crítico)' : ''}.</p>}
               {x.error && <p className="font-body-sm text-error">{x.errorCodigo}: {x.error}{x.intentos ? ` (intentos: ${x.intentos})` : ''}</p>}
               {!x.error && x.errorCodigo === 'SIN_DATOS_FISCALES' && <p className="font-body-sm text-error">El cliente no tiene NIT/razón social válidos. Pídele que los cargue en Suscripción › Datos para tu factura, o emite como consumidor final.</p>}
