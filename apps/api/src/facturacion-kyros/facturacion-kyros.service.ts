@@ -5,13 +5,13 @@ import type { Actor } from '../comun/acceso';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { entorno } from '../config/entorno';
 import { BD, Bd, Tenant, TenantDb } from '../database/database.module';
-import { normalizarEmpresa, urlWebhookDe } from './nucleo/integracion';
+import { evaluarEntrega, normalizarEmpresa, urlWebhookDe } from './nucleo/integracion';
 import { FacturaSinConexion } from './facturasin-conexion';
 import { FacturacionEmisorService } from '../facturacion-emisor/facturacion-emisor.service';
 import { IntegracionFacturaSinService, LLAVE_WEBHOOK } from './integracion-fs.service';
 import { urlPublicaConocida } from './url-publica-conocida';
 import {
-  aceptaTransicion, aCentavos, BOM, codigosFiscalesFaltantes, evaluarRegimenFiscal, TEXTO_AVISO_CODIGOS, celdaNumero, celdaTexto, deCentavos, emitirFactura, estadoLocalDe, FacturaSinClient, FacturaSinError, filaCsv, ivaPorDentro, validarDatosFiscales, verificarFirmaWebhook,
+  aceptaTransicion, aCentavos, BOM, codigosFiscalesFaltantes, evaluarRegimenFiscal, TEXTO_AVISO_CODIGOS, celdaNumero, celdaTexto, deCentavos, emitirFactura, estadoLocalDe, FacturaSinClient, FacturaSinError, filaCsv, ivaPorDentro, validarDatosFiscales,
   type AlmacenFacturas, type ConfigEmision, type DatosIntento, type EstadoLocal, type EventoWebhook, type FilaFactura, type PagoFacturable, type Resultado, type ResultadoGuardado,
 } from './nucleo';
 
@@ -357,16 +357,28 @@ export class FacturacionKyrosService implements OnModuleInit, OnModuleDestroy {
   /* ---------------- webhook de retorno y conciliación ---------------- */
 
   /** «Verificar / Reintentar»: dispara lo mismo que el sistema hace solo (enlace de credenciales + webhook con la URL publica derivada). Sin contrasena, sin URL tecleada. */
+  /** Panel: ultimas entregas del aviso (segun FacturaSIN) + entregas recibidas aqui. */
+  entregasAviso() { return this.integracion.entregas(); }
+  probarEntregaAviso() { return this.integracion.probarEntrega(); }
   verificarIntegracion(a: Actor, token?: string | null) { return this.integracion.verificar(a.sub, true, token); }
 
   /** Procesa una entrega firmada. Devuelve el código HTTP que debe recibir FacturaSIN. */
+  /** Endpoint receptor: evalua la firma, aplica el evento y deja registro de la entrega (fecha, evento, factura, resultado) para el panel. */
   async recibirWebhook(cabeceraFirma: string, eventoId: string, crudo: string): Promise<{ http: number; resultado: string }> {
+    const r = await this.aplicarWebhook(cabeceraFirma, eventoId, crudo);
+    let tipo: string | null = null; let factura: string | null = null; let evId: string | null = eventoId || null;
+    if (r.resultado !== 'firma_invalida') {
+      try { const ev = JSON.parse(crudo) as { id?: string; tipo?: string; datos?: { facturaId?: string; idExterno?: string } }; tipo = ev.tipo ?? null; factura = ev.datos?.facturaId ?? ev.datos?.idExterno ?? null; evId = evId ?? ev.id ?? null; } catch { /* cuerpo invalido */ }
+    }
+    void this.integracion.registrarRecepcion({ eventoId: evId, tipo, factura, firmaOk: r.resultado !== 'firma_invalida', resultado: r.resultado });
+    return r;
+  }
+
+  private async aplicarWebhook(cabeceraFirma: string, eventoId: string, crudo: string): Promise<{ http: number; resultado: string }> {
     const secretos = (await this.cfg.leer<{ secretos: string[] }>(LLAVE_WEBHOOK))?.secretos ?? [];
-    if (!secretos.length || !verificarFirmaWebhook(secretos, cabeceraFirma, crudo)) return { http: 401, resultado: 'firma_invalida' };
-    void this.integracion.registrarEntrega();
-    let ev: EventoWebhook;
-    try { ev = JSON.parse(crudo) as EventoWebhook; } catch { return { http: 400, resultado: 'cuerpo_invalido' }; }
-    if (!ev?.id || !ev.tipo || !ev.datos) return { http: 400, resultado: 'cuerpo_invalido' };
+    const ev0 = evaluarEntrega(secretos, cabeceraFirma, crudo);
+    if (ev0.http !== 200) return { http: ev0.http, resultado: ev0.resultado };
+    const ev = ev0.evento as unknown as EventoWebhook;
     const id = eventoId || ev.id;
     const nuevo = (await this.bd.execute(sql`INSERT INTO kyros_invoice_events (event_id, kind) VALUES (${id}, ${ev.tipo}) ON CONFLICT DO NOTHING RETURNING 1`)).rows.length;
     if (!nuevo) return { http: 200, resultado: 'duplicado' };

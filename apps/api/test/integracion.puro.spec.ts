@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createHmac } from 'node:crypto';
-import { asegurarWebhook, convencion, empresaExterna, mensajeIntegracion, normalizarEmpresa, pasosDeFacturaSin, RegistroUrlPublica, resumenPrueba, RUTA_WEBHOOK, urlPublica, urlWebhookDe, type PuertoEnlaceWebhook } from '../src/facturacion-kyros/nucleo/integracion';
+import { evaluarEntrega, huellaCoincide, huellaSecreto, mensajePruebaEntrega, vistaEntregas, asegurarWebhook, convencion, empresaExterna, mensajeIntegracion, normalizarEmpresa, pasosDeFacturaSin, RegistroUrlPublica, resumenPrueba, RUTA_WEBHOOK, urlPublica, urlWebhookDe, type PuertoEnlaceWebhook } from '../src/facturacion-kyros/nucleo/integracion';
 import { ErrorEnlace, verificarFirmaWebhook } from '../src/facturacion-kyros/nucleo/enlace-facturasin';
 
 const req = (h: Record<string, string>, protocol = 'http') => ({ headers: h, protocol });
@@ -81,5 +81,48 @@ describe('mensajes', () => {
     expect(resumenPrueba([{ clave: 'a', ok: false, detalle: 'x' }]).resumen).toBe('Falta: x');
     const p = pasosDeFacturaSin([{ id: 'rubro', titulo: 'Rubro', estado: 'aviso', detalle: 'd' }, { id: 'catalogo', titulo: 'Catálogo', estado: 'error', detalle: 'e' }, { id: 'f', titulo: 'F', estado: 'omitido', detalle: '' }]);
     expect(p.map((x) => x.ok)).toEqual([true, false, true]);
+  });
+});
+
+const firmar = (secreto: string, cuerpo: string, t = Math.floor(Date.now() / 1000)) => `t=${t},v1=${createHmac('sha256', secreto).update(`${t}.${cuerpo}`).digest('hex')}`;
+
+describe('entregas del aviso (v2.1.0)', () => {
+  it('huella del secreto: 8 hex y coincidencia', () => {
+    expect(huellaSecreto('abc')).toMatch(/^[0-9a-f]{8}$/);
+    expect(huellaCoincide(huellaSecreto('abc'), 'abc')).toBe(true);
+    expect(huellaCoincide(huellaSecreto('abc'), 'otro')).toBe(false);
+    expect(huellaCoincide(null, 'abc')).toBe(false);
+    expect(huellaCoincide(huellaSecreto('abc'), null)).toBe(false);
+  });
+  it('vistaEntregas: 5 ultimas y si el sistema la registro', () => {
+    const e = (i: number) => ({ id: `d${i}`, eventoId: `ev${i}`, tipo: 'factura.validada', estado: 'entregada', intentos: 1, ultimoIntentoEn: null, ultimoCodigoHttp: 200, ultimoError: null, facturaId: `f${i}`, numero: i, estadoFactura: 'validada', idExterno: null });
+    const v = vistaEntregas([1, 2, 3, 4, 5, 6, 7].map(e), new Set(['ev2']));
+    expect(v).toHaveLength(5);
+    expect(v[1]!.registradaPorElSistema).toBe(true);
+    expect(v[0]!.registradaPorElSistema).toBe(false);
+    expect(v[0]).toMatchObject({ http: 200, facturaId: 'f1', estadoFactura: 'validada' });
+  });
+  it('mensajes de la prueba de entrega en lenguaje simple', () => {
+    expect(mensajePruebaEntrega([]).ok).toBe(false);
+    expect(mensajePruebaEntrega([{ ok: true, codigoHttp: 200, secretoHuella: huellaSecreto('s') }], 's')).toMatchObject({ ok: true });
+    expect(mensajePruebaEntrega([{ ok: true, codigoHttp: 200, secretoHuella: huellaSecreto('s') }], 'otro').ok).toBe(false);
+    expect(mensajePruebaEntrega([{ ok: false, codigoHttp: 401 }]).mensaje).toMatch(/firma/);
+    expect(mensajePruebaEntrega([{ ok: false, codigoHttp: 404 }]).mensaje).toMatch(/ruta/);
+    expect(mensajePruebaEntrega([{ ok: false, codigoHttp: 503 }]).mensaje).toMatch(/error interno/);
+    expect(mensajePruebaEntrega([{ ok: false, codigoHttp: null, error: 'ECONNREFUSED' }]).mensaje).toMatch(/llegar/);
+    for (const r of [401, 404, 500, null]) expect(mensajePruebaEntrega([{ ok: false, codigoHttp: r }]).mensaje).not.toMatch(/Keycloak|variable/i);
+  });
+  it('contrato: un evento factura.validada firmado con el secreto del sistema se acepta; con otro secreto, alterado o viejo se rechaza', () => {
+    const secreto = 'a'.repeat(64);
+    const cuerpo = JSON.stringify({ id: 'ev1', tipo: 'factura.validada', empresaId: 'e', creadoEn: new Date().toISOString(), datos: { facturaId: 'f1', estado: 'validada', idExterno: 'x:1', numero: 7, cuf: 'C', factura: { desglose: { neto: 1, iva: 0.13, total: 1.13 } } } });
+    const ok = evaluarEntrega([secreto], firmar(secreto, cuerpo), cuerpo);
+    expect(ok).toMatchObject({ http: 200, resultado: 'ok' });
+    expect(ok.evento).toMatchObject({ id: 'ev1', tipo: 'factura.validada' });
+    expect(evaluarEntrega(['b'.repeat(64)], firmar(secreto, cuerpo), cuerpo)).toMatchObject({ http: 401, resultado: 'firma_invalida' });
+    expect(evaluarEntrega([secreto], firmar(secreto, cuerpo), cuerpo + ' ')).toMatchObject({ http: 401 });
+    expect(evaluarEntrega([secreto], firmar(secreto, cuerpo, Math.floor(Date.now() / 1000) - 3600), cuerpo)).toMatchObject({ http: 401 });
+    expect(evaluarEntrega([], firmar(secreto, cuerpo), cuerpo)).toMatchObject({ http: 401 });
+    const sinTipo = JSON.stringify({ id: 'ev2', datos: {} });
+    expect(evaluarEntrega([secreto], firmar(secreto, sinTipo), sinTipo)).toMatchObject({ http: 400, resultado: 'cuerpo_invalido' });
   });
 });

@@ -33,6 +33,8 @@ export class FacturacionKyrosController {
   @Get('catalogo/:nombre') catalogo(@Param('nombre') nombre: string) { return this.s.catalogo(nombre); }
   @Put('integracion') @HttpCode(200) guardar(@ActorActual() a: Actor, @Body() b: unknown) { reauth(a); return this.s.guardarConfig(a, ConfigParcial.parse(b)); }
   /** «Verificar / Reintentar»: el servidor asegura el enlace y el webhook solo (sin contrasena de Kyros ID ni URL tecleada: la URL es la derivada del sitio). */
+  @Get('integracion/entregas') entregas() { return this.s.entregasAviso(); }
+  @Post('integracion/probar-entrega') @HttpCode(200) probarEntrega() { return this.s.probarEntregaAviso(); }
   @Post('integracion/verificar') @HttpCode(200)
   verificar(@ActorActual() a: Actor, @Body() b: unknown) { const t = (b && typeof b === 'object' ? (b as { token?: unknown }).token : undefined); return this.s.verificarIntegracion(a, typeof t === 'string' && t.length > 20 ? t : null); }
 

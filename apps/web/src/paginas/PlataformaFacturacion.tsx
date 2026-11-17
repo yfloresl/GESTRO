@@ -15,6 +15,8 @@ interface Totales { pagos: number; cobrado: string; facturado: string; iva: stri
 interface Alertas { sinFactura: number; enAlerta: number; criticas: number; rechazadas: number; sinDatosFiscales: number; integracionActiva: boolean }
 interface Lista { filas: Fila[]; totales: Totales; alertas: Alertas }
 interface EstadoEnlace { mensaje: string; webhook: { ultimaEntrega: string | null } }
+interface EntregaAviso { id: string; tipo: string; facturaId: string | null; numero: number | null; estado: string; intentos: number; ultimoIntentoEn: string | null; http: number | null; registradaPorElSistema: boolean }
+interface EntregasAviso { disponible: boolean; mensaje: string | null; ultimas: EntregaAviso[]; recepcion: { total: number; rechazadas: number; ultimas: Array<{ cuando: string | null; tipo: string | null; resultado: string }> } }
 interface Integracion { enlace?: EstadoEnlace; avisoCodigos?: string | null; ivaPorFueraVigente?: boolean; config: { activo: boolean; url: string; empresa: string; clientId: string; metodoPago?: number; codigoProducto?: string; modoIva?: string; codigosConfirmados?: boolean; codigoProductoSin?: string; actividadEconomica?: string; unidadMedida?: number }; codigosSinFaltan?: string[]; secretoConfigurado: boolean; webhookConfigurado: boolean; lista: boolean }
 interface CatalogoFs { nombre: string; disponible: boolean; items: Array<Record<string, unknown>>; aviso: string | null }
 const txt = (v: unknown) => (v === undefined || v === null ? '' : String(v));
@@ -88,6 +90,8 @@ export function PlataformaFacturacion() {
   const csv = () => correr('csv', async () => { const b = await api.blob(`/plataforma/facturacion-kyros/exportar.csv?${qs}`); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = 'facturacion-kyros.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(u), 10_000); });
   const alternar = () => correr('integ', () => api.put('/plataforma/facturacion-kyros/integracion', { activo: !integ.data?.config.activo }), () => 'Configuración guardada.');
   /** «Verificar / Reintentar»: el servidor asegura solo el enlace y el aviso de estados (sin contraseña ni URL tecleada). */
+  const entregas = useQuery({ queryKey: ['fact-entregas'], queryFn: () => api.get<EntregasAviso>('/plataforma/facturacion-kyros/integracion/entregas'), refetchInterval: 60_000 });
+  const probarEntrega = () => correr('entrega', () => api.post<{ ok: boolean; mensaje: string }>('/plataforma/facturacion-kyros/integracion/probar-entrega', {}), (r) => { void entregas.refetch(); return r.mensaje; });
   const verificar = () => correr('wh', () => api.post<{ ok: boolean; mensaje: string }>('/plataforma/facturacion-kyros/integracion/verificar', {}), (r) => r.mensaje);
 
   const t = q.data?.totales; const al = q.data?.alertas; const ig = integ.data;
@@ -106,6 +110,21 @@ export function PlataformaFacturacion() {
         <div className="flex flex-wrap gap-space-sm"><button type="button" onClick={alternar} disabled={!!ocupado} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>{ig?.config.activo ? 'Apagar' : 'Activar'}</button>
           <button type="button" onClick={verificar} disabled={!!ocupado} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Verificar / Reintentar</button>
           <button type="button" onClick={() => correr('conc', () => api.post<{ conciliadas: number; reintentadas: number; emitidas: number }>('/plataforma/facturacion-kyros/conciliar'), (r) => `Conciliación: ${r.conciliadas} conciliadas, ${r.reintentadas} reintentadas, ${r.emitidas} emitidas.`)} disabled={!!ocupado || !ig?.lista} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Conciliar ahora</button></div>
+      </div>
+
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm" data-testid="entregas-aviso">
+        <div className="flex flex-wrap items-center justify-between gap-space-sm">
+          <h2 className="font-headline-sm text-headline-sm">Últimas entregas del aviso</h2>
+          <button type="button" onClick={probarEntrega} disabled={!!ocupado} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>Probar entrega</button>
+        </div>
+        <p className="font-body-sm text-on-surface-variant" data-testid="recibidas">Entregas recibidas: {entregas.data?.recepcion.total ?? 0} ({entregas.data?.recepcion.rechazadas ?? 0} rechazadas por firma).{entregas.data?.recepcion.ultimas[0]?.cuando ? ` Última: ${new Date(entregas.data.recepcion.ultimas[0].cuando).toLocaleString('es-BO', { timeZone: 'America/La_Paz' })} (${entregas.data.recepcion.ultimas[0].tipo ?? '-'}, ${entregas.data.recepcion.ultimas[0].resultado}).` : ''}</p>
+        {entregas.data?.mensaje && <p role="status" className="font-body-sm text-on-surface-variant">{entregas.data.mensaje}</p>}
+        {entregas.data && entregas.data.ultimas.length === 0 && !entregas.data.mensaje && <p className="font-body-sm text-on-surface-variant">FacturaSIN todavía no ha enviado avisos.</p>}
+        <ul className="flex flex-col gap-1">
+          {(entregas.data?.ultimas ?? []).map((e) => (
+            <li key={e.id} data-testid="entrega" className="flex flex-wrap gap-space-sm font-body-sm"><strong>{e.tipo}</strong><span>{e.numero ? `N.º ${e.numero}` : (e.facturaId ?? '-')}</span><span>{e.estado}</span><span>{e.intentos} intento(s)</span><span>{e.ultimoIntentoEn ? new Date(e.ultimoIntentoEn).toLocaleString('es-BO', { timeZone: 'America/La_Paz' }) : '-'}</span><span>HTTP {e.http ?? '-'}</span><span>{e.registradaPorElSistema ? 'Registrada aquí' : 'No registrada aquí'}</span></li>
+          ))}
+        </ul>
       </div>
 
       <details className="rounded-xl border border-outline-variant p-space-md" data-testid="avanzado">

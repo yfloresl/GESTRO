@@ -2,11 +2,13 @@
  * NÚCLEO DE INTEGRACIÓN CON FACTURASIN — versión única para los 7 sistemas Kyros (copia idéntica en cada repo).
  * Sin dependencias de framework: URL pública derivada, convenciones, normalización de empresa, webhook idempotente y mensajes legibles.
  * v2.0.0: el webhook y la credencial pasan por `enlace-facturasin.ts` (núcleo de FacturaSIN v1.0.0, copiado TAL CUAL); aquí NO hay segunda lógica de firma ni de enlace.
+ * v2.1.0: auditoría de entregas del aviso (`vistaEntregas`), prueba de entrega en lenguaje simple (`mensajePruebaEntrega`), huella del secreto (`huellaSecreto`, `huellaCoincide`) y evaluación pura del aviso entrante (`evaluarEntrega`).
  * Cualquier cambio se hace aquí, se sube NUCLEO_INTEGRACION_VERSION y se copia a los demás sistemas.
  */
-export const NUCLEO_INTEGRACION_VERSION = '2.0.0';
+export const NUCLEO_INTEGRACION_VERSION = '2.1.0';
 
-import { RUTA_WEBHOOK_FACTURASIN, type PasoPrueba as PasoFacturaSin } from './enlace-facturasin';
+import { createHash } from 'node:crypto';
+import { RUTA_WEBHOOK_FACTURASIN, verificarFirmaWebhook, type PasoPrueba as PasoFacturaSin } from './enlace-facturasin';
 
 /** Ruta pública ESTÁNDAR (la define FacturaSIN) donde cada sistema recibe los avisos de TODAS sus empresas. */
 export const RUTA_WEBHOOK = RUTA_WEBHOOK_FACTURASIN;
@@ -142,3 +144,47 @@ export const resumenPrueba = (pasos: PasoPrueba[]): { listo: boolean; resumen: s
   const falla = pasos.find((p) => !p.ok);
   return falla ? { listo: false, resumen: `Falta: ${falla.detalle}` } : { listo: true, resumen: 'Todo listo: la conexión con FacturaSIN funciona de punta a punta.' };
 };
+
+/* ------------------------------ entregas del aviso (v2.1.0) ------------------------------ */
+
+/** Huella corta del secreto de firma (la misma que publica FacturaSIN en `secretoHuella`): 8 hex de sha256. Nunca revela el secreto. */
+export const huellaSecreto = (secreto: string): string => createHash('sha256').update(secreto).digest('hex').slice(0, 8);
+/** `true` si lo que FacturaSIN firma (huella remota) es el secreto guardado aquí. Sin secreto guardado o sin huella remota: no coincide. */
+export const huellaCoincide = (huellaRemota: string | null | undefined, secretoLocal: string | null | undefined): boolean => !!huellaRemota && !!secretoLocal && huellaRemota === huellaSecreto(secretoLocal);
+
+/** Entrega tal como la devuelve `GET /v1/integraciones/webhooks/entregas`. */
+export interface EntregaFs { id: string; eventoId: string; tipo: string; estado: string; intentos: number; ultimoIntentoEn: string | null; ultimoCodigoHttp: number | null; ultimoError: string | null; facturaId: string | null; numero: number | null; estadoFactura: string | null; idExterno: string | null }
+export interface EntregaVista { id: string; tipo: string; facturaId: string | null; numero: number | null; estadoFactura: string | null; estado: string; intentos: number; ultimoIntentoEn: string | null; http: number | null; error: string | null; registradaPorElSistema: boolean }
+
+/** Las `n` últimas entregas para el panel; `idsRegistrados` = ids de evento que este sistema SÍ recibió y aplicó (para mostrar «el sistema la registró»). */
+export function vistaEntregas(entregas: EntregaFs[], idsRegistrados: ReadonlySet<string>, n = 5): EntregaVista[] {
+  return entregas.slice(0, n).map((e) => ({
+    id: e.id, tipo: e.tipo, facturaId: e.facturaId, numero: e.numero, estadoFactura: e.estadoFactura, estado: e.estado, intentos: e.intentos, ultimoIntentoEn: e.ultimoIntentoEn,
+    http: e.ultimoCodigoHttp, error: e.ultimoError, registradaPorElSistema: idsRegistrados.has(e.eventoId),
+  }));
+}
+
+/** Resultado de «Probar entrega» (`POST /v1/integraciones/webhooks/probar`) en lenguaje simple. */
+export function mensajePruebaEntrega(resultados: Array<{ ok: boolean; codigoHttp: number | null; error?: string | null; secretoHuella?: string }>, secretoLocal?: string | null): { ok: boolean; mensaje: string } {
+  if (!resultados.length) return { ok: false, mensaje: 'FacturaSIN no tiene un aviso suscrito para este sistema. Pulsa «Verificar»: se suscribe solo.' };
+  const mala = resultados.find((r) => !r.ok);
+  if (mala) {
+    const h = mala.codigoHttp;
+    if (h === 401 || h === 403) return { ok: false, mensaje: 'El sistema recibió el aviso de prueba pero rechazó la firma: el secreto de aquí y el de FacturaSIN no coinciden. Pulsa «Verificar»: se vuelve a sincronizar solo, una vez.' };
+    if (h === 404 || h === 405) return { ok: false, mensaje: `FacturaSIN no encontró la ruta del aviso en este sistema (HTTP ${h}). Si el sistema se actualizó hace poco, espera unos minutos y reintenta; el aviso se vuelve a suscribir solo.` };
+    if (h !== null && h >= 500) return { ok: false, mensaje: `El sistema respondió con un error interno (HTTP ${h}). Avisa a soporte de Kyros-Tech si se repite.` };
+    return { ok: false, mensaje: `FacturaSIN no pudo llegar al sistema${mala.error ? ` (${mala.error})` : ''}. Revisa que la dirección pública sea accesible desde internet.` };
+  }
+  if (secretoLocal !== undefined && resultados[0]?.secretoHuella && !huellaCoincide(resultados[0].secretoHuella, secretoLocal)) return { ok: false, mensaje: 'La entrega llegó, pero el secreto guardado aquí no es el que firma FacturaSIN. Pulsa «Verificar»: se vuelve a sincronizar solo, una vez.' };
+  return { ok: true, mensaje: 'Entrega de prueba correcta: FacturaSIN llegó al sistema y la firma es válida.' };
+}
+
+/** Evalúa un aviso entrante SIN tocar la base: firma HMAC sobre el cuerpo crudo (uno o dos secretos) y forma mínima. `evento` solo viene si la firma es válida. */
+export function evaluarEntrega(secretos: string[], cabeceraFirma: string, crudo: string, ahoraMs = Date.now()): { http: 200 | 400 | 401; resultado: 'ok' | 'firma_invalida' | 'cuerpo_invalido'; evento?: { id: string; tipo: string; datos: Record<string, any> } } { // eslint-disable-line @typescript-eslint/no-explicit-any
+  if (!secretos.length || !crudo || !verificarFirmaWebhook(secretos, cabeceraFirma, crudo, ahoraMs)) return { http: 401, resultado: 'firma_invalida' };
+  try {
+    const ev = JSON.parse(crudo) as { id?: string; tipo?: string; datos?: Record<string, unknown> };
+    if (!ev?.id || !ev.tipo || !ev.datos) return { http: 400, resultado: 'cuerpo_invalido' };
+    return { http: 200, resultado: 'ok', evento: ev as { id: string; tipo: string; datos: Record<string, any> } }; // eslint-disable-line @typescript-eslint/no-explicit-any
+  } catch { return { http: 400, resultado: 'cuerpo_invalido' }; }
+}
