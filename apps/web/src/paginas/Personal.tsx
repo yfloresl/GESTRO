@@ -1,3 +1,5 @@
+import { BOTON_ENTRAR, BOTONES, vigenciaInvitacion } from '../lib/kyros-estandar';
+import { InvitacionVigencia } from '../componentes/estandar/InvitacionVigencia';
 import { confirmar } from '../componentes/Dialogos';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
@@ -18,7 +20,6 @@ export function Personal() {
   const [codigo, setCodigo] = useState<(Codigo & { para: string }) | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [roles, setRoles] = useState<string[]>(['mesero']);
-  const [copiado, setCopiado] = useState(false);
   const refrescar = () => qc.invalidateQueries({ queryKey: ['personal', sucursalId] });
 
   const crear = useMutation({
@@ -31,7 +32,6 @@ export function Personal() {
     crear.mutate({ nombre: String(f.get('nombre')).trim(), correo: String(f.get('correo')).trim(), telefono: String(f.get('telefono')).trim() || undefined, roles }, { onSuccess: () => { form.reset(); setRoles(['mesero']); /* GST-017: el rol no queda marcado de la persona anterior */ } });
   };
   const accion = async (f: () => Promise<unknown>) => { setError(null); try { await f(); await refrescar(); } catch (e) { setError(mensajeDeError(e)); } };
-  const copiar = async () => { if (!codigo) return; try { await navigator.clipboard.writeText(codigo.codigo); setCopiado(true); setTimeout(() => setCopiado(false), 2000); } catch { /* el código queda a la vista para copiarlo a mano */ } };
 
   return (
     <div className="flex flex-col gap-space-lg">
@@ -43,13 +43,10 @@ export function Personal() {
 
       {codigo && (
         <section role="status" className="rounded-xl border-2 border-primary bg-primary-fixed p-space-md flex flex-col gap-space-sm">
-          <h2 className="font-headline-sm text-headline-sm text-on-primary-fixed">Código para {codigo.para}</h2>
-          <p className="text-on-primary-fixed-variant">Entrégaselo ahora: <strong>no volverá a mostrarse</strong>. Vence el {new Date(codigo.venceEl).toLocaleDateString('es-BO')}. La persona entra a GESTRO con «Entrar con Kyros ID» y lo pega en «Tengo un código de invitación».</p>
-          <div className="flex flex-wrap gap-space-sm items-center">
-            <code className="font-label-lg text-label-lg bg-surface-container-lowest rounded-lg px-space-md py-space-sm break-all select-all">{codigo.codigo}</code>
-            <button type="button" onClick={copiar} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold">{copiado ? 'Copiado' : 'Copiar'}</button>
-            <button type="button" onClick={() => setCodigo(null)} className="h-12 px-space-md rounded-lg border border-outline text-on-primary-fixed">Ya lo entregué</button>
-          </div>
+          <h2 className="font-headline-sm text-headline-sm text-on-primary-fixed">Invitación para {codigo.para}</h2>
+          <p className="text-on-primary-fixed-variant">Envíale el enlace: <strong>no volverá a mostrarse</strong>. Entra con «{BOTON_ENTRAR}» y el código ya viene escrito. También puede pegar el código a mano: <code className="select-all">{codigo.codigo}</code>.</p>
+          <InvitacionVigencia enlace={`${location.origin}/entrar?codigo=${encodeURIComponent(codigo.codigo)}`} venceEn={codigo.venceEl} />
+          <button type="button" onClick={() => setCodigo(null)} className="h-12 px-space-md rounded-lg border border-outline text-on-primary-fixed self-start">Ya lo entregué</button>
         </section>
       )}
 
@@ -78,11 +75,11 @@ export function Personal() {
               </div>
               <div className="flex flex-wrap gap-1">{p.roles.map((r) => <span key={r} className="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm">{ETIQUETA_ROL[r] ?? r}</span>)}</div>
               {!p.vinculado && p.activo && (
-                <p className="font-body-sm text-on-surface-variant">{p.invitacion ? (p.invitacion.vencida ? `Código vencido el ${new Date(p.invitacion.venceEl).toLocaleDateString('es-BO')}: genera uno nuevo.` : `Código de un solo uso vigente hasta el ${new Date(p.invitacion.venceEl).toLocaleDateString('es-BO')}.`) : 'Sin código vigente: genera uno nuevo.'}</p>
+                <p className="font-body-sm text-on-surface-variant">{p.invitacion ? `Invitación de un solo uso. ${vigenciaInvitacion(p.invitacion.venceEl).texto}` : 'Sin invitación vigente: reenvía una nueva con un clic.'}</p>
               )}
               <div className="flex flex-wrap gap-space-sm">
                 {!p.vinculado && p.activo && p.invitacion && !p.invitacion.vencida && <button type="button" onClick={async () => { if (await confirmar({ titulo: 'Revocar código', mensaje: `¿Anular el código pendiente de ${p.nombre}? Ya no podrá usarlo; podrás generar otro.`, aceptar: 'Revocar', peligro: true })) accion(async () => { await api.del(`/personal/${p.id}/codigo`, undefined, sucursalId!); }); }} className="h-12 px-space-md rounded-lg border border-outline-variant text-error font-semibold">Revocar código</button>}
-                {!p.vinculado && p.activo && <button type="button" onClick={() => accion(async () => setCodigo({ ...(await api.post<Codigo>(`/personal/${p.id}/codigo`, undefined, sucursalId!)), para: p.nombre }))} className="h-12 px-space-md rounded-lg border border-outline-variant text-primary font-semibold">Nuevo código</button>}
+                {!p.vinculado && p.activo && <button type="button" onClick={() => accion(async () => setCodigo({ ...(await api.post<Codigo>(`/personal/${p.id}/codigo`, undefined, sucursalId!)), para: p.nombre }))} className="h-12 px-space-md rounded-lg border border-outline-variant text-primary font-semibold">{BOTONES.reenviarInvitacion}</button>}
                 <button type="button" onClick={async () => (await confirmar({ titulo: p.activo ? 'Desactivar persona' : 'Reactivar persona', mensaje: p.activo ? `¿Desactivar a ${p.nombre}? Perderá el acceso de inmediato.` : `¿Reactivar a ${p.nombre}?`, aceptar: p.activo ? 'Desactivar' : 'Reactivar', peligro: p.activo })) && accion(() => api.patch(`/personal/${p.id}`, { activo: !p.activo }, sucursalId!))} className={`h-12 px-space-md rounded-lg border font-semibold ${p.activo ? 'border-error text-error' : 'border-outline-variant text-primary'}`}>{p.activo ? 'Desactivar' : 'Reactivar'}</button>
               </div>
             </li>

@@ -9,5 +9,5 @@ export default defineConfig({
     proxy: { '/api': { target: 'http://localhost:4000', changeOrigin: false, ws: true } },
   },
   build: { outDir: 'dist', sourcemap: false },
-  test: { environment: 'node', include: ['src/**/*.spec.ts'] },
+  test: { environment: 'node', include: ['src/**/*.spec.{ts,tsx}'] },
 });

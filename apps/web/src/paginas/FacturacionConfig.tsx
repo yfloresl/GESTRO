@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { BOTONES, opcionesDeRubro, resumenCodigosFiscales, type RubroSin } from '../lib/kyros-estandar';
 import { useState } from 'react';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { clases } from '../componentes/Marca';
@@ -13,7 +14,7 @@ interface Cfg {
 }
 interface Paso { id: string; titulo: string; estado: 'ok' | 'error' | 'aviso' | 'omitido'; detalle: string; accion?: string }
 interface Resultado { ok: boolean; listo: boolean; resumen: string; pasos: Paso[]; requiereRubro: boolean }
-interface Rubros { actividades: Array<{ actividadEconomica: string; descripcion: string; productosSin: Array<{ codigoProductoSin: string; descripcion: string }> }> }
+interface Rubros { actividades: RubroSin[] }
 
 /** Aviso permanente mientras la facturación sea simulada. */
 export function AvisoPruebas({ texto }: { texto?: string | null }) {
@@ -47,23 +48,25 @@ export function FacturacionConfig() {
   return <Formulario key={`${c.nit ?? ''}-${c.configurada}`} c={c} refrescar={() => qc.invalidateQueries({ queryKey: ['fact-config', sucursalId] })} />;
 }
 
-/** Solo si FacturaSIN pide elegir el rubro (409 REQUIERE_ELEGIR_RUBRO): lista MÍNIMA del catálogo sincronizado; nada se inventa. */
+/** S-13: «Rubro del negocio» como lista simple (siempre visible) que completa actividad + producto del SIN; «Avanzado» muestra los tres códigos. Solo catálogo sincronizado: nada se inventa. */
 function SelectorRubro({ onElegido }: { onElegido(): void }) {
   const { sucursalId } = useRolesActivos();
   const r = useQuery({ queryKey: ['fact-rubros', sucursalId], queryFn: () => api.get<Rubros>('/facturacion/rubros', sucursalId!), enabled: !!sucursalId });
   const [sel, setSel] = useState(''); const [error, setError] = useState<string | null>(null);
-  const opciones = (r.data?.actividades ?? []).flatMap((a) => a.productosSin.map((p) => ({ v: `${a.actividadEconomica}|${p.codigoProductoSin}`, e: `${a.descripcion} — ${p.descripcion}` })));
+  const opciones = opcionesDeRubro(r.data?.actividades ?? []).map((o) => ({ v: o.valor, e: o.etiqueta }));
+  const elegida = opcionesDeRubro(r.data?.actividades ?? []).find((o) => o.valor === sel);
   const guardar = async () => {
     const [actividadEconomica, codigoProductoSin] = sel.split('|'); setError(null);
     try { await api.put('/facturacion/rubro', { actividadEconomica, codigoProductoSin }, sucursalId!); onElegido(); } catch (e) { setError(mensajeDeError(e)); }
   };
   return (
     <div className="flex flex-col gap-space-sm" data-testid="selector-rubro">
-      <p className="font-body-sm text-on-surface-variant">FacturaSIN necesita saber el rubro de tu restaurante una sola vez. Elige la actividad y el producto de la lista.</p>
+      <p className="font-body-sm text-on-surface-variant">Rubro del negocio: elige uno de la lista y el sistema completa la actividad, el producto y la unidad del SIN.</p>
       <select value={sel} onChange={(e) => setSel(e.target.value)} className={clases.input} aria-label="Rubro">
-        <option value="">Elige una actividad y un producto</option>
+        <option value="">Elige tu rubro</option>
         {opciones.map((o) => <option key={o.v} value={o.v}>{o.e}</option>)}
       </select>
+      <details className="font-body-sm"><summary className="cursor-pointer min-h-12 flex items-center font-semibold">{BOTONES.verAvanzado}</summary><ul className="list-disc pl-space-md" data-testid="codigos-fiscales">{resumenCodigosFiscales({ actividadEconomica: elegida?.actividadEconomica, codigoProductoSin: elegida?.codigoProductoSin, unidadMedida: elegida?.unidadMedida }).map((l) => <li key={l}>{l}</li>)}</ul><p className="text-on-surface-variant">Los códigos salen del catálogo sincronizado del SIN; los que no se pueden confirmar figuran como NO CONFIRMADO.</p></details>
       <button type="button" disabled={!sel} onClick={() => void guardar()} className={clases.secundario}>Guardar rubro</button>
       {error && <p role="alert" className="text-error font-body-sm">{error}</p>}
     </div>
@@ -159,7 +162,7 @@ function Formulario({ c, refrescar }: { c: Cfg; refrescar(): Promise<unknown> })
       <button type="button" disabled={!!ocupado} onClick={() => void probar()} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>{ocupado === 'probar' ? 'Probando…' : 'Probar facturación'}</button>
       {res && <p role="status" className={`rounded-lg p-space-sm font-label-md ${res.listo ? 'bg-primary-fixed text-on-surface' : 'bg-secondary-fixed text-on-secondary-fixed-variant'}`}>{res.resumen}</p>}
       {res && res.pasos.length > 0 && <ul aria-live="polite" className="flex flex-col gap-1">{res.pasos.map((p) => <li key={p.id} className={`rounded-lg px-space-sm py-space-xs ${p.estado === 'error' ? 'bg-error-container text-on-error-container' : 'bg-primary-fixed text-on-surface'}`}><strong>{p.estado === 'ok' ? '✓' : p.estado === 'error' ? '✗' : '•'} {p.titulo}:</strong> {p.detalle}{p.accion ? ` (${p.accion})` : ''}</li>)}</ul>}
-      {res?.requiereRubro && <SelectorRubro onElegido={() => void probar()} />}
+      <SelectorRubro onElegido={() => { if (res?.requiereRubro) void probar(); }} />
       <p className="font-body-sm text-on-surface-variant">{c.ultimaPrueba ? `Última prueba: ${new Date(c.ultimaPrueba.cuando).toLocaleString('es-BO', { timeZone: 'America/La_Paz' })} · ${c.ultimaPrueba.ok ? 'correcta' : c.ultimaPrueba.mensaje}` : 'Aún no se ha probado.'}</p>
     </section>
   );

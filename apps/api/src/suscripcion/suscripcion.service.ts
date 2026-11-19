@@ -287,6 +287,35 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
       .map((x) => ({ id: x.id, nombre: x.name, cuenta: x.cuenta, estado: x.status, habilitadaHasta: x.hasta, diasRestantes: x.dias, suscripcion: SuscripcionService.estado(x.dias), plan: x.plan, planId: x.plan_id }));
   }
 
+  /**
+   * S-06: vista previa (SOLO LECTURA) de cambiar el plan de una sucursal, con la MISMA regla de `ajustarSucursal` (GS-C04: el valor pagado se
+   * conserva; días restantes al precio viejo = floor(días × viejo / nuevo) días del plan nuevo; el resto queda como crédito en centavos).
+   */
+  async vistaPreviaCambioPlan(id: string, planId: string) {
+    const [a] = (await this.bd.execute(sql`SELECT r.plan_id, r.paid_until::text AS hasta, ${HOY}::text AS hoy, po.monthly_price_bob::text AS viejo_bob, po.monthly_price_usd::text AS viejo_usd FROM restaurants r LEFT JOIN plans po ON po.id = r.plan_id WHERE r.id = ${id}`)).rows as unknown as { plan_id: string | null; hasta: string | null; hoy: string; viejo_bob: string | null; viejo_usd: string | null }[];
+    if (!a) throw new NotFoundException('Sucursal no encontrada.');
+    const base = { hoy: a.hoy, habilitadaHasta: a.hasta, diasRestantes: 0, diasNuevos: 0, creditoCent: '0', vigenciaNueva: a.hasta, aplicaPrevia: false };
+    if (planId === a.plan_id) return base;
+    const pn = (await this.bd.execute(sql`SELECT monthly_price_bob::text AS bob, monthly_price_usd::text AS usd FROM plans WHERE id = ${planId}`)).rows[0] as unknown as PrecioPlan | undefined;
+    if (!pn) throw new NotFoundException('Plan no encontrado.');
+    if (!(a.viejo_bob && a.hasta && diasEntre(a.hoy, a.hasta) >= 0)) return base; // sin días pagados por delante: el plan nuevo rige desde hoy, sin cálculo
+    const tco = pn.usd !== null || a.viejo_usd !== null ? await this.tcoDelDia() : null;
+    const nuevo = (await this.precioBs(pn, tco)).precio;
+    const viejo = (await this.precioBs({ bob: a.viejo_bob, usd: a.viejo_usd }, tco)).precio;
+    const centavos = (x: string) => { const [e, f = ''] = x.split('.'); return BigInt(e) * 100n + BigInt((f + '00').slice(0, 2)); };
+    if (!nuevo || !viejo || centavos(nuevo) <= 0n) return base;
+    const diasRestantes = diasEntre(a.hoy, a.hasta) + 1;
+    const pr = prorrateoCambioPlan({ diasRestantes, precioViejoCent: centavos(viejo), precioNuevoCent: centavos(nuevo) });
+    return { ...base, diasRestantes, diasNuevos: pr.diasNuevos, creditoCent: pr.creditoCent.toString(), vigenciaNueva: pr.diasNuevos >= 1 ? sumarDias(a.hoy, pr.diasNuevos - 1) : a.hasta, aplicaPrevia: pr.diasNuevos >= 1 };
+  }
+
+  /** S-04: Auditoría de la consola de plataforma: lo último que quedó registrado (quién, cuándo y qué). Solo lectura. */
+  async auditoriaPlataforma(limite = 100) {
+    const r = await this.bd.execute(sql`SELECT l.created_at::text AS cuando, l.action AS accion, l.entity AS entidad, l.entity_id AS entidad_id, u.email AS quien, rs.name AS sucursal
+      FROM audit_log l LEFT JOIN users u ON u.id = l.user_id LEFT JOIN restaurants rs ON rs.id = l.restaurant_id ORDER BY l.id DESC LIMIT ${Math.min(Math.max(limite, 1), 300)}`);
+    return (r.rows as { cuando: string; accion: string; entidad: string | null; entidad_id: string | null; quien: string | null; sucursal: string | null }[]).map((x) => ({ cuando: x.cuando, accion: x.accion, entidad: x.entidad, entidadId: x.entidad_id, quien: x.quien, sucursal: x.sucursal }));
+  }
+
   /** Ajuste manual de plataforma (plan, fecha, suspensión): siempre con motivo y auditado. */
   async ajustarSucursal(userId: string, id: string, d: z.infer<typeof AjusteSucursal>) {
     const cambios: Record<string, unknown> = { ...(d.planId !== undefined && { planId: d.planId }), ...(d.habilitadaHasta !== undefined && { paidUntil: d.habilitadaHasta, billingAnchorDay: null }), ...(d.estado !== undefined && { status: d.estado }) };

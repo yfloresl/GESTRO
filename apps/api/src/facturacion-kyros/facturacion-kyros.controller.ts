@@ -8,8 +8,8 @@ import { FacturacionEmisorService } from '../facturacion-emisor/facturacion-emis
 import { Anular, ConfigParcial, DatosFiscalesBody, Emitir, FacturacionKyrosService, FiltroLista } from './facturacion-kyros.service';
 
 const DUENOS = ['owner', 'admin'] as const;
-const VENTANA_REAUTH_S = 15 * 60;
-const reauth = (a: Actor) => { if (!a.aat || Date.now() / 1000 - a.aat > VENTANA_REAUTH_S) throw new HttpException({ code: 'REAUTH_REQUERIDA', message: 'Confirma tu identidad otra vez para cambiar la configuración de facturación.' }, 401); };
+const VENTANA_REAUTH_S = 5 * 60; // S-03: reconfirmación solo para acciones sensibles, <= 5 min (estándar Kyros)
+const reauth = (a: Actor) => { if (!a.aat || Date.now() / 1000 - a.aat > VENTANA_REAUTH_S) throw new HttpException({ code: 'REAUTH_REQUERIDA', message: 'Por seguridad, confirma tu identidad para continuar. Es solo para esta acción.' }, 401); };
 const TIPOS: Record<string, string> = { pdf: 'application/pdf', xml: 'application/xml; charset=utf-8', qr: 'image/png' };
 const enviar = (res: Response, tipo: 'pdf' | 'xml' | 'qr', datos: Buffer, nombre: string) => {
   res.setHeader('Content-Type', TIPOS[tipo]); res.setHeader('Content-Disposition', `inline; filename="${nombre}.${tipo === 'qr' ? 'png' : tipo}"`);

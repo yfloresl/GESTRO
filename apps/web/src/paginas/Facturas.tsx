@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { BOTONES } from '../lib/kyros-estandar';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
@@ -8,7 +9,7 @@ import { clases } from '../componentes/Marca';
 import { AvisoPruebas } from './FacturacionConfig';
 import { abrirPdf, ETIQUETA_FACTURA, type Factura } from './FacturaPanel';
 
-/** Facturas del restaurante: estado de cada una, las pendientes de emitir y su conciliación con FacturaSIN. */
+/** Facturas del restaurante: estado de cada una, las pendientes de emitir y su revisión de estados con FacturaSIN. */
 export function Facturas() {
   const { sucursalId } = useRolesActivos(); const qc = useQueryClient();
   const [estado, setEstado] = useState(''); const [error, setError] = useState<string | null>(null);
@@ -25,7 +26,7 @@ export function Facturas() {
       {error && <p role="alert" className="text-error">{error}</p>}
       <div className="flex flex-wrap gap-space-sm items-end">
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Estado</span><select value={estado} onChange={(e) => setEstado(e.target.value)} className={`${clases.input} !w-56`}><option value="">Todas</option>{Object.entries(ETIQUETA_FACTURA).map(([k, n]) => <option key={k} value={k}>{n}</option>)}</select></label>
-        <button type="button" disabled={conciliar.isPending} onClick={() => conciliar.mutate()} className={`${clases.secundario} !w-auto px-space-md`}>{conciliar.isPending ? 'Conciliando…' : 'Reintentar y conciliar pendientes'}</button>
+        <button type="button" disabled={conciliar.isPending} onClick={() => conciliar.mutate()} className={`${clases.secundario} !w-auto px-space-md`}>{conciliar.isPending ? 'Revisando…' : BOTONES.revisarEstados}</button>
       </div>
       {!q.data ? <ListaEsqueleto /> : q.data.length === 0 ? <p className="text-on-surface-variant">Todavía no hay facturas. Se emiten desde Caja («Factura electrónica») o desde un pedido cobrado.</p> : (
         <ul className="flex flex-col divide-y divide-outline-variant bg-surface-container-lowest border border-outline-variant rounded-xl">

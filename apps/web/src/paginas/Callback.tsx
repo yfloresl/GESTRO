@@ -36,7 +36,7 @@ export function Callback() {
         if ((e as { cuerpo?: { code?: string } }).cuerpo?.code === 'PLATAFORMA_REAUTH') {
           const ya = sessionStorage.getItem('gestro.reauth') === '1';
           sessionStorage.removeItem('gestro.reauth');
-          if (!ya) { sessionStorage.setItem('gestro.reauth', '1'); await iniciarIngreso(await api.kyrosIdConfig(), { reauth: true, destino: '/app/plataforma' }); return; }
+          if (!ya) { sessionStorage.setItem('gestro.reauth', '1'); await iniciarIngreso(await api.kyrosIdConfig(), { reauth: true, destino: '/plataforma/integraciones' }); return; }
           setError('No pudimos confirmar tu identidad como administrador de plataforma. Vuelve a intentarlo.'); return;
         }
         const estado = (e as { status?: number }).status;

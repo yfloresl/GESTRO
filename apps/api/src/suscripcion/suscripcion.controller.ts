@@ -72,5 +72,7 @@ export class PlataformaController {
   @Patch('planes/:id') cambiarPlan(@Param('id', ParseUUIDPipe) id: string, @Body() b: unknown) { return this.s.cambiarPlan(id, Plan.parse(b)); }
 
   @Get('sucursales') sucursales() { return this.s.sucursales(); }
+  @Get('sucursales/:id/cambio-plan') cambioPlan(@Param('id', ParseUUIDPipe) id: string, @Query('planId', ParseUUIDPipe) planId: string) { return this.s.vistaPreviaCambioPlan(id, planId); }
+  @Get('auditoria') auditoria() { return this.s.auditoriaPlataforma(); }
   @Patch('sucursales/:id') ajustar(@ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string, @Body() b: unknown) { return this.s.ajustarSucursal(a.sub, id, AjusteSucursal.parse(b)); }
 }

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, mensajeDeError } from '../lib/sesion';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
+import { AvisoDemostracion } from '../componentes/estandar/AvisoDemostracion';
 
 const ETIQUETA: Record<string, string> = { owner: 'administrador', cajero: 'caja', mesero: 'mesero', cocina: 'cocina', almacen: 'almacén', cobranzas: 'cobranzas', contador: 'contador', area_manager: 'encargado de área' };
 interface Estado { cargada: boolean; modoQa?: boolean; sucursal?: { id: string; nombre: string; slug: string }; ultimoReinicio?: string | null; cuentas: { usuario: string; rol: string; vinculada: boolean }[] }
@@ -17,6 +18,7 @@ export function PlataformaDemo() {
   if (!e) return <ListaEsqueleto />;
   return (
     <section className="flex flex-col gap-space-md">
+      <AvisoDemostracion />
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}{msg && <p role="status" className="rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant p-space-sm">{msg}</p>}
       <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm">
         <h2 className="font-headline-sm text-headline-sm">Restaurante de muestra (cuentas de prueba)</h2>

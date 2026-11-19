@@ -1,3 +1,4 @@
+import { NOTIFICACIONES } from '../lib/kyros-estandar';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
@@ -24,7 +25,7 @@ export function Alertas() {
   const lista = q.data ?? [];
   return (
     <div className="flex flex-col gap-space-lg">
-      <header className="flex flex-wrap items-end justify-between gap-space-sm"><div><h1 className="font-headline-lg text-headline-lg text-primary tracking-tight">Alertas</h1><p className="font-body-md text-body-md text-on-surface-variant">Se revisan solas cada pocos minutos. Cada una muestra los datos que la sustentan.</p></div>
+      <header className="flex flex-wrap items-end justify-between gap-space-sm"><div><h1 className="font-headline-lg text-headline-lg text-primary tracking-tight">{NOTIFICACIONES.TITULO}</h1><p className="font-body-md text-body-md text-on-surface-variant">Se revisan solas cada pocos minutos. Cada una muestra los datos que la sustentan.</p></div>
         {esAdmin && <button type="button" onClick={() => accion(async () => { const r = await api.post<{ nuevas: number }>('/alertas/revisar', undefined, sucursalId); setMsg(r.nuevas ? `Se encontraron ${r.nuevas} alerta(s) nueva(s).` : 'Todo en orden: no hay alertas nuevas.'); })} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold flex items-center gap-space-xs"><span className="material-symbols-outlined" aria-hidden="true">refresh</span>Revisar ahora</button>}</header>
       <div className="flex gap-space-xs">{([['abiertas', 'Abiertas'], ['resueltas', 'Resueltas']] as const).map(([k, n]) => <button key={k} aria-pressed={estado === k} onClick={() => setEstado(k)} className={`h-12 px-space-md rounded-full font-label-md ${estado === k ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'}`}>{n}</button>)}</div>
       {error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}{msg && <p role="status" className="rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant p-space-sm">{msg}</p>}

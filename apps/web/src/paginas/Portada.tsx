@@ -6,11 +6,12 @@ import { PieLegal } from '../componentes/ModalLegal';
 import { SelectorTema } from '../componentes/SelectorTema';
 import { iniciarIngreso } from '../lib/kyrosid';
 import { api, useSesion } from '../lib/sesion';
+import { BOTON_ENTRAR } from '../lib/kyros-estandar';
 
 type Idioma = 'es' | 'en';
 const T = {
   es: {
-    ingresar: 'Ingresar', crear: 'Crear cuenta', lema: 'Tu restaurante, en un solo lugar',
+    ingresar: BOTON_ENTRAR, crear: 'Crear cuenta', lema: 'Tu restaurante, en un solo lugar',
     sub: 'GESTRO reúne el menú, las mesas con código QR, los pedidos, la cocina, la caja, el inventario, las compras, las reservas y la contabilidad básica. Desde el navegador, sin instalar nada.',
     paraQuien: 'Para quién es', quienes: [['Dueños y administradores', 'Ven cómo va el negocio y deciden con datos.'], ['Meseros, cocina y caja', 'Cada persona ve solo lo suyo y trabaja más rápido.'], ['Tus comensales', 'Escanean el QR de la mesa, piden, llaman al mesero y reservan, sin crear cuenta ni pagar nada al sistema.']],
     funciones: 'Qué puedes hacer', f: [['menu_book', 'Menú y fotos', 'Tu carta con precios, fotos y disponibilidad.'], ['table_restaurant', 'Mesas y salón', 'Zonas (VIP, terraza, fumadores…), meseros por mesa o por área y llamados en vivo.'], ['qr_code_2', 'Pedidos por QR', 'El comensal pide desde su mesa y el pedido llega a cocina.'], ['skillet', 'Cocina', 'Tablero de comandas con tiempos y avisos de «listo».'], ['point_of_sale', 'Caja', 'Cobros en efectivo, QR, tarjeta o crédito, arqueo y recibos.'], ['inventory_2', 'Inventario y recetas', 'Stock, mermas, costos y márgenes por plato.'], ['event_seat', 'Reservas', 'Agenda y una página pública para reservar.'], ['account_balance', 'Compras y contabilidad', 'Órdenes de compra, cuentas por pagar y cobrar, asientos y reportes.']],
@@ -20,7 +21,7 @@ const T = {
     error: 'No pudimos abrir Kyros ID. Inténtalo otra vez.', noDisp: 'El ingreso no está disponible por ahora. Inténtalo en unos minutos.',
   },
   en: {
-    ingresar: 'Sign in', crear: 'Create account', lema: 'Your restaurant, in one place',
+    ingresar: 'Sign in with Kyros ID', crear: 'Create account', lema: 'Your restaurant, in one place',
     sub: 'GESTRO brings together your menu, QR-code tables, orders, kitchen, cash register, inventory, purchasing, reservations and basic accounting. In your browser, nothing to install.',
     paraQuien: 'Who it is for', quienes: [['Owners and managers', 'See how the business is doing and decide with data.'], ['Waiters, kitchen and cashiers', 'Everyone sees only their part and works faster.'], ['Your diners', 'They scan the table QR, order, call the waiter and book, with no account and nothing to pay the system.']],
     funciones: 'What you can do', f: [['menu_book', 'Menu and photos', 'Your menu with prices, photos and availability.'], ['table_restaurant', 'Tables and floor', 'Zones (VIP, terrace, smoking…), waiters by table or area and live calls.'], ['qr_code_2', 'QR ordering', 'Diners order from their table and the order reaches the kitchen.'], ['skillet', 'Kitchen', 'Ticket board with timers and “ready” alerts.'], ['point_of_sale', 'Cash register', 'Cash, QR, card or credit payments, till count and receipts.'], ['inventory_2', 'Inventory and recipes', 'Stock, waste, costs and margins per dish.'], ['event_seat', 'Reservations', 'A diary and a public page to book.'], ['account_balance', 'Purchasing and accounting', 'Purchase orders, payables and receivables, journal entries and reports.']],

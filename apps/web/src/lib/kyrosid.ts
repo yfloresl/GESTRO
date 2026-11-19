@@ -1,4 +1,5 @@
 import type { KyrosIdPublico } from '@gestro/contracts';
+import { parametrosSesion } from './kyros-estandar';
 import { abrirEnNavegadorDelSistema, CLIENT_NATIVO, esAppNativa, REDIRECT_NATIVO } from './nativo';
 
 /**
@@ -8,8 +9,12 @@ import { abrirEnNavegadorDelSistema, CLIENT_NATIVO, esAppNativa, REDIRECT_NATIVO
  * state/nonce/verifier durante la redirección y se borra al volver.
  */
 
-/** Autenticación aceptada de hasta 30 min: si Kyros ID ya tiene sesión, no pide la contraseña (app-interna-estandar.md §1.2). */
-export const KYROS_LOGIN_MAX_AGE_SECONDS = 28800;   // 8 h: el SSO dura la jornada, como en el resto del ecosistema
+/**
+ * Política única de sesión (S-03, estándar Kyros): el ingreso normal acepta una autenticación de hasta 8 h (28800 s, `SESION.LOGIN_MAX_AGE_SEGUNDOS`):
+ * si Kyros ID ya tiene sesión vigente no pide la contraseña (SSO entre los 7 sistemas). Nunca `prompt=login` ni `max_age=0` en el ingreso normal.
+ * La reconfirmación («Confirmar mi identidad», <= 5 min, `prompt=login`) es solo para acciones sensibles (`reauth`).
+ */
+export const KYROS_LOGIN_MAX_AGE_SECONDS = parametrosSesion('ingreso').maxAge;
 const CLAVE = 'gestro.pkce';
 
 const b64url = (b: ArrayBuffer | Uint8Array) => btoa(String.fromCharCode(...new Uint8Array(b as ArrayBuffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -17,7 +22,7 @@ const aleatorio = (n: number) => b64url(crypto.getRandomValues(new Uint8Array(n)
 
 /** Solo rutas internas de la app: nada de esquemas, `//` ni otros orígenes (redirección abierta). */
 export function destinoSeguro(destino: string | null | undefined): string {
-  if (!destino || !destino.startsWith('/app') || destino.startsWith('//') || /[\\\s]/.test(destino) || destino.includes('://')) return '/app';
+  if (!destino || !(destino.startsWith('/app') || destino === '/plataforma' || destino.startsWith('/plataforma/')) || destino.startsWith('//') || /[\\\s]/.test(destino) || destino.includes('://')) return '/app';
   return destino;
 }
 
@@ -32,10 +37,10 @@ export function urlDeIngreso(cfg: KyrosIdPublico, pkce: { state: string; nonce: 
   const q = new URLSearchParams({
     client_id: clienteDe(cfg), redirect_uri: redirectDe(), response_type: 'code', scope: 'openid',
     code_challenge: pkce.challenge, code_challenge_method: 'S256', state: pkce.state, nonce: pkce.nonce,
-    // Ingreso normal: sin prompt=login y con max_age=28800 (8 h). Nunca 0 ni ausente.
-    max_age: String(KYROS_LOGIN_MAX_AGE_SECONDS),
+    // Ingreso normal: sin prompt=login y con max_age=28800 (8 h). Acción sensible: max_age <= 300 y prompt=login.
+    max_age: String(parametrosSesion(o.reauth ? 'sensible' : 'ingreso').maxAge),
   });
-  if (o.reauth) q.set('prompt', 'login');   // solo para confirmar la identidad del administrador de plataforma; el ingreso normal nunca lo lleva
+  if (parametrosSesion(o.reauth ? 'sensible' : 'ingreso').promptLogin) q.set('prompt', 'login');   // solo para confirmar la identidad del administrador de plataforma; el ingreso normal nunca lo lleva
   return `${base}?${q}`;
 }
 

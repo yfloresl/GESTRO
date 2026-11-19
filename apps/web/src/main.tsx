@@ -82,7 +82,7 @@ createRoot(document.getElementById('raiz')!).render(
           <Suspense fallback={<Cargando />}>
           <Routes>
             <Route path="/" element={<Portada />} />
-            <Route path="/ingresar" element={<Ingreso />} />
+            <Route path="/ingresar" element={<Ingreso directo />} />
             <Route path="/entrar" element={<Ingreso directo />} />
             <Route path="/callback" element={<Callback />} />
             <Route path="/registro" element={<Registro />} />
@@ -111,7 +111,8 @@ createRoot(document.getElementById('raiz')!).render(
               <Route path="turnos" element={<Turnos />} />
               <Route path="promociones" element={<Promociones />} />
               <Route path="estadisticas" element={<Estadisticas />} />
-              <Route path="alertas" element={<Alertas />} />
+              <Route path="alertas" element={<Navigate to="/notificaciones" replace />} />
+              <Route path="notificaciones" element={<Navigate to="/notificaciones" replace />} />
               <Route path="foda" element={<Foda />} />
               <Route path="asistente" element={<Asistente />} />
               <Route path="recetas" element={<Recetas />} />
@@ -121,9 +122,19 @@ createRoot(document.getElementById('raiz')!).render(
               <Route path="facturas" element={<Facturas />} />
               <Route path="configuracion" element={<Configuracion />} />
               <Route path="suscripcion" element={<Suscripcion />} />
-              <Route path="plataforma" element={<Plataforma />} />
+              <Route path="plataforma" element={<Navigate to="/plataforma/clientes" replace />} />
+              <Route path="avisos" element={<Navigate to="/notificaciones" replace />} />
               <Route path="*" element={<EnConstruccion />} />
             </Route>
+            <Route path="/plataforma" element={<Shell />}>
+              <Route index element={<Navigate to="/plataforma/clientes" replace />} />
+              <Route path=":seccion" element={<Plataforma />} />
+            </Route>
+            <Route path="/notificaciones" element={<Shell />}>
+              <Route index element={<Alertas />} />
+            </Route>
+            <Route path="/avisos" element={<Navigate to="/notificaciones" replace />} />
+            <Route path="/alertas" element={<Navigate to="/notificaciones" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           </Suspense>

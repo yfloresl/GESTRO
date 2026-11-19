@@ -25,7 +25,7 @@ export function PlataformaIntegraciones() {
     ev.preventDefault(); const form = ev.currentTarget; const valor = String(new FormData(form).get('valor') ?? '').trim();
     void accion(async () => { await api.put(`/plataforma/secretos/${clave}`, { valor }); form.reset(); }, 'Guardado. El valor ya no se puede volver a ver.');
   };
-  const confirmar = () => { if (cfg.data) void iniciarIngreso(cfg.data, { reauth: true, destino: '/app/plataforma' }); };
+  const confirmar = () => { if (cfg.data) void iniciarIngreso(cfg.data, { reauth: true, destino: '/plataforma/integraciones' }); };
 
   return (
     <section className="flex flex-col gap-space-md">

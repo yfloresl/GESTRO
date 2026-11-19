@@ -18,7 +18,7 @@ export type ClaveSecreto = keyof typeof CATALOGO_SECRETOS;
 export type ClaveInterna = 'FACTURASIN_CREDENCIAL' | 'FACTURASIN_SECRETO_PLATAFORMA';
 
 /** Escribir exige haber confirmado la identidad hace poco (contraseña + segundo factor en Kyros ID). */
-export const VENTANA_REAUTH_S = 15 * 60;
+export const VENTANA_REAUTH_S = 5 * 60; // S-03: reconfirmación solo para acciones sensibles, <= 5 min (estándar Kyros)
 
 const Valor = z.object({ valor: z.string().min(16).max(512) }).strict();
 const llaveDe = (c: string) => `secreto.${c}`;
@@ -31,7 +31,7 @@ export class IntegracionesService {
   private clave(c: string): ClaveSecreto { if (!(c in CATALOGO_SECRETOS)) throw new NotFoundException('Esa clave no existe en el catálogo.'); return c as ClaveSecreto; }
 
   private exigirReauth(a: Actor) {
-    if (!a.aat || Date.now() / 1000 - a.aat > VENTANA_REAUTH_S) throw new HttpException({ code: 'REAUTH_REQUERIDA', message: 'Confirma tu identidad otra vez para guardar secretos.' }, 401);
+    if (!a.aat || Date.now() / 1000 - a.aat > VENTANA_REAUTH_S) throw new HttpException({ code: 'REAUTH_REQUERIDA', message: 'Por seguridad, confirma tu identidad para continuar. Es solo para esta acción.' }, 401);
   }
 
   private auditar(por: string, accion: string, clave: string) {

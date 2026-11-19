@@ -5,6 +5,7 @@ import { Cargando, clases, Marca, TarjetaCentrada } from '../componentes/Marca';
 import { PieLegal } from '../componentes/ModalLegal';
 import { destinoSeguro, iniciarIngreso } from '../lib/kyrosid';
 import { api, useSesion } from '../lib/sesion';
+import { BOTON_ENTRAR } from '../lib/kyros-estandar';
 
 /** Un solo ingreso visible: «Entrar con Kyros ID». También atiende /entrar?destino= (entrada directa desde el Portal). */
 interface PlanesPublicos { publicado: boolean; planes?: { codigo: string; nombre: string; usd: number; modulos: { codigo: string; nombre: string }[] }[]; tipoCambio?: { bob: number; fecha: string; vigente: boolean } | null; nota?: string }
@@ -34,6 +35,8 @@ export function Ingreso({ directo = false }: { directo?: boolean }) {
   const { estado } = useSesion();
   const [params] = useSearchParams();
   const destino = destinoSeguro(params.get('destino'));
+  // S-08: el enlace de invitación trae el código; se guarda solo en esta pestaña hasta que Registro lo use.
+  const codigoInv = params.get('codigo'); if (codigoInv && /^[A-Za-z0-9_-]{4,80}$/.test(codigoInv)) { try { sessionStorage.setItem('gestro.invitacion', codigoInv); } catch { /* sin almacenamiento: se pega a mano */ } }
   const [error, setError] = useState<string | null>(null);
   const cfg = useQuery({ queryKey: ['kyros-id-config'], queryFn: () => api.kyrosIdConfig(), retry: 1 });
 
@@ -62,7 +65,7 @@ export function Ingreso({ directo = false }: { directo?: boolean }) {
       ) : (
         <div className="flex flex-col gap-space-sm">
           <button type="button" className={clases.primario} onClick={() => ir(false)} disabled={!cfg.data}>
-            <span className="material-symbols-outlined" aria-hidden="true">login</span>Entrar con Kyros ID
+            <span className="material-symbols-outlined" aria-hidden="true">login</span>{BOTON_ENTRAR}
           </button>
           <button type="button" className={clases.secundario} onClick={() => ir(true)} disabled={!cfg.data}>Crear mi cuenta</button>
         </div>

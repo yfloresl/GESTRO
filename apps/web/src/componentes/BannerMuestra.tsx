@@ -14,7 +14,7 @@ export function BannerMuestra() {
     return (
       <div role="status" className="mt-space-md rounded-xl bg-secondary-fixed text-on-secondary-fixed-variant p-space-md flex flex-wrap items-center justify-between gap-space-sm">
         <p className="font-body-md font-semibold flex items-center gap-space-xs"><span className="material-symbols-outlined" aria-hidden="true">support_agent</span>Modo soporte en «{soporte.nombre}»: puedes mirar todo, pero no modificar nada. Tu ingreso quedó registrado.</p>
-        <button type="button" onClick={() => { salirSoporte(); nav('/app/plataforma'); }} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold">Salir del modo soporte</button>
+        <button type="button" onClick={() => { salirSoporte(); nav('/plataforma/clientes'); }} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold">Salir del modo soporte</button>
       </div>
     );
   }

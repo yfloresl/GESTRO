@@ -6,6 +6,8 @@ import { api, ETIQUETA_ROL, useSesion } from '../lib/sesion';
 import { cerrarKyrosId } from '../lib/kyrosid';
 import { useAvisos } from '../lib/avisos';
 import { Link } from 'react-router-dom';
+import { NOTIFICACIONES, RUTA_NOTIFICACIONES } from '../lib/kyros-estandar';
+import { SinPermiso } from './estandar/SinPermiso';
 import { BannerMuestra } from './BannerMuestra';
 import { SelectorTema } from './SelectorTema';
 import { AceptarLegal } from './AceptarLegal';
@@ -35,14 +37,14 @@ export const GRUPOS: { titulo: string; items: Item[] }[] = [
   ] },
   { titulo: 'Gestión & Finanzas', items: [
     { ruta: 'suscripcion', icono: 'workspace_premium', texto: 'Suscripción', roles: ['owner', 'admin'] },
-    { ruta: 'plataforma', icono: 'admin_panel_settings', texto: 'Plataforma Kyros', roles: [] },
+    { ruta: 'plataforma', icono: 'admin_panel_settings', texto: 'Plataforma', roles: [], externa: '/plataforma/clientes' },
     { ruta: 'promociones', icono: 'sell', texto: 'Promociones', roles: ['owner', 'admin', 'contador', 'area_manager', 'cajero'] },
     { ruta: 'facturas', icono: 'receipt_long', texto: 'Facturas (pruebas)', roles: ['owner', 'admin', 'cajero'] },
     { ruta: 'cobranzas', icono: 'request_quote', texto: 'Cuentas por cobrar', roles: ['owner', 'admin', 'cobranzas', 'cajero', 'contador'] },
     { ruta: 'contabilidad', icono: 'account_balance_wallet', texto: 'Contabilidad & Libros', roles: ['owner', 'admin', 'contador'] },
     { ruta: 'foda', icono: 'grid_view', texto: 'Informe FODA', roles: ['owner', 'admin', 'contador'] },
     { ruta: 'asistente', icono: 'smart_toy', texto: 'Asistente', roles: ['owner', 'admin', 'contador'] },
-    { ruta: 'alertas', icono: 'notifications_active', texto: 'Alertas', roles: ['owner', 'admin', 'contador', 'area_manager'] },
+    { ruta: 'alertas', icono: 'notifications_active', texto: 'Notificaciones', roles: ['owner', 'admin', 'contador', 'area_manager'], externa: '/notificaciones' },
     { ruta: 'estadisticas', icono: 'query_stats', texto: 'Estadísticas & BI', roles: ['owner', 'admin', 'contador', 'area_manager'] },
     { ruta: 'configuracion', icono: 'settings', texto: 'Configuración', roles: ['owner', 'admin'] },
   ] },
@@ -90,7 +92,7 @@ export function Shell() {
   const rol = sucursal ? sucursal.roles.map((r) => ETIQUETA_ROL[r] ?? r).join(' / ') : sesion.usuario.esPlataforma ? 'Plataforma Kyros-Tech' : 'Sin sucursal';
 
   // Sin permiso no se muestra la pantalla (ni se disparan llamadas que el servidor va a rechazar).
-  const segmento = pathname.split('/')[2] ?? '';
+  const segmento = pathname.startsWith('/notificaciones') ? 'alertas' : (pathname.split('/')[2] ?? '');
   const itemDeRuta = GRUPOS.flatMap((g) => g.items).find((i) => i.ruta === segmento);
   const sinAcceso = !!itemDeRuta && !visible(itemDeRuta, rolesActivos, sesion.usuario.esPlataforma);
 
@@ -145,6 +147,9 @@ export function Shell() {
             )}
           </div>
           <div className="flex items-center gap-space-xs">
+          {GRUPOS.flatMap((g) => g.items).filter((it) => it.ruta === 'alertas' && visible(it, rolesActivos, sesion.usuario.esPlataforma)).map((it) => (
+            <Link key={it.ruta} to={RUTA_NOTIFICACIONES} aria-label={NOTIFICACIONES.CAMPANA} title={NOTIFICACIONES.CAMPANA} className="w-12 h-12 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container"><span className="material-symbols-outlined" aria-hidden="true">notifications</span></Link>
+          ))}
           <SelectorTema />
           <div ref={cuenta} className="relative">
             <button type="button" aria-haspopup="menu" aria-expanded={menuAbierto} onClick={() => setMenuAbierto((v) => !v)} className="flex items-center gap-space-md pl-space-md min-h-12">
@@ -180,12 +185,8 @@ export function Shell() {
           <BannerMuestra />
           <AceptarLegal />
           <div className="pt-space-lg">{sinAcceso ? (
-            <div role="alert" className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-xl flex flex-col items-center text-center gap-space-sm">
-              <span className="material-symbols-outlined text-[40px] text-primary" aria-hidden="true">lock</span>
-              <h1 className="font-headline-sm text-headline-sm">No tienes acceso a esta sección</h1>
-              <p className="text-on-surface-variant max-w-md">Tu rol no incluye {itemDeRuta?.texto}. Si lo necesitas, pídelo a quien administra el restaurante.</p>
-              <Link to="/app" className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold flex items-center">Ir a mi inicio</Link>
-            </div>) : <Outlet />}</div>
+            <SinPermiso />
+          ) : <Outlet />}</div>
         </main>
       </div>
     </>

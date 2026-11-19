@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { EnlaceLegal, PieLegal } from '../componentes/ModalLegal';
 import { useVersionLegal } from './Legal';
 import { clases, Marca, TarjetaCentrada } from '../componentes/Marca';
+import { mensajeErrorAceptacion, validarAceptacion } from '../lib/kyros-estandar';
 import { api, useSesion } from '../lib/sesion';
 
 interface Estado { registroToken: string; puedeRegistrarse: boolean }
@@ -16,7 +17,8 @@ export function Registro() {
   const estado = useLocation().state as Estado | null;
   const nav = useNavigate();
   const { ingresar } = useSesion();
-  const [modo, setModo] = useState<'registro' | 'codigo'>(estado?.puedeRegistrarse ? 'registro' : 'codigo');
+  const codigoGuardado = (() => { try { return sessionStorage.getItem('gestro.invitacion') ?? ''; } catch { return ''; } })();
+  const [modo, setModo] = useState<'registro' | 'codigo'>(estado?.puedeRegistrarse && !codigoGuardado ? 'registro' : 'codigo');
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [acepta, setAcepta] = useState(false);   // la casilla nunca viene marcada
@@ -24,11 +26,14 @@ export function Registro() {
   if (!estado) return <Navigate to="/" replace />;
 
   const enviar = (accion: () => Promise<Parameters<typeof ingresar>[0]>) => async (e: FormEvent) => {
-    e.preventDefault(); setError(null); setEnviando(true);
-    try { ingresar(await accion()); nav('/app', { replace: true }); }
+    e.preventDefault(); setError(null);
+    const falta = validarAceptacion(acepta);   // S-07: nunca queda mudo
+    if (falta) { setError(falta); return; }
+    setEnviando(true);
+    try { ingresar(await accion()); try { sessionStorage.removeItem('gestro.invitacion'); } catch { /* nada */ } nav('/app', { replace: true }); }
     catch (err) {
       const c = (err as { cuerpo?: { message?: string }; status?: number });
-      setError(c.status === 401 ? 'Tu ingreso venció. Vuelve a entrar con Kyros ID.' : c.cuerpo?.message ?? 'No pudimos completar el paso.');
+      setError(c.status === 401 ? 'Tu ingreso venció. Vuelve a entrar con Kyros ID.' : mensajeErrorAceptacion(c.status, c.cuerpo?.message));
     } finally { setEnviando(false); }
   };
 
@@ -53,11 +58,11 @@ export function Registro() {
             </label>
           ))}
           <label className="flex items-start gap-space-sm min-h-12">
-            <input type="checkbox" required checked={acepta} onChange={(e) => setAcepta(e.target.checked)} className="w-6 h-6 mt-0.5 shrink-0" />
+            <input type="checkbox" checked={acepta} onChange={(e) => { setAcepta(e.target.checked); if (e.target.checked) setError(null); }} className="w-6 h-6 mt-0.5 shrink-0" />
             <span className="font-body-sm text-body-sm">He leído y acepto los <EnlaceLegal doc="terminos">Términos y condiciones</EnlaceLegal>, la <EnlaceLegal doc="privacidad">Política de privacidad</EnlaceLegal> y las <EnlaceLegal doc="politicas">Políticas de uso</EnlaceLegal> (versión {legal.data?.version ?? "…"}).</span>
           </label>
           {error && <p role="alert" className="text-error font-body-sm text-body-sm">{error}</p>}
-          <button className={clases.primario} disabled={enviando || !acepta || !legal.data}>{enviando ? 'Creando…' : 'Abrir mi restaurante'}</button>
+          <button className={clases.primario} disabled={enviando || !legal.data}>{enviando ? 'Creando…' : 'Abrir mi restaurante'}</button>
           <button type="button" className="text-primary font-body-sm text-body-sm underline self-center" onClick={() => setModo('codigo')}>Tengo un código de invitación</button>
         </form>
       ) : (
@@ -68,14 +73,14 @@ export function Registro() {
           </div>
           <label className="flex flex-col gap-space-xs">
             <span className={clases.etiqueta}>Código</span>
-            <input name="codigo" required autoComplete="off" className={`${clases.input} font-label-lg`} />
+            <input name="codigo" required autoComplete="off" defaultValue={codigoGuardado} className={`${clases.input} font-label-lg`} />
           </label>
           <label className="flex items-start gap-space-sm min-h-12">
-            <input type="checkbox" required checked={acepta} onChange={(e) => setAcepta(e.target.checked)} className="w-6 h-6 mt-0.5 shrink-0" />
+            <input type="checkbox" checked={acepta} onChange={(e) => { setAcepta(e.target.checked); if (e.target.checked) setError(null); }} className="w-6 h-6 mt-0.5 shrink-0" />
             <span className="font-body-sm text-body-sm">He leído y acepto los <EnlaceLegal doc="terminos">Términos y condiciones</EnlaceLegal>, la <EnlaceLegal doc="privacidad">Política de privacidad</EnlaceLegal> y las <EnlaceLegal doc="politicas">Políticas de uso</EnlaceLegal> (versión {legal.data?.version ?? "…"}).</span>
           </label>
           {error && <p role="alert" className="text-error font-body-sm text-body-sm">{error}</p>}
-          <button className={clases.primario} disabled={enviando || !acepta || !legal.data}>{enviando ? 'Verificando…' : 'Unir mi cuenta'}</button>
+          <button className={clases.primario} disabled={enviando || !legal.data}>{enviando ? 'Verificando…' : 'Unir mi cuenta'}</button>
           {estado.puedeRegistrarse && <button type="button" className="text-primary font-body-sm text-body-sm underline self-center" onClick={() => setModo('registro')}>Quiero abrir un restaurante nuevo</button>}
         </form>
       )}
