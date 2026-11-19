@@ -14,11 +14,12 @@ import { ListaEsqueleto } from '../componentes/Esqueleto';
 import { PlataformaNav } from '../componentes/estandar/PlataformaNav';
 import { SinPermiso } from '../componentes/estandar/SinPermiso';
 import { VistaPreviaCambioPlan } from '../componentes/estandar/VistaPreviaCambioPlan';
-import { funcionalidadesSinPrecio, PLATAFORMA_NOMBRE, PLATAFORMA_SECCIONES, type SeccionPlataformaId } from '../lib/kyros-estandar';
+import { PLATAFORMA, SECCIONES_PLATAFORMA, type SeccionPlataforma as SeccionPlataformaId } from '../lib/kyros-estandar';
+import { funcionalidadesSinPrecio } from '../lib/kyros-local';
 
 interface PagoP { id: string; sucursal: string; cuenta: string; meses: number; mesesDeRegalo: number; monto: string; esperado: string | null; coincide: boolean | null; referencia: string; banco: string | null; fechaPago: string | null; estado: string; motivo: string | null; tieneVoucher: boolean; creado: string; habilitadaHasta: string | null; promocion: string | null }
 interface SucP { id: string; nombre: string; cuenta: string; estado: string; habilitadaHasta: string | null; diasRestantes: number | null; suscripcion: string; plan: string | null; planId: string | null }
-interface VistaPrevia { hoy: string; habilitadaHasta: string | null; diasRestantes: number; diasNuevos: number; creditoCent: string; vigenciaNueva: string | null; aplicaPrevia: boolean }
+interface VistaPrevia { hoy: string; habilitadaHasta: string | null; diasRestantes: number; diasNuevos: number; creditoCent: string; netoCentavos?: number; ivaCentavos?: number; totalCentavos?: number; vigenciaNueva: string | null; aplicaPrevia: boolean }
 interface PlanP { id: string; codigo: string; nombre: string; precioMensual: string; activo: boolean }
 interface PromoP { id: string; nombre: string; mesesRequeridos: number; mesesDeRegalo: number; descuentoPct: number; desde: string; hasta: string; activa: boolean }
 /** Subpestañas de cada sección de «Plataforma» (S-04): una sola estructura con seis secciones y los mismos nombres en los 7 sistemas. */
@@ -28,7 +29,7 @@ const SUBPESTANAS: Partial<Record<SeccionPlataformaId, [Sub, string][]>> = {
   planes: [['planes', 'Planes'], ['promociones', 'Promociones'], ['cobro', 'Cobro']],
   integraciones: [['integraciones', 'Conexiones'], ['ia', 'Inteligencia artificial']],
 };
-const SECCIONES_IDS = PLATAFORMA_SECCIONES.map((x) => x.id as string);
+const SECCIONES_IDS = SECCIONES_PLATAFORMA.map((x) => x.clave as string);
 
 function Subpestanas({ seccion, children }: { seccion: SeccionPlataformaId; children: (sub: Sub) => React.ReactNode }) {
   const lista = SUBPESTANAS[seccion] ?? [];
@@ -67,7 +68,7 @@ export function Plataforma() {
   const id = seccion as SeccionPlataformaId;
   return (
     <div className="flex flex-col gap-space-lg">
-      <header><h1 className="font-headline-lg text-headline-lg text-primary tracking-tight">{PLATAFORMA_NOMBRE}</h1><p className="font-body-md text-body-md text-on-surface-variant">Consola de Kyros-Tech: clientes, planes, facturación y más de todos los restaurantes.</p></header>
+      <header><h1 className="font-headline-lg text-headline-lg text-primary tracking-tight">{PLATAFORMA.nombre}</h1><p className="font-body-md text-body-md text-on-surface-variant">Consola de Kyros-Tech: clientes, planes, facturación y más de todos los restaurantes.</p></header>
       <PlataformaNav />
       {id === 'clientes' && <Subpestanas seccion={id}>{(sub) => (sub === 'pagos' ? <Pagos /> : <Sucursales />)}</Subpestanas>}
       {id === 'planes' && <Subpestanas seccion={id}>{(sub) => (sub === 'promociones' ? <Promociones /> : sub === 'cobro' ? <Cobro /> : <Planes />)}</Subpestanas>}
@@ -145,7 +146,7 @@ function Sucursales() {
       {previa && (
         <div className="flex flex-col gap-space-sm rounded-xl border border-outline-variant p-space-sm">
           <p className="font-semibold">Cambiar el plan de {previa.nombre}</p>
-          {previa.datos?.aplicaPrevia ? <VistaPreviaCambioPlan datos={{ fechaEfectiva: previa.datos.hoy, vigenciaNueva: previa.datos.vigenciaNueva, diasRestantes: previa.datos.diasRestantes, diasExtra: Math.max(0, previa.datos.diasNuevos - previa.datos.diasRestantes), creditoCentavos: null, costoCentavos: null, cobroCentavos: null, sinPerdidaDeDias: true }} nota={`Se conserva el valor ya pagado: los ${previa.datos.diasRestantes} días que quedan equivalen a ${previa.datos.diasNuevos} días del plan nuevo${previa.datos.creditoCent !== '0' ? `, y queda un crédito de ${bs(Number(previa.datos.creditoCent) / 100)}` : ''}.`} /> : <p className="text-on-surface-variant">El plan nuevo rige desde hoy; no hay días pagados por convertir.</p>}
+          {previa.datos?.aplicaPrevia ? <VistaPreviaCambioPlan datos={{ fechaEfectiva: previa.datos.hoy, vigenciaNueva: previa.datos.vigenciaNueva, diasRestantes: previa.datos.diasRestantes, diasExtra: Math.max(0, previa.datos.diasNuevos - previa.datos.diasRestantes), creditoSobranteCentavos: Number(previa.datos.totalCentavos ?? 0) }} nota={`Se conserva el valor ya pagado: los ${previa.datos.diasRestantes} días que quedan equivalen a ${previa.datos.diasNuevos} días del plan nuevo.`} /> : <p className="text-on-surface-variant">El plan nuevo rige desde hoy; no hay días pagados por convertir.</p>}
           <div className="flex gap-space-xs">
             <button type="button" className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold" onClick={async () => { const x = previa; setPrevia(null); await ajustar(x.id, { planId: x.planId }, `Cambiar el plan de ${x.nombre}.`); }}>Confirmar cambio</button>
             <button type="button" className="h-12 px-space-md rounded-lg border border-outline-variant font-semibold" onClick={() => setPrevia(null)}>Cancelar</button>

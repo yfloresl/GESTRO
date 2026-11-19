@@ -23,7 +23,7 @@ describe('componentes del estándar Kyros en GESTRO', () => {
     expect(h).not.toContain('disabled=""');
   });
   it('VistaPreviaCambioPlan: días, fecha efectiva y sin perder días', () => {
-    const h = r(createElement(VistaPreviaCambioPlan, { datos: { fechaEfectiva: '2026-11-10', vigenciaNueva: '2026-12-01', diasRestantes: 21, diasExtra: 0, creditoCentavos: null, costoCentavos: null, cobroCentavos: null, sinPerdidaDeDias: true } }));
+    const h = r(createElement(VistaPreviaCambioPlan, { datos: { fechaEfectiva: '2026-11-10', vigenciaNueva: '2026-12-01', diasRestantes: 21, diasExtra: 0 } }));
     expect(h).toContain('Días que te quedan: 21');
     expect(h).toContain('Rige desde: 10/11/2026');
     expect(h).toContain('No pierdes ningún día ya pagado.');
@@ -34,12 +34,12 @@ describe('componentes del estándar Kyros en GESTRO', () => {
   });
   it('AvisoDemostracion: aviso permanente y contraseña oculta (nunca en claro)', () => {
     const h = r(createElement(AvisoDemostracion, { contrasena: 'Secreta-Demo-1' }));
-    expect(h).toContain('Esto es una demostración');
+    expect(h).toContain('Demostración');
     expect(h).not.toContain('Secreta-Demo-1');
     expect(h).toContain('Mostrar contraseña de la cuenta de prueba');
   });
   it('InvitacionVigencia: vigencia visible y reenvío con un clic', () => {
-    const h = r(createElement(InvitacionVigencia, { enlace: 'https://x/entrar?codigo=a', venceEn: '2026-11-25T12:00:00Z', ahora: new Date('2026-11-18T12:00:00Z'), onReenviar: () => undefined }));
+    const h = r(createElement(InvitacionVigencia, { enlace: 'https://x/entrar?codigo=a', venceEn: new Date(Date.now() + 6.5 * 86_400_000).toISOString(), onReenviar: () => undefined }));
     expect(h).toContain('Vence en 7 días');
     expect(h).toContain('Reenviar invitación');
     expect(h).toContain('Copiar enlace');

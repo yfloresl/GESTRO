@@ -1,4 +1,4 @@
-import { NOTIFICACIONES } from '../lib/kyros-estandar';
+import { NOTIFICACIONES } from '../lib/kyros-local';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';

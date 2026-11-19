@@ -1,3 +1,4 @@
+import { desgloseIva } from '../comun/kyros-estandar';
 /**
  * Fechas de suscripción (GS-C04). Todo en fechas de calendario "YYYY-MM-DD" (hora de Bolivia, sin horas),
  * sin usar Date local ni UTC: así 23:30 en La Paz nunca cambia de día.
@@ -77,4 +78,9 @@ export function prorrateoCambioPlan(p: { diasRestantes: number; precioViejoCent:
   const restoProporcional = dias * p.precioViejoCent - diasNuevos * p.precioNuevoCent; // en "centavos×día"
   const creditoCent = (restoProporcional * 12n * 2n + 365n) / (365n * 2n); // half-up
   return { diasNuevos: Number(diasNuevos), creditoCent };
+}
+
+/** S-06: el crédito que queda a favor es un importe con IVA incluido: se desglosa Neto / IVA 13 % / Total (estándar Kyros, centavos enteros). */
+export function desgloseCredito(creditoCent: bigint): { netoCentavos: number; ivaCentavos: number; totalCentavos: number } {
+  return desgloseIva(Number(creditoCent));
 }

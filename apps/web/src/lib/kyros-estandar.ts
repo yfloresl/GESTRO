@@ -1,271 +1,211 @@
 /**
- * ESTANDAR KYROS DE SIMPLIFICACION v1.0.0 (S-02..S-13). Archivo IDENTICO en los 7 sistemas (copiar tal cual a `apps/web/src/lib/kyros-estandar.ts`).
- * Solo funciones puras y constantes, sin dependencias: lo que cambia entre sistemas (colores, kit de UI) vive en los componentes finos.
- * Premisa del dueno: simplificar NO es quitar capacidades; es que todo sea identificable e intuitivo y igual en los 7 sistemas.
+ * ESTANDAR KYROS v1.1 (QA-SIMPLIFICACION S-02..S-13). Lógica y textos comunes, SIN dependencias.
+ * Copia idéntica en los 7 sistemas (web: src/lib/kyros-estandar.ts; la API puede importar la misma copia en su src/).
+ * NO editar en un solo sistema: se cambia en QA/estandar-kyros/ y se copia a todos (verificar con md5).
  */
 
-// ---------------------------------------------------------------------------------------------------------------------------------
-// S-02 / S-03: ingreso unico y politica de sesion
-// ---------------------------------------------------------------------------------------------------------------------------------
-/** Texto del UNICO boton de ingreso en los 7 sistemas. Lleva directo a Kyros ID (sin paso intermedio). */
-export const BOTON_ENTRAR = 'Entrar con Kyros ID';
-export const SESION = {
-  /**
-   * Ingreso normal: `max_age` unico = 8 h (28800 s, la jornada). Si Kyros ID tiene una autenticacion de menos de 8 h vuelve sin pedir
-   * contrasena (SSO entre sistemas); si es mas vieja la pide. NO se usa `prompt=login` ni `max_age=0` en el ingreso normal: forzarlos hace
-   * que cada ingreso pida la contrasena otra vez y rompe el SSO. Configurable: cada sistema puede leerlo de su ajuste, con este valor por defecto.
-   */
-  LOGIN_MAX_AGE_SEGUNDOS: 28800,
-  /** Reconfirmacion SOLO para acciones sensibles (borrar datos, cambiar el correo, claves, demostracion, administrador de plataforma): <= 5 min. */
-  SENSIBLE_MAX_AGE_SEGUNDOS: 300,
-  MENSAJE_RECONFIRMAR: 'Por seguridad, confirma tu identidad para continuar. Es solo para esta acción.',
-  BOTON_RECONFIRMAR: 'Confirmar mi identidad',
-} as const;
+// ---------------------------------------------------------------- S-03 sesión y reconfirmación
+/** Duración máxima de una sesión de trabajo: 8 horas (28 800 s). Se envía como `max_age` en el ingreso normal. */
+export const SESION_MAX_AGE_S = 28_800;
+/** Acciones sensibles (secretos, interruptores, cobros, cambios de plataforma): haber confirmado la identidad hace 5 minutos o menos. */
+export const REAUTH_SENSIBLE_MAX_MIN = 5;
+export const REAUTH_SENSIBLE_MAX_AGE_S = REAUTH_SENSIBLE_MAX_MIN * 60;
+/**
+ * Constante estándar para quien exija reconfirmar SIEMPRE (Dental lo usaba: prompt=login, max_age=0).
+ * Por defecto false en los 7. Si un sistema necesita endurecerlo, cambia SOLO esta constante (y lo documenta); no hay variantes sueltas.
+ */
+export const FORZAR_LOGIN_SIEMPRE = false;
 
-/** `max_age` que debe pedirse a Kyros ID segun el motivo. `promptLogin` fuerza la autenticacion nueva SOLO en acciones sensibles. */
-export function parametrosSesion(motivo: 'ingreso' | 'sensible', override?: { loginMaxAge?: number }): { maxAge: number; promptLogin: boolean } {
-  if (motivo === 'sensible') return { maxAge: SESION.SENSIBLE_MAX_AGE_SEGUNDOS, promptLogin: true };
-  const v = override?.loginMaxAge;
-  return { maxAge: Number.isInteger(v) && (v as number) > 0 ? (v as number) : SESION.LOGIN_MAX_AGE_SEGUNDOS, promptLogin: false };
+export type ModoIngreso = 'normal' | 'sensible';
+/** Parámetros OIDC extra del ingreso. normal: max_age 28800; sensible: max_age 300. Con FORZAR_LOGIN_SIEMPRE: prompt=login y max_age=0. */
+export function parametrosIngreso(modo: ModoIngreso = 'normal', forzar: boolean = FORZAR_LOGIN_SIEMPRE): Record<string, string> {
+  if (forzar) return { prompt: 'login', max_age: '0' };
+  return { max_age: String(modo === 'sensible' ? REAUTH_SENSIBLE_MAX_AGE_S : SESION_MAX_AGE_S) };
 }
-/** `true` si la autenticacion (auth_time, segundos) es suficientemente reciente para una accion sensible. */
-export function autenticacionReciente(authTime: number | null | undefined, ahoraSeg = Math.floor(Date.now() / 1000), maxAge: number = SESION.SENSIBLE_MAX_AGE_SEGUNDOS): boolean {
-  return typeof authTime === 'number' && authTime <= ahoraSeg + 60 && ahoraSeg - authTime <= maxAge + 60;
+/** ¿La autenticación (auth_time en segundos) es lo bastante reciente para una acción sensible? `ahoraS` en segundos. */
+export function identidadReciente(authTimeS: number | null | undefined, ahoraS: number = Math.floor(Date.now() / 1000)): boolean {
+  return typeof authTimeS === 'number' && ahoraS - authTimeS <= REAUTH_SENSIBLE_MAX_AGE_S;
 }
-
-// ---------------------------------------------------------------------------------------------------------------------------------
-// S-04: consola «Plataforma» (una sola estructura y nombre)
-// ---------------------------------------------------------------------------------------------------------------------------------
-export const PLATAFORMA_NOMBRE = 'Plataforma';
-export const PLATAFORMA_BASE = '/plataforma';
-export const PLATAFORMA_SECCIONES = [
-  { id: 'clientes', etiqueta: 'Clientes', ruta: '/plataforma/clientes' },
-  { id: 'planes', etiqueta: 'Planes', ruta: '/plataforma/planes' },
-  { id: 'facturacion', etiqueta: 'Facturación', ruta: '/plataforma/facturacion' },
-  { id: 'integraciones', etiqueta: 'Integraciones', ruta: '/plataforma/integraciones' },
-  { id: 'auditoria', etiqueta: 'Auditoría', ruta: '/plataforma/auditoria' },
-  { id: 'demostracion', etiqueta: 'Demostración', ruta: '/plataforma/demostracion' },
-] as const;
-export type SeccionPlataformaId = (typeof PLATAFORMA_SECCIONES)[number]['id'];
-
-/** Seccion de Plataforma a la que pertenece una ruta (canonica, o heredada segun el `alias` del sistema: ruta vieja -> id de seccion). */
-export function seccionDePlataforma(pathname: string, alias: Readonly<Record<string, SeccionPlataformaId>> = {}): SeccionPlataformaId | null {
-  const p = pathname.replace(/\/+$/, '') || '/';
-  for (const s of PLATAFORMA_SECCIONES) if (p === s.ruta || p.startsWith(`${s.ruta}/`)) return s.id;
-  const claves = Object.keys(alias).sort((a, b) => b.length - a.length);
-  for (const k of claves) if (p === k || p.startsWith(`${k}/`)) return alias[k]!;
-  return null;
-}
-/** Redireccion de una ruta vieja a la canonica: `alias` = {rutaVieja: rutaCanonica}. Devuelve null si no es una ruta vieja. */
-export function redirigirRutaVieja(pathname: string, alias: Readonly<Record<string, string>>): string | null {
-  const p = pathname.replace(/\/+$/, '') || '/';
-  return Object.prototype.hasOwnProperty.call(alias, p) ? alias[p]! : null;
+/** Códigos de error que significan «hay que reconfirmar la identidad» (los que hoy devuelven las APIs de los 7). */
+const CODIGOS_REAUTH = ['REAUTH_REQUERIDA', 'REAUTENTICACION_REQUERIDA', 'SESION_ANTIGUA', 'ACR_INSUFICIENTE', 'IDENTIDAD_NO_CONFIRMADA', 'AUTH_TIME_ANTIGUO', 'REAUTENTICAR', 'PLATAFORMA_REAUTH'];
+export function requiereReconfirmar(e: unknown): boolean {
+  const x = e as { codigo?: string; code?: string; error?: string; message?: string; status?: number } | null;
+  const c = String(x?.codigo ?? x?.code ?? x?.error ?? '').toUpperCase();
+  return CODIGOS_REAUTH.some((k) => c.includes(k)) || /reconfirm|volver a ingresar|sesi[oó]n.*(antigua|vieja)|hace m[aá]s de 5 min/i.test(String(x?.message ?? ''));
 }
 
-// ---------------------------------------------------------------------------------------------------------------------------------
-// S-05: glosario unico, botones y estados en espanol simple
-// ---------------------------------------------------------------------------------------------------------------------------------
-export const GLOSARIO = {
-  webhook: 'aviso automático',
-  conciliar: 'revisar estados',
-  pagosSinFactura: 'cobros sin factura',
-  suscribirAviso: 'activar aviso automático',
-  facturaElectronica: 'factura electrónica',
-  facturaSIN: 'FacturaSIN',
-} as const;
-export const BOTONES = {
-  entrar: BOTON_ENTRAR,
-  reconfirmar: SESION.BOTON_RECONFIRMAR,
-  guardar: 'Guardar',
-  cancelar: 'Cancelar',
-  reintentar: 'Reintentar',
-  probar: 'Probar conexión',
-  revisarEstados: 'Revisar estados',
-  reprocesar: 'Reprocesar',
+// ---------------------------------------------------------------- textos únicos (S-02, S-03, S-07, S-10, S-11)
+export type Idioma = 'es' | 'en' | 'pt';
+export const TXT_ES = {
+  entrarKyrosId: 'Entrar con Kyros ID',
+  crearCuenta: 'Crear mi cuenta',
+  reconfirmarTitulo: 'Confirma que eres tú',
+  reconfirmarMensaje: 'Por seguridad, para esta acción necesitamos que confirmes tu identidad (sesión iniciada hace 5 minutos o menos).',
+  confirmarIdentidad: 'Confirmar mi identidad',
+  marcaCasilla: 'Marca la casilla para continuar',
+  aceptoLegal: 'He leído y acepto',
+  leer: 'Leer',
+  sinPermisoTitulo: 'No tienes permiso para ver esto',
+  sinPermisoAQuien: 'Pídele acceso a la persona que administra tu cuenta o a tu equipo de soporte.',
+  sinPermisoAQuienPlataforma: 'Pídele acceso al equipo de Kyros-Tech (soporte).',
+  demostracionAviso: 'Demostración: estos datos son de ejemplo, no son reales y pueden restablecerse en cualquier momento.',
+  invitacionVigencia: (dias: number) => (dias <= 0 ? 'Vencida' : dias === 1 ? 'Vence mañana' : `Vence en ${dias} días`),
+  reenviar: 'Reenviar invitación',
   copiarEnlace: 'Copiar enlace',
-  reenviarInvitacion: 'Reenviar invitación',
-  aceptarYContinuar: 'Aceptar y continuar',
-  verAvanzado: 'Avanzado',
+  sinNotificaciones: 'No tienes avisos nuevos.',
+  campana: 'Avisos',
+  marcarLeidos: 'Marcar todos como leídos',
+  errorGenerico: 'No pudimos completar la acción. Intenta de nuevo y, si sigue igual, avisa a soporte.',
+};
+export type Textos = typeof TXT_ES;
+const TXT_EN: Textos = {
+  entrarKyrosId: 'Sign in with Kyros ID', crearCuenta: 'Create my account', reconfirmarTitulo: 'Confirm it is you',
+  reconfirmarMensaje: 'For your security, this action requires you to confirm your identity (signed in 5 minutes ago or less).', confirmarIdentidad: 'Confirm my identity',
+  marcaCasilla: 'Tick the box to continue', aceptoLegal: 'I have read and accept', leer: 'Read',
+  sinPermisoTitulo: 'You do not have permission to view this', sinPermisoAQuien: 'Ask the person who manages your account or your support team for access.',
+  sinPermisoAQuienPlataforma: 'Ask the Kyros-Tech team (support) for access.', demostracionAviso: 'Demo: this data is sample data, it is not real and may be reset at any time.',
+  invitacionVigencia: (d: number) => (d <= 0 ? 'Expired' : d === 1 ? 'Expires tomorrow' : `Expires in ${d} days`), reenviar: 'Resend invitation', copiarEnlace: 'Copy link',
+  sinNotificaciones: 'You have no new notifications.', campana: 'Notifications', marcarLeidos: 'Mark all as read', errorGenerico: 'We could not complete the action. Try again and, if it persists, contact support.',
+};
+const TXT_PT: Textos = {
+  entrarKyrosId: 'Entrar com Kyros ID', crearCuenta: 'Criar minha conta', reconfirmarTitulo: 'Confirme que é você',
+  reconfirmarMensaje: 'Por segurança, esta ação exige que você confirme sua identidade (login feito há 5 minutos ou menos).', confirmarIdentidad: 'Confirmar minha identidade',
+  marcaCasilla: 'Marque a caixa para continuar', aceptoLegal: 'Li e aceito', leer: 'Ler',
+  sinPermisoTitulo: 'Você não tem permissão para ver isto', sinPermisoAQuien: 'Peça acesso a quem administra sua conta ou à sua equipe de suporte.',
+  sinPermisoAQuienPlataforma: 'Peça acesso à equipe da Kyros-Tech (suporte).', demostracionAviso: 'Demonstração: estes dados são de exemplo, não são reais e podem ser restabelecidos a qualquer momento.',
+  invitacionVigencia: (d: number) => (d <= 0 ? 'Vencido' : d === 1 ? 'Vence amanhã' : `Vence em ${d} dias`), reenviar: 'Reenviar convite', copiarEnlace: 'Copiar link',
+  sinNotificaciones: 'Você não tem avisos novos.', campana: 'Avisos', marcarLeidos: 'Marcar todos como lidos', errorGenerico: 'Não foi possível concluir a ação. Tente novamente e, se persistir, avise o suporte.',
+};
+/** Textos comunes por idioma (es por defecto; en y pt para los sistemas que los ofrecen). */
+export function textos(idioma: Idioma | string | undefined = 'es'): Textos { return idioma === 'en' ? TXT_EN : idioma === 'pt' ? TXT_PT : TXT_ES; }
+/** Compatibilidad: textos en español. */
+export const TXT = TXT_ES;
+
+// ---------------------------------------------------------------- S-04 consola «Plataforma»
+export const PLATAFORMA = { nombre: 'Plataforma', ruta: '/plataforma' } as const;
+export const SECCIONES_PLATAFORMA = [
+  { clave: 'clientes', etiqueta: 'Clientes', ruta: '/plataforma/clientes' },
+  { clave: 'planes', etiqueta: 'Planes', ruta: '/plataforma/planes' },
+  { clave: 'facturacion', etiqueta: 'Facturación', ruta: '/plataforma/facturacion' },
+  { clave: 'integraciones', etiqueta: 'Integraciones', ruta: '/plataforma/integraciones' },
+  { clave: 'auditoria', etiqueta: 'Auditoría', ruta: '/plataforma/auditoria' },
+  { clave: 'demostracion', etiqueta: 'Demostración', ruta: '/plataforma/demostracion' },
+] as const;
+export type SeccionPlataforma = (typeof SECCIONES_PLATAFORMA)[number]['clave'];
+/** Rutas antiguas que redirigen a la canónica (usar con <Navigate replace>). Si un sistema no tiene la sección, redirige a /plataforma. */
+export const REDIRECCIONES_PLATAFORMA: Record<string, string> = {
+  '/admin': '/plataforma',
+  '/admin/configuracion': '/plataforma/integraciones',
+  '/backoffice': '/plataforma',
+  '/app/plataforma': '/plataforma',
+  '/app/plataforma/facturacion': '/plataforma/facturacion',
+  '/admin/facturacion': '/plataforma/facturacion',
+  '/backoffice/facturacion': '/plataforma/facturacion',
+  '/admin/demo': '/plataforma/demostracion',
+};
+/** Destino de una ruta vieja, o null si no hay (o si apuntaría a sí misma: evita el bucle /plataforma → /plataforma). */
+/** Destino de una ruta vieja, o null si no hay (o si apuntaría a sí misma: evita el bucle /plataforma → /plataforma). */
+export function rutaCanonicaPlataforma(ruta: string): string | null {
+  const limpia = ruta.replace(/\/+$/, '') || '/';
+  const d = REDIRECCIONES_PLATAFORMA[limpia] ?? null;
+  return d && d !== limpia ? d : null;
+}
+/** Primera sección disponible (inicio de Plataforma). /plataforma NO redirige a sí misma: la pantalla raíz debe navegar a esta ruta. */
+export function rutaInicioPlataforma(disponibles?: readonly string[]): string {
+  const s = SECCIONES_PLATAFORMA.find((x) => !disponibles || disponibles.includes(x.clave));
+  return s ? s.ruta : PLATAFORMA.ruta;
+}
+
+// ---------------------------------------------------------------- S-05 glosario único (mismos nombres en los 7)
+export const GLOSARIO = {
+  webhook: 'Aviso de estados',
+  suscribirWebhook: 'Verificar aviso de estados',
+  probarEntrega: 'Probar entrega',
+  reprocesar: 'Reprocesar',
+  conciliar: 'Conciliar ahora',
+  conectarYProbar: 'Conectar y probar',
+  pagosSinFactura: 'Pagos sin factura',
+  backoffice: 'Plataforma',
+  tenant: 'Cliente',
+  demo: 'Demostración',
+  avanzado: 'Avanzado',
 } as const;
+/** Estados de factura y de entrega: misma palabra y mismo tono en todas las pantallas. */
 export const ESTADOS = {
-  activo: 'Activo', pendiente: 'Pendiente', vencido: 'Vencido', suspendido: 'Suspendido', aprobado: 'Aprobado', rechazado: 'Rechazado',
-  emitida: 'Emitida', anulada: 'Anulada', conError: 'Con error', noIncluida: 'No incluida en tu plan',
+  pendiente: 'Pendiente', procesando: 'En proceso', emitida: 'Emitida', validada: 'Emitida', observada: 'Observada', rechazada: 'Rechazada', anulada: 'Anulada',
+  entregada: 'Entregada', reintentando: 'Reintentando', fallida: 'Fallida', aplicado: 'Aplicado', ignorado: 'Ignorado', 'rechazada por firma': 'Rechazada por firma',
 } as const;
-const SUSTITUCIONES: ReadonlyArray<readonly [RegExp, string]> = [
-  [/\bsuscribir (?:el )?aviso( de estados)?\b/gi, GLOSARIO.suscribirAviso],
-  [/\baviso de estados\b/gi, GLOSARIO.webhook],
-  [/\bwebhooks?\b/gi, GLOSARIO.webhook],
-  [/\bconciliar\b/gi, GLOSARIO.conciliar],
-  [/\bconciliaci[oó]n\b/gi, 'revisión de estados'],
-  [/\bpagos sin factura\b/gi, GLOSARIO.pagosSinFactura],
-];
-/** Reemplaza el vocabulario tecnico/disperso por el glosario unico (para textos recibidos del servidor). Idempotente. */
-export function simplificarTexto(texto: string): string {
-  let r = texto;
-  for (const [re, por] of SUSTITUCIONES) r = r.replace(re, por);
-  return r;
+export function etiquetaEstado(estado: string | null | undefined): string {
+  const k = (estado ?? '').toLowerCase();
+  return (ESTADOS as Record<string, string>)[k] ?? (estado ? estado.charAt(0).toUpperCase() + estado.slice(1).toLowerCase() : '—');
+}
+/** Reemplaza jerga técnica por el término del glosario en un texto de pantalla (red de seguridad, no sustituye redactar bien). */
+export function aLenguajeSimple(t: string): string {
+  return t.replace(/\bwebhooks?\b/gi, GLOSARIO.webhook.toLowerCase()).replace(/\bbackoffice\b/gi, GLOSARIO.backoffice).replace(/\btenants?\b/gi, 'cliente');
 }
 
-// ---------------------------------------------------------------------------------------------------------------------------------
-// S-07: aceptacion legal (mismo componente y mismos mensajes)
-// ---------------------------------------------------------------------------------------------------------------------------------
-export const LEGAL = {
-  MENSAJE_MARCAR_CASILLA: 'Marca la casilla para continuar.',
-  TEXTO_CASILLA: 'He leído y acepto los Términos y Condiciones, la Política de Privacidad y las Políticas de uso.',
-  MENSAJE_ERROR_GENERICO: 'No pudimos registrar tu aceptación. Revisa tu conexión e inténtalo de nuevo.',
-  MENSAJE_SESION: 'Tu sesión venció. Entra de nuevo con Kyros ID para continuar.',
-} as const;
-/** Mensaje a mostrar si el usuario pulsa «Aceptar y continuar» (null = puede continuar). Nunca queda en silencio. */
-export function validarAceptacion(marcada: boolean): string | null {
-  return marcada ? null : LEGAL.MENSAJE_MARCAR_CASILLA;
+// ---------------------------------------------------------------- S-06b funcionalidades sin precio (solo SuperAdmin)
+export interface FuncionalidadSinPrecio { clave: string; nombre: string }
+/** Lista simple y SOLO para SuperAdmin de plataforma. Ninguna pantalla de cliente muestra el aviso «sin precio definido». */
+export function textoFuncionalidadesSinPrecio(items: FuncionalidadSinPrecio[]): string {
+  return items.length ? `Falta definir precio a ${items.length} funcionalidad${items.length === 1 ? '' : 'es'}: ${items.map((i) => i.nombre).join(', ')}.` : 'Todas las funcionalidades tienen precio.';
 }
-/** Mensaje legible para un error al registrar la aceptacion (estado HTTP + mensaje del servidor, si lo hay). Nunca devuelve un codigo tecnico. */
-export function mensajeErrorAceptacion(estado: number | null | undefined, mensajeServidor?: string | null): string {
-  if (estado === 401 || estado === 403) return LEGAL.MENSAJE_SESION;
-  const m = (mensajeServidor ?? '').trim();
-  const tecnico = !m || /^[A-Z0-9_]+$/.test(m) || /^(error|bad request|internal server error|failed to fetch)/i.test(m) || m.length > 200;
-  return tecnico ? LEGAL.MENSAJE_ERROR_GENERICO : m;
+export const esAdminPlataforma = (roles: readonly string[] | null | undefined): boolean => !!roles?.some((r) => /^(superadmin|super_admin|admin_plataforma|platform_admin|plataforma_admin|administrador)$/i.test(r));
+
+// ---------------------------------------------------------------- S-07 errores legibles tras (re)aceptar
+export function mensajeLegible(e: unknown, respaldo: string = TXT.errorGenerico): string {
+  if (requiereReconfirmar(e)) return `${TXT.reconfirmarMensaje} Pulsa «${TXT.confirmarIdentidad}».`;
+  const m = (e as { message?: string; mensaje?: string } | null)?.mensaje ?? (e as { message?: string } | null)?.message;
+  if (!m || /^(\{|\[|<)|\b(500|502|503|504)\b|failed to fetch|networkerror|unexpected token|internal server|^\w+Error:/i.test(m)) return respaldo;
+  return aLenguajeSimple(m);
 }
 
-// ---------------------------------------------------------------------------------------------------------------------------------
-// S-10: sin permiso
-// ---------------------------------------------------------------------------------------------------------------------------------
-export const SIN_PERMISO = {
-  TITULO: 'No tienes permiso para ver esto',
-  /** `aQuien`: quien administra el acceso en ese sistema (p. ej. «el administrador de tu consultorio»). */
-  ayuda: (aQuien: string): string => `Pídele acceso a ${aQuien}. Si crees que es un error, cierra sesión y vuelve a entrar con Kyros ID.`,
-  BOTON_VOLVER: 'Volver al inicio',
-} as const;
-/** `true` si el error HTTP significa «sin permiso» (403) y debe mostrarse la pantalla unica en vez de un error generico o una consola vacia. */
-export const esSinPermiso = (estado: number | null | undefined): boolean => estado === 403;
+// ---------------------------------------------------------------- S-08 invitaciones
+/** Días enteros que faltan para `venceEn` (ISO); 0 si ya venció. */
+export function diasParaVencer(venceEn: string | Date | null | undefined, ahora: Date = new Date()): number {
+  if (!venceEn) return 0;
+  const ms = new Date(venceEn).getTime() - ahora.getTime();
+  return ms <= 0 ? 0 : Math.ceil(ms / 86_400_000);
+}
+/** Vigencia estándar de toda invitación: 7 días. */
+export const INVITACION_VIGENCIA_DIAS = 7;
 
-// ---------------------------------------------------------------------------------------------------------------------------------
-// S-11: demostracion · S-12: notificaciones
-// ---------------------------------------------------------------------------------------------------------------------------------
-export const DEMOSTRACION = {
-  TITULO: 'Demostración',
-  AVISO_PERMANENTE: 'Esto es una demostración: los datos son de ejemplo y no son reales. No uses información de personas ni de clientes reales.',
-  BOTON_MOSTRAR_CONTRASENA: 'Mostrar contraseña de la cuenta de prueba',
-  BOTON_OCULTAR_CONTRASENA: 'Ocultar contraseña',
-} as const;
-/** La contrasena demo nunca va en claro: oculta (puntos) hasta que se pulsa el boton. */
-export const enmascarar = (secreto: string): string => '•'.repeat(Math.min(Math.max(secreto.length, 8), 16));
-/** Ruta canonica de la pantalla de notificaciones (campana) y alias heredados que redirigen a ella. */
-export const RUTA_NOTIFICACIONES = '/notificaciones';
-export const ALIAS_NOTIFICACIONES: readonly string[] = ['/avisos', '/alertas'];
-export const NOTIFICACIONES = { TITULO: 'Notificaciones', CAMPANA: 'Notificaciones', VACIO: 'No tienes notificaciones nuevas.', MARCAR_LEIDAS: 'Marcar todas como leídas' } as const;
+// ---------------------------------------------------------------- S-13 rubro fiscal
+/** Forma que devuelve FacturaSIN en GET .../rubros (catálogo del SIN): el sistema solo la pasa tal cual al selector. */
+export interface RubroActividad { actividadEconomica: string; descripcion: string; productosSin: { codigoProductoSin: string; descripcion: string; unidadMedida?: { codigo: string | number; descripcion?: string } | null }[] }
+export interface OpcionRubro { valor: string; etiqueta: string; actividadEconomica: string; codigoProductoSin: string; actividad: string; unidadMedida: string }
+/** Aplana el catálogo a una lista simple de rubros («Producto — Actividad»); los códigos quedan en `valor` y se muestran solo en «Avanzado». */
+export function opcionesRubro(actividades: RubroActividad[] | null | undefined): OpcionRubro[] {
+  return (actividades ?? []).flatMap((a) => a.productosSin.map((p) => ({
+    valor: `${a.actividadEconomica}|${p.codigoProductoSin}`, etiqueta: `${p.descripcion} — ${a.descripcion}`, actividadEconomica: a.actividadEconomica, codigoProductoSin: p.codigoProductoSin, actividad: a.descripcion,
+    unidadMedida: p.unidadMedida ? `${p.unidadMedida.descripcion ? p.unidadMedida.descripcion + ' ' : ''}(${p.unidadMedida.codigo})` : NO_CONFIRMADO,
+  })));
+}
+export const RUBRO_NOTA_SIN = 'Los códigos vienen del catálogo oficial del SIN que sincroniza FacturaSIN. Si el catálogo no responde, el sistema muestra «NO CONFIRMADO» y no inventa códigos.';
+/** Unidad de medida: se completa sola por producto; «Avanzado» permite ajustarla. NO CONFIRMADO mientras FacturaSIN no devuelva el código. */
+export const NO_CONFIRMADO = 'NO CONFIRMADO';
 
-// ---------------------------------------------------------------------------------------------------------------------------------
-// S-08: invitaciones (enlace, vigencia visible, reenvio con un clic)
-// ---------------------------------------------------------------------------------------------------------------------------------
-export interface VigenciaInvitacion { vencida: boolean; diasRestantes: number; texto: string; puedeReenviar: boolean }
-/** Vigencia visible de una invitacion: `venceEn` ISO. Siempre ofrece reenviar si esta vencida o vence en <= 1 dia. */
-export function vigenciaInvitacion(venceEn: string | Date | null | undefined, ahora: Date = new Date()): VigenciaInvitacion {
-  const sinFecha: VigenciaInvitacion = { vencida: false, diasRestantes: 0, texto: 'Sin fecha de vencimiento', puedeReenviar: true };
-  if (!venceEn) return sinFecha;
-  const fin = typeof venceEn === 'string' ? new Date(venceEn) : venceEn;
-  if (Number.isNaN(fin.getTime())) return sinFecha;
-  const ms = fin.getTime() - ahora.getTime();
-  if (ms <= 0) return { vencida: true, diasRestantes: 0, texto: 'Venció. Reenvíala con un clic para generar un enlace nuevo.', puedeReenviar: true };
-  const dias = Math.ceil(ms / 86_400_000);
-  return { vencida: false, diasRestantes: dias, texto: dias === 1 ? 'Vence en menos de 1 día' : `Vence en ${dias} días`, puedeReenviar: dias <= 1 };
+// ---------------------------------------------------------------- S-06 desglose de IVA (convención verificada del proyecto)
+export const IVA_TASA_PCT = 13;
+export interface DesgloseIva { netoCentavos: number; ivaCentavos: number; totalCentavos: number }
+/**
+ * Desglose de un importe que YA incluye IVA: el IVA contenido es el 13 % del importe total (convención del proyecto), en centavos enteros,
+ * redondeo al centavo con la mitad hacia arriba; neto = total - IVA, así neto + IVA = total exacto (ej.: Bs 800,00 → IVA 104,00, neto 696,00).
+ * Con BigInt: sin errores de coma flotante en totales grandes.
+ */
+export function desgloseIva(totalCentavos: number): DesgloseIva {
+  if (!Number.isInteger(totalCentavos) || totalCentavos < 0) throw new RangeError('El importe debe ser centavos enteros no negativos.');
+  const t = BigInt(totalCentavos);
+  const iva = Number((t * BigInt(IVA_TASA_PCT) * 2n + 100n) / 200n);
+  return { netoCentavos: totalCentavos - iva, ivaCentavos: iva, totalCentavos };
 }
-
-// ---------------------------------------------------------------------------------------------------------------------------------
-// S-06 / S-06b: vista previa de cambio de plan y funcionalidades sin precio
-// ---------------------------------------------------------------------------------------------------------------------------------
-export interface VistaPreviaCambioPlan {
-  fechaEfectiva: string;          // AAAA-MM-DD
-  vigenciaNueva: string | null;   // AAAA-MM-DD (ultimo dia cubierto)
-  diasRestantes: number;
-  diasExtra: number;              // dias que se SUMAN por credito (nunca se pierden)
-  creditoCentavos: number | null; // null si el sistema acredita en dias y no en dinero
-  costoCentavos: number | null;
-  cobroCentavos: number | null;
-  sinPerdidaDeDias: true;
-}
-const fmtBs = (c: number) => `Bs ${(c / 100).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const fmtFecha = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
-/** Lineas de la vista previa, identicas en todos los sistemas. */
-export function lineasVistaPrevia(v: VistaPreviaCambioPlan): string[] {
-  const l: string[] = [];
-  if (v.creditoCentavos !== null) l.push(`Crédito de tu plan actual: ${fmtBs(v.creditoCentavos)}`);
-  if (v.costoCentavos !== null) l.push(`Costo del plan nuevo por los días que te quedan: ${fmtBs(v.costoCentavos)}`);
-  if (v.cobroCentavos !== null) l.push(`A pagar ahora: ${fmtBs(v.cobroCentavos)}`);
-  l.push(`Días que te quedan: ${v.diasRestantes}`);
-  if (v.diasExtra > 0) l.push(`Días que se suman a tu vigencia: ${v.diasExtra}`);
-  l.push(`Rige desde: ${fmtFecha(v.fechaEfectiva)}`);
-  if (v.vigenciaNueva) l.push(`Tu plan nuevo vence el: ${fmtFecha(v.vigenciaNueva)}`);
-  l.push('No pierdes ningún día ya pagado.');
-  return l;
-}
-/** Vista previa a partir del prorrateo en dinero (modelo AXION, sin tocar su matematica). */
-export function vistaPreviaDeProrrateo(r: ResultadoProrrateo): VistaPreviaCambioPlan {
-  return { fechaEfectiva: r.fechaEfectiva, vigenciaNueva: r.vigenciaNueva, diasRestantes: r.diasRestantes, diasExtra: r.diasExtra, creditoCentavos: r.creditoCentavos, costoCentavos: r.costoNuevoCentavos, cobroCentavos: r.cobroCentavos, sinPerdidaDeDias: true };
-}
-/** Lista simple (solo SuperAdmin) de funcionalidades pendientes de precio. Devuelve [] para que ninguna pantalla de cliente muestre el aviso. */
-export function funcionalidadesSinPrecio<T extends { nombre: string; precio?: number | string | null }>(items: readonly T[], esSuperAdmin: boolean): string[] {
-  if (!esSuperAdmin) return [];
-  return items.filter((i) => i.precio === null || i.precio === undefined || i.precio === '' || Number(i.precio) === 0).map((i) => i.nombre);
-}
-
-// --- Prorrateo en dinero (copia SIN CAMBIOS de la matematica verificada de AXION `prorrateo-plan.ts`; centavos enteros, IVA incluido en el precio) ---
-export interface EntradaProrrateo { hoy: string; vigenciaHasta: string | null; centavosActual: number; centavosNuevo: number; saldoPrevioCentavos?: number; mismoPlan?: boolean }
-export interface ResultadoProrrateo {
-  valido: boolean; motivoInvalido: 'mismo_plan' | null; vencida: boolean; fechaEfectiva: string; vigenciaActual: string | null; vigenciaNueva: string | null; diasRestantes: number; diasDelMes: number;
-  creditoCentavos: number; costoNuevoCentavos: number; diferenciaCentavos: number; saldoAplicadoCentavos: number; cobroCentavos: number; diasExtra: number; saldoFinalCentavos: number;
-}
-const MS_DIA = 86_400_000;
-const msDe = (f: string) => Date.UTC(Number(f.slice(0, 4)), Number(f.slice(5, 7)) - 1, Number(f.slice(8, 10)));
-export const diasEntreFechas = (a: string, b: string): number => Math.round((msDe(b) - msDe(a)) / MS_DIA);
-export const sumarDias = (f: string, n: number): string => new Date(msDe(f) + n * MS_DIA).toISOString().slice(0, 10);
-const diasDelMesDe = (f: string) => new Date(Date.UTC(Number(f.slice(0, 4)), Number(f.slice(5, 7)), 0)).getUTCDate();
-/** round(a × b / c) en enteros, mitad hacia arriba (a, b >= 0, c > 0). */
-export const divRedondeada = (a: number, b: number, c: number): number => Math.floor((2 * a * b + c) / (2 * c));
-export function calcularProrrateo(e: EntradaProrrateo): ResultadoProrrateo {
-  for (const v of [e.centavosActual, e.centavosNuevo, e.saldoPrevioCentavos ?? 0]) if (!Number.isInteger(v) || v < 0) throw new RangeError('Los importes deben ser centavos enteros no negativos.');
-  const diasDelMes = diasDelMesDe(e.hoy);
-  const saldoPrevio = e.saldoPrevioCentavos ?? 0;
-  const base: ResultadoProrrateo = {
-    valido: true, motivoInvalido: null, vencida: false, fechaEfectiva: e.hoy, vigenciaActual: e.vigenciaHasta, vigenciaNueva: e.vigenciaHasta, diasRestantes: 0, diasDelMes,
-    creditoCentavos: 0, costoNuevoCentavos: 0, diferenciaCentavos: 0, saldoAplicadoCentavos: 0, cobroCentavos: 0, diasExtra: 0, saldoFinalCentavos: saldoPrevio,
+/** Texto simple: «IVA 13 % incluido: Bs X». `fmt` formatea centavos. */
+export const textoIvaIncluido = (totalCentavos: number, fmt: (c: number) => string, idioma: Idioma | string = 'es'): string =>
+  (idioma === 'en' ? `VAT 13% included: ` : idioma === 'pt' ? `IVA 13% incluído: ` : `IVA 13 % incluido: `) + fmt(desgloseIva(totalCentavos).ivaCentavos);
+/** Desglose de cada importe visible de la vista previa del cambio de plan (también se guarda en la confirmación y la auditoría). */
+export function desgloseCambioPlan(r: { creditoCentavos: number; costoNuevoCentavos: number; diferenciaCentavos: number; saldoAplicadoCentavos: number; cobroCentavos: number; saldoFinalCentavos: number }) {
+  return {
+    credito: desgloseIva(r.creditoCentavos), costoNuevo: desgloseIva(r.costoNuevoCentavos), diferencia: desgloseIva(Math.abs(r.diferenciaCentavos)), diferenciaEsSaldoAFavor: r.diferenciaCentavos < 0,
+    saldoAplicado: desgloseIva(r.saldoAplicadoCentavos), cobro: desgloseIva(r.cobroCentavos), saldoFinal: desgloseIva(r.saldoFinalCentavos),
   };
-  if (e.mismoPlan) return { ...base, valido: false, motivoInvalido: 'mismo_plan' };
-  const dias = e.vigenciaHasta && e.vigenciaHasta >= e.hoy ? diasEntreFechas(e.hoy, e.vigenciaHasta) + 1 : 0;
-  if (dias === 0) return { ...base, vencida: true };
-  const credito = divRedondeada(e.centavosActual, dias, diasDelMes);
-  const costo = divRedondeada(e.centavosNuevo, dias, diasDelMes);
-  const diferencia = costo - credito;
-  let aplicado = 0; let cobro = 0; let extra = 0; let saldoFinal = saldoPrevio; let vigenciaNueva = e.vigenciaHasta;
-  if (diferencia > 0) {
-    aplicado = Math.min(saldoPrevio, diferencia);
-    cobro = diferencia - aplicado;
-    saldoFinal = saldoPrevio - aplicado;
-  } else if (diferencia < 0) {
-    const exceso = -diferencia + saldoPrevio;
-    if (e.centavosNuevo > 0) {
-      extra = Math.floor((exceso * diasDelMes) / e.centavosNuevo);
-      const usado = Math.floor((e.centavosNuevo * extra) / diasDelMes);
-      saldoFinal = exceso - usado;
-      if (extra > 0) vigenciaNueva = sumarDias(e.vigenciaHasta!, extra);
-    } else saldoFinal = exceso;
-  }
-  return { ...base, diasRestantes: dias, creditoCentavos: credito, costoNuevoCentavos: costo, diferenciaCentavos: diferencia, saldoAplicadoCentavos: aplicado, cobroCentavos: cobro, diasExtra: extra, saldoFinalCentavos: saldoFinal, vigenciaNueva };
-}
-
-// ---------------------------------------------------------------------------------------------------------------------------------
-// S-13: codigos fiscales por rubro (lista simple que completa actividad + producto + unidad; «Avanzado» para ajustar)
-// ---------------------------------------------------------------------------------------------------------------------------------
-export interface RubroSin { actividadEconomica: string; descripcion: string; productosSin: ReadonlyArray<{ codigoProductoSin: string; descripcion: string; unidadMedida?: number | null }> }
-export interface OpcionRubro { valor: string; etiqueta: string; actividadEconomica: string; codigoProductoSin: string; unidadMedida: number | null }
-/** Lista simple y ordenada para el selector de rubro. Solo usa lo que trae el catalogo sincronizado del SIN: no se inventa ningun codigo. */
-export function opcionesDeRubro(rubros: readonly RubroSin[]): OpcionRubro[] {
-  const out: OpcionRubro[] = [];
-  for (const a of rubros) for (const p of a.productosSin) out.push({ valor: `${a.actividadEconomica}|${p.codigoProductoSin}`, etiqueta: `${a.descripcion} — ${p.descripcion}`, actividadEconomica: a.actividadEconomica, codigoProductoSin: p.codigoProductoSin, unidadMedida: p.unidadMedida ?? null });
-  return out.sort((x, y) => x.etiqueta.localeCompare(y.etiqueta, 'es'));
-}
-/** Texto del bloque «Avanzado» con los tres codigos; lo no confirmado se marca NO CONFIRMADO en vez de inventarse. */
-export function resumenCodigosFiscales(c: { actividadEconomica?: string | null; codigoProductoSin?: string | null; unidadMedida?: number | string | null }): string[] {
-  const v = (x: unknown) => (x === null || x === undefined || x === '' ? 'NO CONFIRMADO' : String(x));
-  return [`Actividad económica: ${v(c.actividadEconomica)}`, `Producto del SIN: ${v(c.codigoProductoSin)}`, `Unidad de medida: ${v(c.unidadMedida)}`];
 }

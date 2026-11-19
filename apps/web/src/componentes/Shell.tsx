@@ -6,7 +6,7 @@ import { api, ETIQUETA_ROL, useSesion } from '../lib/sesion';
 import { cerrarKyrosId } from '../lib/kyrosid';
 import { useAvisos } from '../lib/avisos';
 import { Link } from 'react-router-dom';
-import { NOTIFICACIONES, RUTA_NOTIFICACIONES } from '../lib/kyros-estandar';
+import { NOTIFICACIONES, RUTA_NOTIFICACIONES } from '../lib/kyros-local';
 import { SinPermiso } from './estandar/SinPermiso';
 import { BannerMuestra } from './BannerMuestra';
 import { SelectorTema } from './SelectorTema';

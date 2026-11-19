@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { DEMOSTRACION, enmascarar } from '../../lib/kyros-estandar';
-
-/** S-11: aviso PERMANENTE de qué es demostración + contraseña de la cuenta de prueba oculta tras un botón (nunca en claro por defecto). */
+import { AvisoDemostracion as AvisoComun } from '../../lib/kyros-estandar-ui';
+import { DEMOSTRACION, enmascarar } from '../../lib/kyros-local';
+/** S-11: aviso PERMANENTE del estándar + contraseña de la cuenta de prueba oculta tras un botón (nunca en claro por defecto). */
 export function AvisoDemostracion({ contrasena }: { contrasena?: string | null }) {
   const [visible, setVisible] = useState(false);
   return (
-    <div data-testid="aviso-demostracion" className="rounded-lg bg-tertiary-fixed text-on-tertiary-fixed-variant p-space-sm flex flex-col gap-space-xs">
-      <p role="note" className="font-semibold">{DEMOSTRACION.AVISO_PERMANENTE}</p>
+    <div data-testid="aviso-demostracion" className="flex flex-col gap-space-xs">
+      <AvisoComun />
       {contrasena ? (
         <p className="flex flex-wrap items-center gap-space-xs">
           <code data-testid="contrasena-demo">{visible ? contrasena : enmascarar(contrasena)}</code>

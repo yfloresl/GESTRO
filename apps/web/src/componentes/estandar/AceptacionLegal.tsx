@@ -1,28 +1,24 @@
 import { useState } from 'react';
-import { BOTONES, LEGAL, mensajeErrorAceptacion, validarAceptacion } from '../../lib/kyros-estandar';
+import { AceptacionLegal as CasillaLegal } from '../../lib/kyros-estandar-ui';
+import { LEGAL, mensajeErrorAceptacion } from '../../lib/kyros-local';
 import { clases } from '../Marca';
-
 /**
- * S-07: componente ÚNICO de aceptación legal (casilla + «Aceptar y continuar»). El botón NUNCA queda mudo: sin casilla marcada dice
- * «Marca la casilla para continuar.» y, si el servidor falla, muestra un mensaje legible (nunca un código técnico).
+ * S-07: aceptación legal. La casilla y su mensaje son los del estándar compartido; aquí solo se maneja el envío. El botón NUNCA queda mudo: sin casilla
+ * marcada muestra «Marca la casilla para continuar» y, si el servidor falla, un mensaje legible (nunca un código técnico).
  * `enviar` debe lanzar un error con `status`/`message` si falla.
  */
 export function AceptacionLegal({ enviar, textoCasilla = LEGAL.TEXTO_CASILLA }: { enviar: () => Promise<void>; textoCasilla?: string }) {
-  const [marcada, setMarcada] = useState(false); const [aviso, setAviso] = useState<string | null>(null); const [enviando, setEnviando] = useState(false);
+  const [marcada, setMarcada] = useState(false); const [intento, setIntento] = useState(false); const [error, setError] = useState<string | null>(null); const [enviando, setEnviando] = useState(false);
   const aceptar = async () => {
-    const falta = validarAceptacion(marcada);
-    if (falta) { setAviso(falta); return; }
-    setAviso(null); setEnviando(true);
-    try { await enviar(); } catch (e) { const x = e as { status?: number; message?: string }; setAviso(mensajeErrorAceptacion(x.status, x.message)); setEnviando(false); }
+    setIntento(true);
+    if (!marcada) return;
+    setError(null); setEnviando(true);
+    try { await enviar(); } catch (e) { const x = e as { status?: number; message?: string }; setError(mensajeErrorAceptacion(x.status, x.message)); setEnviando(false); }
   };
   return (
     <div className="flex flex-col gap-space-sm">
-      <label className="flex items-start gap-space-sm min-h-12">
-        <input type="checkbox" checked={marcada} onChange={(e) => { setMarcada(e.target.checked); if (e.target.checked) setAviso(null); }} className="w-6 h-6 mt-0.5 shrink-0" aria-describedby="aviso-legal" />
-        <span className="font-body-sm text-body-sm">{textoCasilla}</span>
-      </label>
-      <p id="aviso-legal" role="alert" className="text-error font-body-sm">{aviso}</p>
-      <button type="button" disabled={enviando} onClick={aceptar} className={clases.primario}>{enviando ? 'Guardando…' : BOTONES.aceptarYContinuar}</button>
+      <CasillaLegal marcada={marcada} onCambio={(v) => { setMarcada(v); if (v) setError(null); }} intento={intento} error={error}>{textoCasilla}</CasillaLegal>
+      <button type="button" disabled={enviando} onClick={aceptar} className={clases.primario}>{enviando ? 'Guardando…' : 'Aceptar y continuar'}</button>
     </div>
   );
 }

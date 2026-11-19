@@ -1,4 +1,5 @@
-import { BOTON_ENTRAR, BOTONES, vigenciaInvitacion } from '../lib/kyros-estandar';
+import { TXT } from '../lib/kyros-estandar';
+import { textoVigencia } from '../lib/kyros-local';
 import { InvitacionVigencia } from '../componentes/estandar/InvitacionVigencia';
 import { confirmar } from '../componentes/Dialogos';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -44,7 +45,7 @@ export function Personal() {
       {codigo && (
         <section role="status" className="rounded-xl border-2 border-primary bg-primary-fixed p-space-md flex flex-col gap-space-sm">
           <h2 className="font-headline-sm text-headline-sm text-on-primary-fixed">Invitación para {codigo.para}</h2>
-          <p className="text-on-primary-fixed-variant">Envíale el enlace: <strong>no volverá a mostrarse</strong>. Entra con «{BOTON_ENTRAR}» y el código ya viene escrito. También puede pegar el código a mano: <code className="select-all">{codigo.codigo}</code>.</p>
+          <p className="text-on-primary-fixed-variant">Envíale el enlace: <strong>no volverá a mostrarse</strong>. Entra con «{TXT.entrarKyrosId}» y el código ya viene escrito. También puede pegar el código a mano: <code className="select-all">{codigo.codigo}</code>.</p>
           <InvitacionVigencia enlace={`${location.origin}/entrar?codigo=${encodeURIComponent(codigo.codigo)}`} venceEn={codigo.venceEl} />
           <button type="button" onClick={() => setCodigo(null)} className="h-12 px-space-md rounded-lg border border-outline text-on-primary-fixed self-start">Ya lo entregué</button>
         </section>
@@ -75,11 +76,11 @@ export function Personal() {
               </div>
               <div className="flex flex-wrap gap-1">{p.roles.map((r) => <span key={r} className="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm">{ETIQUETA_ROL[r] ?? r}</span>)}</div>
               {!p.vinculado && p.activo && (
-                <p className="font-body-sm text-on-surface-variant">{p.invitacion ? `Invitación de un solo uso. ${vigenciaInvitacion(p.invitacion.venceEl).texto}` : 'Sin invitación vigente: reenvía una nueva con un clic.'}</p>
+                <p className="font-body-sm text-on-surface-variant">{p.invitacion ? `Invitación de un solo uso. ${textoVigencia(p.invitacion.venceEl)}` : 'Sin invitación vigente: reenvía una nueva con un clic.'}</p>
               )}
               <div className="flex flex-wrap gap-space-sm">
                 {!p.vinculado && p.activo && p.invitacion && !p.invitacion.vencida && <button type="button" onClick={async () => { if (await confirmar({ titulo: 'Revocar código', mensaje: `¿Anular el código pendiente de ${p.nombre}? Ya no podrá usarlo; podrás generar otro.`, aceptar: 'Revocar', peligro: true })) accion(async () => { await api.del(`/personal/${p.id}/codigo`, undefined, sucursalId!); }); }} className="h-12 px-space-md rounded-lg border border-outline-variant text-error font-semibold">Revocar código</button>}
-                {!p.vinculado && p.activo && <button type="button" onClick={() => accion(async () => setCodigo({ ...(await api.post<Codigo>(`/personal/${p.id}/codigo`, undefined, sucursalId!)), para: p.nombre }))} className="h-12 px-space-md rounded-lg border border-outline-variant text-primary font-semibold">{BOTONES.reenviarInvitacion}</button>}
+                {!p.vinculado && p.activo && <button type="button" onClick={() => accion(async () => setCodigo({ ...(await api.post<Codigo>(`/personal/${p.id}/codigo`, undefined, sucursalId!)), para: p.nombre }))} className="h-12 px-space-md rounded-lg border border-outline-variant text-primary font-semibold">{TXT.reenviar}</button>}
                 <button type="button" onClick={async () => (await confirmar({ titulo: p.activo ? 'Desactivar persona' : 'Reactivar persona', mensaje: p.activo ? `¿Desactivar a ${p.nombre}? Perderá el acceso de inmediato.` : `¿Reactivar a ${p.nombre}?`, aceptar: p.activo ? 'Desactivar' : 'Reactivar', peligro: p.activo })) && accion(() => api.patch(`/personal/${p.id}`, { activo: !p.activo }, sucursalId!))} className={`h-12 px-space-md rounded-lg border font-semibold ${p.activo ? 'border-error text-error' : 'border-outline-variant text-primary'}`}>{p.activo ? 'Desactivar' : 'Reactivar'}</button>
               </div>
             </li>

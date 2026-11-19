@@ -7,7 +7,7 @@ import { BD, Bd, Tenant, TenantDb } from '../database/database.module';
 import { alcanceDe, MODULOS, type Modulo } from './paquetes';
 import { precioMensualBs, type PrecioPlan, type TcoUsado } from './precio-bs';
 import { TipoCambioService } from './planes-publicos';
-import { diasEntre, prorrateoCambioPlan, renovar, sumarDias } from './periodos';
+import { desgloseCredito, diasEntre, prorrateoCambioPlan, renovar, sumarDias } from './periodos';
 import { auditLog, plans, platformSettings, restaurants, saasPromotions, subscriptionPayments } from '../database/esquema';
 import { StorageService } from '../storage/storage.service';
 import { EventosGateway, salas } from '../tiempo-real/eventos.gateway';
@@ -294,7 +294,7 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
   async vistaPreviaCambioPlan(id: string, planId: string) {
     const [a] = (await this.bd.execute(sql`SELECT r.plan_id, r.paid_until::text AS hasta, ${HOY}::text AS hoy, po.monthly_price_bob::text AS viejo_bob, po.monthly_price_usd::text AS viejo_usd FROM restaurants r LEFT JOIN plans po ON po.id = r.plan_id WHERE r.id = ${id}`)).rows as unknown as { plan_id: string | null; hasta: string | null; hoy: string; viejo_bob: string | null; viejo_usd: string | null }[];
     if (!a) throw new NotFoundException('Sucursal no encontrada.');
-    const base = { hoy: a.hoy, habilitadaHasta: a.hasta, diasRestantes: 0, diasNuevos: 0, creditoCent: '0', vigenciaNueva: a.hasta, aplicaPrevia: false };
+    const base = { hoy: a.hoy, habilitadaHasta: a.hasta, diasRestantes: 0, diasNuevos: 0, creditoCent: '0', ...desgloseCredito(0n), vigenciaNueva: a.hasta, aplicaPrevia: false };
     if (planId === a.plan_id) return base;
     const pn = (await this.bd.execute(sql`SELECT monthly_price_bob::text AS bob, monthly_price_usd::text AS usd FROM plans WHERE id = ${planId}`)).rows[0] as unknown as PrecioPlan | undefined;
     if (!pn) throw new NotFoundException('Plan no encontrado.');
@@ -306,7 +306,7 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
     if (!nuevo || !viejo || centavos(nuevo) <= 0n) return base;
     const diasRestantes = diasEntre(a.hoy, a.hasta) + 1;
     const pr = prorrateoCambioPlan({ diasRestantes, precioViejoCent: centavos(viejo), precioNuevoCent: centavos(nuevo) });
-    return { ...base, diasRestantes, diasNuevos: pr.diasNuevos, creditoCent: pr.creditoCent.toString(), vigenciaNueva: pr.diasNuevos >= 1 ? sumarDias(a.hoy, pr.diasNuevos - 1) : a.hasta, aplicaPrevia: pr.diasNuevos >= 1 };
+    return { ...base, diasRestantes, diasNuevos: pr.diasNuevos, creditoCent: pr.creditoCent.toString(), ...desgloseCredito(pr.creditoCent), vigenciaNueva: pr.diasNuevos >= 1 ? sumarDias(a.hoy, pr.diasNuevos - 1) : a.hasta, aplicaPrevia: pr.diasNuevos >= 1 };
   }
 
   /** S-04: Auditoría de la consola de plataforma: lo último que quedó registrado (quién, cuándo y qué). Solo lectura. */
@@ -323,7 +323,7 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
     return this.bd.transaction(async (tx) => {
       const [a] = (await tx.execute(sql`SELECT r.plan_id, r.paid_until::text AS hasta, ${HOY}::text AS hoy, po.monthly_price_bob::text AS viejo_bob, po.monthly_price_usd::text AS viejo_usd FROM restaurants r LEFT JOIN plans po ON po.id = r.plan_id WHERE r.id = ${id} FOR UPDATE OF r`)).rows as { plan_id: string | null; hasta: string | null; hoy: string; viejo_bob: string | null; viejo_usd: string | null }[];
       if (!a) throw new NotFoundException('Sucursal no encontrada.');
-      let prorrateo: { diasRestantes: number; diasNuevos: number; creditoCent: string } | null = null;
+      let prorrateo: ({ diasRestantes: number; diasNuevos: number; creditoCent: string } & ReturnType<typeof desgloseCredito>) | null = null;
       // GS-C04: cambio de plan con días pagados por delante y sin fecha manual: el valor pagado se conserva (días del plan nuevo + crédito).
       if (d.planId && d.planId !== a.plan_id && d.habilitadaHasta === undefined && a.viejo_bob && a.hasta && diasEntre(a.hoy, a.hasta) >= 0) {
         const pn = (await tx.execute(sql`SELECT monthly_price_bob::text AS bob, monthly_price_usd::text AS usd FROM plans WHERE id = ${d.planId}`)).rows[0] as unknown as PrecioPlan | undefined;
@@ -337,7 +337,7 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
           const pr = prorrateoCambioPlan({ diasRestantes, precioViejoCent: centavos(viejo), precioNuevoCent: centavos(nuevo) });
           if (pr.diasNuevos < 1) throw new ConflictException('El crédito pendiente no alcanza para un día del plan nuevo; define la fecha a mano con su motivo.');
           cambios.paidUntil = sumarDias(a.hoy, pr.diasNuevos - 1); cambios.billingAnchorDay = null;
-          prorrateo = { diasRestantes, diasNuevos: pr.diasNuevos, creditoCent: pr.creditoCent.toString() };
+          prorrateo = { diasRestantes, diasNuevos: pr.diasNuevos, creditoCent: pr.creditoCent.toString(), ...desgloseCredito(pr.creditoCent) };
         }
       }
       await tx.update(restaurants).set(cambios).where(eq(restaurants.id, id));

@@ -1,5 +1,5 @@
 import type { KyrosIdPublico } from '@gestro/contracts';
-import { parametrosSesion } from './kyros-estandar';
+import { parametrosIngreso, SESION_MAX_AGE_S } from './kyros-estandar';
 import { abrirEnNavegadorDelSistema, CLIENT_NATIVO, esAppNativa, REDIRECT_NATIVO } from './nativo';
 
 /**
@@ -14,7 +14,7 @@ import { abrirEnNavegadorDelSistema, CLIENT_NATIVO, esAppNativa, REDIRECT_NATIVO
  * si Kyros ID ya tiene sesión vigente no pide la contraseña (SSO entre los 7 sistemas). Nunca `prompt=login` ni `max_age=0` en el ingreso normal.
  * La reconfirmación («Confirmar mi identidad», <= 5 min, `prompt=login`) es solo para acciones sensibles (`reauth`).
  */
-export const KYROS_LOGIN_MAX_AGE_SECONDS = parametrosSesion('ingreso').maxAge;
+export const KYROS_LOGIN_MAX_AGE_SECONDS = SESION_MAX_AGE_S;
 const CLAVE = 'gestro.pkce';
 
 const b64url = (b: ArrayBuffer | Uint8Array) => btoa(String.fromCharCode(...new Uint8Array(b as ArrayBuffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -38,9 +38,9 @@ export function urlDeIngreso(cfg: KyrosIdPublico, pkce: { state: string; nonce: 
     client_id: clienteDe(cfg), redirect_uri: redirectDe(), response_type: 'code', scope: 'openid',
     code_challenge: pkce.challenge, code_challenge_method: 'S256', state: pkce.state, nonce: pkce.nonce,
     // Ingreso normal: sin prompt=login y con max_age=28800 (8 h). Acción sensible: max_age <= 300 y prompt=login.
-    max_age: String(parametrosSesion(o.reauth ? 'sensible' : 'ingreso').maxAge),
+    ...parametrosIngreso(o.reauth ? 'sensible' : 'normal'),
   });
-  if (parametrosSesion(o.reauth ? 'sensible' : 'ingreso').promptLogin) q.set('prompt', 'login');   // solo para confirmar la identidad del administrador de plataforma; el ingreso normal nunca lo lleva
+  if (o.reauth) q.set('prompt', 'login');   // solo para confirmar la identidad del administrador de plataforma; el ingreso normal nunca lo lleva
   return `${base}?${q}`;
 }
 

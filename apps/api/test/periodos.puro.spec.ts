@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { diasDelMes, diasEntre, partes, prorrateoCambioPlan, renovar, sumarDias, sumarMesesAncla } from '../src/suscripcion/periodos';
+import { desgloseCredito, diasDelMes, diasEntre, partes, prorrateoCambioPlan, renovar, sumarDias, sumarMesesAncla } from '../src/suscripcion/periodos';
 
 // Recálculo independiente con Date.UTC (solo en la prueba) para comparar el calendario propio.
 const iso = (ms: number) => new Date(ms).toISOString().slice(0, 10);
@@ -81,6 +81,20 @@ describe('cambio de plan con prorrateo (BigInt, centavos)', () => {
       const r = prorrateoCambioPlan({ diasRestantes: d, precioViejoCent: v, precioNuevoCent: n });
       expect(BigInt(r.diasNuevos) * n <= BigInt(d) * v).toBe(true);
       expect((BigInt(d) * v - BigInt(r.diasNuevos) * n) < n).toBe(true); // el resto es menos de un día del plan nuevo
+    }
+  });
+});
+
+describe('S-06 IVA desglosado del crédito (13 % del total, mitad hacia arriba)', () => {
+  const ref = (t: bigint) => { const iva = (t * 13n * 2n + 100n) / 200n; return { netoCentavos: Number(t - iva), ivaCentavos: Number(iva), totalCentavos: Number(t) }; };
+  it('Bs 800,00 -> IVA 104,00 y neto 696,00', () => {
+    expect(desgloseCredito(80000n)).toEqual({ netoCentavos: 69600, ivaCentavos: 10400, totalCentavos: 80000 });
+  });
+  it('bordes: 0, 1 centavo, impares y mitades exactas, totales grandes; neto + IVA = total', () => {
+    for (const t of [0n, 1n, 3n, 4n, 5n, 7n, 8n, 99n, 101n, 12_345n, 99_999n, 123_456_789n, 9_007_199_254_740_000n]) {
+      const d = desgloseCredito(t);
+      expect(d).toEqual(ref(t));
+      expect(d.netoCentavos + d.ivaCentavos).toBe(d.totalCentavos);
     }
   });
 });

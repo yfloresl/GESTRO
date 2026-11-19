@@ -143,12 +143,7 @@ export class FacturacionEmisorService implements OnModuleInit, OnModuleDestroy {
   async habilitacion(t: Tenant): Promise<{ habilitada: boolean; mensaje: string | null; motivo?: string }> {
     const h = await this.habilitacionDe(t.restaurantId);
     if (!h.habilitada) return { habilitada: false, mensaje: h.mensaje, motivo: h.motivo };
-    try {
-      if ((await this.conexion.conectada()) || (await this.conexion.puedeEnlazar())) {
-        const r = await (await this.conexion.enlace()).habilitacion(t.restaurantId);
-        if (!r.habilitada) return { habilitada: false, mensaje: r.mensaje || 'La facturación electrónica no está habilitada para tu cuenta.', motivo: 'no_incluida' };
-      }
-    } catch { /* FacturaSIN no responde: manda el criterio local */ }
+    // Manda SOLO el criterio por cliente (override del SuperAdmin -> plan de pago -> «No incluida»). No se consulta de vuelta el estado a FacturaSIN: ya se le declara arriba y un interruptor GLOBAL no debe ocultar el Flujo 2 (QA 19/11).
     return { habilitada: true, mensaje: null, motivo: h.motivo };
   }
 

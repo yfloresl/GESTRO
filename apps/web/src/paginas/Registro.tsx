@@ -3,7 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { EnlaceLegal, PieLegal } from '../componentes/ModalLegal';
 import { useVersionLegal } from './Legal';
 import { clases, Marca, TarjetaCentrada } from '../componentes/Marca';
-import { mensajeErrorAceptacion, validarAceptacion } from '../lib/kyros-estandar';
+import { mensajeErrorAceptacion, validarAceptacion } from '../lib/kyros-local';
 import { api, useSesion } from '../lib/sesion';
 
 interface Estado { registroToken: string; puedeRegistrarse: boolean }

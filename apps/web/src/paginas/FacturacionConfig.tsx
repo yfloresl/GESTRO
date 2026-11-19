@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { BOTONES, opcionesDeRubro, resumenCodigosFiscales, type RubroSin } from '../lib/kyros-estandar';
+import { SelectorRubro as SelectorRubroComun } from '../lib/kyros-estandar-ui';
+import type { RubroActividad } from '../lib/kyros-estandar';
 import { useState } from 'react';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { clases } from '../componentes/Marca';
@@ -14,7 +15,10 @@ interface Cfg {
 }
 interface Paso { id: string; titulo: string; estado: 'ok' | 'error' | 'aviso' | 'omitido'; detalle: string; accion?: string }
 interface Resultado { ok: boolean; listo: boolean; resumen: string; pasos: Paso[]; requiereRubro: boolean }
+interface RubroSin { actividadEconomica: string; descripcion: string; productosSin: { codigoProductoSin: string; descripcion: string; unidadMedida?: number | null }[] }
 interface Rubros { actividades: RubroSin[] }
+/** El catálogo de Gestro trae la unidad como número; el estándar la espera como {codigo}. */
+const aActividades = (a: RubroSin[]): RubroActividad[] => a.map((x) => ({ ...x, productosSin: x.productosSin.map((p) => ({ ...p, unidadMedida: p.unidadMedida === null || p.unidadMedida === undefined ? null : { codigo: p.unidadMedida } })) }));
 
 /** Aviso permanente mientras la facturación sea simulada. */
 export function AvisoPruebas({ texto }: { texto?: string | null }) {
@@ -53,20 +57,13 @@ function SelectorRubro({ onElegido }: { onElegido(): void }) {
   const { sucursalId } = useRolesActivos();
   const r = useQuery({ queryKey: ['fact-rubros', sucursalId], queryFn: () => api.get<Rubros>('/facturacion/rubros', sucursalId!), enabled: !!sucursalId });
   const [sel, setSel] = useState(''); const [error, setError] = useState<string | null>(null);
-  const opciones = opcionesDeRubro(r.data?.actividades ?? []).map((o) => ({ v: o.valor, e: o.etiqueta }));
-  const elegida = opcionesDeRubro(r.data?.actividades ?? []).find((o) => o.valor === sel);
   const guardar = async () => {
     const [actividadEconomica, codigoProductoSin] = sel.split('|'); setError(null);
     try { await api.put('/facturacion/rubro', { actividadEconomica, codigoProductoSin }, sucursalId!); onElegido(); } catch (e) { setError(mensajeDeError(e)); }
   };
   return (
     <div className="flex flex-col gap-space-sm" data-testid="selector-rubro">
-      <p className="font-body-sm text-on-surface-variant">Rubro del negocio: elige uno de la lista y el sistema completa la actividad, el producto y la unidad del SIN.</p>
-      <select value={sel} onChange={(e) => setSel(e.target.value)} className={clases.input} aria-label="Rubro">
-        <option value="">Elige tu rubro</option>
-        {opciones.map((o) => <option key={o.v} value={o.v}>{o.e}</option>)}
-      </select>
-      <details className="font-body-sm"><summary className="cursor-pointer min-h-12 flex items-center font-semibold">{BOTONES.verAvanzado}</summary><ul className="list-disc pl-space-md" data-testid="codigos-fiscales">{resumenCodigosFiscales({ actividadEconomica: elegida?.actividadEconomica, codigoProductoSin: elegida?.codigoProductoSin, unidadMedida: elegida?.unidadMedida }).map((l) => <li key={l}>{l}</li>)}</ul><p className="text-on-surface-variant">Los códigos salen del catálogo sincronizado del SIN; los que no se pueden confirmar figuran como NO CONFIRMADO.</p></details>
+      <SelectorRubroComun actividades={aActividades(r.data?.actividades ?? [])} valor={sel} onCambio={setSel} catalogoDisponible={!r.isError} />
       <button type="button" disabled={!sel} onClick={() => void guardar()} className={clases.secundario}>Guardar rubro</button>
       {error && <p role="alert" className="text-error font-body-sm">{error}</p>}
     </div>

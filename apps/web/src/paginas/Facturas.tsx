@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BOTONES } from '../lib/kyros-estandar';
+import { GLOSARIO } from '../lib/kyros-estandar';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
@@ -26,7 +26,7 @@ export function Facturas() {
       {error && <p role="alert" className="text-error">{error}</p>}
       <div className="flex flex-wrap gap-space-sm items-end">
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Estado</span><select value={estado} onChange={(e) => setEstado(e.target.value)} className={`${clases.input} !w-56`}><option value="">Todas</option>{Object.entries(ETIQUETA_FACTURA).map(([k, n]) => <option key={k} value={k}>{n}</option>)}</select></label>
-        <button type="button" disabled={conciliar.isPending} onClick={() => conciliar.mutate()} className={`${clases.secundario} !w-auto px-space-md`}>{conciliar.isPending ? 'Revisando…' : BOTONES.revisarEstados}</button>
+        <button type="button" disabled={conciliar.isPending} onClick={() => conciliar.mutate()} className={`${clases.secundario} !w-auto px-space-md`}>{conciliar.isPending ? 'Revisando…' : GLOSARIO.conciliar}</button>
       </div>
       {!q.data ? <ListaEsqueleto /> : q.data.length === 0 ? <p className="text-on-surface-variant">Todavía no hay facturas. Se emiten desde Caja («Factura electrónica») o desde un pedido cobrado.</p> : (
         <ul className="flex flex-col divide-y divide-outline-variant bg-surface-container-lowest border border-outline-variant rounded-xl">

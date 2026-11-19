@@ -1,5 +1,5 @@
 import { lineaCuf } from './lineaCuf';
-import { BOTONES, simplificarTexto } from '../lib/kyros-estandar';
+import { aLenguajeSimple, GLOSARIO } from '../lib/kyros-estandar';
 import { confirmar, pedirTexto } from '../componentes/Dialogos';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -120,11 +120,11 @@ export function PlataformaFacturacion() {
       <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-wrap items-center justify-between gap-space-sm">
         <div><h2 className="font-headline-sm text-headline-sm">Integración con FacturaSIN</h2>
           <p className="font-body-sm text-on-surface-variant">{ig ? `${ig.config.url} · empresa ${ig.config.empresa} · client ${ig.config.clientId}` : '…'}</p>
-          <p className="font-body-sm" data-testid="estado-enlace">{ig?.config.activo ? 'Activa' : 'Apagada'} · conexión con FacturaSIN: {ig?.secretoConfigurado ? 'lista' : 'falta la credencial de servicio (la coloca el despliegue una vez)'} · aviso automático: {ig?.webhookConfigurado ? 'activo' : 'pendiente (se activa solo)'}</p>
-          <p className="font-body-sm text-on-surface-variant">{simplificarTexto(ig?.enlace?.mensaje ?? 'El aviso automático se activa solo en cuanto el sistema detecta su dirección pública.')}{ig?.enlace?.webhook.ultimaEntrega ? ` Última entrega: ${new Date(ig.enlace.webhook.ultimaEntrega).toLocaleString('es-BO')}.` : ''}</p></div>
+          <p className="font-body-sm" data-testid="estado-enlace">{ig?.config.activo ? 'Activa' : 'Apagada'} · conexión con FacturaSIN: {ig?.secretoConfigurado ? 'lista' : 'falta la credencial de servicio (la coloca el despliegue una vez)'} · Aviso de estados: {ig?.webhookConfigurado ? 'activo' : 'pendiente (se activa solo)'}</p>
+          <p className="font-body-sm text-on-surface-variant">{aLenguajeSimple(ig?.enlace?.mensaje ?? 'El aviso automático se activa solo en cuanto el sistema detecta su dirección pública.')}{ig?.enlace?.webhook.ultimaEntrega ? ` Última entrega: ${new Date(ig.enlace.webhook.ultimaEntrega).toLocaleString('es-BO')}.` : ''}</p></div>
         <div className="flex flex-wrap gap-space-sm"><button type="button" onClick={alternar} disabled={!!ocupado} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>{ig?.config.activo ? 'Apagar' : 'Activar'}</button>
-          <button type="button" onClick={verificar} disabled={!!ocupado} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>{BOTONES.probar}</button>
-          <button type="button" onClick={() => correr('conc', () => api.post<{ conciliadas: number; reintentadas: number; emitidas: number }>('/plataforma/facturacion-kyros/conciliar'), (r) => `Revisión de estados: ${r.conciliadas} revisadas, ${r.reintentadas} reintentadas, ${r.emitidas} emitidas.`)} disabled={!!ocupado || !ig?.lista} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>{BOTONES.revisarEstados}</button></div>
+          <button type="button" onClick={verificar} disabled={!!ocupado} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>{GLOSARIO.suscribirWebhook}</button>
+          <button type="button" onClick={() => correr('conc', () => api.post<{ conciliadas: number; reintentadas: number; emitidas: number }>('/plataforma/facturacion-kyros/conciliar'), (r) => `Conciliación: ${r.conciliadas} revisadas, ${r.reintentadas} reintentadas, ${r.emitidas} emitidas.`)} disabled={!!ocupado || !ig?.lista} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>{GLOSARIO.conciliar}</button></div>
       </div>
 
       <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm" data-testid="clientes-facturacion">

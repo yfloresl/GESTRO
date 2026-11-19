@@ -5,7 +5,7 @@ import { Cargando, clases, Marca, TarjetaCentrada } from '../componentes/Marca';
 import { PieLegal } from '../componentes/ModalLegal';
 import { destinoSeguro, iniciarIngreso } from '../lib/kyrosid';
 import { api, useSesion } from '../lib/sesion';
-import { BOTON_ENTRAR } from '../lib/kyros-estandar';
+import { TXT } from '../lib/kyros-estandar';
 
 /** Un solo ingreso visible: «Entrar con Kyros ID». También atiende /entrar?destino= (entrada directa desde el Portal). */
 interface PlanesPublicos { publicado: boolean; planes?: { codigo: string; nombre: string; usd: number; modulos: { codigo: string; nombre: string }[] }[]; tipoCambio?: { bob: number; fecha: string; vigente: boolean } | null; nota?: string }
@@ -65,7 +65,7 @@ export function Ingreso({ directo = false }: { directo?: boolean }) {
       ) : (
         <div className="flex flex-col gap-space-sm">
           <button type="button" className={clases.primario} onClick={() => ir(false)} disabled={!cfg.data}>
-            <span className="material-symbols-outlined" aria-hidden="true">login</span>{BOTON_ENTRAR}
+            <span className="material-symbols-outlined" aria-hidden="true">login</span>{TXT.entrarKyrosId}
           </button>
           <button type="button" className={clases.secundario} onClick={() => ir(true)} disabled={!cfg.data}>Crear mi cuenta</button>
         </div>
