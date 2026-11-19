@@ -43,9 +43,9 @@ export function Portada() {
 
   const ir = (registro: boolean) => { if (!cfg.data) return; setError(null); iniciarIngreso(cfg.data, { registro, destino: '/app' }).catch(() => setError(t.error)); };
   const caido = cfg.isError || (cfg.data && !cfg.data.activo);
-  const Botones = ({ clase = '' }: { clase?: string }) => (
+  const Botones = ({ clase = '', sinIngreso = false }: { clase?: string; sinIngreso?: boolean }) => (
     <div className={`flex flex-wrap gap-space-sm ${clase}`}>
-      <button type="button" onClick={() => ir(false)} disabled={!cfg.data || !!caido} className="h-14 px-space-lg rounded-lg bg-primary text-on-primary font-semibold flex items-center gap-space-xs disabled:opacity-50"><span className="material-symbols-outlined" aria-hidden="true">login</span>{t.ingresar}</button>
+      {!sinIngreso && <button type="button" onClick={() => ir(false)} disabled={!cfg.data || !!caido} className="h-14 px-space-lg rounded-lg bg-primary text-on-primary font-semibold flex items-center gap-space-xs disabled:opacity-50"><span className="material-symbols-outlined" aria-hidden="true">login</span>{t.ingresar}</button>}
       <button type="button" onClick={() => ir(true)} disabled={!cfg.data || !!caido} className="h-14 px-space-lg rounded-lg border border-outline text-primary font-semibold disabled:opacity-50">{t.crear}</button>
     </div>);
 
@@ -57,7 +57,6 @@ export function Portada() {
           <div className="flex items-center gap-space-xs">
             <div role="group" aria-label={idioma === 'es' ? 'Idioma' : 'Language'} className="flex gap-space-xs">{(['es', 'en'] as const).map((i) => <button key={i} type="button" aria-pressed={idioma === i} onClick={() => setIdioma(i)} className={`h-12 px-space-sm rounded-lg font-semibold ${idioma === i ? 'bg-primary-container text-on-primary' : 'text-on-surface-variant hover:bg-surface-container'}`}>{i.toUpperCase()}</button>)}</div>
             <SelectorTema />
-            <button type="button" onClick={() => ir(false)} disabled={!cfg.data || !!caido} className="hidden sm:flex h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold items-center disabled:opacity-50">{t.ingresar}</button>
           </div>
         </div>
       </header>
@@ -96,7 +95,7 @@ export function Portada() {
         <section aria-labelledby="como" className="max-w-6xl mx-auto px-space-md py-space-xl flex flex-col gap-space-md">
           <h2 id="como" className="font-headline-lg text-headline-lg text-primary">{t.como}</h2>
           <ol className="grid gap-gutter md:grid-cols-3">{t.pasos.map((p, i) => <li key={p} className="flex items-start gap-space-sm"><span className="w-10 h-10 shrink-0 rounded-full bg-primary text-on-primary flex items-center justify-center font-semibold">{i + 1}</span><span className="pt-2">{p}</span></li>)}</ol>
-          <Botones />
+          <Botones sinIngreso />
           <p className="font-body-sm text-on-surface-variant">{t.nota}</p>
         </section>
       </main>

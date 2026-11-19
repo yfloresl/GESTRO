@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { lazy, ReactNode, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { GRUPOS, Shell, visible } from './componentes/Shell';
 import { Cargando } from './componentes/Marca';
 import { LegalProvider } from './componentes/ModalLegal';
@@ -43,6 +43,15 @@ const Panel = lazy(() => import('./paginas/Panel').then((m) => ({ default: m.Pan
 import { Registro } from './paginas/Registro';
 import { PaginaLegal } from './paginas/Legal';
 import { useRolesActivos } from './lib/sesion';
+import { SECCIONES_PLATAFORMA } from './lib/kyros-estandar';
+
+/** Rutas antiguas /admin/<sección> y /backoffice/<sección> (y cualquier otra bajo ellas) llevan a la misma sección de /plataforma/*, o a Clientes si no existe. */
+function AntiguaAPlataforma() {
+  const { seccion } = useParams();
+  const alias: Record<string, string> = { config: 'integraciones', configuracion: 'integraciones', demo: 'demostracion' };
+  const clave = alias[seccion ?? ''] ?? seccion ?? '';
+  return <Navigate to={SECCIONES_PLATAFORMA.some((s) => s.clave === clave) ? `/plataforma/${clave}` : '/plataforma/clientes'} replace />;
+}
 
 /** Cada persona cae en lo suyo: cocina en su tablero, mesero en el salón, cajero en la caja. */
 /** El Panel del Dueño solo se abre para dueño o administrador; cualquier otro rol vuelve a su pantalla de inicio. */
@@ -134,6 +143,10 @@ createRoot(document.getElementById('raiz')!).render(
               <Route index element={<Alertas />} />
             </Route>
             <Route path="/avisos" element={<Navigate to="/notificaciones" replace />} />
+            <Route path="/admin" element={<Navigate to="/plataforma/clientes" replace />} />
+            <Route path="/admin/:seccion/*" element={<AntiguaAPlataforma />} />
+            <Route path="/backoffice" element={<Navigate to="/plataforma/clientes" replace />} />
+            <Route path="/backoffice/:seccion/*" element={<AntiguaAPlataforma />} />
             <Route path="/alertas" element={<Navigate to="/notificaciones" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
