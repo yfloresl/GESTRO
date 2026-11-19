@@ -5,7 +5,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos, useSesion } from '../lib/sesion';
 import { bs } from '../lib/tipos';
-import { reducirImagen } from '../lib/imagen';
+import { SubirQr, type QrActual } from '../lib/kyros-subir-qr';
 import { PlataformaDemo } from './PlataformaDemo';
 import { PlataformaFacturacion } from './PlataformaFacturacion';
 import { PlataformaIa } from './PlataformaIa';
@@ -221,17 +221,13 @@ function Promociones() {
 function Cobro() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['plat-cobro'], queryFn: () => api.get<{ instrucciones: string; tieneQr: boolean }>('/plataforma/cobro') });
-  const [qr, setQr] = useState<string | null>(null);
+  const qrq = useQuery({ queryKey: ['qr-plataforma'], queryFn: () => api.get<QrActual>('/qr-cobro/plataforma') });
   const [msg, setMsg] = useState<string | null>(null); const [error, setError] = useState<string | null>(null);
-  useEffect(() => { if (!q.data?.tieneQr) return; let u: string | null = null; api.blob('/plataforma/cobro/qr').then((b) => { u = URL.createObjectURL(b); setQr(u); }).catch(() => undefined); return () => { if (u) URL.revokeObjectURL(u); }; }, [q.data?.tieneQr]);
   const guardar = async (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); setError(null); setMsg(null); const f = new FormData(e.currentTarget); try { await api.put('/plataforma/cobro', { instrucciones: String(f.get('instrucciones')).trim() }); setMsg('Instrucciones guardadas.'); } catch (err) { setError(mensajeDeError(err)); } };
-  const subir = async (archivo: File | undefined) => { if (!archivo) return; setError(null); setMsg(null); try { await api.subirImagen('/plataforma/cobro/qr', await reducirImagen(archivo, 1200), ''); setMsg('QR actualizado.'); setQr(null); await qc.invalidateQueries({ queryKey: ['plat-cobro'] }); } catch (err) { setError(mensajeDeError(err)); } };
   return (
     <section className="grid grid-cols-1 gap-gutter md:grid-cols-2 max-w-4xl">
-      <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm items-center">
-        <h2 className="font-headline-sm text-headline-sm self-start">QR de cobro</h2>
-        {qr ? <img src={qr} alt="QR de cobro actual" className="w-48 h-48 object-contain" /> : <p className="text-on-surface-variant">Todavía no cargaste un QR.</p>}
-        <label className="flex flex-col gap-space-xs w-full"><span className={clases.etiqueta}>Subir QR (JPG, PNG o WebP)</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => subir(e.target.files?.[0])} className="font-body-sm" /></label>
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md">
+        <SubirQr qr={qrq.data} idioma="es" puedeEditar subir={(f, banco) => api.subirQr('/qr-cobro/plataforma', f, banco)} quitar={() => api.del('/qr-cobro/plataforma')} alCambiar={() => { void qc.invalidateQueries({ queryKey: ['qr-plataforma'] }); void qc.invalidateQueries({ queryKey: ['plat-cobro'] }); }} descripcion="Es el QR con el que los restaurantes pagan su suscripción." />
       </div>
       <form onSubmit={guardar} className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm">
         <h2 className="font-headline-sm text-headline-sm">Instrucciones de pago</h2>

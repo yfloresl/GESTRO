@@ -38,10 +38,6 @@ export class SuscripcionController {
 
   @Get('pagos/:id/voucher') @DeSucursalSiempre(...DUENOS)
   async verVoucher(@TenantActual() t: Tenant, @Param('id', ParseUUIDPipe) id: string, @Res() res: Response) { enviarImagen(res, await this.s.voucherDeMiPago(t, id)); }
-
-  /** QR bancario de cobro de Kyros-Tech, para mostrarlo en «Pagar». */
-  @Get('cobro/qr') @DeSucursalSiempre(...DUENOS)
-  async qr(@Res() res: Response) { enviarImagen(res, await this.s.qrDeCobro()); }
 }
 
 const Estado = z.enum(['pendiente', 'validado', 'rechazado', 'todos']).default('pendiente');
@@ -59,8 +55,6 @@ export class PlataformaController {
 
   @Get('cobro') cobro() { return this.s.cobro(); }
   @Put('cobro') @HttpCode(200) guardarCobro(@Body() b: unknown) { return this.s.guardarCobro(z.object({ instrucciones: z.string().trim().max(1000) }).strict().parse(b).instrucciones); }
-  @Put('cobro/qr') @HttpCode(200) guardarQr(@Req() req: Request) { return this.s.guardarQr(cuerpoImagen(req)); }
-  @Get('cobro/qr') async verQr(@Res() res: Response) { enviarImagen(res, await this.s.qrDeCobro()); }
 
   @Get('promociones') promociones() { return this.s.promociones(); }
   @Post('promociones') crearPromocion(@Body() b: unknown) { return this.s.crearPromocion(Promocion.parse(b)); }

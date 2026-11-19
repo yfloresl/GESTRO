@@ -4,6 +4,7 @@ import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
 import { clases } from '../componentes/Marca';
 import { FacturacionConfig } from './FacturacionConfig';
+import { SubirQr, type QrActual } from '../lib/kyros-subir-qr';
 import { deCentavos, leerPorcentaje, pctTxt, topeEnCentavos } from '../lib/cobro';
 
 interface Ajustes {
@@ -68,6 +69,7 @@ export function Configuracion() {
     try { await api.patch('/sucursal/ajustes', c, sucursalId!); await qc.invalidateQueries({ queryKey: ['ajustes', sucursalId] }); await qc.invalidateQueries({ queryKey: ['cobro-topes', sucursalId] }); return true; }
     catch (e) { setError(mensajeDeError(e)); return false; }
   };
+  const qrq = useQuery({ queryKey: ['qr-cliente', sucursalId], queryFn: () => api.get<QrActual>(`/qr-cobro/cliente/${sucursalId}`, sucursalId!), enabled: !!sucursalId });
   const a = q.data;
   return (
     <div className="flex flex-col gap-space-lg max-w-2xl">
@@ -85,6 +87,13 @@ export function Configuracion() {
             </div>
           </div>
           <TopesDeCobro key={`${a.descuentoMaxPct}-${a.propinaMaxPct}`} a={a} guardar={cambiar} />
+        </section>
+      )}
+      {sucursalId && (
+        <section id="qr-cobro" className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md">
+          <SubirQr qr={qrq.data} idioma="es" puedeEditar titulo="QR de cobro de tu restaurante" descripcion="Es el QR que se muestra al cobrar con «QR» en caja."
+            subir={(f, banco) => api.subirQr(`/qr-cobro/cliente/${sucursalId}`, f, banco, sucursalId)} quitar={() => api.del(`/qr-cobro/cliente/${sucursalId}`, undefined, sucursalId)}
+            alCambiar={() => { void qc.invalidateQueries({ queryKey: ['qr-cliente', sucursalId] }); }} />
         </section>
       )}
       <FacturacionConfig />

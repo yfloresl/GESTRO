@@ -31,6 +31,17 @@ export class GestroClient {
     const r = await fetch(`${this.base}${ruta}`, { method: 'PUT', headers, body: imagen, credentials: 'same-origin' });
     if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status}`), { status: r.status, cuerpo: await r.json().catch(() => null) });
   }
+  /** QR de cobro por archivo (estándar Kyros v1.2): multipart con el campo `file` (+ `banco`). Sin fijar Content-Type: el navegador pone el boundary. Rechaza con { codigo, status }. */
+  async subirQr(ruta: string, archivo: File, banco: string, sucursal?: string): Promise<{ url: string | null; banco: string | null; esRespaldo: boolean }> {
+    const f = new FormData(); f.append('file', archivo); if (banco.trim()) f.append('banco', banco.trim());
+    const headers = new Headers();
+    if (this.token) headers.set('authorization', `Bearer ${this.token}`);
+    if (sucursal) headers.set('x-restaurant-id', sucursal);
+    const r = await fetch(`${this.base}${ruta}`, { method: 'PUT', headers, body: f, credentials: 'same-origin' });
+    const cuerpo = await r.json().catch(() => null) as { codigo?: string; code?: string } | null;
+    if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status}`), { status: r.status, codigo: cuerpo?.codigo ?? cuerpo?.code });
+    return cuerpo as { url: string | null; banco: string | null; esRespaldo: boolean };
+  }
   /** Descarga un archivo protegido (comprobante, QR) con la sesión: no se puede poner en un <img src> directo. */
   async blob(ruta: string, sucursal?: string): Promise<Blob> {
     const headers = new Headers();

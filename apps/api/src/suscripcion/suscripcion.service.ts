@@ -10,6 +10,7 @@ import { TipoCambioService } from './planes-publicos';
 import { desgloseCredito, diasEntre, prorrateoCambioPlan, renovar, sumarDias } from './periodos';
 import { auditLog, plans, platformSettings, restaurants, saasPromotions, subscriptionPayments } from '../database/esquema';
 import { StorageService } from '../storage/storage.service';
+import { QrCobroService } from '../qr-cobro/qr-cobro.service';
 import { EventosGateway, salas } from '../tiempo-real/eventos.gateway';
 import { PushService } from '../tiempo-real/push.service';
 import { FacturacionKyrosService } from '../facturacion-kyros/facturacion-kyros.service';
@@ -41,6 +42,7 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
     @Inject(BD) private readonly bd: Bd,
     @Inject(TenantDb) private readonly db: TenantDb,
     @Inject(StorageService) private readonly storage: StorageService,
+    @Inject(QrCobroService) private readonly qr: QrCobroService,
     @Inject(EventosGateway) private readonly eventos: EventosGateway,
     @Inject(PushService) private readonly push: PushService,
     @Inject(TipoCambioService) private readonly tc: TipoCambioService,
@@ -103,7 +105,7 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
       const [cfg] = await tx.select().from(platformSettings);
       return {
         habilitadaHasta: f.hasta, diasRestantes: f.dias, estado: SuscripcionService.estado(f.dias), sucursal: f.status, plan: f.plan, precioMensual: precio, precioUsd: f.usd, tipoCambio, diasDeGracia: DIAS_DE_GRACIA,
-        cobro: { instrucciones: cfg?.paymentInstructions ?? null, tieneQr: !!cfg?.paymentQrUrl },
+        cobro: { instrucciones: cfg?.paymentInstructions ?? null, tieneQr: await this.qr.hayPlataforma() },
         pagos: pagos.map((p) => ({ id: p.id, meses: p.monthsPaid, mesesDeRegalo: p.giftMonths, monto: p.amountBob, esperado: p.expectedAmount, referencia: p.bankReference, banco: p.bank, estado: p.status, motivo: p.status === 'rechazado' ? p.notes : null, tieneVoucher: !!p.voucherUrl, desde: p.periodFrom, hasta: p.periodTo, creado: p.createdAt.toISOString() })),
       };
     });
@@ -167,12 +169,6 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
     const [p] = await this.db.run(t, (tx) => tx.select({ v: subscriptionPayments.voucherUrl }).from(subscriptionPayments).where(and(eq(subscriptionPayments.id, id), eq(subscriptionPayments.restaurantId, t.restaurantId))));
     if (!p?.v) throw new NotFoundException();
     return this.storage.leer(p.v);
-  }
-
-  async qrDeCobro(): Promise<Buffer> {
-    const [c] = await this.bd.select({ q: platformSettings.paymentQrUrl }).from(platformSettings);
-    if (!c?.q) throw new NotFoundException('Kyros-Tech todavía no cargó el QR de cobro.');
-    return this.storage.leer(c.q);
   }
 
   /* ---------------- consola de plataforma (Kyros-Tech) ---------------- */
@@ -239,17 +235,10 @@ export class SuscripcionService implements OnModuleInit, OnModuleDestroy {
 
   async cobro() {
     const [c] = await this.bd.select().from(platformSettings);
-    return { instrucciones: c?.paymentInstructions ?? '', tieneQr: !!c?.paymentQrUrl };
+    return { instrucciones: c?.paymentInstructions ?? '', tieneQr: await this.qr.hayPlataforma() };
   }
   async guardarCobro(instrucciones: string) {
     await this.bd.insert(platformSettings).values({ id: 1, paymentInstructions: instrucciones }).onConflictDoUpdate({ target: platformSettings.id, set: { paymentInstructions: instrucciones, updatedAt: sql`now()` as unknown as Date } });
-    return { ok: true };
-  }
-  async guardarQr(datos: Buffer) {
-    const clave = await this.storage.guardarImagenEn('plataforma/cobro', datos, MAX_IMAGEN);
-    const [antes] = await this.bd.select({ q: platformSettings.paymentQrUrl }).from(platformSettings);
-    await this.bd.insert(platformSettings).values({ id: 1, paymentQrUrl: clave }).onConflictDoUpdate({ target: platformSettings.id, set: { paymentQrUrl: clave, updatedAt: sql`now()` as unknown as Date } });
-    if (antes?.q) await this.storage.borrar(antes.q);
     return { ok: true };
   }
 

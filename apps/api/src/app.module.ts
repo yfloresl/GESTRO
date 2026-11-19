@@ -57,6 +57,8 @@ import { SolicitudesService } from './qr/solicitudes.service';
 import { SalonController } from './salon/salon.controller';
 import { SalonService } from './salon/salon.service';
 import { StorageService } from './storage/storage.service';
+import { QrCobroController } from './qr-cobro/qr-cobro.controller';
+import { QrCobroService } from './qr-cobro/qr-cobro.service';
 import { EventosGateway } from './tiempo-real/eventos.gateway';
 import { PushController } from './tiempo-real/push.controller';
 import { PushService } from './tiempo-real/push.service';
@@ -84,9 +86,9 @@ class NucleoModule {}
     // En las pruebas (Vitest) se desactivan para que no se bloqueen entre sí.
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 120 }], skipIf: () => process.env.VITEST !== undefined }),
   ],
-  controllers: [SaludController, LegalController, IntegracionesController, AuthController, KyrosIdController, SucursalController, PersonalController, MenuController, MenuPublicoController, SalonController, QrController, SolicitudesController, PushController, PedidosController, CajaController, SuscripcionController, PlataformaController, PlanesPublicosController, PlanesPublicosAdminController, PortalController, InventarioController, RecetasController, ComprasController, ContabilidadController, CobranzasController, ReservasController, ReservasPublicasController, CateringController, TurnosController, PromocionesController, EstadisticasController, AlertasController, FodaController, AsistenteController, PlataformaIaController, DemoController, PlataformaDemoController, SoporteController, FacturacionEmisorController, FacturacionKyrosController, FacturacionKyrosWebhookController, FacturacionKyrosClienteController],
+  controllers: [SaludController, LegalController, IntegracionesController, AuthController, KyrosIdController, SucursalController, PersonalController, MenuController, MenuPublicoController, SalonController, QrController, SolicitudesController, PushController, PedidosController, CajaController, SuscripcionController, PlataformaController, QrCobroController, PlanesPublicosController, PlanesPublicosAdminController, PortalController, InventarioController, RecetasController, ComprasController, ContabilidadController, CobranzasController, ReservasController, ReservasPublicasController, CateringController, TurnosController, PromocionesController, EstadisticasController, AlertasController, FodaController, AsistenteController, PlataformaIaController, DemoController, PlataformaDemoController, SoporteController, FacturacionEmisorController, FacturacionKyrosController, FacturacionKyrosWebhookController, FacturacionKyrosClienteController],
   providers: [
-    SesionService, LegalService, IntegracionesService, KyrosIdService, JwtAuthGuard, StorageService, PersonalService, MenuService, SalonService, SolicitudesService, TableTokenGuard, EventosGateway, PushService, PedidosService, CajaService, SuscripcionService, PlanesPublicosService, TipoCambioService, InventarioService, RecetasService, ConsumoService, ComprasService, ContabilidadService, CobranzasService, ReservasService, CateringService, TurnosService, PromocionesService, EstadisticasService, AlertasService, IaService, FodaService, AsistenteService, DemoService, FacturacionEmisorService, FacturacionKyrosService, IntegracionFacturaSinService, FacturaSinConexion,
+    SesionService, LegalService, IntegracionesService, KyrosIdService, JwtAuthGuard, StorageService, PersonalService, MenuService, SalonService, SolicitudesService, TableTokenGuard, EventosGateway, PushService, PedidosService, CajaService, QrCobroService, SuscripcionService, PlanesPublicosService, TipoCambioService, InventarioService, RecetasService, ConsumoService, ComprasService, ContabilidadService, CobranzasService, ReservasService, CateringService, TurnosService, PromocionesService, EstadisticasService, AlertasService, IaService, FodaService, AsistenteService, DemoService, FacturacionEmisorService, FacturacionKyrosService, IntegracionFacturaSinService, FacturaSinConexion,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useExisting: JwtAuthGuard },
     LegalGuard,

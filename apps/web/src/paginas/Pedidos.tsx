@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs, ETIQUETA_ESTADO, ETIQUETA_TIPO, minutosDesde, haceCuanto, Pedido } from '../lib/tipos';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
 import { ComensalCampos, comensalVacio, cuerpoDeFactura, FacturaPanel, type DatosComensal } from './FacturaPanel';
 import { AvisoPruebas } from './FacturacionConfig';
+import { QrCobro, type QrActual } from '../lib/kyros-subir-qr';
 import { calcularCobro, deCentavos, aCentavos, pctTxt, TOPES_POR_DEFECTO, type Topes } from '../lib/cobro';
 
 interface Mesa { id: string; numero: string; asientos: number; activa: boolean }
@@ -264,12 +265,13 @@ function MoverMesa({ pedido, cerrar, movido }: { pedido: Pedido; cerrar(): void;
 
 const METODOS = [['efectivo', 'Efectivo', 'payments'], ['qr', 'QR', 'qr_code_2'], ['tarjeta', 'Tarjeta', 'credit_card'], ['transferencia', 'Transferencia', 'account_balance'], ['credito', 'Crédito', 'schedule']] as const;
 function Cobrar({ pedido, cerrar, cobrado }: { pedido: Pedido; cerrar(): void; cobrado(): void }) {
-  const { sucursalId } = useRolesActivos();
+  const { sucursalId, esAdmin } = useRolesActivos(); const ir = useNavigate();
   const caja = useQuery({ queryKey: ['caja', sucursalId], queryFn: () => api.get<{ activa: boolean }>('/caja/actual', sucursalId!), enabled: !!sucursalId });
   const aj = useQuery({ queryKey: ['ajustes', sucursalId], queryFn: () => api.get<{ modoDeCobro: string }>('/sucursal/ajustes', sucursalId!).catch(() => ({ modoDeCobro: 'recibo' })), enabled: !!sucursalId });
   const tp = useQuery({ queryKey: ['cobro-topes', sucursalId], queryFn: () => api.get<{ descuentoMaxPct: number; propinaMaxPct: number }>('/cobro/topes', sucursalId!), enabled: !!sucursalId, staleTime: 0, refetchOnMount: 'always' });
   const topes: Topes = tp.data ? { descuentoPct: tp.data.descuentoMaxPct, propinaPct: tp.data.propinaMaxPct } : TOPES_POR_DEFECTO;
   const [metodo, setMetodo] = useState<(typeof METODOS)[number][0]>('efectivo');
+  const qrc = useQuery({ queryKey: ['qr-cliente', sucursalId], queryFn: () => api.get<QrActual>(`/qr-cobro/cliente/${sucursalId}`, sucursalId!), enabled: !!sucursalId && metodo === 'qr' });
   const fe = useQuery({ queryKey: ['fact-estado', sucursalId], queryFn: () => api.get<{ disponible: boolean; permiteConsumidorFinal: boolean; aviso: string | null }>('/facturacion/estado', sucursalId!).catch(() => ({ disponible: false, permiteConsumidorFinal: false, aviso: null })), enabled: !!sucursalId });
   const [datos, setDatos] = useState<DatosComensal>(comensalVacio);
   const [doc, setDoc] = useState<'recibo' | 'ninguno' | 'factura'>('recibo'); const [cliente, setCliente] = useState(''); const [telefono, setTelefono] = useState(''); const [dias, setDias] = useState('30');
@@ -296,6 +298,7 @@ function Cobrar({ pedido, cerrar, cobrado }: { pedido: Pedido; cerrar(): void; c
       <fieldset className="flex flex-col gap-space-xs"><legend className={clases.etiqueta}>Método de pago</legend>
         <div className="grid grid-cols-2 gap-space-xs">{METODOS.map(([k, n, ic]) => <button key={k} type="button" role="radio" aria-checked={metodo === k} onClick={() => setMetodo(k)} className={`h-14 rounded-lg font-semibold flex items-center justify-center gap-space-xs ${metodo === k ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}><span className="material-symbols-outlined" aria-hidden="true">{ic}</span>{n}</button>)}</div>
       </fieldset>
+      {metodo === 'qr' && qrc.data && <QrCobro qr={qrc.data} idioma="es" puedeSubir={esAdmin} onSubir={() => ir('/app/configuracion#qr-cobro')} titulo="QR para pagar" />}
       <fieldset className="flex flex-col gap-space-xs"><legend className={clases.etiqueta}>Documento</legend>
         <div className="grid grid-cols-2 gap-space-xs">
           {!soloContabilizar && <button type="button" role="radio" aria-checked={doc === 'recibo'} onClick={() => setDoc('recibo')} className={`h-12 rounded-lg font-semibold ${doc === 'recibo' ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}>Recibo</button>}

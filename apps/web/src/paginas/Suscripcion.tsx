@@ -4,6 +4,7 @@ import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
 import { reducirImagen } from '../lib/imagen';
+import { QrCobro, type QrActual } from '../lib/kyros-subir-qr';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
 import { FacturasDeSuscripcion } from './FacturasDeSuscripcion';
 
@@ -30,18 +31,12 @@ export function Suscripcion() {
   const q = useQuery({ queryKey: ['suscripcion', sucursalId], queryFn: () => api.get<Mia>('/suscripcion', sucursalId!), enabled: !!sucursalId });
   const [meses, setMeses] = useState(1);
   const calculo = useQuery({ queryKey: ['suscripcion-calculo', sucursalId, meses], queryFn: () => api.get<Calculo>(`/suscripcion/calculo?meses=${meses}`, sucursalId!), enabled: !!sucursalId });
-  const [qr, setQr] = useState<string | null>(null);
+  const qrq = useQuery({ queryKey: ['qr-plataforma'], queryFn: () => api.get<QrActual>('/qr-cobro/plataforma') });
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [trabajando, setTrabajando] = useState(false);
   const [monto, setMonto] = useState('');
   useEffect(() => { if (calculo.data?.montoEsperado) setMonto(calculo.data.montoEsperado); }, [calculo.data?.montoEsperado]);
-  useEffect(() => {
-    if (!q.data?.cobro.tieneQr || !sucursalId) return;
-    let url: string | null = null;
-    api.blob('/suscripcion/cobro/qr', sucursalId).then((b) => { url = URL.createObjectURL(b); setQr(url); }).catch(() => undefined);
-    return () => { if (url) URL.revokeObjectURL(url); };
-  }, [q.data?.cobro.tieneQr, sucursalId]);
 
   const enviar = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault(); setError(null); setOk(null); setTrabajando(true);
@@ -72,7 +67,7 @@ export function Suscripcion() {
           <section className="grid grid-cols-1 gap-gutter md:grid-cols-[16rem_1fr]">
             <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col items-center gap-space-sm text-center">
               <h2 className="font-headline-sm text-headline-sm">1. Paga por tu banco</h2>
-              {qr ? <img src={qr} alt="QR de cobro de Kyros-Tech" className="w-48 h-48 object-contain" /> : <p className="text-on-surface-variant font-body-sm">{m.cobro.tieneQr ? 'Cargando QR…' : 'Kyros-Tech todavía no cargó su QR de cobro. Pídelo por soporte.'}</p>}
+              <QrCobro qr={qrq.data} idioma="es" titulo="QR de cobro de Kyros-Tech" />
               {m.cobro.instrucciones && <p className="font-body-sm text-body-sm text-on-surface-variant whitespace-pre-line">{m.cobro.instrucciones}</p>}
             </div>
             <form onSubmit={enviar} className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm">

@@ -127,12 +127,14 @@ describe('Pago de la suscripción (voucher manual)', () => {
   it('QR e instrucciones de cobro: las carga la plataforma y las ve el restaurante', async () => {
     const e = await escenario();
     expect((await e.kyros.put('/plataforma/cobro', { instrucciones: 'Paga al QR y sube tu comprobante.' })).status).toBe(200);
-    expect((await subir(e.kyros.token, null, '/plataforma/cobro/qr', PNG)).status).toBe(200);
+    const png64 = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAAG0lEQVR4nO3BgQAAAADDoPlT3+AEVQEAAAB8AxBAAAFGOA0dAAAAAElFTkSuQmCC', 'base64');
+    expect((await t.api().put('/api/v1/qr-cobro/plataforma').set('Authorization', `Bearer ${e.kyros.token}`).attach('file', png64, 'qr.png')).status).toBe(200);
     const mia = (await e.dueno.get('/suscripcion')).body;
     expect(mia.cobro).toEqual({ instrucciones: 'Paga al QR y sube tu comprobante.', tieneQr: true });
-    const qr = await t.api().get('/api/v1/suscripcion/cobro/qr').set('Authorization', `Bearer ${e.d.token}`).set('X-Restaurant-Id', e.d.rid);
-    expect(qr.headers['content-type']).toBe('image/png');
-    expect((await subir(e.d.token, e.d.rid, '/plataforma/cobro/qr', PNG)).status).toBe(403);
+    const qr = await t.api().get('/api/v1/qr-cobro/plataforma');
+    expect(qr.body.esRespaldo).toBe(false);
+    expect((await t.api().get(qr.body.url)).headers['content-type']).toBe('image/png');
+    expect((await t.api().put('/api/v1/qr-cobro/plataforma').set('Authorization', `Bearer ${e.d.token}`).attach('file', png64, 'qr.png')).status).toBe(403);
   });
 
   it('avisos de vencimiento: salen una sola vez por sucursal y fecha (5 días, 1 día y el día)', async () => {
