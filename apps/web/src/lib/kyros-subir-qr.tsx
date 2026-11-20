@@ -68,6 +68,20 @@ export function problemaArchivoQr(f: { type: string; size: number }, idioma?: st
   return null;
 }
 
+/** Firma real de la imagen (PNG, JPEG o WebP) leída de los primeros bytes: un archivo falso con extensión .png no pasa. */
+export async function firmaImagenQrValida(f: Blob): Promise<boolean> {
+  try {
+    const cab = f.slice(0, 12);
+    const buf: ArrayBuffer = typeof cab.arrayBuffer === 'function' ? await cab.arrayBuffer()
+      : await new Promise<ArrayBuffer>((ok, mal) => { const r = new FileReader(); r.onload = () => ok(r.result as ArrayBuffer); r.onerror = () => mal(r.error); r.readAsArrayBuffer(cab); });
+    const b = new Uint8Array(buf);
+    const png = b.length >= 8 && [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((v, i) => b[i] === v);
+    const jpg = b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+    const webp = b.length >= 12 && String.fromCharCode(b[0], b[1], b[2], b[3]) === 'RIFF' && String.fromCharCode(b[8], b[9], b[10], b[11]) === 'WEBP';
+    return png || jpg || webp;
+  } catch { return false; }
+}
+
 const caja: CSSProperties = { border: '1px solid var(--kx-borde, #cbd5e1)', borderRadius: 8, padding: '14px 16px', background: 'var(--kx-fondo, transparent)' };
 const boton: CSSProperties = { cursor: 'pointer', borderRadius: 8, border: '1px solid var(--kx-primario, #1d4ed8)', background: 'var(--kx-primario, #1d4ed8)', color: '#fff', padding: '8px 14px', font: 'inherit' };
 const botonSec: CSSProperties = { ...boton, background: 'transparent', color: 'var(--kx-primario, #1d4ed8)' };
@@ -125,14 +139,16 @@ export function SubirQr({ qr, idioma, puedeEditar = true, subir, quitar, alCambi
     return () => URL.revokeObjectURL(u);
   }, [archivo]);
 
-  function elegir(f: File | null | undefined) {
+  async function elegir(f: File | null | undefined) {
     setOk(null);
     if (!f) return;
     const p = problemaArchivoQr(f, idioma);
     if (p) { setError(p); setArchivo(null); return; }
+    // La vista previa solo aparece si la firma real es de imagen: así un archivo falso se rechaza de inmediato, sin imagen rota.
+    if (!(await firmaImagenQrValida(f))) { setError(x.errTipo); setArchivo(null); return; }
     setError(null); setArchivo(f);
   }
-  function soltar(e: DragEvent<HTMLDivElement>) { e.preventDefault(); setEncima(false); if (puedeEditar) elegir(e.dataTransfer.files?.[0]); }
+  function soltar(e: DragEvent<HTMLDivElement>) { e.preventDefault(); setEncima(false); if (puedeEditar) void elegir(e.dataTransfer.files?.[0]); }
 
   async function guardar() {
     if (!archivo) { setError(x.errVacio); return; }
@@ -168,10 +184,10 @@ export function SubirQr({ qr, idioma, puedeEditar = true, subir, quitar, alCambi
             style={{ border: `2px dashed ${encima ? 'var(--kx-primario, #1d4ed8)' : 'var(--kx-borde, #cbd5e1)'}`, borderRadius: 8, padding: 14, textAlign: 'center' }}
           >
             {vista ? (
-              <div><p style={{ margin: '0 0 6px', fontSize: 13 }}>{x.vistaPrevia}</p><img src={vista} alt={x.vistaPrevia} style={img} /></div>
+              <div><p style={{ margin: '0 0 6px', fontSize: 13 }}>{x.vistaPrevia}</p><img src={vista} alt={x.vistaPrevia} style={img} onError={() => { setError(x.errCorrupta); setArchivo(null); }} /></div>
             ) : (<p style={{ margin: '0 0 6px' }}>{x.arrastra}</p>)}
             <p style={{ margin: '0 0 8px', fontSize: 12, opacity: 0.8 }}>{x.formatos}</p>
-            <input ref={input} type="file" accept={QR_ACEPTA} hidden onChange={(e) => { elegir(e.target.files?.[0]); e.target.value = ''; }} data-kx="qr-archivo" />
+            <input ref={input} type="file" accept={QR_ACEPTA} hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; void elegir(f); }} data-kx="qr-archivo" />
             <button type="button" style={tieneQr || archivo ? botonSec : boton} disabled={ocupado} onClick={() => input.current?.click()}>
               {tieneQr || archivo ? x.reemplazar : x.subir}
             </button>

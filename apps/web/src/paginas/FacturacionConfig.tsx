@@ -35,6 +35,12 @@ const campo = (v: string, nombre: string, min: number, max: number): string | nu
   return null;
 };
 
+/** El mensaje del servidor ya empieza con «No incluida en tu plan.»: se quita para decirlo una sola vez (el título en negrita). */
+export function detalleNoIncluida(mensaje: string | null | undefined): string {
+  const resto = (mensaje ?? '').replace(/^\s*No incluida en tu plan\.?\s*/i, '').trim();
+  return resto || 'Pídela a administracion@kyros-tech.com o mejora tu plan en Suscripción.';
+}
+
 /** Facturación del restaurante a sus comensales (FacturaSIN) en TRES pasos: 1) Facturación (si tu plan la incluye), 2) Datos del SIN, 3) Probar facturación. Solo dueño y administrador. */
 export function FacturacionConfig() {
   const { sucursalId } = useRolesActivos();
@@ -45,7 +51,7 @@ export function FacturacionConfig() {
   if (c.habilitacion && !c.habilitacion.habilitada) {
     return (
       <p role="status" data-testid="no-incluida" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-md font-body-md">
-        <strong>No incluida en tu plan.</strong> {c.habilitacion.mensaje ?? 'Pídela a administracion@kyros-tech.com o mejora tu plan en Suscripción.'}
+        <strong>No incluida en tu plan.</strong> {detalleNoIncluida(c.habilitacion.mensaje)}
       </p>
     );
   }
