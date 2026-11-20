@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
@@ -280,6 +280,9 @@ function Cobrar({ pedido, cerrar, cobrado }: { pedido: Pedido; cerrar(): void; c
   const subtotal = aCentavos(String(pedido.total)) ?? 0;
   const calc = calcularCobro({ subtotal, descuento, motivo: motivoDesc, propina, metodo, recibido, topes });
   const soloContabilizar = aj.data?.modoDeCobro === 'ninguno';
+  // GST-013/GST-C01: el aviso de descuento o propina fuera de tope se ve al escribir (no solo al confirmar) y un error viejo no queda pegado tras corregir.
+  useEffect(() => { setError(null); }, [descuento, motivoDesc, propina, recibido, metodo, cliente]);
+  const avisoVivo = !error && calc.error && (descuento.trim() !== '' || propina.trim() !== '') && !/Faltan|efectivo recibido/.test(calc.error) ? calc.error : null;
   const cobrar = async () => {
     setError(null);
     if (calc.error) { setError(calc.error); return; }
@@ -334,7 +337,7 @@ function Cobrar({ pedido, cerrar, cobrado }: { pedido: Pedido; cerrar(): void; c
         <dt className="font-semibold">A cobrar</dt><dd className="text-right font-semibold">{bs(deCentavos(calc.aCobrar))}</dd>
         {metodo === 'efectivo' && calc.vuelto !== null && <><dt className="font-semibold text-primary">Vuelto</dt><dd className="text-right font-semibold text-primary">{bs(deCentavos(calc.vuelto))}</dd></>}
       </dl>
-      {error && <p role="alert" className="text-error">{error}</p>}
+      {(error ?? avisoVivo) && <p role="alert" className="text-error">{error ?? avisoVivo}</p>}
       <div className="grid grid-cols-2 gap-space-sm"><button type="button" onClick={cerrar} className="h-14 rounded-lg border border-outline-variant font-semibold">Cancelar</button><button type="button" disabled={ocupado || caja.data?.activa === false} onClick={cobrar} className={clases.primario}>{ocupado ? 'Cobrando…' : 'Confirmar cobro'}</button></div>
     </Hoja>
   );

@@ -19,6 +19,8 @@ export interface Recibo {
 }
 
 export const bs = (n: string | number) => `Bs ${Number(n).toFixed(2)}`;
+/** GST-014: un costo unitario promedio (cuatro decimales) se muestra tal cual para que «cantidad × costo» cuadre a mano. */
+export const bsUnitario = (n: string | number) => `Bs ${Number(n).toFixed(4)}`;
 export const ETIQUETA_TIPO: Record<string, string> = { mesa: 'Mesa', mostrador: 'Mostrador', llevar: 'Para llevar', delivery: 'Delivery' };
 export const ETIQUETA_ESTADO: Record<string, string> = {
   borrador: 'Sin enviar', enviado: 'Enviado', en_preparacion: 'En preparación', listo: 'Listo', servido: 'Servido', cobrado: 'Cobrado', anulado: 'Anulado', por_confirmar: 'Por confirmar',

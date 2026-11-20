@@ -8,6 +8,14 @@ import { api, useSesion } from '../lib/sesion';
 
 interface Estado { registroToken: string; puedeRegistrarse: boolean }
 
+/** GS-N04: igual que la API (kyros-id.service.ts): sin espacios, puntos ni guiones; de 5 a 13 dígitos, sin cero a la izquierda. Vacío = opcional. */
+export function normalizarNit(bruto: string): { nit: string | undefined; error: string | null } {
+  const limpio = bruto.replace(/[\s.-]/g, '');
+  if (limpio === '') return { nit: undefined, error: null };
+  if (!/^[1-9]\d{4,12}$/.test(limpio)) return { nit: undefined, error: 'El NIT debe tener solo números, de 5 a 13 dígitos y sin ceros a la izquierda. Si no lo tienes a mano, déjalo vacío: lo puedes cargar después.' };
+  return { nit: limpio, error: null };
+}
+
 /**
  * Identidad de Kyros ID sin vínculo. Dos caminos, nunca por correo:
  *  - cuenta recién creada con «Crear mi cuenta»: «Completa tu registro» y se abre el restaurante;
@@ -45,7 +53,9 @@ export function Registro() {
       {modo === 'registro' ? (
         <form className="flex flex-col gap-space-md" onSubmit={(e) => {
           const f = new FormData(e.currentTarget);
-          return enviar(() => api.kyrosIdRegistrar({ registroToken: estado.registroToken, nombre: campo(f, 'nombre'), correo: campo(f, 'correo'), restaurante: campo(f, 'restaurante'), razonSocial: campo(f, 'razonSocial'), nit: campo(f, 'nit') || undefined, aceptaTerminos: true, versionLegal: legal.data!.version }))(e);
+          const n = normalizarNit(campo(f, 'nit'));
+          if (n.error) { e.preventDefault(); setError(n.error); return; }
+          return enviar(() => api.kyrosIdRegistrar({ registroToken: estado.registroToken, nombre: campo(f, 'nombre'), correo: campo(f, 'correo'), restaurante: campo(f, 'restaurante'), razonSocial: campo(f, 'razonSocial'), nit: n.nit, aceptaTerminos: true, versionLegal: legal.data!.version }))(e);
         }}>
           <div>
             <h1 className="font-headline-md text-headline-md text-primary">Completa tu registro</h1>
@@ -54,7 +64,7 @@ export function Registro() {
           {[['nombre', 'Tu nombre', 'name'], ['correo', 'Correo de contacto', 'email'], ['restaurante', 'Nombre del restaurante', 'organization'], ['razonSocial', 'Razón social', 'organization'], ['nit', 'NIT (opcional)', 'off']].map(([k, et, ac]) => (
             <label key={k} className="flex flex-col gap-space-xs">
               <span className={clases.etiqueta}>{et}</span>
-              <input name={k} required={k !== 'nit'} type={k === 'correo' ? 'email' : 'text'} autoComplete={ac} className={clases.input} />
+              <input name={k} required={k !== 'nit'} type={k === 'correo' ? 'email' : 'text'} autoComplete={ac} {...(k === 'nit' ? { inputMode: 'numeric' as const, maxLength: 20 } : {})} className={clases.input} />
             </label>
           ))}
           <label className="flex items-start gap-space-sm min-h-12">
@@ -63,6 +73,7 @@ export function Registro() {
           </label>
           {error && <p role="alert" className="text-error font-body-sm text-body-sm">{error}</p>}
           <button className={clases.primario} disabled={enviando || !legal.data}>{enviando ? 'Creando…' : 'Abrir mi restaurante'}</button>
+          {!legal.data && <p role="status" className="font-body-sm text-body-sm text-on-surface-variant">Cargando los textos legales: el botón se activa en unos segundos.</p>}
           <button type="button" className="text-primary font-body-sm text-body-sm underline self-center" onClick={() => setModo('codigo')}>Tengo un código de invitación</button>
         </form>
       ) : (
@@ -81,6 +92,7 @@ export function Registro() {
           </label>
           {error && <p role="alert" className="text-error font-body-sm text-body-sm">{error}</p>}
           <button className={clases.primario} disabled={enviando || !legal.data}>{enviando ? 'Verificando…' : 'Unir mi cuenta'}</button>
+          {!legal.data && <p role="status" className="font-body-sm text-body-sm text-on-surface-variant">Cargando los textos legales: el botón se activa en unos segundos.</p>}
           {estado.puedeRegistrarse && <button type="button" className="text-primary font-body-sm text-body-sm underline self-center" onClick={() => setModo('registro')}>Quiero abrir un restaurante nuevo</button>}
         </form>
       )}

@@ -42,12 +42,27 @@ export function Cobranzas() {
   );
 }
 
+/** GST-C05: valida el monto de un cobro de cuenta en centavos enteros (BigInt) antes de enviar, con mensajes claros en vez de «Datos inválidos». */
+export function validarMontoCobro(texto: string, saldo: string): { monto: number | null; error: string | null } {
+  const t = texto.trim().replace(',', '.');
+  const aCentavos = (s: string): bigint | null => { const m = /^(\d{1,10})(?:\.(\d{1,2}))?$/.exec(s); return m ? BigInt(m[1]) * 100n + BigInt(((m[2] ?? '') + '00').slice(0, 2)) : null; };
+  const c = aCentavos(t);
+  if (c === null) return { monto: null, error: 'Escribe el monto en números, con hasta 2 decimales (por ejemplo 150,50).' };
+  if (c <= 0n) return { monto: null, error: 'El monto a cobrar debe ser mayor a cero.' };
+  const s = aCentavos(String(saldo).trim());
+  if (s !== null && c > s) return { monto: null, error: `El monto no puede ser mayor al saldo pendiente (Bs ${(Number(s) / 100).toFixed(2).replace('.', ',')}).` };
+  return { monto: Number(t), error: null };
+}
+
 function Cobro({ cuenta, cerrar, hecho }: { cuenta: Cuenta; cerrar(): void; hecho(): void }) {
   const { sucursalId } = useRolesActivos();
   const [error, setError] = useState<string | null>(null); const [ocupado, setOcupado] = useState(false);
   const enviar = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); setError(null); setOcupado(true); const f = new FormData(e.currentTarget);
-    try { await api.post(`/por-cobrar/${cuenta.id}/cobrar`, { monto: Number(String(f.get('monto')).replace(',', '.')), via: String(f.get('via')) }, sucursalId!); hecho(); } catch (err) { setError(mensajeDeError(err)); setOcupado(false); }
+    e.preventDefault(); setError(null); const f = new FormData(e.currentTarget);
+    const v = validarMontoCobro(String(f.get('monto') ?? ''), cuenta.saldo);
+    if (v.error) { setError(v.error); return; }
+    setOcupado(true);
+    try { await api.post(`/por-cobrar/${cuenta.id}/cobrar`, { monto: v.monto, via: String(f.get('via')) }, sucursalId!); hecho(); } catch (err) { setError(mensajeDeError(err)); setOcupado(false); }
   };
   return (
     <div role="dialog" aria-modal="true" aria-label="Cobrar cuenta" className="fixed inset-0 z-[60] flex justify-end bg-inverse-surface/40" onClick={cerrar}>

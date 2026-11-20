@@ -119,7 +119,6 @@ export function PlataformaFacturacion() {
 
       <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-wrap items-center justify-between gap-space-sm">
         <div><h2 className="font-headline-sm text-headline-sm">Integración con FacturaSIN</h2>
-          <p className="font-body-sm text-on-surface-variant">{ig ? `${ig.config.url} · empresa ${ig.config.empresa} · client ${ig.config.clientId}` : '…'}</p>
           <p className="font-body-sm" data-testid="estado-enlace">{ig?.config.activo ? 'Activa' : 'Apagada'} · conexión con FacturaSIN: {ig?.secretoConfigurado ? 'lista' : 'falta la credencial de servicio (la coloca el despliegue una vez)'} · Aviso de estados: {ig?.webhookConfigurado ? 'activo' : 'pendiente (se activa solo)'}</p>
           <p className="font-body-sm text-on-surface-variant">{aLenguajeSimple(ig?.enlace?.mensaje ?? 'El aviso automático se activa solo en cuanto el sistema detecta su dirección pública.')}{ig?.enlace?.webhook.ultimaEntrega ? ` Última entrega: ${new Date(ig.enlace.webhook.ultimaEntrega).toLocaleString('es-BO')}.` : ''}</p></div>
         <div className="flex flex-wrap gap-space-sm"><button type="button" onClick={alternar} disabled={!!ocupado} className={`${clases.secundario} sm:w-auto sm:px-space-md`}>{ig?.config.activo ? 'Apagar' : 'Activar'}</button>
@@ -161,6 +160,8 @@ export function PlataformaFacturacion() {
 
       <details className="rounded-xl border border-outline-variant p-space-md" data-testid="avanzado">
         <summary className="cursor-pointer font-label-md font-bold">Avanzado (solo SuperAdmin de la plataforma)</summary>
+        {/* GS-F1: la línea técnica de la conexión (dirección, empresa, client) vive solo aquí. */}
+        <p className="mt-space-sm font-body-sm text-on-surface-variant" data-testid="linea-tecnica">{ig ? `${ig.config.url} · empresa ${ig.config.empresa} · client ${ig.config.clientId}` : '…'}</p>
         <div className="mt-space-md flex flex-col gap-space-md">
           <p className="font-body-sm text-on-surface-variant">Estos códigos fiscales son provisionales (NO CONFIRMADOS) y se completan solos. Ajústalos solo si el contador lo indica.</p>
       {ig && <CodigosFiscales ig={ig} ocupado={!!ocupado} onGuardar={(parcial) => void correr('cfg-sin', () => api.put('/plataforma/facturacion-kyros/integracion', parcial), () => 'Códigos fiscales guardados.')} />}

@@ -13,6 +13,11 @@ interface Persona { id: string; nombre: string; correo: string | null; telefono:
 interface Codigo { id?: string; codigo: string; venceEl: string }
 const ASIGNABLES = ROLES.filter((r) => r !== 'owner');
 
+/** GS-N07: alterna un rol en la lista editada (siempre queda al menos uno al guardar; el dueño no se asigna). */
+export function alternarRol(actuales: readonly string[], rol: string): string[] {
+  return actuales.includes(rol) ? actuales.filter((x) => x !== rol) : [...actuales, rol];
+}
+
 /** Personal: alta con rol y código de invitación de un solo uso (la persona lo pega al entrar con Kyros ID). */
 export function Personal() {
   const { sucursalId } = useRolesActivos();
@@ -21,6 +26,7 @@ export function Personal() {
   const [codigo, setCodigo] = useState<(Codigo & { para: string }) | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [roles, setRoles] = useState<string[]>(['mesero']);
+  const [edicion, setEdicion] = useState<{ id: string; roles: string[] } | null>(null);
   const refrescar = () => qc.invalidateQueries({ queryKey: ['personal', sucursalId] });
 
   const crear = useMutation({
@@ -74,7 +80,22 @@ export function Personal() {
                 <div className="min-w-0"><h3 className="font-body-lg font-semibold truncate">{p.nombre}</h3><p className="font-body-sm text-on-surface-variant truncate">{p.correo}</p></div>
                 <span className={`px-2 py-0.5 rounded-full font-label-sm text-label-sm uppercase whitespace-nowrap ${!p.activo ? 'bg-surface-container text-on-surface-variant' : p.vinculado ? 'bg-tertiary-fixed text-on-tertiary-fixed-variant' : 'bg-secondary-fixed text-on-secondary-fixed-variant'}`}>{!p.activo ? 'Inactivo' : p.vinculado ? 'Con Kyros ID' : 'Pendiente de unirse'}</span>
               </div>
-              <div className="flex flex-wrap gap-1">{p.roles.map((r) => <span key={r} className="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm">{ETIQUETA_ROL[r] ?? r}</span>)}</div>
+              {edicion?.id === p.id ? (
+                <fieldset className="flex flex-col gap-space-xs"><legend className={clases.etiqueta}>Roles de {p.nombre}</legend>
+                  <div className="flex flex-wrap gap-space-xs">{ASIGNABLES.map((r) => (
+                    <button key={r} type="button" aria-pressed={edicion.roles.includes(r)} onClick={() => setEdicion({ id: p.id, roles: alternarRol(edicion.roles, r) })} className={`h-10 px-space-sm rounded-full border font-label-md text-label-md ${edicion.roles.includes(r) ? 'bg-primary-container text-on-primary border-primary-container' : 'border-outline-variant text-on-surface-variant'}`}>{ETIQUETA_ROL[r]}</button>
+                  ))}</div>
+                  <div className="flex flex-wrap gap-space-sm">
+                    <button type="button" disabled={edicion.roles.length === 0 || edicion.roles.length > 4} onClick={() => accion(async () => { await api.patch(`/personal/${p.id}`, { roles: edicion.roles }, sucursalId!); setEdicion(null); })} className="h-12 px-space-md rounded-lg bg-primary-container text-on-primary font-semibold disabled:opacity-50">Guardar roles</button>
+                    <button type="button" onClick={() => setEdicion(null)} className="h-12 px-space-md rounded-lg border border-outline-variant font-semibold">Cancelar</button>
+                  </div>
+                  {(edicion.roles.length === 0 || edicion.roles.length > 4) && <p role="status" className="font-body-sm text-body-sm text-error">{edicion.roles.length === 0 ? 'Elige al menos un rol.' : 'Una persona puede tener hasta 4 roles.'}</p>}
+                </fieldset>
+              ) : (
+                <div className="flex flex-wrap items-center gap-1">{p.roles.map((r) => <span key={r} className="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm">{ETIQUETA_ROL[r] ?? r}</span>)}
+                  {p.activo && <button type="button" onClick={() => setEdicion({ id: p.id, roles: p.roles.filter((r) => r !== 'owner') })} className="ml-space-xs px-2 py-0.5 rounded border border-outline-variant text-primary font-label-sm text-label-sm">Cambiar roles</button>}
+                </div>
+              )}
               {!p.vinculado && p.activo && (
                 <p className="font-body-sm text-on-surface-variant">{p.invitacion ? `Invitación de un solo uso. ${textoVigencia(p.invitacion.venceEl)}` : 'Sin invitación vigente: reenvía una nueva con un clic.'}</p>
               )}
