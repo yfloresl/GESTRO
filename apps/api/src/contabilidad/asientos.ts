@@ -64,10 +64,10 @@ export function compraRecibida(p: { total: Decimal.Value; conIva: boolean; ivaPc
   return hecho('Compra con factura', [debe('inventarios', total.minus(iva)), ...(iva.gt(0) ? [debe('credito_fiscal', iva)] : []), haber('proveedores', total)]);
 }
 
-/** Compra pagada al contado que entra directo al kardex (sin orden de compra). */
-export function compraAlContado(p: { total: Decimal.Value }): Asiento {
+/** Compra pagada al contado que entra directo al kardex (sin orden de compra). GS-N10: `via` dice de dónde salió la plata (efectivo de Caja o Bancos); sin dato, Caja como siempre. */
+export function compraAlContado(p: { total: Decimal.Value; via?: 'caja' | 'bancos' }): Asiento {
   const total = positivo(p.total, 'El total de la compra');
-  return hecho('Compra al contado', [debe('inventarios', total), haber('caja', total)]);
+  return hecho('Compra al contado', [debe('inventarios', total), haber(p.via ?? 'caja', total)]);
 }
 
 export function pagoAProveedor(p: { monto: Decimal.Value; via: 'caja' | 'bancos' }): Asiento {

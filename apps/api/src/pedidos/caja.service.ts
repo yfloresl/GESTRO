@@ -8,12 +8,13 @@ import { EventosGateway, salas } from '../tiempo-real/eventos.gateway';
 import { ContabilidadService } from '../contabilidad/contabilidad.service';
 import { PedidosService } from './pedidos.service';
 import { calcularCobro, CobroInvalido } from './cobro-calculo';
+import { cobrosDelTurno, diferenciaDeCaja, notaDeDiferencia } from './cierre-caja';
 import { Facturar, FacturacionEmisorService } from '../facturacion-emisor/facturacion-emisor.service';
 
 const Monto = z.number().min(0).max(10_000_000).refine((n) => Math.round(n * 100) / 100 === n, 'Máximo 2 decimales');
 const Pct = z.number({ invalid_type_error: 'Escribe un porcentaje entre 0 y 100.' }).min(0, 'El tope no puede ser menor que 0 %.').max(100, 'El tope no puede pasar de 100 %.').refine((n) => Math.round(n * 100) / 100 === n, 'Máximo 2 decimales (por ejemplo 12,5).');
 export const AbrirCaja = z.object({ montoInicial: Monto }).strict();
-export const CerrarCaja = z.object({ montoContado: Monto }).strict();
+export const CerrarCaja = z.object({ montoContado: Monto, /** GST-C03: por qué no cuadra (solo se guarda si hay diferencia). */ explicacion: z.string().trim().max(300).optional() }).strict();
 export const Cobro = z.object({
   metodo: z.enum(['efectivo', 'qr', 'tarjeta', 'transferencia', 'credito']),
   documento: z.enum(['recibo', 'ninguno', 'factura']).default('recibo'),
@@ -57,8 +58,9 @@ export class CajaService {
     // Efectivo cobrado a clientes de crédito (cuentas por cobrar) durante este turno: también entra a la caja física.
     const cc = (await tx.execute(sql`SELECT COALESCE(SUM(amount), 0)::text AS total, count(*)::int AS n FROM receivable_collections WHERE cash_session_id = ${c.id} AND via = 'caja'`)).rows[0] as { total: string; n: number };
     const esp = await tx.execute(sql`SELECT (${c.openingAmount}::numeric + ${efectivo.v}::numeric + ${cc.total}::numeric)::text AS esperado`);
-    const cobros = filas.map((f) => ({ metodo: f.method, total: f.total, cantidad: f.n }));
-    if (cc.n > 0) cobros.push({ metodo: 'cuentas_por_cobrar', total: cc.total, cantidad: cc.n });
+    // GST-C06: el cobro de cuentas hecho por banco también se lista (no entra al efectivo esperado).
+    const cb = (await tx.execute(sql`SELECT COALESCE(SUM(amount), 0)::text AS total, count(*)::int AS n FROM receivable_collections WHERE cash_session_id = ${c.id} AND via = 'bancos'`)).rows[0] as { total: string; n: number };
+    const cobros = cobrosDelTurno(filas.map((f) => ({ metodo: f.method, total: f.total, cantidad: f.n })), cc, cb);
     return { activa: true as const, id: c.id, desde: c.openedAt.toISOString(), montoInicial: c.openingAmount, cobros, propinas: propinas.v, propinasEnEfectivo: fe?.propina ?? '0.00', efectivoEsperado: (esp.rows[0] as { esperado: string }).esperado };
   }
 
@@ -82,11 +84,11 @@ export class CajaService {
       if (!c) throw new ConflictException('No tienes una caja abierta.');
       const pend = await tx.execute(sql`SELECT count(*)::int AS n FROM orders WHERE restaurant_id = ${t.restaurantId} AND status IN ('borrador','enviado','en_preparacion','listo','servido') AND total > 0 AND created_by = ${userId} AND order_type <> 'mesa'`);
       const r = await this.resumen(tx, c);
-      const dif = await tx.execute(sql`SELECT (${d.montoContado.toFixed(2)}::numeric - ${r.efectivoEsperado}::numeric)::text AS dif`);
-      await tx.update(cashSessions).set({ closedAt: sql`now()` as unknown as Date, countedAmount: d.montoContado.toFixed(2) }).where(eq(cashSessions.id, c.id));
-      const diferencia = (dif.rows[0] as { dif: string }).dif;
-      await auditar(tx, t.restaurantId, userId, 'caja.cerrada', 'cash_session', c.id, { contado: d.montoContado, esperado: r.efectivoEsperado, diferencia });
-      return { ...r, montoContado: d.montoContado.toFixed(2), diferencia, pedidosSinCobrar: (pend.rows[0] as { n: number }).n };
+      const diferencia = diferenciaDeCaja(d.montoContado.toFixed(2), r.efectivoEsperado);
+      const nota = notaDeDiferencia(diferencia, d.explicacion);
+      await tx.update(cashSessions).set({ closedAt: sql`now()` as unknown as Date, countedAmount: d.montoContado.toFixed(2), differenceNote: nota }).where(eq(cashSessions.id, c.id));
+      await auditar(tx, t.restaurantId, userId, 'caja.cerrada', 'cash_session', c.id, { contado: d.montoContado, esperado: r.efectivoEsperado, diferencia, ...(nota ? { explicacion: nota } : {}) });
+      return { ...r, montoContado: d.montoContado.toFixed(2), diferencia, explicacion: nota, pedidosSinCobrar: (pend.rows[0] as { n: number }).n };
     });
   }
 

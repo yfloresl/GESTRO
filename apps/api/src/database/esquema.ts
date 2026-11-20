@@ -238,6 +238,8 @@ export const cashSessions = pgTable('cash_sessions', {
   closedAt: timestamp('closed_at', { withTimezone: true }),
   openingAmount: numeric('opening_amount', { precision: 12, scale: 2 }).notNull().default('0'),
   countedAmount: numeric('counted_amount', { precision: 12, scale: 2 }),
+  /** GST-C03: explicación del cajero cuando el cierre tiene diferencia (mig. 0036). */
+  differenceNote: text('difference_note'),
 });
 
 export const salesPayments = pgTable('sales_payments', {

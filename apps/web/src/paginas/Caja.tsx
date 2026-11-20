@@ -6,8 +6,9 @@ import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs, CajaEstado, Recibo } from '../lib/tipos';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
+import { centavosDeDiferencia } from '../lib/cierre-caja';
 
-const METODO: Record<string, string> = { efectivo: 'Efectivo', qr: 'QR', tarjeta: 'Tarjeta', transferencia: 'Transferencia', credito: 'Crédito', cuentas_por_cobrar: 'Cobros de cuentas (efectivo)' };
+const METODO: Record<string, string> = { efectivo: 'Efectivo', qr: 'QR', tarjeta: 'Tarjeta', transferencia: 'Transferencia', credito: 'Crédito', cuentas_por_cobrar: 'Cobros de cuentas (efectivo)', cuentas_por_cobrar_banco: 'Cobros de cuentas (por banco, no van al cajón)' };
 const num = (v: FormDataEntryValue | null) => Number(String(v ?? '').replace(',', '.'));
 
 /** Caja: apertura, cobros del turno por método y cierre con arqueo (el cobro se hace desde el pedido). */
@@ -17,14 +18,18 @@ export function Caja() {
   const q = useQuery({ queryKey: ['caja', sucursalId], queryFn: () => api.get<CajaEstado>('/caja/actual', sucursalId!), enabled: !!sucursalId, refetchInterval: 30_000 });
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
-  const [cierre, setCierre] = useState<{ esperado: string; contado: string; diferencia: string } | null>(null);
+  const [cierre, setCierre] = useState<{ esperado: string; contado: string; diferencia: string; explicacion?: string | null } | null>(null);
+  // GST-C03: si lo contado no cuadra con lo esperado, la pantalla pide explicarlo.
+  const [contado, setContado] = useState('');
+  const dif = centavosDeDiferencia(contado, q.data?.efectivoEsperado);
   const refrescar = () => qc.invalidateQueries({ queryKey: ['caja', sucursalId] });
 
   const abrir = async (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); setError(null); const f = new FormData(e.currentTarget); try { await api.post('/caja/abrir', { montoInicial: num(f.get('monto')) }, sucursalId!); setCierre(null); setAviso('Caja abierta. Ya puedes cobrar.'); await refrescar(); } catch (err) { setError(mensajeDeError(err)); } };
   const cerrar = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault(); setError(null); const f = new FormData(e.currentTarget);
     if (!(await confirmar({ titulo: 'Cerrar la caja', mensaje: 'Ya no podrás cobrar hasta abrir una nueva. ¿Cerrar la caja?', aceptar: 'Cerrar caja' }))) return;
-    try { const r = await api.post<{ efectivoEsperado: string; montoContado: string; diferencia: string }>('/caja/cerrar', { montoContado: num(f.get('contado')) }, sucursalId!); setAviso(null); setCierre({ esperado: r.efectivoEsperado, contado: r.montoContado, diferencia: r.diferencia }); await refrescar(); } catch (err) { setError(mensajeDeError(err)); }
+    try { const explicacion = String(f.get('explicacion') ?? '').trim();
+      const r = await api.post<{ efectivoEsperado: string; montoContado: string; diferencia: string; explicacion?: string | null }>('/caja/cerrar', { montoContado: num(f.get('contado')), ...(explicacion ? { explicacion } : {}) }, sucursalId!); setAviso(null); setContado(''); setCierre({ esperado: r.efectivoEsperado, contado: r.montoContado, diferencia: r.diferencia, explicacion: r.explicacion }); await refrescar(); } catch (err) { setError(mensajeDeError(err)); }
   };
 
   const c = q.data;
@@ -38,6 +43,7 @@ export function Caja() {
           <h2 className="font-headline-sm text-headline-sm">Caja cerrada</h2>
           <p>Esperado en efectivo: <strong className="font-label-lg">{bs(cierre.esperado)}</strong> · Contado: <strong className="font-label-lg">{bs(cierre.contado)}</strong></p>
           <p className="font-semibold">{Number(cierre.diferencia) === 0 ? 'La caja cuadra.' : `Diferencia: ${bs(cierre.diferencia)} (${Number(cierre.diferencia) < 0 ? 'faltante' : 'sobrante'})`}</p>
+          {cierre.explicacion && <p className="font-body-sm text-on-surface-variant">Explicación: {cierre.explicacion}</p>}
         </section>
       )}
       {q.isLoading ? <ListaEsqueleto /> : !c?.activa ? (
@@ -57,7 +63,10 @@ export function Caja() {
           </section>
           <form onSubmit={cerrar} className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm">
             <h2 className="font-headline-sm text-headline-sm">Cerrar caja (arqueo)</h2>
-            <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Efectivo contado (Bs)</span><input name="contado" required inputMode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" title="Escribe un monto válido, por ejemplo 200,50 (sin signo y con a lo más 2 decimales)" className={`${clases.input} font-label-lg`} /></label>
+            <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Efectivo contado (Bs)</span><input name="contado" required value={contado} onChange={(e) => setContado(e.target.value)} inputMode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" title="Escribe un monto válido, por ejemplo 200,50 (sin signo y con a lo más 2 decimales)" className={`${clases.input} font-label-lg`} /></label>
+            {dif !== null && dif !== 0 && (
+              <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>La caja no cuadra ({dif < 0 ? 'faltan' : 'sobran'} Bs {(Math.abs(dif) / 100).toFixed(2)}): explica por qué</span><input name="explicacion" required minLength={3} maxLength={300} placeholder="Por ejemplo: vuelto mal dado, gasto menor sin registrar…" className={clases.input} /></label>
+            )}
             <button className="h-14 rounded-lg bg-error text-on-error font-semibold">Cerrar caja</button>
           </form>
         </>

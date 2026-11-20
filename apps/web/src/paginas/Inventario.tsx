@@ -93,7 +93,7 @@ function Movimientos({ insumos, almacenes, hecho }: { insumos: Insumo[]; almacen
     try {
       const comun = { insumoId, cantidad: num(f.get('cantidad')), unidad: s('unidad') || undefined };
       if (tipo === 'traspaso') await api.post('/stock/traspasos', { ...comun, origenId: s('origen'), destinoId: s('destino') }, sucursalId!);
-      else await api.post('/stock/movimientos', { ...comun, tipo, almacenId: s('almacen'), ...(tipo === 'compra' ? { costoUnitario: num(f.get('costo')), lote: s('lote') || undefined, vence: s('vence') || undefined } : { motivo: s('motivo') }), ...(tipo === 'ajuste' ? { sentido: s('sentido') } : {}) }, sucursalId!);
+      else await api.post('/stock/movimientos', { ...comun, tipo, almacenId: s('almacen'), ...(tipo === 'compra' ? { costoUnitario: num(f.get('costo')), pagoEn: s('pagoEn') || 'caja', lote: s('lote') || undefined, vence: s('vence') || undefined } : { motivo: s('motivo') }), ...(tipo === 'ajuste' ? { sentido: s('sentido') } : {}) }, sucursalId!);
       setMsg('Movimiento registrado en el kardex.'); form.reset(); setInsumoId(''); hecho();
     } catch (err) { setError(mensajeDeError(err)); }
   };
@@ -108,6 +108,7 @@ function Movimientos({ insumos, almacenes, hecho }: { insumos: Insumo[]; almacen
       <div className="grid grid-cols-2 gap-space-sm"><label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Cantidad</span><input name="cantidad" required inputMode="decimal" pattern="[0-9]+([.,][0-9]{1,3})?" className={`${clases.input} font-label-lg`} /></label>
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Unidad</span><select name="unidad" className={clases.input}><option value="">{ins ? ins.unidad : 'La del insumo'}</option>{compatibles.filter((u) => u.codigo !== ins?.unidad).map((u) => <option key={u.codigo} value={u.codigo}>{u.codigo}</option>)}</select></label></div>
       {tipo === 'compra' && <><label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Costo unitario (Bs por unidad elegida)</span><input name="costo" required inputMode="decimal" pattern="[0-9]+([.,][0-9]{1,4})?" className={`${clases.input} font-label-lg`} /></label>
+        <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Pagado con</span><select name="pagoEn" className={clases.input} defaultValue="caja"><option value="caja">Efectivo de la caja</option><option value="bancos">Banco (transferencia, QR o tarjeta)</option></select></label>
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Lote (opcional)</span><input name="lote" maxLength={40} className={clases.input} /></label>
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Vence (opcional)</span><input name="vence" type="date" className={clases.input} /></label></>}
       {tipo === 'ajuste' && <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Sentido</span><select name="sentido" required className={clases.input}><option value="entrada">Entrada (sobra)</option><option value="salida">Salida (falta)</option></select></label>}

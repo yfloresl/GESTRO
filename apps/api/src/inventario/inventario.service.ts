@@ -20,6 +20,8 @@ export const Almacen = z.object({ nombre: z.string().trim().min(1).max(60) }).st
 export const Movimiento = z.object({
   tipo: z.enum(['compra', 'merma', 'ajuste']), almacenId: z.string().uuid(), insumoId: z.string().uuid(), cantidad: Cant, unidad: z.string().trim().max(10).optional(),
   sentido: z.enum(['entrada', 'salida']).optional(), costoUnitario: Costo.optional(), lote: z.string().trim().min(1).max(40).optional(), vence: Fecha.optional(), motivo: z.string().trim().min(3).max(200).optional(),
+  /** GS-N10: solo en «compra»: de dónde salió la plata. Sin dato, Caja (como antes). */
+  pagoEn: z.enum(['caja', 'bancos']).optional(),
 }).strict();
 export const Traspaso = z.object({ origenId: z.string().uuid(), destinoId: z.string().uuid(), insumoId: z.string().uuid(), cantidad: Cant, unidad: z.string().trim().max(10).optional() }).strict();
 export const Conteo = z.object({ almacenId: z.string().uuid(), motivo: z.string().trim().max(160).optional(), lineas: z.array(z.object({ insumoId: z.string().uuid(), contado: z.number().min(0).max(1_000_000).refine((n) => Math.round(n * 1000) / 1000 === n, 'Máximo 3 decimales') }).strict()).min(1).max(500) }).strict();
@@ -184,6 +186,7 @@ export class InventarioService {
       if (d.tipo === 'compra' && d.costoUnitario === undefined) throw new BadRequestException('La compra necesita el costo unitario.');
       if ((d.tipo === 'merma' || d.tipo === 'ajuste') && !d.motivo) throw new BadRequestException('Indica el motivo.');
       if (d.tipo === 'ajuste' && !d.sentido) throw new BadRequestException('Indica si el ajuste es de entrada o de salida.');
+      if (d.pagoEn && d.tipo !== 'compra') throw new BadRequestException('«Pagado con» solo va en las entradas por compra.');
       if ((d.lote || d.vence) && d.tipo !== 'compra' && !(d.tipo === 'ajuste' && d.sentido === 'entrada')) throw new BadRequestException('El lote y el vencimiento solo van en entradas.');
       const entra = d.tipo === 'compra' || (d.tipo === 'ajuste' && d.sentido === 'entrada');
       const c = await this.aUnidadDelInsumo(tx, t, d.insumoId, d.cantidad, d.unidad, d.costoUnitario);
@@ -191,7 +194,7 @@ export class InventarioService {
       const base = { warehouseId: d.almacenId, ingredientId: d.insumoId, reason: d.motivo ?? null, groupId: grupo };
       if (entra) await this.registrar(tx, t, por, { ...base, kind: d.tipo === 'compra' ? 'compra' : 'ajuste', qty: c.qty, unitCost: c.costo, lot: d.lote ?? null, expires: d.vence ?? null });
       else await this.salidaFefo(tx, t, por, { ...base, kind: d.tipo === 'merma' ? 'merma' : 'ajuste' }, c.qty);
-      await this.conta.deMovimiento(tx, t, por, d.tipo, grupo);
+      await this.conta.deMovimiento(tx, t, por, d.tipo, grupo, d.pagoEn ?? 'caja');
       // Merma y ajustes son sensibles: quedan en la auditoría general además del kardex.
       if (d.tipo !== 'compra') await auditar(tx, t.restaurantId, por, `inventario.${d.tipo}`, 'ingredient', d.insumoId, { almacenId: d.almacenId, cantidad: c.qty, unidad: c.unidadInsumo, motivo: d.motivo, sentido: d.sentido });
       return { ok: true, cantidadEnUnidadDelInsumo: c.qty, unidad: c.unidadInsumo };

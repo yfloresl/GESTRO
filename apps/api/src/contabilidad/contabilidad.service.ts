@@ -239,7 +239,7 @@ export class ContabilidadService {
     const v = (await tx.execute(sql`SELECT COALESCE(SUM(-qty * COALESCE(unit_cost, 0)), 0)::numeric(14,2)::text AS v FROM stock_movements WHERE restaurant_id = ${t.restaurantId} AND kind = 'consumo' AND ref_type = 'event' AND ref_id = ${eventoId}::uuid`)).rows[0] as { v: string };
     if (Number(v.v) > 0) await this.registrar(tx, t, por, costoDeVentas({ valor: v.v }), { source: 'costo_evento', sourceId: eventoId });
   }
-  compraAlContado(tx: Bd, t: Tenant, por: string, grupoId: string, total: string) { return this.registrar(tx, t, por, compraAlContado({ total }), { source: 'compra_directa', sourceId: grupoId }); }
+  compraAlContado(tx: Bd, t: Tenant, por: string, grupoId: string, total: string, via: 'caja' | 'bancos' = 'caja') { return this.registrar(tx, t, por, compraAlContado({ total, via }), { source: 'compra_directa', sourceId: grupoId }); }
 
   /** Valor del kardex de un grupo de movimientos (con signo: entradas suman, salidas restan). */
   private async valorDeGrupo(tx: Bd, t: Tenant, grupoId: string): Promise<string> {
@@ -254,11 +254,11 @@ export class ContabilidadService {
   }
 
   /** Asiento de un movimiento manual del kardex (compra directa, merma o ajuste), agrupado por `groupId`. */
-  async deMovimiento(tx: Bd, t: Tenant, por: string, tipo: 'compra' | 'merma' | 'ajuste', grupoId: string) {
+  async deMovimiento(tx: Bd, t: Tenant, por: string, tipo: 'compra' | 'merma' | 'ajuste', grupoId: string, via: 'caja' | 'bancos' = 'caja') {
     if (tipo === 'merma') return this.mermaRegistrada(tx, t, por, grupoId);
     if (tipo === 'ajuste') return this.ajusteRegistrado(tx, t, por, grupoId);
     const v = await this.valorDeGrupo(tx, t, grupoId);
-    if (Number(v) > 0) await this.compraAlContado(tx, t, por, grupoId, v);
+    if (Number(v) > 0) await this.compraAlContado(tx, t, por, grupoId, v, via);
   }
 
   /* ============ asientos manuales ============ */

@@ -30,6 +30,15 @@ describe('Generadores de asientos (funciones puras)', () => {
     }
   });
 
+  it('GS-N10: la entrada de insumos paga con Caja (por omisión) o con Bancos, y en ambos casos cuadra', () => {
+    expect(compraAlContado({ total: '65.50' }).lineas).toEqual([
+      { cuenta: 'inventarios', debe: '65.50', haber: '0.00' }, { cuenta: 'caja', debe: '0.00', haber: '65.50' }]);
+    expect(compraAlContado({ total: '65.50', via: 'caja' }).lineas[1]).toMatchObject({ cuenta: 'caja', haber: '65.50' });
+    const banco = compraAlContado({ total: '65.50', via: 'bancos' });
+    expect(banco.lineas).toEqual([{ cuenta: 'inventarios', debe: '65.50', haber: '0.00' }, { cuenta: 'bancos', debe: '0.00', haber: '65.50' }]);
+    expect(() => validarPartidaDoble(banco)).not.toThrow();
+  });
+
   it('compra con IVA: inventario por el neto, crédito fiscal por el IVA, proveedor por el total', () => {
     expect(compraRecibida({ total: '113', conIva: true, ivaPct: 13 }).lineas).toEqual([
       { cuenta: 'inventarios', debe: '100.00', haber: '0.00' }, { cuenta: 'credito_fiscal', debe: '13.00', haber: '0.00' }, { cuenta: 'proveedores', debe: '0.00', haber: '113.00' }]);
