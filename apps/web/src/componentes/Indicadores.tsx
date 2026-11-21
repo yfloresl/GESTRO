@@ -33,7 +33,7 @@ export function Indicadores() {
   const on = !!sucursalId;
   const dia = useQuery({ queryKey: ['panel-dia', sucursalId, hoy], queryFn: () => api.get<ResumenDia>(`/estadisticas/resumen?desde=${hoy}&hasta=${hoy}`, sucursalId!), enabled: on, refetchInterval: 60_000 });
   const menu = useQuery({ queryKey: ['panel-menu', sucursalId, hoy], queryFn: () => api.get<{ platos: PlatoMenu[] }>(`/estadisticas/menu?desde=${semana}&hasta=${hoy}`, sucursalId!), enabled: on, staleTime: 300_000 });
-  const horas = useQuery({ queryKey: ['panel-horas', sucursalId, hoy], queryFn: () => api.get<{ filas: FilaVenta[] }>(`/estadisticas/ventas?grupo=hora&desde=${semana}&hasta=${hoy}`, sucursalId!), enabled: on, staleTime: 300_000 });
+  const horas = useQuery({ queryKey: ['panel-horas', sucursalId, hoy], queryFn: () => api.get<{ filas: FilaVenta[]; zona?: string }>(`/estadisticas/ventas?grupo=hora&desde=${semana}&hasta=${hoy}`, sucursalId!), enabled: on, staleTime: 300_000 });
   const alertas = useQuery({ queryKey: ['panel-alertas', sucursalId], queryFn: () => api.get<Alerta[]>('/alertas', sucursalId!), enabled: on, refetchInterval: 60_000 });
   const mesas = useQuery({ queryKey: ['mesas', sucursalId], queryFn: () => api.get<{ id: string; activa: boolean }[]>('/mesas', sucursalId!), enabled: on, staleTime: 300_000 });
   const abiertos = useQuery({ queryKey: ['pedidos', sucursalId, 'abiertos'], queryFn: () => api.get<Pedido[]>('/pedidos?filtro=abiertos', sucursalId!), enabled: on, refetchInterval: 30_000 });
@@ -69,13 +69,18 @@ export function Indicadores() {
         <section aria-labelledby="horas" className="xl:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm">
           <h2 id="horas" className="font-headline-sm text-headline-sm">Ventas por hora <span className="font-body-sm text-on-surface-variant">· últimos 7 días</span></h2>
           {horas.isLoading ? <Esqueleto className="h-40" /> : !filasHora.length ? <p className="text-on-surface-variant">Todavía no hay ventas para mostrar.</p> : (
-            <div className="flex items-end gap-1 h-40" role="group" aria-label="Ventas por hora">
-              {filasHora.map((f) => (
-                <button key={f.h} type="button" title={`${f.h}: ${bs(f.v)}`} onClick={() => setDetalle({ titulo: `Ventas a las ${f.h}`, sub: 'Suma de los últimos 7 días', cuerpo: <Dato etiqueta="Ventas" valor={bs(f.v)} /> })} className="flex-1 flex flex-col items-center justify-end gap-1 h-full group">
-                  <span className="w-full rounded-t bg-primary group-hover:bg-primary-container transition-colors" style={{ height: `${Math.max(4, (f.v / maxH) * 100)}%` }} />
-                  <span className="font-label-sm text-[10px] text-on-surface-variant">{f.h.slice(0, 2)}</span>
-                </button>))}
+            <div className="flex gap-space-xs">
+              <div className="flex flex-col justify-between items-end h-40 font-label-sm text-[10px] text-on-surface-variant shrink-0" aria-hidden="true"><span>{bs(maxH)}</span><span>{bs(maxH / 2)}</span><span>Bs 0</span></div>
+              <div className="flex-1 flex items-end gap-1 h-40 border-l border-b border-outline-variant" role="group" aria-label="Ventas por hora">
+                {filasHora.map((f) => (
+                  <button key={f.h} type="button" title={`${f.h}: ${bs(f.v)}`} onClick={() => setDetalle({ titulo: `Ventas a las ${f.h}`, sub: 'Suma de los últimos 7 días', cuerpo: <Dato etiqueta="Ventas" valor={bs(f.v)} /> })} className="flex-1 flex flex-col items-center justify-end gap-1 h-full group">
+                    {(filasHora.length <= 12 || f.v === maxH) && f.v > 0 && <span className="font-label-sm text-[10px] text-on-surface">{Math.round(f.v)}</span>}
+                    <span className="w-full rounded-t bg-primary group-hover:bg-primary-container transition-colors" style={{ height: `${Math.max(4, (f.v / maxH) * 100)}%` }} />
+                    <span className="font-label-sm text-[10px] text-on-surface-variant">{f.h.slice(0, 2)}h</span>
+                  </button>))}
+              </div>
             </div>)}
+          {filasHora.length > 0 && <p className="font-body-sm text-on-surface-variant">Bolivianos cobrados por hora del día. {horas.data?.zona ?? "Hora de Bolivia"}; suma de los últimos 7 días. Toca una barra para ver su valor.</p>}
         </section>
         <section aria-labelledby="alertas-v" className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm">
           <h2 id="alertas-v" className="font-headline-sm text-headline-sm flex items-center gap-space-xs"><span className="material-symbols-outlined text-error" aria-hidden="true">notifications_active</span>Alertas operativas</h2>

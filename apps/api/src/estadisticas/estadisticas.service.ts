@@ -6,6 +6,7 @@ import { BD, Bd, Tenant, TenantDb } from '../database/database.module';
 import { costoPorPorcion } from '../recetas/motor';
 import { RecetasService } from '../recetas/recetas.service';
 import { escenario, proyectar, sumarDias } from './proyeccion';
+import { conciliarVentas, rellenarHuecos } from './conciliacion';
 
 const MAX_DIAS = 92;
 const r2 = (n: Decimal.Value) => new Decimal(n).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toFixed(2);
@@ -123,8 +124,17 @@ export class EstadisticasService implements OnModuleInit, OnModuleDestroy {
       const etiqueta = (f: Fila) => (grupo === 'hora' ? `${f.clave.padStart(2, '0')}:00` : grupo === 'dia_semana' ? DIA[Number(f.clave)] : grupo === 'canal' ? (CANAL[f.clave] ?? f.clave) : grupo === 'tipo' ? (TIPO[f.clave] ?? f.clave) : (f.etiqueta ?? f.clave));
       const total = filas.reduce((s, f) => s.plus(f.ventas), new Decimal(0));
       const orden = (a: Fila, b: Fila) => (grupo === 'hora' || grupo === 'dia_semana' ? Number(a.clave) - Number(b.clave) : Number(b.ventas) - Number(a.ventas));
-      return { grupo, desde, hasta, total: total.toFixed(2), unidad: grupo === 'hora' || grupo === 'dia_semana' ? 'pedidos' : 'unidades',
-        filas: filas.sort(orden).map((f) => ({ clave: f.clave, etiqueta: etiqueta(f), ventas: f.ventas, cantidad: f.cantidad, participacionPct: total.gt(0) ? r2(new Decimal(f.ventas).div(total).mul(100)) : '0.00' })) };
+      // gestro-024: las ventas por plato/categoría/mesero/canal/tipo suman precio de lista; los Ingresos son lo cobrado (ya con descuento). Se concilia con cifras de la base, sin ajustar nada.
+      const porItems = !(grupo === 'hora' || grupo === 'dia_semana');
+      let conciliacion: ReturnType<typeof conciliarVentas> | null = null;
+      if (porItems && filas.length) {
+        const c = (await tx.execute(sql`SELECT COALESCE(SUM(p.amount), 0)::text AS ingresos, COALESCE(SUM(p.discount_amount), 0)::text AS descuentos
+          FROM sales_payments p JOIN orders o ON o.id = p.order_id WHERE p.restaurant_id = ${rid} AND p.voided_at IS NULL AND o.status = 'cobrado' AND (o.closed_at AT TIME ZONE ${tz})::date BETWEEN ${desde}::date AND ${hasta}::date`)).rows[0] as { ingresos: string; descuentos: string };
+        conciliacion = conciliarVentas(total, c.descuentos, c.ingresos);
+      }
+      const ordenadas = filas.sort(orden).map((f) => ({ clave: f.clave, etiqueta: etiqueta(f), ventas: f.ventas, cantidad: f.cantidad, participacionPct: total.gt(0) ? r2(new Decimal(f.ventas).div(total).mul(100)) : '0.00' }));
+      const completas = grupo === 'hora' ? rellenarHuecos(ordenadas, 'hora') : grupo === 'dia_semana' ? rellenarHuecos(ordenadas, 'dia_semana') : ordenadas;
+      return { grupo, desde, hasta, total: total.toFixed(2), unidad: porItems ? 'unidades' : 'pedidos', zona: tz === 'America/La_Paz' ? 'Hora de Bolivia (La Paz)' : `Zona horaria ${tz}`, conciliacion, filas: completas };
     });
   }
 

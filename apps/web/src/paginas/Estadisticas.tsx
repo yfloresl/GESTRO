@@ -1,19 +1,21 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { clases } from '../componentes/Marca';
-import { api, useRolesActivos } from '../lib/sesion';
+import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
+import { BotonCsv } from '../componentes/BotonCsv';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
 
 interface Resumen { ingresos: string; pedidos: number; ticketPromedio: string; costo: string; costoAlimentosPct: string | null; merma: string; minutosPreparacion: string | null; utilidadBruta: string }
-interface ResumenRes { desde: string; hasta: string; dias: number; actual: Resumen; anterior: Resumen; variacion: { ingresosPct: string | null; pedidosPct: string | null; ticketPct: string | null }; serie: { fecha: string; ingresos: string; pedidos: number }[] }
-interface Ventas { grupo: string; total: string; unidad: string; filas: { clave: string; etiqueta: string; ventas: string; cantidad: string; participacionPct: string }[] }
+interface ResumenRes { desde: string; hasta: string; dias: number; actual: Resumen; anterior: Resumen; variacion: { ingresosPct: string | null; pedidosPct: string | null; ticketPct: string | null }; serie: { fecha: string; ingresos: string; pedidos: number; costo: string }[] }
+interface Conciliacion { ventasAPrecioLista: string; descuentos: string; ingresos: string; diferenciaSinExplicar: string }
+interface Ventas { grupo: string; total: string; unidad: string; zona?: string; conciliacion?: Conciliacion | null; filas: { clave: string; etiqueta: string; ventas: string; cantidad: string; participacionPct: string }[] }
 interface MenuRes { umbralUnidades: string; margenPromedioPct: string | null; resumen: Record<string, number>; platos: { platoId: string; nombre: string; unidades: string; ventas: string; precioPromedio: string; costoPorPorcion: string | null; margenPct: string | null; clase: string }[] }
 type ProyRes = { suficiente: false; motivo: string; semanasHistoria: number; minimoSemanas: number } | { suficiente: true; confianza: 'alta' | 'media' | 'baja'; crecimientoSemanalPct: number; semanasHistoria: number; desde: string; costoAlimentosPct: string; comprasEstimadas: string;
   diario: { fecha: string; valor: number; bajo: number; alto: number }[]; semanas: { desde: string; hasta: string; valor: number; bajo: number; alto: number }[]; total: { valor: number; bajo: number; alto: number } };
 type EscRes = { suficiente: false; motivo: string } | { suficiente: true; base: { ingresos: string; costo: string; utilidadBruta: string }; escenario: { ingresos: string; costo: string; utilidadBruta: string; ingresosVariacion: number; utilidadVariacion: number }; nota: string };
 interface Comparacion { sucursales: (Resumen & { id: string; nombre: string })[] }
-type Pestana = 'resumen' | 'ventas' | 'menu' | 'proyeccion' | 'sucursales';
+type Pestana = 'resumen' | 'ventas' | 'menu' | 'propinas' | 'proyeccion' | 'sucursales';
 
 const hoy = () => new Date(Date.now() - 4 * 3_600_000).toISOString().slice(0, 10);
 const sumar = (f: string, d: number) => new Date(Date.parse(`${f}T12:00:00Z`) + d * 86_400_000).toISOString().slice(0, 10);
@@ -30,7 +32,7 @@ const CLASES: Record<string, { t: string; c: string; d: string }> = {
 export function Estadisticas() {
   const { sucursalId, esAdmin, roles } = useRolesActivos();
   const finanzas = esAdmin || roles.includes('contador');
-  const pestanas: [Pestana, string][] = [['resumen', 'Resumen'], ['ventas', 'Ventas'], ['menu', 'Menú'], ...(finanzas ? ([['proyeccion', 'Proyección']] as [Pestana, string][]) : []), ...(esAdmin ? ([['sucursales', 'Sucursales']] as [Pestana, string][]) : [])];
+  const pestanas: [Pestana, string][] = [['resumen', 'Resumen'], ['ventas', 'Ventas'], ['menu', 'Menú'], ...(finanzas ? ([['propinas', 'Propinas']] as [Pestana, string][]) : []), ...(finanzas ? ([['proyeccion', 'Proyección']] as [Pestana, string][]) : []), ...(esAdmin ? ([['sucursales', 'Sucursales']] as [Pestana, string][]) : [])];
   const [p, setP] = useState<Pestana>('resumen'); const [dias, setDias] = useState(30);
   if (!sucursalId) return null;
   const hasta = hoy(); const desde = sumar(hasta, -(dias - 1));
@@ -39,7 +41,7 @@ export function Estadisticas() {
       <header className="flex flex-wrap items-end justify-between gap-space-sm"><div><h1 className="font-headline-lg text-headline-lg text-primary tracking-tight">Estadísticas &amp; BI</h1><p className="font-body-md text-body-md text-on-surface-variant">Ventas, menú y proyecciones con los datos reales del restaurante.</p></div>
         {p !== 'proyeccion' && <div className="flex gap-space-xs" role="group" aria-label="Período">{[7, 30, 90].map((d) => <button key={d} aria-pressed={dias === d} onClick={() => setDias(d)} className={`h-12 px-space-md rounded-full font-label-md ${dias === d ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'}`}>{d} días</button>)}</div>}</header>
       <div className="flex gap-space-xs overflow-x-auto" role="tablist" aria-label="Secciones">{pestanas.map(([k, n]) => <button key={k} role="tab" aria-selected={p === k} onClick={() => setP(k)} className={`h-12 px-space-md rounded-lg font-semibold whitespace-nowrap ${p === k ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}>{n}</button>)}</div>
-      {p === 'resumen' && <ResumenVista desde={desde} hasta={hasta} />}{p === 'ventas' && <VentasVista desde={desde} hasta={hasta} />}{p === 'menu' && <MenuVista desde={desde} hasta={hasta} />}
+      {p === 'resumen' && <ResumenVista desde={desde} hasta={hasta} />}{p === 'ventas' && <VentasVista desde={desde} hasta={hasta} />}{p === 'menu' && <MenuVista desde={desde} hasta={hasta} />}{p === 'propinas' && <PropinasVista desde={desde} hasta={hasta} />}
       {p === 'proyeccion' && <Proyeccion />}{p === 'sucursales' && <Sucursales desde={desde} hasta={hasta} />}
     </div>
   );
@@ -88,12 +90,21 @@ function ResumenVista({ desde, hasta }: { desde: string; hasta: string }) {
         <Tarjeta t="Merma" v={bs(a.merma)} sub={Number(a.ingresos) > 0 ? `${((Number(a.merma) / Number(a.ingresos)) * 100).toFixed(1)}% de las ventas` : null} />
         <Tarjeta t="Prep. en cocina" v={a.minutosPreparacion ? `${a.minutosPreparacion} min` : '—'} />
       </div>
-      <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md"><h2 className="font-headline-sm text-headline-sm mb-space-xs">Ingresos por día</h2>
+      <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md"><div className="flex flex-wrap items-center justify-between gap-space-sm mb-space-xs"><h2 className="font-headline-sm text-headline-sm">Ingresos por día</h2><BotonCsv nombre={`ingresos-por-dia-${desde}-a-${hasta}`} columnas={['Fecha', 'Ingresos (Bs)', 'Pedidos cobrados', 'Costo (Bs)']} filas={r.serie.map((x) => [x.fecha, x.ingresos, x.pedidos, x.costo])} /></div>
         {a.pedidos === 0 ? <p className="text-on-surface-variant">Sin ventas cobradas en este período.</p> : <Linea puntos={r.serie.map((s) => ({ x: s.fecha, y: Number(s.ingresos) }))} />}</div>
     </section>
   );
 }
 
+/** gestro-024: explica por qué la suma por plato (precio de lista) no es igual a Ingresos (lo cobrado). */
+function Conciliar({ c }: { c: Conciliacion }) {
+  const dif = Number(c.diferenciaSinExplicar);
+  return (
+    <div className="rounded-lg bg-surface-container p-space-sm font-body-sm" role="note">
+      <p>Ventas a precio de lista <strong>{bs(c.ventasAPrecioLista)}</strong> − descuentos <strong>{bs(c.descuentos)}</strong> = ingresos cobrados <strong>{bs(c.ingresos)}</strong> (el mismo valor del Resumen).</p>
+      {dif !== 0 && <p role="alert" className="text-error font-semibold">Diferencia sin explicar: {bs(c.diferenciaSinExplicar)}. Avisa a soporte.</p>}
+    </div>);
+}
 const GRUPOS: [string, string][] = [['hora', 'Hora'], ['dia_semana', 'Día'], ['plato', 'Plato'], ['categoria', 'Categoría'], ['mesero', 'Mesero'], ['canal', 'Canal'], ['tipo', 'Tipo de pedido']];
 function VentasVista({ desde, hasta }: { desde: string; hasta: string }) {
   const { sucursalId } = useRolesActivos(); const [grupo, setGrupo] = useState('plato');
@@ -102,7 +113,10 @@ function VentasVista({ desde, hasta }: { desde: string; hasta: string }) {
     <section className="flex flex-col gap-space-sm">
       <div className="flex flex-wrap gap-space-xs">{GRUPOS.map(([k, n]) => <button key={k} aria-pressed={grupo === k} onClick={() => setGrupo(k)} className={`h-12 px-space-md rounded-full font-label-md ${grupo === k ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'}`}>{n}</button>)}</div>
       {!q.data ? <ListaEsqueleto /> : q.data.filas.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Sin ventas en este período.</p> : (
-        <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md flex flex-col gap-space-sm"><p>Total <strong>{bs(q.data.total)}</strong></p>
+        <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md flex flex-col gap-space-sm"><p>Total <strong>{bs(q.data.total)}</strong>{(grupo === 'hora' || grupo === 'dia_semana') ? <span className="text-on-surface-variant font-body-sm"> · cobrado, antes de propinas</span> : <span className="text-on-surface-variant font-body-sm"> · a precio de lista, antes de descuentos</span>}</p>
+          {grupo === 'hora' && q.data.zona && <p className="font-body-sm text-on-surface-variant">{q.data.zona}. Cada barra es una hora; la más larga ({bs(Math.max(...q.data.filas.map((f) => Number(f.ventas))))}) marca la hora pico.</p>}
+          {q.data.conciliacion && <Conciliar c={q.data.conciliacion} />}
+          <div><BotonCsv nombre={`ventas-por-${grupo}-${desde}-a-${hasta}`} columnas={[GRUPOS.find(([k]) => k === grupo)?.[1] ?? grupo, 'Ventas (Bs)', `Cantidad (${q.data.unidad})`, 'Participación (%)']} filas={q.data.filas.map((f) => [f.etiqueta, f.ventas, f.cantidad, f.participacionPct])} /></div>
           <Barras filas={q.data.filas.map((f) => ({ etiqueta: f.etiqueta, valor: Number(f.ventas), extra: `${Number(f.cantidad)} ${q.data!.unidad} · ${f.participacionPct}%` }))} /></div>)}
     </section>
   );
@@ -117,9 +131,38 @@ function MenuVista({ desde, hasta }: { desde: string; hasta: string }) {
   return (
     <section className="flex flex-col gap-space-md">
       <div className="grid grid-cols-2 gap-gutter md:grid-cols-5">{Object.entries(CLASES).map(([k, c]) => <div key={k} className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-sm"><span className={`px-2 py-0.5 rounded-full font-label-sm uppercase ${c.c}`}>{c.t}</span><p className="font-headline-sm text-headline-sm text-primary mt-1">{m.resumen[k] ?? 0}</p><p className="font-body-sm text-on-surface-variant">{c.d}</p></div>)}</div>
+      <div><BotonCsv nombre={`ingenieria-de-menu-${desde}-a-${hasta}`} columnas={['Plato', 'Unidades', 'Ventas (Bs)', 'Precio promedio (Bs)', 'Costo por porción (Bs)', 'Margen (%)', 'Clase']} filas={m.platos.map((p) => [p.nombre, p.unidades, p.ventas, p.precioPromedio, p.costoPorPorcion, p.margenPct, CLASES[p.clase]?.t ?? p.clase])} /></div>
       <p className="font-body-sm text-on-surface-variant">Popular = al menos {m.umbralUnidades} unidades (70 % del promedio por plato). Margen alto = al menos {m.margenPromedioPct ?? '—'} % (promedio ponderado del menú).</p>
       <div className="overflow-x-auto bg-surface-container-lowest border border-outline-variant rounded-xl"><table className="w-full text-body-sm"><caption className="sr-only">Ingeniería de menú</caption><thead><tr className="text-left text-on-surface-variant font-label-sm uppercase"><th className="p-3">Plato</th><th className="p-3 text-right">Unid.</th><th className="p-3 text-right">Ventas</th><th className="p-3 text-right">Costo</th><th className="p-3 text-right">Margen</th><th className="p-3">Clase</th></tr></thead>
         <tbody>{m.platos.map((p) => <tr key={p.platoId} className="border-t border-outline-variant"><td className="p-3 font-semibold">{p.nombre}</td><td className="p-3 text-right">{Number(p.unidades)}</td><td className="p-3 text-right">{bs(p.ventas)}</td><td className="p-3 text-right">{p.costoPorPorcion ? bs(p.costoPorPorcion) : '—'}</td><td className="p-3 text-right">{p.margenPct ? `${p.margenPct}%` : '—'}</td><td className="p-3"><span className={`px-2 py-0.5 rounded-full font-label-sm uppercase ${CLASES[p.clase].c}`}>{CLASES[p.clase].t}</span></td></tr>)}</tbody></table></div>
+    </section>
+  );
+}
+
+interface FilaPropina { meseroId: string | null; mesero: string; dia: string; propina: string; entregada: string; pendiente: string; entregadaEl: string | null; entregadaPor: string | null }
+/** gestro-p02: cuánta propina corresponde a cada mesero por día (según quién atendió la mesa) y marca de «entregada». */
+function PropinasVista({ desde, hasta }: { desde: string; hasta: string }) {
+  const { sucursalId, esAdmin } = useRolesActivos(); const qc = useQueryClient();
+  const [error, setError] = useState<string | null>(null);
+  const q = useQuery({ queryKey: ['propinas', sucursalId, desde, hasta], queryFn: () => api.get<{ filas: FilaPropina[]; totales: { propina: string; entregada: string; pendiente: string } }>(`/propinas?desde=${desde}&hasta=${hasta}`, sucursalId!), enabled: !!sucursalId });
+  const entregar = async (f: FilaPropina) => { setError(null); try { await api.post('/propinas/entregar', { meseroId: f.meseroId, dia: f.dia }, sucursalId!); await qc.invalidateQueries({ queryKey: ['propinas'] }); } catch (e) { setError(mensajeDeError(e)); } };
+  if (!q.data) return <ListaEsqueleto />;
+  const { filas, totales } = q.data;
+  return (
+    <section className="flex flex-col gap-space-sm">
+      <div className="grid grid-cols-3 gap-gutter"><Tarjeta t="Propinas" v={bs(totales.propina)} /><Tarjeta t="Entregadas" v={bs(totales.entregada)} /><Tarjeta t="Pendientes de entregar" v={bs(totales.pendiente)} bueno={Number(totales.pendiente) === 0 ? true : null} /></div>
+      <p className="font-body-sm text-on-surface-variant">La propina de cada cobro se asigna al mesero que atendió la mesa. «Marcar como entregada» deja registrado quién la entregó y cuándo.</p>
+      {error && <p role="alert" className="text-error">{error}</p>}
+      {filas.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">Sin propinas en este período.</p> : (
+        <>
+          <div><BotonCsv nombre={`propinas-${desde}-a-${hasta}`} columnas={['Día', 'Mesero', 'Propina (Bs)', 'Entregada (Bs)', 'Pendiente (Bs)', 'Entregada por']} filas={filas.map((f) => [f.dia, f.mesero, f.propina, f.entregada, f.pendiente, f.entregadaPor])} /></div>
+          <div className="overflow-x-auto bg-surface-container-lowest border border-outline-variant rounded-xl"><table className="min-w-[36rem] w-full text-body-sm"><caption className="sr-only">Propinas por mesero y día</caption>
+            <thead><tr className="text-left text-on-surface-variant font-label-sm uppercase"><th className="p-3">Día</th><th className="p-3">Mesero</th><th className="p-3 text-right">Propina</th><th className="p-3 text-right">Pendiente</th><th className="p-3" /></tr></thead>
+            <tbody>{filas.map((f) => (
+              <tr key={`${f.dia}-${f.meseroId}`} className="border-t border-outline-variant"><td className="p-3">{f.dia}</td><td className="p-3 font-semibold">{f.mesero}</td><td className="p-3 text-right">{bs(f.propina)}</td>
+                <td className={`p-3 text-right ${Number(f.pendiente) > 0 ? 'font-semibold' : 'text-on-surface-variant'}`}>{bs(f.pendiente)}</td>
+                <td className="p-3 text-right">{Number(f.pendiente) === 0 ? <span className="text-tertiary font-semibold">Entregada{f.entregadaPor ? ` por ${f.entregadaPor}` : ''}</span> : f.meseroId && esAdmin ? <button type="button" onClick={() => entregar(f)} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold">Marcar como entregada</button> : <span className="text-on-surface-variant">{f.meseroId ? 'Pendiente' : 'Sin mesero: reparte según tu criterio'}</span>}</td></tr>))}</tbody></table></div>
+        </>)}
     </section>
   );
 }
