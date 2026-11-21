@@ -4,6 +4,7 @@ import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { auditar } from '../comun/auditoria';
 import { Bd, Tenant, TenantDb } from '../database/database.module';
+import { margenNeto, CriterioIva } from './margen-neto';
 import { Catalogo, CicloDeRecetas, costoPorPorcion, faltantes, margenPct, r2, r3, r4, Receta, RecetaInvalida, requerimientos, UnidadIncompatible, validarSinCiclos } from './motor';
 
 const Cant = z.number().positive().max(1_000_000).refine((n) => Math.round(n * 10000) / 10000 === n, 'Máximo 4 decimales');
@@ -57,19 +58,20 @@ export class RecetasService {
   lista(t: Tenant) {
     return this.db.run(t, async (tx) => {
       const cat = await this.catalogo(tx, t); const costos = await this.costos(tx, t);
-      const [cfg] = (await tx.execute(sql`SELECT min_margin_pct::float8 AS m FROM restaurants WHERE id = ${t.restaurantId}`)).rows as { m: number }[];
+      const [cfg] = (await tx.execute(sql`SELECT min_margin_pct::float8 AS m, iva_pct::text AS iva, it_pct::text AS it, iva_criterio AS criterio FROM restaurants WHERE id = ${t.restaurantId}`)).rows as { m: number; iva: string; it: string; criterio: CriterioIva }[];
       const platos = (await tx.execute(sql`SELECT id, name, price::text AS price, available, category_id FROM menu_items WHERE restaurant_id = ${t.restaurantId} ORDER BY name`)).rows as { id: string; name: string; price: string; available: boolean }[];
       const vers = (await tx.execute(sql`SELECT menu_item_id, id, version FROM recipes WHERE restaurant_id = ${t.restaurantId} AND active AND menu_item_id IS NOT NULL`)).rows as { menu_item_id: string; id: string; version: number }[];
       const out = platos.map((p) => {
         const rec = cat.recetaDePlato[p.id]; const v = vers.find((x) => x.menu_item_id === p.id);
-        if (!rec) return { platoId: p.id, nombre: p.name, precio: p.price, disponible: p.available, tieneReceta: false, recetaId: null, version: null, costo: null, margen: null, bajoMinimo: false };
+        if (!rec) return { platoId: p.id, nombre: p.name, precio: p.price, disponible: p.available, tieneReceta: false, recetaId: null, version: null, costo: null, margen: null, margenNeto: null, ganancia: null, bajoMinimo: false };
         let costo: Decimal | null = null;
         try { costo = costoPorPorcion(cat, rec, costos); } catch { costo = null; }
         const m = costo ? margenPct(p.price, costo) : null;
-        return { platoId: p.id, nombre: p.name, precio: p.price, disponible: p.available, tieneReceta: true, recetaId: rec.id, version: v?.version ?? null, costo: costo ? r2(costo) : null, margen: m ? r2(m) : null, bajoMinimo: m ? m.lt(cfg.m) : false };
+        const n = costo ? margenNeto(p.price, costo, cfg.iva, cfg.it, cfg.criterio) : null;
+        return { platoId: p.id, nombre: p.name, precio: p.price, disponible: p.available, tieneReceta: true, recetaId: rec.id, version: v?.version ?? null, costo: costo ? r2(costo) : null, margen: m ? r2(m) : null, margenNeto: n?.margenPct ?? null, ganancia: n?.ganancia ?? null, bajoMinimo: m ? m.lt(cfg.m) : false };
       });
       const subs = (await tx.execute(sql`SELECT r.id, r.output_ingredient_id, i.name, r.version, r.yield_portions::text AS rend FROM recipes r JOIN ingredients i ON i.id = r.output_ingredient_id WHERE r.restaurant_id = ${t.restaurantId} AND r.active ORDER BY i.name`)).rows as { id: string; output_ingredient_id: string; name: string; version: number; rend: string }[];
-      return { margenMinimo: cfg.m, platos: out, subRecetas: subs.map((s) => ({ recetaId: s.id, insumoId: s.output_ingredient_id, nombre: s.name, version: s.version, rendimiento: s.rend })) };
+      return { margenMinimo: cfg.m, impuestos: { iva: cfg.iva, it: cfg.it, criterio: cfg.criterio }, platos: out, subRecetas: subs.map((s) => ({ recetaId: s.id, insumoId: s.output_ingredient_id, nombre: s.name, version: s.version, rendimiento: s.rend })) };
     });
   }
 
@@ -83,7 +85,9 @@ export class RecetasService {
     try { costo = r4(costoPorPorcion(cat, rec, costos)); } catch { costo = null; }
     const precio = r.menu_item_id ? ((await tx.execute(sql`SELECT price::text AS p FROM menu_items WHERE id = ${r.menu_item_id}`)).rows[0] as { p: string } | undefined)?.p ?? null : null;
     const m = costo && precio ? margenPct(precio, costo) : null;
-    return { id: r.id, platoId: r.menu_item_id, insumoId: r.output_ingredient_id, version: r.version, activa: r.active, rendimiento: rec.rendimiento, mermaPct: rec.mermaPct, instrucciones: r.instructions, costoPorPorcion: costo, precio, margen: m ? r2(m) : null, lineas: lineas.map((l) => ({ insumoId: l.ingredient_id, insumo: l.name, cantidad: l.qty, unidad: l.unit_code, costo: costos[l.ingredient_id] ?? '0' })) };
+    const [cf] = (await tx.execute(sql`SELECT iva_pct::text AS iva, it_pct::text AS it, iva_criterio AS criterio FROM restaurants WHERE id = ${t.restaurantId}`)).rows as { iva: string; it: string; criterio: CriterioIva }[];
+    const n = costo && precio ? margenNeto(precio, costo, cf.iva, cf.it, cf.criterio) : null;
+    return { id: r.id, platoId: r.menu_item_id, insumoId: r.output_ingredient_id, version: r.version, activa: r.active, rendimiento: rec.rendimiento, mermaPct: rec.mermaPct, instrucciones: r.instructions, costoPorPorcion: costo, precio, margen: m ? r2(m) : null, margenNeto: n?.margenPct ?? null, gananciaNeta: n?.ganancia ?? null, lineas: lineas.map((l) => ({ insumoId: l.ingredient_id, insumo: l.name, cantidad: l.qty, unidad: l.unit_code, costo: costos[l.ingredient_id] ?? '0' })) };
   }
 
   detalle(t: Tenant, id: string) { return this.db.run(t, (tx) => this.completa(tx, t, id)); }

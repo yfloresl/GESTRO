@@ -221,10 +221,10 @@ function Periodos() {
   const qc = useQueryClient(); const [error, setError] = useState<string | null>(null);
   const ahora = new Date(); const [anio, setAnio] = useState(ahora.getFullYear()); const [mes, setMes] = useState(ahora.getMonth() + 1);
   const q = useQuery({ queryKey: ['conta', 'periodos', sucursalId], queryFn: () => api.get<Periodo[]>('/contabilidad/periodos', sucursalId!), enabled: !!sucursalId });
-  const tasas = useQuery({ queryKey: ['conta', 'tasas', sucursalId], queryFn: () => api.get<{ iva: number; it: number }>('/contabilidad/tasas', sucursalId!), enabled: !!sucursalId });
+  const tasas = useQuery({ queryKey: ['conta', 'tasas', sucursalId], queryFn: () => api.get<{ iva: number; it: number; criterioIva?: string }>('/contabilidad/tasas', sucursalId!), enabled: !!sucursalId });
   const esDueno = roles.includes('owner');
   const accion = async (f: () => Promise<unknown>) => { setError(null); try { await f(); void refrescarTodo(qc); } catch (e) { setError(mensajeDeError(e)); } };
-  const guardarTasas = (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); const f = new FormData(e.currentTarget); void accion(() => api.put('/contabilidad/tasas', { iva: num(f.get('iva')), it: num(f.get('it')) }, sucursalId!)); };
+  const guardarTasas = (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); const f = new FormData(e.currentTarget); void accion(() => api.put('/contabilidad/tasas', { iva: num(f.get('iva')), it: num(f.get('it')), criterioIva: String(f.get('criterioIva') ?? 'incluido') }, sucursalId!)); };
   return (
     <section className="flex flex-col gap-space-md">{error && <p role="alert" className="rounded-lg bg-error-container text-on-error-container p-space-sm">{error}</p>}
       <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-wrap items-end gap-space-sm"><h2 className="font-headline-sm text-headline-sm w-full">Cerrar un período</h2>
@@ -233,9 +233,11 @@ function Periodos() {
         <button type="button" onClick={async () => { if (await confirmar({ titulo: 'Cerrar período', mensaje: `¿Cerrar ${MESES[mes - 1]} de ${anio}? No se podrán registrar asientos en ese mes.`, aceptar: 'Cerrar período' })) void accion(() => api.post('/contabilidad/periodos/cerrar', { anio, mes }, sucursalId!)); }} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold">Cerrar período</button></div>
       <ul className="flex flex-col gap-space-xs">{(q.data ?? []).map((p) => <li key={`${p.anio}-${p.mes}`} className="flex items-center justify-between gap-space-sm rounded-xl bg-surface-container-lowest border border-outline-variant p-space-sm px-space-md"><span className="font-semibold capitalize">{MESES[p.mes - 1]} {p.anio} <span className="font-body-sm font-normal text-on-surface-variant">· {p.asientos} asiento(s) · {p.cerrado ? 'cerrado' : 'abierto'}</span></span>
         {p.cerrado && esDueno && <button type="button" onClick={() => accion(() => api.post('/contabilidad/periodos/reabrir', { anio: p.anio, mes: p.mes }, sucursalId!))} className="h-12 px-space-sm rounded-lg border border-outline-variant font-label-md">Reabrir</button>}</li>)}</ul>
-      {(esAdmin || tasas.data) && tasas.data && <form onSubmit={guardarTasas} className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md grid grid-cols-2 gap-space-sm items-end" key={`${tasas.data.iva}-${tasas.data.it}`}><h2 className="font-headline-sm text-headline-sm col-span-2">Tasas de impuestos (parámetros de la sucursal)</h2>
+      {(esAdmin || tasas.data) && tasas.data && <form onSubmit={guardarTasas} className="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md grid grid-cols-2 gap-space-sm items-end" key={`${tasas.data.iva}-${tasas.data.it}-${tasas.data.criterioIva}`}><h2 className="font-headline-sm text-headline-sm col-span-2">Tasas de impuestos (parámetros de la sucursal)</h2>
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>IVA %</span><input name="iva" inputMode="decimal" defaultValue={tasas.data.iva} className={clases.input} /></label>
         <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>IT %</span><input name="it" inputMode="decimal" defaultValue={tasas.data.it} className={clases.input} /></label>
+        <label className="flex flex-col gap-space-xs col-span-2"><span className={clases.etiqueta}>¿Cómo se separa el IVA del precio? (margen neto de recetas)</span>
+          <select name="criterioIva" defaultValue={tasas.data.criterioIva ?? 'incluido'} className={clases.input}><option value="incluido">El precio ya incluye el IVA (13/113)</option><option value="porcentaje">IVA = 13 % del precio</option></select></label>
         <p className="col-span-2 font-body-sm text-on-surface-variant">Referenciales. Tu contador debe validar las tasas y las cifras antes de declarar.</p>
         {esAdmin && <button className={`${clases.primario} col-span-2`}>Guardar tasas</button>}</form>}
     </section>

@@ -27,7 +27,7 @@ export const CambioCuenta = z.object({ nombre: z.string().trim().min(2).max(120)
 export const NuevoCentro = z.object({ codigo: z.string().trim().min(1).max(20), nombre: z.string().trim().min(2).max(80) }).strict();
 export const Rango = z.object({ desde: Fecha.optional(), hasta: Fecha.optional() }).strict();
 export const Periodo = z.object({ anio: z.number().int().min(2000).max(2100), mes: z.number().int().min(1).max(12) }).strict();
-export const Tasas = z.object({ iva: z.number().min(0).max(100), it: z.number().min(0).max(100) }).strict();
+export const Tasas = z.object({ iva: z.number().min(0).max(100), it: z.number().min(0).max(100), criterioIva: z.enum(['incluido', 'porcentaje']).optional() }).strict();
 
 interface Origen { source: string; sourceId: string; fecha?: string }
 interface Saldo { id: string; codigo: string; nombre: string; tipo: TipoCuenta; acepta: boolean; clave: string | null; debe: string; haber: string }
@@ -496,10 +496,10 @@ export class ContabilidadService {
     });
   }
 
-  tasasDeImpuestos(t: Tenant) { return this.db.run(t, async (tx) => { const x = await this.tasas(tx, t); return { iva: Number(x.iva), it: Number(x.it) }; }); }
+  tasasDeImpuestos(t: Tenant) { return this.db.run(t, async (tx) => { const x = await this.tasas(tx, t); const [c] = (await tx.execute(sql`SELECT iva_criterio AS c FROM restaurants WHERE id = ${t.restaurantId}`)).rows as { c: string }[]; return { iva: Number(x.iva), it: Number(x.it), criterioIva: c?.c ?? 'incluido' }; }); }
   cambiarTasas(t: Tenant, por: string, d: z.infer<typeof Tasas>) {
     return this.db.run(t, async (tx) => {
-      await tx.execute(sql`UPDATE restaurants SET iva_pct = ${d.iva.toFixed(2)}::numeric, it_pct = ${d.it.toFixed(2)}::numeric WHERE id = ${t.restaurantId}`);
+      await tx.execute(sql`UPDATE restaurants SET iva_pct = ${d.iva.toFixed(2)}::numeric, it_pct = ${d.it.toFixed(2)}::numeric${d.criterioIva ? sql`, iva_criterio = ${d.criterioIva}` : sql``} WHERE id = ${t.restaurantId}`);
       await auditar(tx, t.restaurantId, por, 'contabilidad.tasas', 'restaurant', t.restaurantId, d);
       return { ok: true };
     });
