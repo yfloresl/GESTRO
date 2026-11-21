@@ -18,6 +18,9 @@ const COLOR: Record<string, string> = { borrador: 'bg-surface-container text-on-
 const Chip = ({ estado }: { estado: string }) => <span className={`px-2 py-0.5 rounded-full font-label-sm text-label-sm uppercase whitespace-nowrap ${COLOR[estado] ?? COLOR.borrador}`}>{ETIQUETA_ESTADO[estado] ?? estado}</span>;
 
 /** Pedidos: lista del día (2.6) y pantalla de toma de pedidos del personal (2.3, 2.4, 2.5, 2.7). */
+/** gestro-031: «platos» de una tarjeta = unidades pedidas (2× Pique + 1× Sopa = 3 platos), no líneas. */
+export const unidadesDePlatos = (items: { cantidad: string | number; anulado?: boolean }[]) => items.filter((i) => !i.anulado).reduce((t, i) => t + Number(i.cantidad), 0);
+
 export function Pedidos() {
   const { sucursalId } = useRolesActivos();
   const [sp] = useSearchParams();
@@ -45,7 +48,8 @@ export function Pedidos() {
             return (
               <li key={p.id}><button type="button" onClick={() => setAbierto(p.id)} className={`w-full text-left bg-surface-container-lowest border-2 rounded-xl p-space-md flex flex-col gap-space-xs ${pendientes ? 'border-secondary-container' : 'border-outline-variant'} hover:border-primary`}>
                 <div className="flex items-center justify-between"><span className="font-headline-sm text-headline-sm text-primary">{p.tipo === 'mesa' ? `Mesa ${p.mesa}` : `${ETIQUETA_TIPO[p.tipo]} #${p.ticket}`}</span><Chip estado={p.estado} /></div>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">{p.items.filter((i) => !i.anulado).length} platos · {haceCuanto(minutosDesde(p.abierto))}{p.mesero ? ` · ${p.mesero}` : ''}{p.cliente ? ` · ${p.cliente}` : ''}</p>
+                <p className="font-body-sm text-body-sm text-on-surface-variant">{unidadesDePlatos(p.items)} {unidadesDePlatos(p.items) === 1 ? 'plato' : 'platos'} · {haceCuanto(minutosDesde(p.abierto))}{p.mesero ? ` · ${p.mesero}` : ''}{p.cliente ? ` · ${p.cliente}` : ''}</p>
+                {p.comentario && <p className="font-body-sm text-on-secondary-fixed-variant bg-secondary-fixed rounded px-2 py-0.5 line-clamp-2">«{p.comentario}»</p>}
                 {pendientes > 0 && <p className="font-body-sm font-semibold text-on-secondary-fixed-variant flex items-center gap-1"><span className="material-symbols-outlined text-[18px]" aria-hidden="true">qr_code_2</span>{pendientes} por confirmar (pedido del cliente)</p>}
                 <p className="font-label-lg text-label-lg text-primary mt-space-xs">{bs(p.total)}</p>
               </button></li>
@@ -163,6 +167,7 @@ function PedidoDetalle({ id, volver }: { id: string; volver(): void }) {
 
         <aside aria-label="Pedido" className={`bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md flex flex-col gap-space-sm h-fit ${cerrado ? 'lg:col-span-2' : 'lg:sticky lg:top-20'}`}>
           <h2 className="font-headline-sm text-headline-sm">Pedido</h2>
+          {p.comentario && <p role="note" className="rounded-lg bg-secondary-fixed text-on-secondary-fixed-variant p-space-sm font-body-sm"><strong>Comentario del cliente:</strong> {p.comentario}</p>}
           {vigentes.length === 0 ? <p className="text-on-surface-variant">Toca un plato para agregarlo.</p> : (
             <ul className="flex flex-col divide-y divide-outline-variant">
               {p.items.map((i) => (
@@ -331,14 +336,17 @@ function Cobrar({ pedido, cerrar, cobrado }: { pedido: Pedido; cerrar(): void; c
       {metodo === 'efectivo' && <label className="flex flex-col gap-space-xs"><span className={clases.etiqueta}>Efectivo recibido (Bs)</span><input value={recibido} onChange={(e) => setRecibido(e.target.value)} inputMode="decimal" placeholder={deCentavos(calc.aCobrar)} className={clases.input} /></label>}
       <dl className="rounded-lg bg-surface-container p-space-sm grid grid-cols-[1fr_auto] gap-x-space-md gap-y-1" aria-live="polite">
         <dt>Subtotal</dt><dd className="text-right">{bs(deCentavos(subtotal))}</dd>
-        {calc.descuento > 0 && <><dt>Descuento</dt><dd className="text-right">− {bs(deCentavos(calc.descuento))}</dd></>}
+        {calc.descuento > 0 && (calc.descuentoExcedidoTope !== undefined
+          ? <><dt className="text-error">Descuento escrito (no se aplica: pasa del tope)</dt><dd className="text-right text-error line-through">− {bs(deCentavos(calc.descuento))}</dd></>
+          : <><dt>Descuento</dt><dd className="text-right">− {bs(deCentavos(calc.descuento))}</dd></>)}
         <dt>Total del pedido</dt><dd className="text-right">{bs(deCentavos(calc.total))}</dd>
         {calc.propina > 0 && <><dt>Propina</dt><dd className="text-right">{bs(deCentavos(calc.propina))}</dd></>}
         <dt className="font-semibold">A cobrar</dt><dd className="text-right font-semibold">{bs(deCentavos(calc.aCobrar))}</dd>
         {metodo === 'efectivo' && calc.vuelto !== null && <><dt className="font-semibold text-primary">Vuelto</dt><dd className="text-right font-semibold text-primary">{bs(deCentavos(calc.vuelto))}</dd></>}
       </dl>
       {(error ?? avisoVivo) && <p role="alert" className="text-error">{error ?? avisoVivo}</p>}
-      <div className="grid grid-cols-2 gap-space-sm"><button type="button" onClick={cerrar} className="h-14 rounded-lg border border-outline-variant font-semibold">Cancelar</button><button type="button" disabled={ocupado || caja.data?.activa === false} onClick={cobrar} className={clases.primario}>{ocupado ? 'Cobrando…' : 'Confirmar cobro'}</button></div>
+      {calc.descuentoExcedidoTope !== undefined && <p className="font-body-sm text-error">No se puede cobrar con ese descuento. Escribe como máximo Bs {deCentavos(calc.descuentoExcedidoTope)} (con él el total sería Bs {deCentavos(subtotal - calc.descuentoExcedidoTope)}) o borra el descuento para cobrar Bs {deCentavos(subtotal)}.</p>}
+      <div className="grid grid-cols-2 gap-space-sm"><button type="button" onClick={cerrar} className="h-14 rounded-lg border border-outline-variant font-semibold">Cancelar</button><button type="button" disabled={ocupado || caja.data?.activa === false || calc.descuentoExcedidoTope !== undefined} onClick={cobrar} className={clases.primario}>{ocupado ? 'Cobrando…' : 'Confirmar cobro'}</button></div>
     </Hoja>
   );
 }

@@ -30,7 +30,9 @@ export function aCentavos(v: string): number | null {
 export const deCentavos = (c: number) => `${Math.floor(c / 100)}.${String(c % 100).padStart(2, '0')}`;
 
 export interface EntradaCobro { subtotal: number; descuento: string; motivo: string; propina: string; metodo: string; recibido: string; topes?: Topes }
-export interface ResultadoCobro { descuento: number; total: number; propina: number; aCobrar: number; recibido: number | null; vuelto: number | null; error: string | null }
+export interface ResultadoCobro { descuento: number; total: number; propina: number; aCobrar: number; recibido: number | null; vuelto: number | null; error: string | null;
+  /** gestro-026: si el descuento pasa del tope, el máximo permitido (centavos); el resumen lo explica en vez de mostrar el total sin descuento sin más. */
+  descuentoExcedidoTope?: number }
 
 export function calcularCobro(e: EntradaCobro): ResultadoCobro {
   const topes = e.topes ?? TOPES_POR_DEFECTO;
@@ -40,7 +42,7 @@ export function calcularCobro(e: EntradaCobro): ResultadoCobro {
   if (pr === null) return { ...vacio, error: 'La propina debe ser un monto válido (máximo 2 decimales).' };
   if (d > 0 && e.motivo.trim().length < 3) return { ...vacio, descuento: d, total: Math.max(0, e.subtotal - d), error: 'Escribe el motivo del descuento (mínimo 3 letras).' };
   const topeD = topeEnCentavos(e.subtotal, topes.descuentoPct);
-  if (d > topeD) return { ...vacio, descuento: d, error: `El descuento no puede pasar del ${pctTxt(topes.descuentoPct)} % (Bs ${deCentavos(topeD)}).` };
+  if (d > topeD) return { ...vacio, descuento: d, descuentoExcedidoTope: topeD, error: `El descuento no puede pasar del ${pctTxt(topes.descuentoPct)} % (Bs ${deCentavos(topeD)}).` };
   const total = e.subtotal - d;
   const topeP = topeEnCentavos(total, topes.propinaPct);
   if (pr > topeP) return { ...vacio, descuento: d, total, propina: pr, aCobrar: total + pr, error: `La propina no puede pasar del ${pctTxt(topes.propinaPct)} % (Bs ${deCentavos(topeP)}).` };

@@ -22,6 +22,8 @@ describe('cobro en centavos (GST-004)', () => {
     expect(calcularCobro({ ...base, descuento: '10' }).error).toMatch(/motivo/);
     expect(calcularCobro({ ...base, descuento: '65,40', motivo: 'Cortesía' })).toMatchObject({ descuento: 6540, total: 15260, error: null });
     expect(calcularCobro({ ...base, descuento: '65,41', motivo: 'Cortesía' }).error).toMatch(/30 %/);
+    expect(calcularCobro({ ...base, descuento: '65,41', motivo: 'Cortesía' }).descuentoExcedidoTope).toBe(6540);   // gestro-026
+    expect(calcularCobro({ ...base, descuento: '65,40', motivo: 'Cortesía' }).descuentoExcedidoTope).toBeUndefined();
   });
   it('propina: tope del 30 % del total y sin crédito', () => {
     expect(calcularCobro({ ...base, propina: '65,40' }).error).toBeNull();
