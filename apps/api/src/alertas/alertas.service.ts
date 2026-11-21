@@ -8,6 +8,7 @@ import { sumarDias } from '../estadisticas/proyeccion';
 import { costoPorPorcion } from '../recetas/motor';
 import { RecetasService } from '../recetas/recetas.service';
 import { EventosGateway, salas } from '../tiempo-real/eventos.gateway';
+import { MAX_MIN_COCINA, mensajeDemora } from './demora';
 import { PushService } from '../tiempo-real/push.service';
 
 export const LIMITE_MERMA_PCT = 5;
@@ -82,8 +83,8 @@ export class AlertasService implements OnModuleInit, OnModuleDestroy {
       HAVING extract(epoch FROM (now() - min(i.sent_at))) / 60 > GREATEST(max(COALESCE(m.prep_minutes, 10)) * 1.5, 15)`)).rows as { id: string; ticket_number: number | null; mesa: string | null; minutos: number; umbral: number; plato: string }[];
     return r.map((x) => ({
       clave: x.id, severidad: x.minutos > x.umbral * 2 ? 'alta' : 'media',
-      mensaje: `El pedido ${x.ticket_number ? `#${x.ticket_number}` : ''}${x.mesa ? ` (mesa ${x.mesa})` : ''} lleva ${x.minutos} min en cocina; el límite para «${x.plato}» es ${x.umbral} min.`.replace('pedido  (', 'pedido ('),
-      datos: { pedidoId: x.id, ticket: x.ticket_number, mesa: x.mesa, minutosEnCocina: x.minutos, limiteMinutos: x.umbral, platoMasLento: x.plato },
+      mensaje: mensajeDemora({ ticket: x.ticket_number, mesa: x.mesa, minutos: x.minutos, umbral: x.umbral, plato: x.plato }),
+      datos: { pedidoId: x.id, ticket: x.ticket_number, mesa: x.mesa, minutosEnCocina: x.minutos, limiteMinutos: x.umbral, platoMasLento: x.plato, olvidado: x.minutos > MAX_MIN_COCINA },
     }));
   }
 

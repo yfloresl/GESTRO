@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, HttpException, HttpStatus, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, HttpException, HttpStatus, Inject, Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { randomBytes } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import { Pool, PoolClient } from 'pg';
@@ -21,8 +21,41 @@ const CONSERVAR = ['user_roles', 'staff_members', 'audit_log', 'ai_jobs', 'subsc
  * en lo que se ve). Las cuentas entran por sus `sub` fijos de Kyros ID, pre-vinculadas aquí. «Restablecer» borra y recarga SOLO esta sucursal.
  */
 @Injectable()
-export class DemoService {
+export class DemoService implements OnModuleInit, OnModuleDestroy {
+  private readonly log = new Logger('Demo');
+  private reloj?: NodeJS.Timeout;
   constructor(@Inject(BD) private readonly bd: Bd, @Inject(POOL) private readonly pool: Pool, @Inject(KyrosIdService) private readonly kyros: KyrosIdService) {}
+
+  /**
+   * gestro-033: la historia de muestra termina «ayer» del día en que se cargó; con los días se vuelve vieja (alerta de caída de ventas, gráficos sin datos recientes).
+   * Cada hora, pasadas las 02:00 de La Paz, si su última venta es anterior a ayer y nadie ha trabajado en ella en las últimas 3 horas, se recarga sola (la sucursal de muestra siempre se puede restablecer).
+   */
+  onModuleInit() {
+    if (process.env.VITEST !== undefined) return;
+    this.reloj = setInterval(() => { void this.refrescarSiEstaVieja().catch((e) => this.log.error(`No se pudo refrescar la demostración: ${(e as Error).message}`)); }, 3_600_000);
+    this.reloj.unref();
+  }
+  onModuleDestroy() { if (this.reloj) clearInterval(this.reloj); }
+
+  async refrescarSiEstaVieja(): Promise<boolean> {
+    const hora = Number((await this.bd.execute(sql`SELECT EXTRACT(HOUR FROM now() AT TIME ZONE 'America/La_Paz')::int AS h`)).rows[0]?.h ?? 0);
+    if (hora < 2) return false;
+    const { emisor } = await this.kyros.ajustes();
+    if (!emisor) return false;
+    return this.conTransaccion(async (c) => {
+      const r = (await c.query(`SELECT r.id, r.timezone, r.demo_days,
+          (SELECT max((o.closed_at AT TIME ZONE r.timezone)::date) FROM orders o WHERE o.restaurant_id = r.id AND o.status = 'cobrado') AS ultima,
+          (now() AT TIME ZONE r.timezone)::date AS hoy
+        FROM restaurants r WHERE r.is_demo AND NOT EXISTS (SELECT 1 FROM audit_log a WHERE a.restaurant_id = r.id AND a.created_at > now() - interval '3 hours') FOR UPDATE`)).rows[0] as { id: string; timezone: string; demo_days: number; ultima: Date | null; hoy: Date } | undefined;
+      if (!r) return false;
+      if (r.ultima && (r.hoy.getTime() - r.ultima.getTime()) / 86_400_000 <= 1) return false;
+      await c.query(`UPDATE restaurants SET demo_reset_at = now() WHERE id = $1`, [r.id]);
+      const res = await this.recargar(c, r.id, emisor, r.timezone, r.demo_days);
+      await c.query(`INSERT INTO audit_log (restaurant_id, action, entity, entity_id, after) VALUES ($1::uuid, 'demo.refrescada_sola', 'restaurant', $1::text, $2::jsonb)`, [r.id, JSON.stringify(res)]);
+      this.log.log('Demostración refrescada: sus ventas ya eran viejas.');
+      return true;
+    });
+  }
 
   private async conTransaccion<T>(f: (c: PoolClient) => Promise<T>): Promise<T> {
     const c = await this.pool.connect();
@@ -49,10 +82,16 @@ export class DemoService {
     let plan = (await c.query(`SELECT id, monthly_price_bob::float8 AS precio FROM plans WHERE active ORDER BY monthly_price_bob DESC LIMIT 1`)).rows[0] as { id: string; precio: number } | undefined;
     plan ??= (await c.query(`INSERT INTO plans (code, name, monthly_price_bob, features) VALUES ('demo-profesional', 'Profesional', 299, '{}') RETURNING id, monthly_price_bob::float8 AS precio`)).rows[0];
     await c.query(`UPDATE restaurants SET plan_id = $2 WHERE id = $1 AND plan_id IS NULL`, [rid, plan!.id]);
-    if ((await c.query(`SELECT 1 FROM subscription_payments WHERE restaurant_id = $1`, [rid])).rows.length) return;
+    if ((await c.query(`SELECT 1 FROM subscription_payments WHERE restaurant_id = $1`, [rid])).rows.length) { await this.alinearVigencia(c, rid); return; }
     const monto = Math.round(plan!.precio * 12 * 100) / 100;
     await c.query(`INSERT INTO subscription_payments (restaurant_id, months_paid, amount_bob, expected_amount, voucher_url, bank, bank_reference, status, validated_at, paid_on, period_from, period_to, notes)
       VALUES ($1, 12, $2, $2, 'demo/sin-comprobante', 'Banco Unión', 'PAGO-0001', 'validado', now() - interval '20 days', (now() - interval '20 days')::date, (now() - interval '20 days')::date, (now() + interval '345 days')::date, 'Pago anual')`, [rid, monto]);
+    await this.alinearVigencia(c, rid);
+  }
+
+  /** gestro-033: la vigencia de la sucursal de muestra es la del pago validado (antes decía 2036 frente a un pago hasta 2027). */
+  private async alinearVigencia(c: PoolClient, rid: string) {
+    await c.query(`UPDATE restaurants SET paid_until = (SELECT max(period_to) FROM subscription_payments WHERE restaurant_id = $1 AND status = 'validado') WHERE id = $1 AND is_demo AND EXISTS (SELECT 1 FROM subscription_payments WHERE restaurant_id = $1 AND status = 'validado')`, [rid]);
   }
 
   /** Interruptor «Cuentas demo: modo QA con escritura». Solo plataforma; queda auditado. */
