@@ -110,6 +110,8 @@ export function Salon() {
         )}
       </section>
 
+      <Agotados />
+
       {fichaMesa && (() => {
         const m = (mesas.data ?? []).find((x) => x.id === fichaMesa); if (!m) return null;
         const abiertas = porMesa.get(m.id) ?? []; const pedido = pedidoDe.get(m.id);
@@ -122,10 +124,57 @@ export function Salon() {
                 <button type="button" disabled={atender.isPending} onClick={() => atender.mutate(s.id)} className="h-12 px-space-md rounded-lg bg-error text-on-error font-semibold">Atendido</button>
               </div>))}
             {pedido && <Link to={`/app/pedidos?abrir=${pedido.id}`} className={clases.primario}>Abrir el pedido · {bs(pedido.total)}</Link>}
+            <QrDeMesa mesaId={m.id} numero={m.numero} />
           </Ficha>);
       })()}
       {esAdmin && <Configurar areas={areas.data ?? []} mesas={mesas.data ?? []} refrescar={() => { void qc.invalidateQueries({ queryKey: ['areas', sucursalId] }); void qc.invalidateQueries({ queryKey: ['mesas', sucursalId] }); }} />}
     </div>
+  );
+}
+
+/** gestro-p08: el mesero muestra a la mesa su QR sin entrar a la administración (solo ve el de su mesa; el servidor lo comprueba). */
+function QrDeMesa({ mesaId, numero }: { mesaId: string; numero: string }) {
+  const { sucursalId } = useRolesActivos();
+  const [img, setImg] = useState<string | null>(null); const [error, setError] = useState<string | null>(null); const [ocupado, setOcupado] = useState(false);
+  const mostrar = async () => {
+    setError(null); setOcupado(true);
+    try { const r = await api.get<{ urlQr: string }>(`/mesas/${mesaId}/qr`, sucursalId!); setImg(await QRCode.toDataURL(r.urlQr, { margin: 1, width: 360, errorCorrectionLevel: 'M' })); }
+    catch (e) { setError(mensajeDeError(e)); } finally { setOcupado(false); }
+  };
+  return (
+    <div className="flex flex-col gap-space-xs">
+      {!img ? <button type="button" onClick={mostrar} disabled={ocupado} className="h-12 px-space-md rounded-lg border border-outline-variant text-primary font-semibold">{ocupado ? 'Cargando…' : 'Mostrar QR de la mesa'}</button>
+        : <figure className="flex flex-col items-center gap-space-xs"><img src={img} alt={`Código QR de la mesa ${numero}`} className="w-64 h-64 bg-white rounded-lg p-space-xs" /><figcaption className="font-body-sm text-on-surface-variant text-center">El cliente lo escanea con la cámara para ver el menú y pedir desde su celular.</figcaption>
+          <button type="button" onClick={() => setImg(null)} className="h-12 px-space-md rounded-lg border border-outline-variant font-semibold">Ocultar</button></figure>}
+      {error && <p role="alert" className="text-error">{error}</p>}
+    </div>
+  );
+}
+
+interface PlatoMenu { id: string; nombre: string; disponible: boolean }
+/** gestro-p08: marcar un plato como agotado (o de vuelta disponible) desde el celular; el menú del cliente se actualiza solo. */
+function Agotados() {
+  const { sucursalId } = useRolesActivos(); const qc = useQueryClient();
+  const [error, setError] = useState<string | null>(null); const [b, setB] = useState('');
+  const q = useQuery({ queryKey: ['menu-platos', sucursalId], queryFn: () => api.get<PlatoMenu[]>('/menu/platos', sucursalId!), enabled: !!sucursalId });
+  const cambiar = useMutation({
+    mutationFn: (p: PlatoMenu) => api.patch(`/menu/platos/${p.id}`, { disponible: !p.disponible }, sucursalId!),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['menu-platos', sucursalId] }), onError: (e) => setError(mensajeDeError(e)),
+  });
+  const platos = (q.data ?? []).filter((p) => p.nombre.toLowerCase().includes(b.toLowerCase()));
+  const agotados = (q.data ?? []).filter((p) => !p.disponible).length;
+  return (
+    <details className="bg-surface-container-low rounded-xl p-space-md">
+      <summary className="font-headline-sm text-headline-sm cursor-pointer min-h-12 flex items-center">Platos agotados{agotados > 0 ? ` (${agotados})` : ''}</summary>
+      <div className="flex flex-col gap-space-sm mt-space-sm">
+        <p className="font-body-sm text-on-surface-variant">Toca un plato para marcarlo como agotado; vuelve a tocarlo cuando haya otra vez. El menú del cliente se actualiza al instante.</p>
+        <input value={b} onChange={(e) => setB(e.target.value)} placeholder="Buscar plato" aria-label="Buscar plato" className={clases.input} />
+        {error && <p role="alert" className="text-error">{error}</p>}
+        {q.isLoading ? <ListaEsqueleto /> : <ul className="grid grid-cols-1 gap-space-xs md:grid-cols-2">{platos.map((p) => (
+          <li key={p.id}><button type="button" aria-pressed={!p.disponible} disabled={cambiar.isPending} onClick={() => { setError(null); cambiar.mutate(p); }} className={`w-full min-h-12 px-space-md rounded-lg flex items-center justify-between gap-space-sm font-semibold ${p.disponible ? 'bg-surface-container-lowest border border-outline-variant' : 'bg-error-container text-on-error-container'}`}>
+            <span className="truncate text-left">{p.nombre}</span><span className="font-label-md whitespace-nowrap">{p.disponible ? 'Disponible' : 'Agotado'}</span></button></li>))}</ul>}
+      </div>
+    </details>
   );
 }
 
@@ -136,10 +185,12 @@ function Configurar({ areas, mesas, refrescar }: { areas: Area[]; mesas: Mesa[];
   const personal = useQuery({ queryKey: ['personal', sucursalId], queryFn: () => api.get<Persona[]>('/personal', sucursalId!), enabled: !!sucursalId });
   const meseros = (personal.data ?? []).filter((p) => p.activo && p.roles.some((r) => r === 'mesero' || r === 'area_manager'));
   const encargados = (personal.data ?? []).filter((p) => p.activo);
-  const accion = async (f: () => Promise<unknown>) => { setError(null); try { await f(); refrescar(); } catch (e) { setError(mensajeDeError(e)); } };
+  // gestro-030: mientras el servidor responde, el botón se bloquea («Agregando…»): no se envía dos veces ni se pierde lo escrito; si falla, el formulario conserva sus datos.
+  const [ocupado, setOcupado] = useState(false);
+  const accion = async (f: () => Promise<unknown>) => { setError(null); setOcupado(true); try { await f(); refrescar(); } catch (e) { setError(mensajeDeError(e)); } finally { setOcupado(false); } };
 
-  const nuevaArea = (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); const f = new FormData(e.currentTarget); const form = e.currentTarget; void accion(async () => { await api.post('/areas', { nombre: String(f.get('nombre')).trim(), encargadoId: String(f.get('encargado')) || null }, sucursalId!); form.reset(); }); };
-  const nuevaMesa = (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); const f = new FormData(e.currentTarget); const form = e.currentTarget; void accion(async () => { await api.post('/mesas', { numero: String(f.get('numero')).trim(), asientos: Number(f.get('asientos')), areaId: String(f.get('area')) || null }, sucursalId!); form.reset(); }); };
+  const nuevaArea = (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); if (ocupado) return; const f = new FormData(e.currentTarget); const form = e.currentTarget; void accion(async () => { await api.post('/areas', { nombre: String(f.get('nombre')).trim(), encargadoId: String(f.get('encargado')) || null }, sucursalId!); form.reset(); }); };
+  const nuevaMesa = (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); if (ocupado) return; const f = new FormData(e.currentTarget); const form = e.currentTarget; void accion(async () => { await api.post('/mesas', { numero: String(f.get('numero')).trim(), asientos: Number(f.get('asientos')), areaId: String(f.get('area')) || null }, sucursalId!); form.reset(); }); };
 
   return (
     <details className="bg-surface-container-low rounded-xl p-space-md">
@@ -152,13 +203,13 @@ function Configurar({ areas, mesas, refrescar }: { areas: Area[]; mesas: Mesa[];
             <input name="nombre" required list="sugerencias-area" placeholder="Salón principal, Terraza, VIP…" aria-label="Nombre del área" className={clases.input} />
             <datalist id="sugerencias-area">{['Salón principal', 'Terraza', 'VIP', 'Aire acondicionado', 'Fumadores', 'No fumadores', 'Jardín', 'Barra'].map((n) => <option key={n} value={n} />)}</datalist>
             <select name="encargado" aria-label="Encargado del área" className={clases.input}><option value="">Sin encargado</option>{encargados.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}</select>
-            <button className={clases.secundario}>Agregar área</button>
+            <button disabled={ocupado} className={clases.secundario}>{ocupado ? 'Agregando…' : 'Agregar área'}</button>
           </form>
           <form onSubmit={nuevaMesa} className="bg-surface-container-lowest rounded-xl border border-outline-variant p-space-md flex flex-col gap-space-sm">
             <h3 className="font-body-lg font-semibold">Nueva mesa</h3>
             <div className="grid grid-cols-2 gap-space-sm"><input name="numero" required placeholder="Número" aria-label="Número de mesa" className={clases.input} /><input name="asientos" required type="number" min={1} max={50} defaultValue={4} aria-label="Asientos" className={clases.input} /></div>
             <select name="area" aria-label="Área de la mesa" className={clases.input}><option value="">Sin área</option>{areas.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}</select>
-            <button className={clases.secundario}>Agregar mesa</button>
+            <button disabled={ocupado} className={clases.secundario}>{ocupado ? 'Agregando…' : 'Agregar mesa'}</button>
           </form>
         </div>
 

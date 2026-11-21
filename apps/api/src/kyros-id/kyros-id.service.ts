@@ -7,6 +7,7 @@ import { and, count, eq, gt, isNull, lt, sql } from 'drizzle-orm';
 import type { Response } from 'express';
 import { z } from 'zod';
 import type { KyrosIdPublico, Rol, SesionRespuesta } from '@gestro/contracts';
+import { marcarCierre } from '../auth/cierres';
 import { SesionService } from '../auth/sesion.service';
 import { entorno } from '../config/entorno';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
@@ -275,6 +276,11 @@ export class KyrosIdService {
       aviso = await validarAvisoDeCierre(token, { emisor: a.emisor, clientId: a.clientId }, this.clavesDe(a.emisor));
     } catch { throw new BadRequestException(); }
     await this.bd.insert(kyrosUsedTokens).values({ jti: `bc:${aviso.jti}`, expiresAt: new Date(aviso.exp * 1000 + 60_000) }).onConflictDoNothing();
-    if (aviso.sub) await this.sesion.revocarPorSub(aviso.sub);
+    if (aviso.sub) {
+      await this.sesion.revocarPorSub(aviso.sub);
+      // gestro-p07: además de los refresh tokens, el token de acceso vigente deja de valer ya (no a los 15 min).
+      const us = await this.bd.select({ userId: kyrosLinks.userId }).from(kyrosLinks).where(and(eq(kyrosLinks.issuer, a.emisor), eq(kyrosLinks.sub, aviso.sub)));
+      for (const u of us) marcarCierre(u.userId);
+    }
   }
 }

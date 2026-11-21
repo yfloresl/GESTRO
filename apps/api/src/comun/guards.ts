@@ -1,4 +1,5 @@
 import { applyDecorators, CanActivate, ExecutionContext, UseGuards, ForbiddenException, HttpException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { tokenCerrado } from '../auth/cierres';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { eq } from 'drizzle-orm';
@@ -30,9 +31,10 @@ export class JwtAuthGuard implements CanActivate {
     const token = (req.headers.authorization ?? '').replace(/^Bearer /, '');
     if (!token) throw new UnauthorizedException('Sesión requerida');
     try {
-      const p = await this.jwt.verifyAsync<Actor & { aud: string }>(token, {
+      const p = await this.jwt.verifyAsync<Actor & { aud: string; iat?: number }>(token, {
         secret: this.secretos.firma('acceso'), algorithms: ['HS256'], audience: 'staff',
       });
+      if (tokenCerrado(p.sub, p.iat)) throw new UnauthorizedException('Sesión cerrada');   // gestro-p07: la persona salió de Kyros ID
       req.actor = { sub: p.sub, plat: !!p.plat, aat: p.aat, rids: p.rids ?? [], roles: p.roles ?? {} };
       return true;
     } catch {

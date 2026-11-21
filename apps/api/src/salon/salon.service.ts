@@ -1,5 +1,5 @@
 import { urlPublicaConocida } from '../facturacion-kyros/url-publica-conocida';
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { auditar, esDuplicado } from '../comun/auditoria';
@@ -95,6 +95,21 @@ export class SalonService {
       } catch (e) { if (esDuplicado(e)) throw new ConflictException('Ya existe una mesa con ese número.'); throw e; }
       await auditar(tx, t.restaurantId, por, 'salon.mesa_cambiada', 'table', id, d);
       return { ok: true };
+    });
+  }
+
+  /** QR de una mesa para quien atiende: dueño, administración, encargado de área y caja ven cualquiera; un mesero, solo la que tiene asignada o donde tiene un pedido abierto. */
+  qrDeMesa(t: Tenant, userId: string, roles: string[], id: string) {
+    return this.db.run(t, async (tx) => {
+      const [m] = await tx.select({ numero: restaurantTables.number, q: restaurantTables.qrToken, activa: restaurantTables.active }).from(restaurantTables).where(and(eq(restaurantTables.id, id), eq(restaurantTables.restaurantId, t.restaurantId)));
+      if (!m || !m.activa) throw new NotFoundException('Mesa no encontrada.');
+      if (!roles.some((r) => ['owner', 'admin', 'area_manager', 'cajero'].includes(r))) {
+        const suya = (await tx.execute(sql`SELECT 1 FROM staff_members s WHERE s.restaurant_id = ${t.restaurantId} AND s.user_id = ${userId}::uuid AND (
+            EXISTS (SELECT 1 FROM table_assignments a WHERE a.table_id = ${id}::uuid AND a.waiter_id = s.id AND a.valid_during @> now())
+            OR EXISTS (SELECT 1 FROM orders o WHERE o.table_id = ${id}::uuid AND o.waiter_id = s.id AND o.status NOT IN ('cobrado', 'anulado')))`)).rows.length > 0;
+        if (!suya) throw new ForbiddenException('Esa mesa no es tuya: pídele al encargado que te la asigne.');
+      }
+      return { numero: m.numero, urlQr: `${(urlPublicaConocida() ?? entorno.urlPublica)}/m/${m.q}` };
     });
   }
 

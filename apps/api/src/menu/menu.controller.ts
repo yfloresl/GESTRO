@@ -25,13 +25,13 @@ export class MenuController {
   platos(@TenantActual() t: Tenant) { return this.menu.platos(t); }
   @Post('platos') @DeSucursal(...EDITA)
   crearPlato(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Body() b: unknown) { return this.menu.crearPlato(t, a.sub, Plato.parse(b)); }
-  @Patch('platos/:id') @DeSucursal(...EDITA, 'cocina')
+  @Patch('platos/:id') @DeSucursal(...EDITA, 'cocina', 'mesero', 'area_manager')
   cambiarPlato(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string, @Body() b: unknown) {
     const d = PlatoParcial.parse(b);
-    // GS-K02: cocina solo marca disponible/agotado (es lo único que ofrece la pantalla); precio, nombre, categoría y códigos SIN son del dueño o la administración.
+    // GS-K02 / gestro-p08: cocina y meseros solo marcan disponible/agotado (es lo único que ofrece la pantalla); precio, nombre, categoría y códigos SIN son del dueño o la administración.
     const roles = a.roles[t.restaurantId] ?? [];
     const edita = a.plat || roles.some((r) => (EDITA as readonly string[]).includes(r));
-    if (!edita && Object.keys(d).some((k) => k !== 'disponible')) throw new ForbiddenException('Cocina solo puede marcar un plato como disponible o agotado.');
+    if (!edita && Object.keys(d).some((k) => k !== 'disponible')) throw new ForbiddenException('Solo puedes marcar un plato como disponible o agotado.');
     return this.menu.cambiarPlato(t, a.sub, id, d);
   }
   @Delete('platos/:id') @DeSucursal(...EDITA)

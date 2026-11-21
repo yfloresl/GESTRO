@@ -22,6 +22,9 @@ export class SalonController {
     const conQr = (a.roles[t.restaurantId] ?? []).some((r) => r === 'owner' || r === 'admin');
     return this.salon.mesas(t, conQr);
   }
+  /** gestro-p08: el mesero muestra el QR de SU mesa (asignada o con un pedido suyo abierto) sin entrar a la administración. */
+  @Get('mesas/:id/qr') @DeSucursal(...EDITA, 'mesero', 'area_manager', 'cajero')
+  qrDeMesa(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Param('id', ParseUUIDPipe) id: string) { return this.salon.qrDeMesa(t, a.sub, (a.roles[t.restaurantId] ?? []) as string[], id); }
   @Post('mesas') @DeSucursal(...EDITA)
   crearMesa(@TenantActual() t: Tenant, @ActorActual() a: Actor, @Body() b: unknown) { return this.salon.crearMesa(t, a.sub, Mesa.parse(b)); }
   @Patch('mesas/:id') @DeSucursal(...EDITA)
