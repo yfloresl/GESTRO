@@ -5,8 +5,9 @@ import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs } from '../lib/tipos';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
+import { BotonCsv } from '../componentes/BotonCsv';
 
-interface Cuenta { id: string; cliente: string; telefono: string | null; monto: string; pagado: string; saldo: string; vence: string; dias: number; vencida: boolean }
+interface Cuenta { id: string; cliente: string; telefono: string | null; monto: string; pagado: string; saldo: string; vence: string; cobradaEl?: string | null; dias: number; vencida: boolean }
 
 /** Cuentas por cobrar: ventas a crédito pendientes, con cobro total o parcial por caja o banco. */
 export function Cobranzas() {
@@ -24,6 +25,7 @@ export function Cobranzas() {
         <div className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md"><p className="font-label-sm uppercase text-on-surface-variant">Por cobrar</p><p className="font-headline-sm text-headline-sm text-primary">{bs(total)}</p></div>
         <div className={`rounded-xl border p-space-md ${vencido > 0 ? 'bg-error-container text-on-error-container border-error-container' : 'bg-surface-container-lowest border-outline-variant'}`}><p className="font-label-sm uppercase">Vencido</p><p className="font-headline-sm text-headline-sm">{bs(vencido)}</p></div>
       </div>
+      <div><BotonCsv nombre="cuentas-por-cobrar" columnas={['Cliente', 'Teléfono', 'Monto (Bs)', 'Pagado (Bs)', 'Saldo (Bs)', 'Vence', 'Cobrada el']} filas={lista.map((c) => [c.cliente, c.telefono, c.monto, c.pagado, c.saldo, c.vence, c.cobradaEl])} /></div>
       <label className="flex items-center gap-space-sm min-h-12"><input type="checkbox" className="w-6 h-6" checked={todas} onChange={(e) => setTodas(e.target.checked)} /><span>Incluir cuentas ya cobradas</span></label>
       {q.isLoading ? <ListaEsqueleto /> : lista.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">No hay cuentas por cobrar. Nacen al cobrar un pedido con el método «Crédito».</p> : (
         <ul className="grid grid-cols-1 gap-gutter md:grid-cols-2">{lista.map((c) => {
@@ -31,7 +33,7 @@ export function Cobranzas() {
           return (
             <li key={c.id} className={`border rounded-xl p-space-md flex items-center justify-between gap-space-sm ${c.vencida ? 'bg-error-container/30 border-error-container' : 'bg-surface-container-lowest border-outline-variant'} ${cobrada ? 'opacity-60' : ''}`}>
               <div className="min-w-0"><button type="button" onClick={() => setFicha(c.cliente)} aria-label={`Ver ficha de ${c.cliente}`} className="font-semibold truncate text-left text-primary underline-offset-2 hover:underline max-w-full">{c.cliente}</button>
-                <p className="font-body-sm text-on-surface-variant">{c.telefono ? `${c.telefono} · ` : ''}{cobrada ? 'Cobrada' : c.vencida ? `Venció hace ${-c.dias} día(s)` : c.dias === 0 ? 'Vence hoy' : `Vence en ${c.dias} día(s)`} ({c.vence})</p>
+                <p className="font-body-sm text-on-surface-variant">{c.telefono ? `${c.telefono} · ` : ''}{cobrada ? textoCobrada(c) : `${c.vencida ? `Venció hace ${-c.dias} día(s)` : c.dias === 0 ? 'Vence hoy' : `Vence en ${c.dias} día(s)`} (${c.vence})`}</p>
                 <p className="font-label-lg text-primary">{cobrada ? bs(c.monto) : `Saldo ${bs(c.saldo)}`}{!cobrada && Number(c.pagado) > 0 ? <span className="font-body-sm text-on-surface-variant"> de {bs(c.monto)}</span> : null}</p></div>
               {!cobrada && <button type="button" onClick={() => setCobrando(c)} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold whitespace-nowrap">Cobrar</button>}
             </li>);
@@ -40,6 +42,11 @@ export function Cobranzas() {
       {cobrando && <Cobro cuenta={cobrando} cerrar={() => setCobrando(null)} hecho={() => { setCobrando(null); void qc.invalidateQueries({ queryKey: ['por-cobrar'] }); void qc.invalidateQueries({ queryKey: ['conta'] }); }} />}
     </div>
   );
+}
+
+/** gestro-022: una cuenta cobrada muestra cuándo se cobró (nunca su fecha de vencimiento, que puede ser futura y parecer un cobro adelantado). */
+export function textoCobrada(c: { cobradaEl?: string | null; vence: string }): string {
+  return c.cobradaEl ? `Cobrada el ${c.cobradaEl}` : `Cobrada (vencía el ${c.vence})`;
 }
 
 /** GST-C05: valida el monto de un cobro de cuenta en centavos enteros (BigInt) antes de enviar, con mensajes claros en vez de «Datos inválidos». */
@@ -96,7 +103,7 @@ function FichaCliente({ cliente, cuentas, cobrar, cerrar }: { cliente: string; c
         return (
           <li key={c.id} className="border border-outline-variant rounded-xl p-space-sm flex items-center justify-between gap-space-sm">
             <div><p className="font-label-lg">{cobrada ? `Cobrada · ${bs(c.monto)}` : `Saldo ${bs(c.saldo)} de ${bs(c.monto)}`}</p>
-              <p className="font-body-sm text-on-surface-variant">Vence {c.vence}{!cobrada && c.vencida ? ` · venció hace ${-c.dias} día(s)` : ''}</p></div>
+              <p className="font-body-sm text-on-surface-variant">{cobrada ? textoCobrada(c) : `Vence ${c.vence}${c.vencida ? ` · venció hace ${-c.dias} día(s)` : ''}`}</p></div>
             {!cobrada && <button type="button" onClick={() => cobrar(c)} className="h-12 px-space-md rounded-lg bg-primary text-on-primary font-semibold">Cobrar</button>}
           </li>);
       })}</ul>

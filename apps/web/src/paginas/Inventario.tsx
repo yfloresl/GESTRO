@@ -6,6 +6,7 @@ import { clases } from '../componentes/Marca';
 import { api, mensajeDeError, useRolesActivos } from '../lib/sesion';
 import { bs, bsUnitario } from '../lib/tipos';
 import { ListaEsqueleto } from '../componentes/Esqueleto';
+import { BotonCsv } from '../componentes/BotonCsv';
 
 interface Insumo { id: string; nombre: string; categoria: string | null; unidad: string; minimo: number; ultimoCosto: string; costoPromedio: string; perecedero: boolean; metodoCosto: string; activo: boolean; stock: string; valor: string; estado: 'agotado' | 'bajo' | 'optimo'; proveedorPreferidoId: string | null; almacenConsumoId: string | null }
 interface Almacen { id: string; nombre: string }
@@ -60,6 +61,7 @@ function Existencias({ lista, cargando, alertas }: { lista: Insumo[]; cargando: 
       <div className="flex flex-wrap gap-space-sm items-center">
         <label className="relative flex-1 min-w-[12rem]"><span className="sr-only">Buscar insumo</span><span className="material-symbols-outlined absolute left-3 top-3 text-on-surface-variant" aria-hidden="true">search</span><input value={b} onChange={(e) => setB(e.target.value)} placeholder="Buscar insumo" className={`${clases.input} pl-11 h-12`} /></label>
         {(['todos', 'agotado', 'bajo', 'optimo'] as const).map((k) => <button key={k} aria-pressed={f === k} onClick={() => setF(k)} className={`h-12 px-space-md rounded-full font-label-md ${f === k ? 'bg-primary-container text-on-primary' : 'bg-surface-container text-on-surface-variant'}`}>{k === 'todos' ? `Todos (${lista.filter((i) => i.activo).length})` : ESTADO[k].t}</button>)}
+        <BotonCsv nombre="existencias-inventario" columnas={['Insumo', 'Categoría', 'Unidad', 'Stock', 'Mínimo', 'Costo promedio (Bs)', 'Valor (Bs)', 'Estado']} filas={v.map((i) => [i.nombre, i.categoria, i.unidad, i.stock, i.minimo, i.costoPromedio, i.valor, i.estado])} />
       </div>
       {cargando ? <ListaEsqueleto /> : v.length === 0 ? <p className="rounded-xl border border-outline-variant bg-surface-container-lowest p-space-md text-on-surface-variant">{lista.length ? 'Ningún insumo coincide.' : 'Todavía no hay insumos. Créalos en «Insumos y almacenes».'}</p> : (
         <div className="overflow-x-auto bg-surface-container-lowest border border-outline-variant rounded-xl"><table className="min-w-[44rem] w-full text-body-sm"><caption className="sr-only">Existencias por insumo</caption>

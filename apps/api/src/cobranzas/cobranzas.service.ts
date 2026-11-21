@@ -18,10 +18,10 @@ export class CobranzasService {
 
   porCobrar(t: Tenant, soloAbiertas = true) {
     return this.db.run(t, async (tx) => {
-      const r = await tx.execute(sql`SELECT p.id, p.counterparty, p.customer_phone, p.amount::text AS monto, p.paid::text AS pagado, (p.amount - p.paid)::text AS saldo, p.due_on::text AS vence, (p.due_on - ${HOY})::int AS dias
+      const r = await tx.execute(sql`SELECT p.id, p.counterparty, p.customer_phone, p.amount::text AS monto, p.paid::text AS pagado, (p.amount - p.paid)::text AS saldo, p.due_on::text AS vence, (p.due_on - ${HOY})::int AS dias, CASE WHEN p.paid >= p.amount THEN (p.paid_at AT TIME ZONE 'America/La_Paz')::date::text END AS cobrada_el
         FROM payables_receivables p WHERE p.restaurant_id = ${t.restaurantId} AND p.direction = 'por_cobrar' AND p.voided_at IS NULL ${soloAbiertas ? sql`AND p.paid < p.amount` : sql``} ORDER BY p.due_on, p.created_at LIMIT 300`);
-      return (r.rows as { id: string; counterparty: string; customer_phone: string | null; monto: string; pagado: string; saldo: string; vence: string; dias: number }[])
-        .map((x) => ({ id: x.id, cliente: x.counterparty, telefono: x.customer_phone, monto: x.monto, pagado: x.pagado, saldo: x.saldo, vence: x.vence, dias: x.dias, vencida: x.dias < 0 && Number(x.saldo) > 0 }));
+      return (r.rows as { id: string; counterparty: string; customer_phone: string | null; monto: string; pagado: string; saldo: string; vence: string; dias: number; cobrada_el: string | null }[])
+        .map((x) => ({ id: x.id, cliente: x.counterparty, telefono: x.customer_phone, monto: x.monto, pagado: x.pagado, saldo: x.saldo, vence: x.vence, dias: x.dias, cobradaEl: x.cobrada_el, vencida: x.dias < 0 && Number(x.saldo) > 0 }));
     });
   }
 

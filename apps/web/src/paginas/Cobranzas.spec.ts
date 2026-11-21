@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validarMontoCobro } from './Cobranzas';
+import { textoCobrada, validarMontoCobro } from './Cobranzas';
 
 // GST-C05: un cobro de cuenta con monto 0 (o inválido) dice qué falla en vez de «Datos inválidos».
 describe('validarMontoCobro', () => {
@@ -20,4 +20,10 @@ describe('validarMontoCobro', () => {
     expect(validarMontoCobro('200,01', '200.00').error).toMatch(/mayor al saldo pendiente \(Bs 200,00\)/);
     expect(validarMontoCobro('0,30', '0.30').error).toBeNull();
   });
+});
+
+// gestro-022: la cuenta cobrada muestra la fecha del cobro, no la de vencimiento (que puede ser futura).
+describe('textoCobrada', () => {
+  it('usa la fecha real del cobro', () => expect(textoCobrada({ cobradaEl: '2026-11-20', vence: '2026-12-05' })).toBe('Cobrada el 2026-11-20'));
+  it('sin fecha de cobro aclara que la fecha es de vencimiento', () => expect(textoCobrada({ vence: '2026-12-05' })).toBe('Cobrada (vencía el 2026-12-05)'));
 });
